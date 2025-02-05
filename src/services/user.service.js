@@ -1,4 +1,4 @@
-import User from "../models/user.model.js";
+import User from '../models/user.model.js';
 
 export const getUser = async (body) => {
     return User.findOne({ ...body})
