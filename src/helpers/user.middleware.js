@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { Message } from '../utils/message';
+import { Message } from '../utils/message.js';
 
 export const authorization = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');

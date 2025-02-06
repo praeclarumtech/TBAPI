@@ -5,7 +5,17 @@ import { registerValidation, loginValidation } from '../../validations/user.vali
 
 const router = express.Router();
 
-router.post('/register',validator.body(registerValidation), register);
-router.post('/login',validator.body(loginValidation), login);
+
+router.post('/register', (req, res, next) => {
+    console.log("Request Body: ", req.body);
+    next();
+  }, validator.body(registerValidation), register);
+  
+
+router.post('/login', (req, res, next) => {
+    console.log("Login Request Body: ", req.body);
+    next();
+  }, validator.body(loginValidation), login);
+  
 
 export default router;

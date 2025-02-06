@@ -21,7 +21,32 @@ const userSchema = new mongoose.Schema({
     enum: [Enum.ADMIN,Enum.HR,Enum.USER],
     default: Enum.ADMIN,
   },
-});
+  phoneNumber: {
+    type: String,
+    match: [/^\d{3}-\d{3}-\d{4}$/, 'Invalid phone number format (XXX-XXX-XXXX)']
+  },
+  profilePicture: {
+    type: String
+  },
+  dateOfBirth: {
+    type: Date
+  },
+  gender: {
+    type: String,
+    enum: [Enum.MALE,Enum.FEMALE,Enum.OTHER]
+  },
+  designation: {
+    type: String
+  },
+  created_At: { 
+    type: Date, 
+    default: Date.now 
+  },
+  modified_At: { 
+    type: Date, 
+    default: Date.now 
+  },
+},{ timestamps: true });
 
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {

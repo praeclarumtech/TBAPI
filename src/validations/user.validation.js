@@ -2,12 +2,12 @@ import Joi from 'joi';
 import { Enum } from '../utils/enum.js';
 
   export const registerValidation= Joi.object().keys({
-    userName: Joi.string().required().empty().messages({
+    userName: Joi.string().required().messages({
       'string.base': `username should be a type of 'text'`,
       'string.empty': `username cannot be an empty field`,
       'any.required': `username is a required field`,
     }),
-    email: Joi.string().required().empty().email().messages({
+    email: Joi.string().required().email().messages({
       'string.base': `Email id should be a type of 'text'`,
       'string.empty': `Email id cannot be an empty field`,
       'string.email': `Email id should be in correct format`,
@@ -18,7 +18,6 @@ import { Enum } from '../utils/enum.js';
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`'])[A-Za-z\d@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`']{8,}$/,
         'password'
       )
-      .empty()
       .required()
       .min(8)
       .messages({
@@ -35,7 +34,6 @@ import { Enum } from '../utils/enum.js';
       role: Joi.string()
       .required()
       .valid(Enum.ADMIN, Enum.HR)
-      .empty()
       .messages({
         'string.base': `Role should be number`,
         'any.only': `Role must be a ${Enum.ADMIN} or ${Enum.HR}`,
@@ -45,13 +43,13 @@ import { Enum } from '../utils/enum.js';
   })
 
   export const loginValidation= Joi.object().keys({
-    email: Joi.string().required().empty().email().messages({
+    email: Joi.string().required().email().messages({
       'string.base': `Email id should be a type of 'text'`,
       'string.email': `Email id should be in correct format`,
       'string.empty': `Email id cannot be an empty field`,
       'any.required': `Email id is required`,
     }),
-    password: Joi.string().required().empty().messages({
+    password: Joi.string().required().messages({
       'string.base': `Password should be a type of 'text'`,
       'string.empty': `Password cannot be an empty field`,
       'any.required': `Password is a required field`,

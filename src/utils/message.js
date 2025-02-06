@@ -9,5 +9,10 @@ export const Message = {
   MONGODB_CONNECTION_ERROR:'MongoDB Connection Error',
   NO_TOKEN:'No token, authorization denied',
   TOKEN_ISnNOT_VALID:'Token is not valid',
-  LISTENING_TO_PORT:'Listening to Port'
+  LISTENING_TO_PORT:'Listening to Port',
+  INVALID_FILE_TYPE:'Invalid file type. Only JPG, JPEG, and PNG are allowed.',
+  SERVER_ERROR:'Server Error',
+  PROFILE_UPDATED_SUCCESSFULLY:'Profile updated successfully',
+  PROFILE_FRTCHDES_SUCCESSFULLY:'Profile fetched successfully for user',
+  NEW_PROFILE_CREATED_SUCCESSFULLY:'New profile created successfully for user',
 };
