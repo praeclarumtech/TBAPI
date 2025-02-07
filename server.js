@@ -10,7 +10,7 @@ const helmet = require("helmet");
 app.use(helmet());
 
 require('dotenv').config()
-
+app.use(express.json())
 app.use('/api',yearRoute)
 
 const port = process.env.PORT || 3000;
