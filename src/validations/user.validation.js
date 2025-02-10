@@ -65,3 +65,36 @@ import { Enum } from '../utils/enum.js';
     }),
   })
 
+  export const changePasswordValidation = Joi.object().keys({
+    oldPassword: Joi.string().required().messages({
+      'string.base': `Old password should be a type of 'text'`,
+      'string.empty': `Old password cannot be an empty field`,
+      'any.required': `Old password is a required field`,
+    }),
+    newPassword: Joi.string()
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`'])[A-Za-z\d@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`']{8,}$/,
+        'password'
+      )
+      .required()
+      .min(8)
+      .messages({
+        'string.base': `New Password should be a type of 'text'`,
+        'string.empty': `New Password cannot be an empty field`,
+        'string.min': 'New Password length must be at least 8 characters.',
+        'any.required': `New Password is Required`,
+        'string.pattern.name':
+          'New Password must contain a capital letter, a special character, and a digit. Password length must be minimum 8 characters.',
+      }),
+    confirmPassword: Joi.string()
+      .required()
+      .valid(Joi.ref('newPassword'))
+      .messages({
+        'string.base': `Confirm Password should be a type of text`,
+        'string.empty': 'Confirm Password is not allowed to be empty',
+        'any.required': `Confirm Password is Required`,
+        'any.only': `New Password and Confirm Password should be the same`,
+      }),
+  });
+  
+

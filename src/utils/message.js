@@ -17,4 +17,6 @@ export const Message = {
   PROFILE_UPDATED_SUCCESSFULLY:'Profile updated successfully',
   PROFILE_FRTCHDES_SUCCESSFULLY:'Profile fetched successfully for user',
   NEW_PROFILE_CREATED_SUCCESSFULLY:'New profile created successfully for user',
+  OLD_PASSWORD_INCORRECT:'Old password is incorrecct.',
+  PASSWORD_CHANGE_SUCCESSFULLY:'Password successfully changed.'
 };

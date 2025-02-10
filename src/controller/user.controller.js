@@ -1,17 +1,17 @@
-import { Message } from '../utils/message.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import logger from '../loggers/logger.js';
+import { Message } from "../utils/message.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import logger from "../loggers/logger.js";
 import {
   createUser,
   getUser,
   getAllusers,
   getUserById,
   updateUserById,
-} from '../services/user.service.js';
+} from "../services/user.service.js";
 
 export const register = async (req, res, next) => {
-  let { userName, email, password, confirmPassword, role } = req.body;
+  let { userName, email, password, role } = req.body;
   try {
     const existingUser = await getUser({ email });
     if (existingUser) {
@@ -54,7 +54,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '5h' }
+      { expiresIn: "5h" }
     );
     logger.info(` ${Message.USER_LOGGED_IN_SUCCESSFULLY}: ${email}`);
     res.json({ token });
@@ -132,5 +132,35 @@ export const updateProfile = async (req, res) => {
     res
       .status(500)
       .json({ message: Message.SERVER_ERROR, error: error.message });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    const userId = req.params.id;
+    const user = await getUserById(userId);
+
+    if (!user) {
+      logger.error(Message.USER_NOT_FOUND);
+      return res.status(404).json({ message: Message.USER_NOT_FOUND });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      logger.warn(Message.OLD_PASSWORD_INCORRECT);
+      return res.status(400).json({ message: Message.OLD_PASSWORD_INCORRECT });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
+    res.json({ message: Message.PASSWORD_CHANGE_SUCCESSFULLY });
+  } catch (error) {
+    logger.error(Message.SERVER_ERROR, error);
+    res.status(500).json({ message: Message.SERVER_ERROR });
   }
 };
