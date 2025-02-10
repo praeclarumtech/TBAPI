@@ -28,9 +28,18 @@ import { Enum } from '../utils/enum.js';
         'string.pattern.name':
           'Password must contain a capital letter, a special character and a digit. Password length must be minimum 8 characters.',
       }),
-      // password: Joi.string()
-      // .pattern(new RegExp('^[a-zA-Z0-9]{3,30}$'))
-      // .required(),
+
+      confirmPassword: Joi.string()
+      .required()
+      .valid(Joi.ref('password'))
+      .messages({
+        'string.base': `Confirm Password should be a type of text`,
+        'string.empty': 'Confirm Password is not allowed to be empty',
+        'any.required': `Confirm Password is Required`,
+        'any.only': `Password and confirm password should be same`,
+        'string.pattern.name': `Confirm Password must contain a capital letter, a special character and a digit. Password length must be minimum 8 characters.`,
+      }),
+      
       role: Joi.string()
       .required()
       .valid(Enum.ADMIN, Enum.HR)
