@@ -37,12 +37,11 @@ export const getYears = async (req, res) => {
         item: findYears.getYears,
         totalRecords: findYears.totalRecords,
         currentPage: page,
-        // totalPages: Math.ceil(findYears.totalRecords / limit), // roundup
         totalPages:
-          findYears.totalPages && limit > 0
+          findYears.totalRecords && limit > 0
             ? Math.ceil(findYears.totalRecords / limit)
             : 0,
-        limit: limit, //num of record per page
+        limit,
       },
     });
   } catch (error) {
