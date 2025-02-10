@@ -8,7 +8,6 @@ exports.addYear = async (req, res) => {
         res.status(201).json({
             success: true,
             message: Message.NEW_YEAR,
-            data: newYear
         })
     } catch (error) {
         res.status(500).json({
