@@ -6,7 +6,5 @@ export const errorHandlerMiddleware = (err, req, res, next) => {
             details: err.error.details.map(detail => detail.message),
         });
     }
-    // console.error(err);
-    // res.status(500).json({ success: false, message: "Internal Server Error" });
     next(err);
 }

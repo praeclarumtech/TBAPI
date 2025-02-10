@@ -18,7 +18,7 @@ export const register = async (req, res, next) => {
     }
     await createUser({ userName, email, password, role });
 
-    logger.info(Message.REGISTERED_SUCCESSFULLY);  //***************************************************** */
+    logger.info(Message.REGISTERED_SUCCESSFULLY); 
     return res
       .status(201)
       .json({ success: true, message: Message.REGISTERED_SUCCESSFULLY });

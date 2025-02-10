@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
     default: Enum.ADMIN,
   },
   phoneNumber: {
-    type: String,
+    type: Number,
     match: [/^\d{3}-\d{3}-\d{4}$/, 'Invalid phone number format (XXX-XXX-XXXX)']
   },
   profilePicture: {
@@ -37,14 +37,6 @@ const userSchema = new mongoose.Schema({
   },
   designation: {
     type: String
-  },
-  created_At: { 
-    type: Date, 
-    default: Date.now 
-  },
-  modified_At: { 
-    type: Date, 
-    default: Date.now 
   },
 },{ timestamps: true });
 
