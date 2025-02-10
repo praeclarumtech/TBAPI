@@ -16,25 +16,9 @@ import { authorization } from '../../helpers/user.middleware.js';
 
 const router = express.Router();
 
-router.post(
-  '/register',
-  (req, res, next) => {
-    console.log('Request Body: ', req.body);
-    next();
-  },
-  validator.body(registerValidation),
-  register
-);
+router.post('/register', validator.body(registerValidation), register);
 
-router.post(
-  '/login',
-  (req, res, next) => {
-    console.log('Login Request Body: ', req.body);
-    next();
-  },
-  validator.body(loginValidation),
-  login
-);
+router.post('/login', validator.body(loginValidation), login);
 
 router.get('/viewProfile', authorization, viewProfile);
 router.get('/viewProfile/viewProfileById/:id', authorization, viewProfileById);
