@@ -9,4 +9,5 @@ const Message = {
     INV_CR:"invalid credential"
 }
 
+
 module.exports = Message

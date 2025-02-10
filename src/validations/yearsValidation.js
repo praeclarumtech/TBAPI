@@ -1,12 +1,12 @@
 const Joi = require("joi");
 
 const validateId = Joi.object({
-    id: Joi.number()
-        .integer()
+    id: Joi.string()
+        .regex(/^[0-9a-fA-F]{24}$/) // MongoDB ObjectId validation
         .required()
         .messages({
-            "number.base": "YearId must be a number",
-            "number.integer": "YearId must be an integer",
+            "string.base": "YearId must be a string",
+            "string.pattern.base": "YearId must be a valid MongoDB ObjectId",
             "any.required": "YearId is required",
         })
 });
