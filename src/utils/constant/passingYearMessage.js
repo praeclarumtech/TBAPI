@@ -1,5 +1,5 @@
 export const Message = {
-    NEW_YEAR:"new year added successfully!!!!!",
+    NEW_YEAR:"New year added successfully!!!!!",
     INT_SE_ERR:"internal sever error",
     YEAR_NF:"year not found",
     YEAR_BY_ID:"get data by id",
@@ -9,5 +9,6 @@ export const Message = {
     INV_CR:"invalid credential",
     LIS_PORT:"Listening to Port",
     DB_CONN:"database connected",
-    DB_CONN_ERR:"database connection error"
+    DB_CONN_ERR:"database connection error",
+    INT_SE_ERR:"Internal server error"
 }
