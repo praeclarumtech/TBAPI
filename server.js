@@ -1,30 +1,30 @@
-import express from "express";
-import bodyParser from "body-parser";
-import helmet from "helmet";
-import dotenv from "dotenv";
-import connectDb from "./src/helpers/db.connection.js";
-import yearRoute from "./src/routes/routes.js";
-import { Message } from "./src/utils/constant/passingYearMessage.js";
-import { errorHandler } from "./src/helpers/errorHandler.js";
-
+import express from 'express';
+import connectDB from './src/helpers/db.connection.js';
+import router from './src/routes/routes.js';
+import dotenv from 'dotenv';
+import helmet from 'helmet';
+import bodyParser from 'body-parser';
+import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
+import { Message } from './src/utils/message.js';
+import logger from './src/loggers/logger.js';
 dotenv.config();
 
 const app = express();
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+connectDB();
 app.use(helmet());
+
+app.use('uploads/profile', express.static('uploads'));
+
 app.use(express.json());
-
-connectDb();
-
-app.use("/api", yearRoute);
-app.use(errorHandler);
+app.use('/api', router);
+app.use(errorHandlerMiddleware);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.info(`${Message.LIS_PORT} : ${port}`);
+  logger.info(`${Message.LISTENING_TO_PORT} :  ${port}`);
 });
 
-// Exporting as ES6 module
 export default app;

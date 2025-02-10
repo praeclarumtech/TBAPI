@@ -1,15 +1,18 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import { Message } from "../utils/constant/passingYearMessage.js";
+import mongoose from 'mongoose';
+import logger from '../loggers/logger.js';
+import { Message } from '../utils/message.js';
+import dotenv from 'dotenv';
 dotenv.config();
 
-const connectDb = async () => {
+const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.URI);
-    console.log(Message.DB_CONN);
+    await mongoose.connect(process.env.DBURL, {
+      useNewUrlParser: true });
+    logger.info(Message.MONGODB_CONNECTED);
   } catch (error) {
-    console.log(Message.DB_CONN_ERR);
+    logger.error(`${Message.MONGODB_CONNECTION_ERROR}: ${error.message}`);
+    process.exit(1);
   }
 };
 
-export default connectDb;
+export default connectDB;
