@@ -1,26 +1,35 @@
-const express = require("express");
-const connectDb = require('./src/helpers/db.connection')
-const yearRoute = require('./src/routes/routes')
-const errorHandler = require("./src/helpers/errorHandler");
+import express from 'express';
+import bodyParser from 'body-parser';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
+import connectDb from './src/helpers/db.connection.js';
+import yearRoute from './src/routes/routes.js';
+import { Message } from './src/utils/constant/passingYearMessage.js';
+import { errorHandler } from './src/helpers/errorHandler.js';
 
 
+dotenv.config();
 
 const app = express();
-const bodyParser = require("body-parser");
+
+
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-connectDb()
-const helmet = require("helmet");
 app.use(helmet());
-require('dotenv').config()
-app.use(express.json())
+app.use(express.json());
 
-app.use('/api',yearRoute)
-app.use(errorHandler)
+
+connectDb();
+
+
+app.use('/api', yearRoute);
+app.use(errorHandler);
 
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.info(`Listening to Port :  ${port}`);
+    console.info(`${Message.LIS_PORT} : ${port}`);
 });
-module.exports = app;
+
+// Exporting as ES6 module
+export default app;

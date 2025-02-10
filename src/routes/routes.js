@@ -1,7 +1,8 @@
-const express = require('express')
-const yearRoute = require('./route/passingYearRoutes')
-const router = express.Router()
+import express from "express";
+import yearRoute from "./route/passingYearRoutes.js";
 
-router.use("/year",yearRoute)
+const router = express.Router();
 
-module.exports = router
+router.use("/year", yearRoute);
+
+export default router;

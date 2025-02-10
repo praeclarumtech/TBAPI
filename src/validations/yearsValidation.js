@@ -1,6 +1,6 @@
-const Joi = require("joi");
+import Joi from "joi"
 
-const validateId = Joi.object({
+export const validateId = Joi.object({
     id: Joi.string()
         .regex(/^[0-9a-fA-F]{24}$/) // MongoDB ObjectId validation
         .required()
@@ -11,7 +11,7 @@ const validateId = Joi.object({
         })
 });
 
-const passingYearValidation = Joi.object({
+export const passingYearValidation = Joi.object({
     year: Joi.number()
         .integer()
         .min(1999)
@@ -25,4 +25,3 @@ const passingYearValidation = Joi.object({
         })
 });
 
-module.exports = {passingYearValidation,validateId };

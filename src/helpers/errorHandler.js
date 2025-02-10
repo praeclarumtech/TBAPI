@@ -1,4 +1,4 @@
-const errorHandler = (err,req,res,next)=>{
+export const errorHandler = (err,req,res,next)=>{
     if (err && err.error && err.error.isJoi) {
         const errorDetails = err.error.details.map(detail => detail.message);
         
@@ -13,5 +13,3 @@ const errorHandler = (err,req,res,next)=>{
         message: "Internal Server Error"
     });
 }
-
-module.exports = errorHandler

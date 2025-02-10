@@ -1,11 +1,12 @@
-const passingYear = require('../models/passingYear')
-const Message = require('../utils/constant/passingYearMessage')
+import {Message} from '../utils/constant/passingYearMessage.js'
+import {createYear,getOneYear,updateYearById,deleteYearById} from '../services/passingYear.js'
+import {pagination} from '../helpers/commonFunction/passingYearPagination.js'
+import PassingYear from '../models/passingYear.js'
 
-exports.addYear = async (req, res) => {
+export const addYear = async (req, res) => {
     try {
-        const {year} = req.body
-        const newYear = await passingYear.create({year})
-        res.status(201).json({
+         await createYear(req.body.year)
+         res.status(201).json({
             success: true,
             message: Message.NEW_YEAR,
         })
@@ -17,22 +18,23 @@ exports.addYear = async (req, res) => {
     }
 }
 
-exports.getYears = async (req, res) => {
+export const getYears = async (req, res) => {
     try {
-        let page = parseInt(req.query.page) // current page
-        let limit = parseInt(req.query.limit) // num of record per page
+        const page = parseInt(req.query.page) || 1 
+        const limit = parseInt(req.query.limit) || 10 
+        const findYears = await pagination({Schema:PassingYear,page,limit})
 
-        let skip = (page -1) * limit
-        const totalRecords = await passingYear.countDocuments() // count the document within database
-        const getYears = await passingYear.find().skip(skip).limit(limit)
+        // console.log(findYears)
+
         res.status(200).json({
             success: true,
             message: Message.SHOW_YEARS,
-            data: getYears,
+            data: findYears.getYears,
             pagination:{
-                totalRecords:totalRecords,
-                currentPage:page, // current page number
-                totalPages:Math.ceil(totalRecords / 100), // roundup
+                totalRecords:findYears.totalRecords,
+                currentPage:page,
+                // totalPages: Math.ceil(findYears.totalRecords / limit), // roundup
+                totalPages:findYears.totalPages && limit > 0 ? Math.ceil(findYears.totalRecords / limit):0,
                 limit:limit //num of record per page
             }
         });
@@ -44,15 +46,14 @@ exports.getYears = async (req, res) => {
     }
 };
 
-exports.getYearById = async(req,res)=>{
+export const getYearById = async(req,res)=>{
     try {
         const yearId = req.params.id
-        const getYearById = await passingYear.findById(yearId)
-        
+        const yearDetail =  await getOneYear(yearId)
         return res.status(200).json({
             success: true,
             message: Message.YEAR_BY_ID,
-            data: getYearById
+            data: yearDetail
         })
     } catch (error) {
         res.status(404).json({
@@ -62,14 +63,9 @@ exports.getYearById = async(req,res)=>{
     }
 }
 
-exports.updateYear = async (req, res) => {
+export const updateYear = async (req, res) => {
     try {
-        const updateYear = await passingYear.findByIdAndUpdate(
-            req.params.id,
-            req.body, {
-            new: true
-        }
-        )
+        const updateYear = await updateYearById(req.params.id,req.body)
         res.status(202).json({
             success: true,
             message: Message.YEAR_UP,
@@ -83,13 +79,10 @@ exports.updateYear = async (req, res) => {
     }
 }
 
-exports.deleteYear = async (req, res) => {
+export const deleteYear = async (req, res) => {
     try {
-        const yearId = req.params.id
-        const deleteYear = await passingYear.findByIdAndUpdate(
-            yearId,
-            {is_deleted: true},
-        )
+        const deleteYear = await deleteYearById(
+            req.params.id, {is_deleted: true},)
         if (!deleteYear) {
             return res.status(404).json({
                 success: false,

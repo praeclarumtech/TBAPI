@@ -1,18 +1,19 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const passingYearSchema = new mongoose.Schema(
   {
-    year:{
-      type: Number
+    year: {
+      type: Number,
     },
     is_deleted: {
-      type : Boolean,
-      default: false
-    }
+      type: Boolean,
+      default: false,
+    },
   },
   {
-    timestamps: true 
+    timestamps: true,
   }
 );
 
-module.exports = mongoose.model("passingYear", passingYearSchema);
+const PassingYear = mongoose.model("PassingYear", passingYearSchema);
+export default PassingYear;

@@ -1,13 +1,16 @@
-const mongoose = require('mongoose')
-require('dotenv').config()
+import mongoose from 'mongoose'
+import dotenv from 'dotenv';
+import { Message } from '../utils/constant/passingYearMessage.js';
+dotenv.config();
+
 
 const connectDb = async()=>{
     try {
-        const connection = await mongoose.connect(process.env.URI)
-        console.log(`database connected:${connection.connection.host}`)
+         await mongoose.connect(process.env.URI)
+        console.log(Message.DB_CONN)
     } catch (error) {
-        console.log("database connection error",error)
+        console.log(Message.DB_CONN_ERR)
     }
 }
 
-module.exports = connectDb
+export default connectDb
