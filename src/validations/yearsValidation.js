@@ -2,7 +2,7 @@ import Joi from "joi"
 
 export const validateId = Joi.object({
     id: Joi.string()
-        .regex(/^[0-9a-fA-F]{24}$/) // MongoDB ObjectId validation
+        .regex(/^[0-9a-fA-F]{24}$/)
         .required()
         .messages({
             "string.base": "YearId must be a string",
@@ -24,4 +24,6 @@ export const passingYearValidation = Joi.object({
             "number.min": "passout year  must after 2017",
         })
 });
+
+
 
