@@ -18,5 +18,15 @@ export const Message = {
   PROFILE_FRTCHDES_SUCCESSFULLY:'Profile fetched successfully for user',
   NEW_PROFILE_CREATED_SUCCESSFULLY:'New profile created successfully for user',
   OLD_PASSWORD_INCORRECT:'Old password is incorrecct.',
-  PASSWORD_CHANGE_SUCCESSFULLY:'Password successfully changed.'
+  PASSWORD_CHANGE_SUCCESSFULLY:'Password successfully changed.',
+  ERROR_ADDING_AAPLICANT:'Error adding applicant',
+  ERROR_RETRIEVING_APPLICANTS:'Error retrieving applicants',
+  APPLICANT_SUBMIT_SUCCESSFULLY:'Applicant Submit Successfully',
+  FETCHED_ALL_APPLICANTS:'Fetched all applicants successfully.',
+  FETCHED_APPLICANT_SUCCESSFULLY:'Fetched applicant successfully',
+  APPLICANT_NOT_FOUND:'Applicant Not Found.',
+  UPDATED_SUCCESSFULLY:'Updated Successfully.',
+  ERROR_UPDATING_APPLICANT:'Error updating applicant',
+  APPLICANT_DELETED_SUCCESSFULLY:'Applicant deleted successfully',
+  ERROR_DELETING_APPLICANT:'Error deleting applicant',
 };
