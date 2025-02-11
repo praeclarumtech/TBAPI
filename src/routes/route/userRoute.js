@@ -5,6 +5,9 @@ import {
   viewProfile,
   updateProfile,
   viewProfileById,
+  sendEmail,
+  verifyOtp,
+  forgtoPassword
 } from '../../controller/user.controller.js';
 import { validator } from '../../helpers/validator.js';
 import {
@@ -23,5 +26,8 @@ router.post('/login', validator.body(loginValidation), login);
 router.get('/viewProfile', authorization, viewProfile);
 router.get('/viewProfile/viewProfileById/:id', authorization, viewProfileById);
 router.put('/updateProfile/:id', authorization, upload, updateProfile);
+router.post('/sendEmail', sendEmail);
+router.post('/sendEmail/verifyOtp', verifyOtp);
+router.put('/forgtoPassword/:id', forgtoPassword);
 
 export default router;

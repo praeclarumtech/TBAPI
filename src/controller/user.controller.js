@@ -1,14 +1,18 @@
-import { Message } from '../utils/message.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import logger from '../loggers/logger.js';
+import { Message } from "../utils/message.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import logger from "../loggers/logger.js";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import User from "../models/user.model.js";
+dotenv.config();
 import {
   createUser,
   getUser,
   getAllusers,
   getUserById,
   updateUserById,
-} from '../services/user.service.js';
+} from "../services/user.service.js";
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -54,7 +58,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '5h' }
+      { expiresIn: "5h" }
     );
     logger.info(` ${Message.USER_LOGGED_IN_SUCCESSFULLY}: ${email}`);
     res.json({ token });
@@ -132,5 +136,125 @@ export const updateProfile = async (req, res) => {
     res
       .status(500)
       .json({ message: Message.SERVER_ERROR, error: error.message });
+  }
+};
+
+export const sendEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: Message.USER_NOT_FOUND,
+      });
+    }
+    const newOtp = Math.floor(1000 + Math.random() * 9000);
+    const expireOtp = new Date(Date.now() + 5 * 60 * 1000);
+    user.otp = newOtp;
+    user.resetOtp = expireOtp;
+    await user.save();
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.HOST,
+      port: 2525,
+      auth: {
+        user: process.env.USER,
+        pass: process.env.PASS,
+      },
+    });
+
+    // config useail
+    const mailOption = {
+      from: process.env.FROM,
+      to: user.email,
+      subject: "first mail",
+      text: `new otp:-${newOtp}`,
+    };
+
+    try {
+      await transporter.sendMail(mailOption);
+      console.log("mail sent succesfull");
+      return res.status(200).json({
+        success: true,
+        message: Message.MAIL_SENT,
+        data: mailOption,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: Message.SERVER_ERROR,
+        error: error.message,
+      });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: Message.SERVER_ERROR,
+        error: error.message,
+      });
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email,otp } = req.body;
+    const user = await confirmOtp({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: Message.USER_NOT_FOUND });
+    }
+    if (user.otp !== otp) {
+      return res
+        .status(400)
+        .json({ success: false, message: Message.OTP_NOT_MATCHED });
+    }
+    return res
+      .status(200)
+      .json({ success: true, message: Message.OTP_MATCHED });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: Message.SERVER_ERROR,
+        error: error.message,
+      });
+  }
+};
+
+export const forgtoPassword = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { newPassword, confirmPassword } = req.body;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: Message.USER_NOT_FOUND });
+    }
+    if (newPassword !== confirmPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: "password must be same" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    await user.save();
+    res
+      .status(200)
+      .json({ success: true, message: "password updated successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: Message.SERVER_ERROR,
+        error: error.message,
+      });
   }
 };

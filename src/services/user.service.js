@@ -22,3 +22,7 @@ export const updateUserById = async (id, updateData) => {
     '-password'
   );
 };
+
+export const confirmOtp = async()=>{
+  return User.findOne
+}

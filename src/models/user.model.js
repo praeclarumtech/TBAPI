@@ -38,6 +38,13 @@ const userSchema = new mongoose.Schema({
   designation: {
     type: String
   },
+  otp: {
+    type: Number
+  },
+  resetOtp:{
+    type:Date
+  }
+  
 },{ timestamps: true });
 
 userSchema.pre('save', async function (next) {
