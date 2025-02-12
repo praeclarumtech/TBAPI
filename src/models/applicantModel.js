@@ -74,7 +74,9 @@ const ApplicantSchema = new mongoose.Schema(
       default: applicantEnum.HR_ROUND,
       required: true,
     },
-    referral: { type: String }
+    referral: { type: String },
+    isDeleted: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now } 
   },
   { timestamps: true }
 );
