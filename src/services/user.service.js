@@ -1,3 +1,4 @@
+import logger from "../loggers/logger.js";
 import User from "../models/user.model.js";
 import { Message } from "../utils/message.js";
 import bcrypt from 'bcryptjs'
@@ -36,9 +37,11 @@ export const verifyOtpService = async (email, otp) => {
   }
 
   if (user.otp !== otp) {
+    logger.warn(Message.OTP_NOT_MATCHED)
     return { success: false, status: 400, message: Message.OTP_NOT_MATCHED };
   }
 
+  logger.info(Message.OTP_MATCHED)
   return { success: true, status: 200, message: Message.OTP_MATCHED };
 };
 
@@ -55,8 +58,14 @@ export const updatePasswordService = async (
     return { success: false, status: 404,message:Message.USER_NOT_FOUND };
   }
 
+  console.log("new pass:-",newPassword)
+  console.log("confirm pass:-",confirmPassword)
   const hashedPassword = await bcrypt.hash(newPassword, 12);
   user.password = hashedPassword;
+
+  console.log("=====================")
+  console.log("before save",user.password)
   await user.save();
+  console.log("after save",user.password)
   return { success: true, status: 200, message: "Password updated successfully" };
 };

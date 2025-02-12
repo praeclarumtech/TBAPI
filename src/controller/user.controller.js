@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import logger from "../loggers/logger.js";
 // import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import User from "../models/user.model.js";
 import {sendingEmail} from '../helpers/commonFunction/sendEmail.js'
 dotenv.config();
 import {
@@ -52,7 +51,14 @@ export const login = async (req, res) => {
         .status(400)
         .json({ success: true, message: Message.USER_NOT_FOUND });
     }
+    console.log("Password---login======>>>>>>>>",password);
+    console.log("email===========>>>>..",email)
 
+    console.log("user.password===========>>>>..",user.password)
+
+
+
+    console.log("userr======>>>>>>>>",user)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       logger.info(`${Message.INVALID_CREDENTIALS}: ${email}`);
@@ -65,7 +71,7 @@ export const login = async (req, res) => {
       { expiresIn: "5h" }
     );
     logger.info(` ${Message.USER_LOGGED_IN_SUCCESSFULLY}: ${email}`);
-    res.json({ token });
+    res.status(200).json({ success: true, statusCode: 200, message: Message.USER_LOGGED_IN_SUCCESSFULLY, data:token });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -148,8 +154,10 @@ export const sendEmail = async (req, res) => {
     const { email } = req.body;
     const user = await findUserEmail({email});
     if (!user) {
-      return res.status(404).json({
+      logger.warn(Message.USER_NOT_FOUND);
+      return res.status(200).json({
         success: false,
+        statusCode: 404,
         message: Message.USER_NOT_FOUND,
       });
     }
@@ -162,10 +170,13 @@ export const sendEmail = async (req, res) => {
 
     const data = await sendingEmail({email,otp:newOtp})
     if(!data){
+      logger.warn(Message.SERVER_ERROR);
       res.status(500).json({success:false,message:Message.SERVER_ERROR,error: error.message,})
     }
-    res.status(200).json({success:true,message:Message.MAIL_SENT})
+    logger.info(Message.MAIL_SENT);
+    res.status(200).json({success:true,message:Message.MAIL_SENT, data: newOtp})
   } catch (error) {
+    logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     res.status(500).json({success: false,message: Message.SERVER_ERROR,error: error.message,});
   }
 };
@@ -175,19 +186,23 @@ export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
     const data = await verifyOtpService(email, otp);
+    logger.info(`${Message.OPT_SEND}`);
     return res.status(200).json({ success: true, message: data.message });
   } catch (error) {
+    logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     return res.status(500).json({success: false,message: Message.SERVER_ERROR,error: error.message,});
   }
 };
 
-export const forgtoPassword = async (req, res) => {
+export const forgotPassword = async (req, res) => {
   try {
     const userId = req.params.id;
     const { newPassword, confirmPassword } = req.body;
     const user = await updatePasswordService(userId,newPassword,confirmPassword);
-   return res.status(200).json({success:true,message:user.message})
+    logger.info(`${Message.PASS_UPDATED}`);
+    return res.status(200).json({success:true,message:user.message})
   } catch (error) {
+    logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     res.status(500).json({success: false,message: Message.SERVER_ERROR,error: error.message,});
   }
 };

@@ -19,5 +19,7 @@ export const Message = {
   NEW_PROFILE_CREATED_SUCCESSFULLY:'New profile created successfully for user',
   MAIL_SENT:"Mail sent successfully",
   OTP_MATCHED:"Otp matched",
-  OTP_NOT_MATCHED:"Otp not matched"
+  OTP_NOT_MATCHED:"Otp not matched",
+  OPT_SEND:"Otp sended successfuuly",
+  PASS_UPDATED:"Password updated successfully"
 };

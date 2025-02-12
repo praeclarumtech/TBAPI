@@ -10,12 +10,11 @@ import logger from './src/loggers/logger.js';
 dotenv.config();
 
 const app = express();
+connectDB();
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-connectDB();
 app.use(helmet());
-
 app.use('uploads/profile', express.static('uploads'));
 
 app.use(express.json());
@@ -24,6 +23,8 @@ app.use(errorHandlerMiddleware);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
+  console.log(`Server is running fine on ${port}`);
+
   logger.info(`${Message.LISTENING_TO_PORT} :  ${port}`);
 });
 

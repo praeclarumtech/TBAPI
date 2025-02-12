@@ -22,5 +22,3 @@ export const sendingEmail = async({email,newOtp})=>{
         const data = await transporter.sendMail(mailOption)
         return{success:true,data}
 }
-
-export const generateOtp = async()

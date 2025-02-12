@@ -1,7 +1,6 @@
 import { createLogger, format, transports } from 'winston';
 import 'winston-mongodb';
 import dotenv from 'dotenv';
-
 dotenv.config(); 
 
 const logFormat = format.combine(
