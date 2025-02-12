@@ -76,7 +76,7 @@ const ApplicantSchema = new mongoose.Schema(
     },
     referral: { type: String },
     isDeleted: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now } 
+    createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

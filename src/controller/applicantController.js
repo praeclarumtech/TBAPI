@@ -3,12 +3,12 @@ import {
   getApplicantById,
   updateApplicantById,
   deleteApplicantById,
-} from "../services/applicantService.js";
-import { Message } from "../utils/message.js";
-import logger from "../loggers/logger.js";
-import { generateApplicantNo } from "../helpers/generateApplicationNo.js";
-import Applicant from "../models/applicantModel.js";
-import { pagination } from "../helpers/commonFunction/passingYearPagination.js";
+} from '../services/applicantService.js';
+import { Message } from '../utils/message.js';
+import logger from '../loggers/logger.js';
+import { generateApplicantNo } from '../helpers/generateApplicationNo.js';
+import Applicant from '../models/applicantModel.js';
+import { pagination } from '../helpers/commonFunction/passingYearPagination.js';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -64,6 +64,14 @@ export const viewAllApplicant = async (req, res) => {
 
     if (total_Exp && !isNaN(total_Exp)) {
       query.total_Exp = parseInt(total_Exp);
+      // query.total_Exp = { $gte: parseInt(total_Exp) };
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate)
+        query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
+      if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
     }
 
     const findYears = await pagination({
