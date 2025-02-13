@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const passingYearSchema = new mongoose.Schema(
   {
@@ -15,5 +15,5 @@ const passingYearSchema = new mongoose.Schema(
   }
 );
 
-const PassingYear = mongoose.model("PassingYear", passingYearSchema);
+const PassingYear = mongoose.model('PassingYear', passingYearSchema);
 export default PassingYear;
