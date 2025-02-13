@@ -5,11 +5,16 @@ import {
   viewProfile,
   updateProfile,
   viewProfileById,
+  sendEmail,
+  verifyOtp,
+  forgotPassword
 } from '../../controller/user.controller.js';
 import { validator } from '../../helpers/validator.js';
 import {
   registerValidation,
   loginValidation,
+  sendEmailValidation,
+  forgotPasswordValidation
 } from '../../validations/user.validation.js';
 import { upload } from '../../helpers/Multer.js';
 import { authorization } from '../../helpers/user.middleware.js';
@@ -23,5 +28,8 @@ router.post('/login', validator.body(loginValidation), login);
 router.get('/viewProfile', authorization, viewProfile);
 router.get('/viewProfile/viewProfileById/:id', authorization, viewProfileById);
 router.put('/updateProfile/:id', authorization, upload, updateProfile);
+router.post('/sendEmail',authorization,validator.body(sendEmailValidation),sendEmail);
+router.post('/sendEmail/verifyOtp',verifyOtp);
+router.put('/forgotPassword/:id',validator.body(forgotPasswordValidation),forgotPassword);
 
 export default router;

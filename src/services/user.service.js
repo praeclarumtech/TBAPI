@@ -1,5 +1,4 @@
 import User from '../models/user.model.js';
-
 export const getUser = async (body) => {
   return User.findOne({ ...body });
 };
@@ -21,4 +20,8 @@ export const updateUserById = async (id, updateData) => {
   return User.findByIdAndUpdate(id, updateData, { new: true }).select(
     '-password'
   );
+};
+
+export const findUserEmail = async ({ email }) => {
+  return User.findOne({ email });
 };

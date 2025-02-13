@@ -1,7 +1,6 @@
 import { createLogger, format, transports } from 'winston';
 import 'winston-mongodb';
 import dotenv from 'dotenv';
-
 dotenv.config(); 
 
 const logFormat = format.combine(
@@ -27,7 +26,7 @@ const logger = createLogger({
       level: 'error',
       db: process.env.DBURL, 
       collection: 'logs',
-      options: { useUnifiedTopology: true },
+      // options: { useUnifiedTopology: true },
     }),
   ],
   exceptionHandlers: [
