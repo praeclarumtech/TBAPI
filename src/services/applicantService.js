@@ -1,4 +1,4 @@
-import Applicant from "../models/applicantModel.js";
+import Applicant from '../models/applicantModel.js';
 
 export const createApplicant = async (body) => {
   const applicant = new Applicant({ ...body });

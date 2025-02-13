@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import { applicantEnum } from "../utils/enum.js";
+import mongoose from 'mongoose';
+import { applicantEnum } from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
@@ -81,5 +81,5 @@ const ApplicantSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Applicant = mongoose.model("Applicant", ApplicantSchema);
+const Applicant = mongoose.model('Applicant', ApplicantSchema);
 export default Applicant;

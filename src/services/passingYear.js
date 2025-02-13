@@ -1,4 +1,4 @@
-import PassingYear from "../models/passingYear.js";
+import PassingYear from '../models/passingYear.js';
 
 export const createYear = async (year) => {
   return await PassingYear.create({ year });

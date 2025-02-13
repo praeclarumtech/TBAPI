@@ -1,14 +1,14 @@
-import { Message } from "../utils/message.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import logger from "../loggers/logger.js";
+import { Message } from '../utils/message.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import logger from '../loggers/logger.js';
 import {
   createUser,
   getUser,
   getAllusers,
   getUserById,
   updateUserById,
-} from "../services/user.service.js";
+} from '../services/user.service.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -54,7 +54,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "5h" }
+      { expiresIn: '5h' }
     );
     logger.info(` ${Message.USER_LOGGED_IN_SUCCESSFULLY}: ${email}`);
     res.json({ token });
@@ -153,7 +153,7 @@ export const changePassword = async (req, res) => {
       return res.status(400).json({ message: Message.OLD_PASSWORD_INCORRECT });
     }
 
-    user.password = await (newPassword);
+    user.password = await newPassword;
     await user.save();
 
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);

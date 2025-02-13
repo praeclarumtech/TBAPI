@@ -22,11 +22,11 @@ export const applicantEnum = {
   HYBRID:'Hybrid', 
   ONSITE:'Onsite',
 
-  PENDING:"Pending", 
-  SELECTED:"Selected", 
-  REJECTED:"Rejected",
-  ON_HOLD:"On-Hold",
-  IN_PROCESS:"In-Process",
+  PENDING:'Pending', 
+  SELECTED:'Selected', 
+  REJECTED:'Rejected',
+  ON_HOLD:'On-Hold',
+  IN_PROCESS:'In-Process',
 
   HR_ROUND:'HR Round', 
   TECHNICAL:'Technical', 

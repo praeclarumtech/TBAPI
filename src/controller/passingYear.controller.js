@@ -1,12 +1,12 @@
-import { Message } from "../utils/constant/passingYearMessage.js";
+import { Message } from '../utils/constant/passingYearMessage.js';
 import {
   createYear,
   getOneYear,
   updateYearById,
   deleteYearById,
-} from "../services/passingYear.js";
-import { pagination } from "../helpers/commonFunction/passingYearPagination.js";
-import PassingYear from "../models/passingYear.js";
+} from '../services/passingYear.js';
+import { pagination } from '../helpers/commonFunction/passingYearPagination.js';
+import PassingYear from '../models/passingYear.js';
 
 export const addYear = async (req, res) => {
   try {
