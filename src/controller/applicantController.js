@@ -144,7 +144,7 @@ export const updateApplicant = async (req, res) => {
       return res.status(404).json({ message: Message.USER_NOT_FOUND });
     }
     logger.info(`${Message.UPDATED_SUCCESSFULLY}: ${applicantId}`);
-    res.status(200).json({ success: true, message: Message.UPDATED_SUCCESSFULLY , data:updatedApplicant });
+    res.status(200).json({ success: true, message: Message.UPDATED_SUCCESSFULLY , data: updatedApplicant });
   } catch (error) {
     logger.error(`${Message.ERROR_UPDATING_APPLICANT}: ${error.message}`);
     res.status(500).json({ message: Message.ERROR_UPDATING_APPLICANT, error });

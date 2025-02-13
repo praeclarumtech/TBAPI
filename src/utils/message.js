@@ -52,4 +52,6 @@ export const Message = {
   ERROR_UPDATING_APPLICANT:'Error updating applicant',
   APPLICANT_DELETED_SUCCESSFULLY:'Applicant deleted successfully',
   ERROR_DELETING_APPLICANT:'Error deleting applicant',
+  FETCHED_DASHBOARD:'Fetched dashboard',
+  ERROR_FETCHING_DASHBOARD:'error Fetching dashboard',
 };
