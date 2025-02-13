@@ -3,7 +3,7 @@ import { applicantEnum } from "../utils/enum.js";
 
 const ApplicantSchema = new mongoose.Schema(
   {
-    application_No: { type: Number, required: true },
+    applicationNo: { type: Number, required: true },
     name: {
       first: { type: String, required: true },
       middle: { type: String },
@@ -22,33 +22,33 @@ const ApplicantSchema = new mongoose.Schema(
     dob: { type: Date, required: true },
     qualification: { type: String, required: true },
     degree: { type: String, required: true },
-    passing_Year: { type: Number, required: true },
-    current_Location: { type: String, required: true },
+    passingYear: { type: Number, required: true },
+    currentLocation: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
     pincode: { type: Number, required: true },
     city: { type: String, required: true },
-    applied_Skills: { type: [String], required: true },
+    appliedSkills: { type: [String], required: true },
     resume: { type: String, required: true },
-    total_Exp: { type: Number, required: true },
-    relevant_Exp: { type: Number, required: true },
-    other_Skills: { type: String }, //*********** */
-    javascript_Rate: { type: Number, required: true },
-    current_Pkg: { type: String },
-    expected_Pkg: { type: String },
-    notice_Period: { type: String },
+    totalExp: { type: Number, required: true },
+    relevantExp: { type: Number, required: true },
+    otherSkills: { type: String }, //*********** */
+    javascriptRate: { type: Number, required: true },
+    currentPkg: { type: String },
+    expectedPkg: { type: String },
+    noticePeriod: { type: String },
     negotiable: { type: String },
-    ready_Wfo: {
+    readyWfo: {
       type: String,
       enum: [applicantEnum.YES, applicantEnum.NO],
       required: true,
     },
-    work_Preference: {
+    workPreference: {
       type: String,
       enum: [applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE],
       required: true,
     },
-    about_Us: { type: String },
+    aboutUs: { type: String },
     feedback: { type: String },
     status: {
       type: String,
@@ -62,7 +62,7 @@ const ApplicantSchema = new mongoose.Schema(
       default: applicantEnum.PENDING,
       required: true,
     },
-    interview_Stage: {
+    interviewStage: {
       type: String,
       enum: [
         applicantEnum.HR_ROUND,

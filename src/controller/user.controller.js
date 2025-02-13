@@ -11,7 +11,7 @@ import {
 } from "../services/user.service.js";
 
 export const register = async (req, res, next) => {
-  let { userName, email, password, role } = req.body;
+  let { userName, email, password, confirmPassword, role } = req.body;
   try {
     const existingUser = await getUser({ email });
     if (existingUser) {
@@ -20,7 +20,7 @@ export const register = async (req, res, next) => {
         .status(409)
         .json({ success: true, message: Message.ALREADY_EXIST });
     }
-    await createUser({ userName, email, password, role });
+    await createUser({ userName, email, password, confirmPassword, role });
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
     return res
@@ -153,8 +153,7 @@ export const changePassword = async (req, res) => {
       return res.status(400).json({ message: Message.OLD_PASSWORD_INCORRECT });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    user.password = await (newPassword);
     await user.save();
 
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);

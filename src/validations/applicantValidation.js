@@ -60,12 +60,12 @@ export const applicantValidation = Joi.object({
     "any.required": "Degree is required.",
   }),
 
-  passing_Year: Joi.number().integer().required().messages({
+  passingYear: Joi.number().integer().required().messages({
     "number.base": "Passing Year must be a number.",
     "any.required": "Passing Year is required.",
   }),
 
-  current_Location: Joi.string().required().messages({
+  currentLocation: Joi.string().required().messages({
     "string.empty": "Current location cannot be empty.",
     "any.required": "Current location is required.",
   }),
@@ -75,7 +75,7 @@ export const applicantValidation = Joi.object({
   pincode: Joi.number().integer().required(),
   city: Joi.string().required(),
 
-  applied_Skills: Joi.array().items(Joi.string()).required().messages({
+  appliedSkills: Joi.array().items(Joi.string()).required().messages({
     "array.base": "Applied skills must be an array of strings.",
     "any.required": "Applied skills are required.",
   }),
@@ -85,29 +85,29 @@ export const applicantValidation = Joi.object({
     "any.required": "Resume is required.",
   }),
 
-  total_Exp: Joi.number().required().messages({
+  totalExp: Joi.number().required().messages({
     "number.base": "Total experience must be a number.",
     "any.required": "Total experience is required.",
   }),
 
-  relevant_Exp: Joi.number().required().messages({
+  relevantExp: Joi.number().required().messages({
     "number.base": "Relevant experience must be a number.",
     "any.required": "Relevant experience is required.",
   }),
 
-  other_Skills: Joi.string().allow(null, ""),
+  otherSkills: Joi.string().allow(null, ""),
 
-  javascript_Rate: Joi.number().required().messages({
+  javascriptRate: Joi.number().required().messages({
     "number.base": "JavaScript rate must be a number.",
     "any.required": "JavaScript rate is required.",
   }),
 
-  current_Pkg: Joi.string().required(),
-  expected_Pkg: Joi.string().required(),
-  notice_Period: Joi.string().required(),
+  currentPkg: Joi.string().required(),
+  expectedPkg: Joi.string().required(),
+  noticePeriod: Joi.string().required(),
   negotiable: Joi.string().required(),
 
-  ready_Wfo: Joi.string()
+  readyWfo: Joi.string()
     .valid(applicantEnum.YES, applicantEnum.NO)
     .required()
     .messages({
@@ -115,7 +115,7 @@ export const applicantValidation = Joi.object({
       "any.required": "Ready WFO is required.",
     }),
 
-  work_Preference: Joi.string()
+  workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
     .required()
     .messages({
@@ -123,7 +123,7 @@ export const applicantValidation = Joi.object({
       "any.required": "Work Preference is required.",
     }),
 
-  about_Us: Joi.string().required(),
+  aboutUs: Joi.string().required(),
   feedback: Joi.string().allow(null, ""),
 
   status: Joi.string()
@@ -141,7 +141,7 @@ export const applicantValidation = Joi.object({
       "any.required": "Status is required.",
     }),
 
-  interview_Stage: Joi.string()
+  interviewStage: Joi.string()
     .valid(
       applicantEnum.HR_ROUND,
       applicantEnum.TECHNICAL,
