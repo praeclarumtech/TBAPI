@@ -78,6 +78,7 @@ export const viewAllApplicant = async (req, res) => {
       page: pageNum,
       limit: limitNum,
       query,
+      sort: { createdAt: -1 }
     });
 
     res.status(200).json({
