@@ -63,4 +63,4 @@ logs/
 .env
 
 # upload 
-upload/
+uploads/profile
