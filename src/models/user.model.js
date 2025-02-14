@@ -38,12 +38,6 @@ profilePicture: {
   designation: {
     type: String
   },
-  otp: {
-    type: Number
-  },
-  resetOtp:{
-    type:Date
-  }
   
 },{ timestamps: true });
 

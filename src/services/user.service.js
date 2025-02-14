@@ -1,4 +1,5 @@
 import User from '../models/user.model.js';
+import otpModel from '../models/otp.model.js'
 export const getUser = async (body) => {
   return User.findOne({ ...body });
 };
@@ -25,3 +26,18 @@ export const updateUserById = async (id, updateData) => {
 export const findUserEmail = async ({ email }) => {
   return User.findOne({ email });
 };
+export const findEmailForOtp = async ({ email }) => {
+  return otpModel.findOne({ email });
+};
+
+export const deleteOtp = async({otp})=>{
+  return  otpModel.deleteOne({otp});
+}
+
+export const storeOtp = async(email,newOtp,expireOtp)=>{
+  return otpModel.findOneAndUpdate(
+    {email:email},
+    {otp:newOtp,resetOtp:expireOtp},
+    {upsert:true,}
+)
+}

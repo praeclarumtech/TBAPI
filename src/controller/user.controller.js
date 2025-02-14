@@ -1,4 +1,5 @@
 import { Message } from "../utils/message.js";
+import otpModel from '../models/otp.model.js'
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import logger from "../loggers/logger.js";
@@ -13,9 +14,11 @@ import {
   getUserById,
   updateUserById,
   findUserEmail,
+  findEmailForOtp,
+  deleteOtp,
+  storeOtp
 } from "../services/user.service.js";
 import { HandleResponse } from "../helpers/handleResponse.js";
-import  error  from "winston";
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -47,7 +50,7 @@ export const register = async (req, res, next) => {
     });
     return HandleResponse(
       false,
-      StatusCodes.REGISTRATION_ERROR,
+      StatusCodes.BAD_REQUEST,
       `${Message.FAILED_TO} register`
     );
   }
@@ -57,7 +60,6 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await getUser({ email });
-
     if (!user) {
       logger.info(Message.USER_NOT_FOUND);
 
@@ -231,29 +233,28 @@ export const sendEmail = async (req, res) => {
       );
     }
     const newOtp = Math.floor(1000 + Math.random() * 9000);
-    const expireOtp = new Date(Date.now() + 5 * 60 * 1000);
-    user.otp = newOtp;
-    user.resetOtp = expireOtp;
-    await user.save();
+    const expireOtp = new Date(Date.now() + 2 * 60 * 1000);
 
+    
+    
     const data = await sendingEmail({ email, otp: newOtp });
     if (!data) {
       logger.warn(Message.UNABLE_SENT_MAIL);
       return HandleResponse(
         res,
         false,
-        StatusCodes.FORBIDDEN,
+        StatusCodes.BAD_REQUEST,
         Message.UNABLE_SENT_MAIL,
       );
     }
-
-    logger.info(Message.MAIL_SENT);
+    await storeOtp(email,newOtp,expireOtp) 
       HandleResponse(
         res,
         true,
         StatusCodes.OK,
         Message.MAIL_SENT,
-        `OTP-${newOtp}`
+        `OTP:-${newOtp}`,
+        `otp will expird in:${expireOtp}`
       );
     } catch (error) {
     logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
@@ -268,7 +269,7 @@ export const sendEmail = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    const user = await findUserEmail({ email });
+    const user = await findEmailForOtp({ email });
     if (!user) {
       logger.warn(Message.USER_NOT_FOUND);
       return HandleResponse(
@@ -279,17 +280,21 @@ export const verifyOtp = async (req, res) => {
       );
     }
 
+
     if (user.otp !== otp) {
       logger.warn(Message.OTP_NOT_MATCHED);
       return HandleResponse(
         res,
         false,
-        StatusCodes.NOT_FOUND,
+        StatusCodes.BAD_REQUEST,
         Message.OTP_NOT_MATCHED
       );
     }
 
     logger.info(Message.OTP_MATCHED);
+    
+    await deleteOtp({otp});
+    
     HandleResponse(
       res,
       true,

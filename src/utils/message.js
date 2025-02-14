@@ -27,5 +27,6 @@ export const Message = {
   PASS_NOT_MATCHED: 'Passwords do not match!',
   FAILED_TO: 'Failed to',
   VIEW_ALL_PROFILE:'View all profiles',
-  VIEW_SINLE_PROFILE:"View Profile By id"
+  VIEW_SINLE_PROFILE:"View Profile By id",
+  OTP_EXPIRED:"Otp expired"
 };
