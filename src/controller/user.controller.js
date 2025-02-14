@@ -34,8 +34,7 @@ export const register = async (req, res, next) => {
         Message.USER_ALREADY_EXISTS
       );
     }
-
-    await createUser({ userName, email, password, role });
+    await createUser({ userName, email, password, confirmPassword, role });
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
     HandleResponse(
@@ -355,4 +354,33 @@ export const forgotPassword = async (req, res) => {
       `${Message.FAILED_TO} updated passoword`
     );
   }
-};
+}
+
+export const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    const userId = req.params.id;
+    const user = await getUserById(userId);
+
+    if (!user) {
+      logger.error(Message.USER_NOT_FOUND);
+      return res.status(404).json({ message: Message.USER_NOT_FOUND });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      logger.warn(Message.OLD_PASSWORD_INCORRECT);
+      return res.status(400).json({ message: Message.OLD_PASSWORD_INCORRECT });
+    }
+
+    user.password = await newPassword;
+    await user.save();
+
+    logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
+    res.json({ message: Message.PASSWORD_CHANGE_SUCCESSFULLY });
+  } catch (error) {
+    logger.error(Message.SERVER_ERROR, error);
+    res.status(500).json({ message: Message.SERVER_ERROR });
+  }
+}
