@@ -26,7 +26,7 @@ export const addYear = async (req, res) => {
     return HandleResponse(
       res,
       false,
-      StatusCodes.BAD_REQUEST,
+      StatusCodes.INTERNAL_SERVER_ERROR,
       Message.INT_SE_ERR
     )
   }
@@ -39,7 +39,7 @@ export const getYears = async (req, res) => {
     const findYears = await pagination({ Schema: PassingYear, page, limit });  
 
     logger.info(Message.SHOW_YEARS);
-    HandleResponse(
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -51,7 +51,7 @@ export const getYears = async (req, res) => {
     return HandleResponse(
       res,
       false,
-      StatusCodes.BAD_REQUEST,
+      StatusCodes.INTERNAL_SERVER_ERROR,
       Message.INT_SE_ERR
     )
   }
@@ -62,7 +62,7 @@ export const getYearById = async (req, res) => {
     const yearId = req.params.id;
     const yearDetail = await getOneYear(yearId);
     logger.info(Message.YEAR_BY_ID);
-    HandleResponse(
+   return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -74,7 +74,7 @@ export const getYearById = async (req, res) => {
     return HandleResponse(
       res,
       false,
-      StatusCodes.BAD_REQUEST,
+      StatusCodes.INTERNAL_SERVER_ERROR,
       Message.YEAR_NF
     )
   }
@@ -84,7 +84,7 @@ export const updateYear = async (req, res) => {
   try {
     const updateYear = await updateYearById(req.params.id, req.body);
     logger.info(Message.YEAR_UP);
-    HandleResponse(
+   return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -117,7 +117,7 @@ export const deleteYear = async (req, res) => {
       )
     }
     logger.info(Message.YEAR_DEL);
-    HandleResponse(
+   return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -129,7 +129,7 @@ export const deleteYear = async (req, res) => {
     return HandleResponse(
       res,
       false,
-      StatusCodes.BAD_REQUEST,
+      StatusCodes.INTERNAL_SERVER_ERROR,
       Message.INT_SE_ERR
     )
   }

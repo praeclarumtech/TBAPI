@@ -1,5 +1,4 @@
 import { Message } from "../utils/message.js";
-import otpModel from '../models/otp.model.js'
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import logger from "../loggers/logger.js";
@@ -7,7 +6,7 @@ import dotenv from "dotenv";
 import { StatusCodes } from "http-status-codes";
 import { sendingEmail } from "../helpers/commonFunction/sendEmail.js";
 dotenv.config();
-import {
+import{
   createUser,
   getUser,
   getAllusers,
@@ -37,7 +36,7 @@ export const register = async (req, res, next) => {
     await createUser({ userName, email, password, confirmPassword, role });
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
-    HandleResponse(
+   return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -49,8 +48,8 @@ export const register = async (req, res, next) => {
     });
     return HandleResponse(
       false,
-      StatusCodes.BAD_REQUEST,
-      `${Message.FAILED_TO} register`
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} register.`
     );
   }
 };
@@ -88,7 +87,7 @@ export const login = async (req, res) => {
 
     logger.info(Message.USER_LOGGED_IN_SUCCESSFULLY);
 
-    HandleResponse(
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -100,8 +99,8 @@ export const login = async (req, res) => {
     logger.error(error);
     return HandleResponse(
       false,
-      StatusCodes.SERVER_ERROR,
-      `${Message.FAILED_TO} login`
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} login.`
     );
   }
 };
@@ -119,7 +118,7 @@ export const viewProfile = async (req, res) => {
       );
     }
 
-    HandleResponse(
+   return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -130,8 +129,8 @@ export const viewProfile = async (req, res) => {
     logger.error(Message.SERVER_ERROR);
     return HandleResponse(
       false,
-      StatusCodes.SERVER_ERROR,
-      `${Message.FAILED_TO} View profile`
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} View profile.`
     );
   }
 };
@@ -151,7 +150,7 @@ export const viewProfileById = async (req, res) => {
     }
     
     logger.info(Message.VIEW_SINLE_PROFILE)
-    HandleResponse(
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -162,8 +161,8 @@ export const viewProfileById = async (req, res) => {
     logger.error(Message.SERVER_ERROR);
     return HandleResponse(
       false,
-      StatusCodes.NOT_FOUND,
-      `${Message.FAILED_TO} View prfofile by Id`
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} View prfofile by Id.`
     );
   }
 };
@@ -200,7 +199,7 @@ export const updateProfile = async (req, res) => {
     }
 
     logger.info(`${Message.PROFILE_UPDATED_SUCCESSFULLY}: ${userId}`);
-    HandleResponse(
+   return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -212,8 +211,8 @@ export const updateProfile = async (req, res) => {
     logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     return HandleResponse(
       false,
-      StatusCodes.SERVER_ERROR,
-      `${Message.FAILED_TO} update profile`
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update profile.`
     );
   }
 };
@@ -247,7 +246,7 @@ export const sendEmail = async (req, res) => {
       );
     }
     await storeOtp(email,newOtp,expireOtp) 
-      HandleResponse(
+      return HandleResponse(
         res,
         true,
         StatusCodes.OK,
@@ -259,8 +258,8 @@ export const sendEmail = async (req, res) => {
     logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     return HandleResponse(
       false,
-      StatusCodes.SERVER_ERROR,
-      `${Message.FAILED_TO} send mail`
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} send mail.`
     );
   }
 };
@@ -294,7 +293,7 @@ export const verifyOtp = async (req, res) => {
     
     await deleteOtp({otp});
     
-    HandleResponse(
+   return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -305,7 +304,7 @@ export const verifyOtp = async (req, res) => {
     return HandleResponse(
       false,
       StatusCodes.SERVER_ERROR,
-      `${Message.FAILED_TO} verify otp`
+      `${Message.FAILED_TO} verify otp.`
     );
   }
 };
@@ -350,8 +349,8 @@ export const forgotPassword = async (req, res) => {
     logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     return HandleResponse(
       false,
-      StatusCodes.SERVER_ERROR,
-      `${Message.FAILED_TO} updated passoword`
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} updated passoword.`
     );
   }
 }
@@ -365,22 +364,42 @@ export const changePassword = async (req, res) => {
 
     if (!user) {
       logger.error(Message.USER_NOT_FOUND);
-      return res.status(404).json({ message: Message.USER_NOT_FOUND });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        Message.USER_NOT_FOUND
+      );
     }
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       logger.warn(Message.OLD_PASSWORD_INCORRECT);
-      return res.status(400).json({ message: Message.OLD_PASSWORD_INCORRECT });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        Message.OLD_PASSWORD_INCORRECT
+      );
     }
 
     user.password = await newPassword;
     await user.save();
 
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
-    res.json({ message: Message.PASSWORD_CHANGE_SUCCESSFULLY });
+    return(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.PASSWORD_CHANGE_SUCCESSFULLY
+    )
   } catch (error) {
     logger.error(Message.SERVER_ERROR, error);
-    res.status(500).json({ message: Message.SERVER_ERROR });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} change password.`
+    )
   }
 }
