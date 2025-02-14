@@ -5,32 +5,37 @@ export const Enum = {
 };
 
 export const genderEnum = {
-  MALE: 'Male',
-  FEMALE: 'Female',
-  OTHER: 'Other'
+  MALE: 'male',
+  FEMALE: 'female',
+  OTHER: 'other'
 };
 
 export const applicantEnum = {
-  MALE: 'Male',
-  FEMALE: 'Female',
-  OTHER: 'Other',
+  MALE: 'male',
+  FEMALE: 'female',
+  OTHER: 'other',
 
-  YES:'Yes',
-  NO:'No',
+  YES:'yes',
+  NO:'no',
 
-  REMOTE:'Remote', 
-  HYBRID:'Hybrid', 
-  ONSITE:'Onsite',
+  REMOTE:'remote', 
+  HYBRID:'hybrid', 
+  ONSITE:'onsite',
 
-  PENDING:'Pending', 
-  SELECTED:'Selected', 
-  REJECTED:'Rejected',
-  ON_HOLD:'On-Hold',
-  IN_PROCESS:'In-Process',
+  PENDING:'pending', 
+  SELECTED:'selected', 
+  REJECTED:'rejected',
+  HOLD:'hold',
+  IN_PROCESS:'in-process',
 
-  HR_ROUND:'HR Round', 
-  TECHNICAL:'Technical', 
-  FIRST_INTERVIEW:'1st Interview', 
-  FINAL:'Final',
-  SECOND_INTERVIEW:'2nd Interview',
+  HR_ROUND:'hr round', 
+  TECHNICAL:'technical', 
+  FIRST_INTERVIEW:'1st interview', 
+  FINAL:'final',
+  SECOND_INTERVIEW:'2nd interview',
+};
+
+export const countryEnum = {
+  INDIA:'india',
+  CANADA:'canada'
 };

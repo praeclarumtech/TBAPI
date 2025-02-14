@@ -3,15 +3,15 @@ import { applicantEnum } from '../utils/enum.js';
 
 export const applicantValidation = Joi.object({
   name: Joi.object({
-    first: Joi.string().required().messages({
+    firstName: Joi.string().required().messages({
       'string.base': 'First name must be a string.',
       'string.empty': 'First name cannot be empty.',
       'any.required': 'First name is required.',
     }),
-    middle: Joi.string().allow(null, '').messages({
+    middleName: Joi.string().allow(null, '').messages({
       'string.base': 'Middle name must be a string.',
     }),
-    last: Joi.string().required().messages({
+    lastName: Joi.string().required().messages({
       'string.base': 'Last name must be a string.',
       'string.empty': 'Last name cannot be empty.',
       'any.required': 'Last name is required.',
@@ -19,12 +19,12 @@ export const applicantValidation = Joi.object({
   }).required(),
 
   phone: Joi.object({
-    whatsApp: Joi.string().required().messages({
+    whatsappNumber: Joi.string().required().messages({
       'string.base': 'WhatsApp number must be a string.',
       'string.empty': 'WhatsApp number cannot be empty.',
       'any.required': 'WhatsApp number is required.',
     }),
-    contact: Joi.string().required().messages({
+    phoneNumber: Joi.string().required().messages({
       'string.base': 'Contact number must be a string.',
       'string.empty': 'Contact number cannot be empty.',
       'any.required': 'Contact number is required.',
@@ -41,11 +41,11 @@ export const applicantValidation = Joi.object({
     .valid(applicantEnum.MALE, applicantEnum.FEMALE, applicantEnum.OTHER)
     .required()
     .messages({
-      'any.only': 'Gender must be Male, Female, or Other.',
+      'any.only': 'Gender must be male, female, or other.',
       'any.required': 'Gender is required.',
     }),
 
-  dob: Joi.date().required().messages({
+    dateOfBirth: Joi.date().required().messages({
     'date.base': 'Date of birth must be a valid date.',
     'any.required': 'Date of birth is required.',
   }),
@@ -65,10 +65,11 @@ export const applicantValidation = Joi.object({
     'any.required': 'Passing Year is required.',
   }),
 
-  currentLocation: Joi.string().required().messages({
+  currentLocation: Joi.string().messages({
     'string.empty': 'Current location cannot be empty.',
     'any.required': 'Current location is required.',
   }),
+  fullAddress: Joi.string().required(),
 
   state: Joi.string().required(),
   country: Joi.string().required(),
@@ -80,38 +81,38 @@ export const applicantValidation = Joi.object({
     'any.required': 'Applied skills are required.',
   }),
 
-  resume: Joi.string().required().messages({
+  resume: Joi.string().messages({
     'string.empty': 'Resume cannot be empty.',
     'any.required': 'Resume is required.',
   }),
 
-  totalExp: Joi.number().required().messages({
+  totalExperience: Joi.number().required().messages({
     'number.base': 'Total experience must be a number.',
     'any.required': 'Total experience is required.',
   }),
 
-  relevantExp: Joi.number().required().messages({
+  relevantSkillExperience: Joi.number().required().messages({
     'number.base': 'Relevant experience must be a number.',
     'any.required': 'Relevant experience is required.',
   }),
 
   otherSkills: Joi.string().allow(null, ''),
 
-  javascriptRate: Joi.number().required().messages({
+  rating: Joi.number().required().messages({
     'number.base': 'JavaScript rate must be a number.',
     'any.required': 'JavaScript rate is required.',
   }),
 
-  currentPkg: Joi.string().required(),
-  expectedPkg: Joi.string().required(),
+  currentPkg: Joi.string().allow(null, ''),
+  expectedPkg: Joi.string().allow(null, ''),
   noticePeriod: Joi.string().required(),
-  negotiable: Joi.string().required(),
+  negotiation: Joi.string().required(),
 
-  readyWfo: Joi.string()
+  readyForWork: Joi.string()
     .valid(applicantEnum.YES, applicantEnum.NO)
     .required()
     .messages({
-      'any.only': 'Ready WFO must be Yes or No.',
+      'any.only': 'Ready WFO must be yes or no.',
       'any.required': 'Ready WFO is required.',
     }),
 
@@ -119,11 +120,11 @@ export const applicantValidation = Joi.object({
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
     .required()
     .messages({
-      'any.only': 'Work Preference must be Remote, Hybrid, or Onsite.',
+      'any.only': 'Work Preference must be remote, hybrid, or onsite.',
       'any.required': 'Work Preference is required.',
     }),
 
-  aboutUs: Joi.string().required(),
+  aboutUs: Joi.string().allow(null, ''),
   feedback: Joi.string().allow(null, ''),
 
   status: Joi.string()
@@ -131,11 +132,10 @@ export const applicantValidation = Joi.object({
       applicantEnum.PENDING,
       applicantEnum.SELECTED,
       applicantEnum.REJECTED,
-      applicantEnum.ON_HOLD,
+      applicantEnum.HOLD,
       applicantEnum.IN_PROCESS
     )
     .default(applicantEnum.PENDING)
-    .required()
     .messages({
       'any.only': 'Invalid status value.',
       'any.required': 'Status is required.',
@@ -150,7 +150,6 @@ export const applicantValidation = Joi.object({
       applicantEnum.FINAL
     )
     .default(applicantEnum.HR_ROUND)
-    .required()
     .messages({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',

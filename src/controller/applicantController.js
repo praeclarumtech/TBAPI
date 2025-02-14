@@ -13,13 +13,13 @@ import { pagination } from '../helpers/commonFunction/passingYearPagination.js';
 export const addApplicant = async (req, res) => {
   try {
     const {
-      name: { first, middle, last },
+      name: { firstName, middleName, lastName },
       ...body
     } = req.body;
     const applicationNo = await generateApplicantNo();
     const applicantData = {
       applicationNo,
-      name: { first, middle, last },
+      name: { firstName, middleName, lastName },
       ...body,
     };
     const applicant = await createApplicant(applicantData);
@@ -40,7 +40,7 @@ export const viewAllApplicant = async (req, res) => {
       limit = 10,
       applicationNo,
       appliedSkills,
-      totalExp,
+      totalExperience,
       startDate,
       endDate,
     } = req.body;
@@ -62,8 +62,8 @@ export const viewAllApplicant = async (req, res) => {
       query.appliedSkills = { $in: appliedSkills };
     }
 
-    if (totalExp && !isNaN(totalExp)) {
-      query.totalExp = parseInt(totalExp);
+    if (totalExperience && !isNaN(totalExperience)) {
+      query.totalExperience = parseInt(totalExperience);
     }
 
     if (startDate || endDate) {
