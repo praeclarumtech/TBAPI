@@ -10,6 +10,7 @@ import { generateApplicantNo } from '../helpers/generateApplicationNo.js';
 import Applicant from '../models/applicantModel.js';
 import { pagination } from '../helpers/commonFunction/passingYearPagination.js';
 
+
 export const addApplicant = async (req, res) => {
   try {
     const {
@@ -172,3 +173,5 @@ export const deleteApplicant = async (req, res) => {
     res.status(500).json({ message: Message.ERROR_DELETING_APPLICANT, error });
   }
 };
+
+

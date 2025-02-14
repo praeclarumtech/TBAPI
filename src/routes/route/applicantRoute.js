@@ -18,4 +18,5 @@ router.get('/viewApplicant/:id',authorization, viewApplicant);
 router.put('/updateApplicant/:id',authorization,validator.body(applicantValidation), updateApplicant);
 router.delete('/deleteApplicant/:id',authorization, deleteApplicant);
 
+
 export default router;
