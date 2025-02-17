@@ -52,4 +52,11 @@ export const Message = {
   ERROR_UPDATING_APPLICANT:'Error updating applicant',
   APPLICANT_DELETED_SUCCESSFULLY:'Applicant deleted successfully',
   ERROR_DELETING_APPLICANT:'Error deleting applicant',
+  SKILL_ADDED:'Skills added successfully ',
+  SKILL_FIELD_IS_REQUIRED:'Skills field is required',
+  INTERNAL_SERVER_ERROR:'Internal Server Error',
+  FETCHED_SKILLS_SUCCESSFULLY:'Fetched skills successfully',
+  NOT_FOUND:'not found',
+  SUCCESSFULLY_UPDATED:'Successfully updated skill with ID',
+  DELETED_SUCCESSFULLY:'deleted successfully',
 };

@@ -12,7 +12,7 @@ import {
   getUserById,
   updateUserById,
   findUserEmail,
-} from '../services/user.service.js';
+} from '../services/userService.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;

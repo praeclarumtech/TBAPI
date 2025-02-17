@@ -1,5 +1,5 @@
 import express from 'express';
-import connectDB from './src/helpers/db.connection.js';
+import connectDB from './src/helpers/dbConnection.js';
 import router from './src/routes/routes.js';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
