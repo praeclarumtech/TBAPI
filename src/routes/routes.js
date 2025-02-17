@@ -10,6 +10,6 @@ router.use('/year', yearRoute);
 router.use('/user', userRouter);
 router.use('/applicants', applicantRouter);
 router.use('/dashboard', dashboardRouter);
-router.use('/country', countryRouter);
+router.use('/countryAndstates', countryRouter);
 
 export default router;

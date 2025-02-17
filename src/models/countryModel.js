@@ -3,13 +3,15 @@ import { countryEnum } from '../utils/enum.js';
 
 const countrySchema = new mongoose.Schema(
   {
-    country : {
+    name : {
       type: String,
-      enum: [countryEnum.INDIA,countryEnum.CANADA],
+      enum: Object.values(countryEnum),
       required: true,
     }
   }
 );
 
-const  country= mongoose.model('country', countrySchema);
+const  country= mongoose.model('country', countrySchema,'country');
+// const country = mongoose.model('country', countrySchema, 'country');
+
 export default country;

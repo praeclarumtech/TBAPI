@@ -54,4 +54,8 @@ export const Message = {
   ERROR_DELETING_APPLICANT:'Error deleting applicant',
   FETCHED_DASHBOARD:'Fetched dashboard',
   ERROR_FETCHING_DASHBOARD:'error Fetching dashboard',
+  FETCHING_COUNTRI:'fetching countries.',
+  FETCHING_STATES:'fetching states.',
+  ERROR_FETCHING_COUNTRI:'error fetching countries.',
+  ERROR_FETCHING_STATES:'error fetching states.',
 };
