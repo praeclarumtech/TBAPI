@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.use('/year', yearRoute);
 router.use('/user', userRouter);
-router.use('/user', applicantRouter);
+router.use('/applicants', applicantRouter);
 
 export default router;
