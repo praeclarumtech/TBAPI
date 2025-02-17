@@ -9,10 +9,7 @@ const router = express.Router();
 router.use('/year', yearRoute);
 router.use('/user', userRouter);
 router.use('/applicants', applicantRouter);
-<<<<<<< HEAD
-=======
 router.use('/dashboard', dashboardRouter);
 router.use('/', countryRouter);
->>>>>>> 10199371ee8c79f223a3a6692106859e5dbce32f
 
 export default router;
