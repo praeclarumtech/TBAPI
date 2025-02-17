@@ -36,7 +36,7 @@ export const addApplicant = async (req, res) => {
 
 export const viewAllApplicant = async (req, res) => {
   try {
-    const {
+    const{
       page = 1,
       limit = 10,
       applicationNo,

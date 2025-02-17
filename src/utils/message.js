@@ -52,4 +52,9 @@ export const Message = {
   ERROR_UPDATING_APPLICANT:'Error updating applicant',
   APPLICANT_DELETED_SUCCESSFULLY:'Applicant deleted successfully',
   ERROR_DELETING_APPLICANT:'Error deleting applicant',
+  EMAIL_DELETED:"Email deleted successfully",
+  SHOW_ALL_EMAILS:"Show all Emails",
+  EMAIL_NOT_FOUND:"Email not found",
+  FAILED_TO:"Failed to",
+  OBJ_ID_NOT_FOUND:"ObjectId not found"
 };
