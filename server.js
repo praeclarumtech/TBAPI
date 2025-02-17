@@ -1,21 +1,31 @@
-const express = require("express");
-const connectDb =require('./src/helpers/db.connection');
-const router = require('./src/routes/route.js');
+import express from 'express';
+import connectDB from './src/helpers/db.connection.js';
+import router from './src/routes/routes.js';
+import dotenv from 'dotenv';
+import helmet from 'helmet';
+import bodyParser from 'body-parser';
+import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
+import { Message } from './src/utils/message.js';
+import logger from './src/loggers/logger.js';
+dotenv.config();
+
 const app = express();
-connectDb();
-const bodyParser = require("body-parser");
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+connectDB();
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-const helmet = require("helmet");
 app.use(helmet());
+app.use('uploads/profile', express.static('uploads'));
 
-require('dotenv').config()
-
-app.use("/api",router);
+app.use(express.json());
+app.use('/api', router);
+app.use(errorHandlerMiddleware);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.info(`Listening to Port :  ${port}`);
+  console.log(`Server is running fine on ${port}`);
+
+  logger.info(`${Message.LISTENING_TO_PORT} :  ${port}`);
 });
-module.exports = app;
+
+export default app;

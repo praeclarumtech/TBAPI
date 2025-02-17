@@ -1,13 +1,18 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
+import logger from '../loggers/logger.js';
+import { Message } from '../utils/message.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.DBURL, {
+      useNewUrlParser: true });
+    logger.info(Message.MONGODB_CONNECTED);
+  } catch (error) {
+    logger.error(`${Message.MONGODB_CONNECTION_ERROR}: ${error.message}`);
+    process.exit(1);
+  }
+};
 
-const connectDb = async()=>{
-    try {
-        const connection = await mongoose.connect("mongodb://localhost:27017/TALENTBOX");
-        console.log("database connected")
-    } catch (error) {
-        console.log("connectio error")
-    }
-}
-
-module.exports = connectDb
+export default connectDB;
