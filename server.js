@@ -5,7 +5,6 @@ import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cors from "cors";
 import bodyParser from 'body-parser';
-import cors from 'cors';
 import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
 import { Message } from './src/utils/message.js';
 import logger from './src/loggers/logger.js';
@@ -18,7 +17,6 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cors());
 app.use(helmet());
-app.use(cors());
 app.use('uploads/profile', express.static('uploads'));
 
 app.use(express.json());
