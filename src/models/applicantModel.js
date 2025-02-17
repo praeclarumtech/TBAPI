@@ -76,6 +76,7 @@ const ApplicantSchema = new mongoose.Schema(
       required: false,
     },
     referral: { type: String },
+    url: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
   },
