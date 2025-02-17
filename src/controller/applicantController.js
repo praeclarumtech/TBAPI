@@ -9,6 +9,8 @@ import logger from '../loggers/logger.js';
 import { generateApplicantNo } from '../helpers/generateApplicationNo.js';
 import Applicant from '../models/applicantModel.js';
 import { pagination } from '../helpers/commonFunction/passingYearPagination.js';
+import { HandleResponse } from '../helpers/handleResponse.js';
+import { StatusCodes } from 'http-status-codes';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -24,12 +26,23 @@ export const addApplicant = async (req, res) => {
     };
     const applicant = await createApplicant(applicantData);
     logger.info(`${Message.APPLICANT_SUBMIT_SUCCESSFULLY}: ${applicant._id}`);
-    res.status(201).json({ success: true,message: Message.APPLICANT_SUBMIT_SUCCESSFULLY, data: applicant });
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.CREATED,
+      Message.APPLICANT_SUBMIT_SUCCESSFULLY,
+      applicant
+    )
   } catch (error) {
     logger.error(`${Message.ERROR_ADDING_AAPLICANT}: ${error.message}`, {
       stack: error.stack,
     });
-    res.status(500).json({ message: Message.ERROR_ADDING_AAPLICANT, error });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.BAD_REQUEST,
+      `${Message.FAILED_TO} add aplicant.`
+    );
   }
 };
 
@@ -81,29 +94,24 @@ export const viewAllApplicant = async (req, res) => {
       sort: { createdAt: -1 }
     });
 
-    res.status(200).json({
-      success: true,
-      message: Message.FETCHED_APPLICANT_SUCCESSFULLY,
-      data: {
-        item: findYears.getYears,
-        totalRecords: findYears.totalRecords,
-        currentPage: pageNum,
-        totalPages:
-          findYears.totalRecords && limitNum > 0
-            ? Math.ceil(findYears.totalRecords / limitNum)
-            : 0,
-        limit: limitNum,
-      },
-    });
+    logger.info(Message.FETCHED_APPLICANT_SUCCESSFULLY)
+    return HandleResponse(
+          res,
+          true,
+          StatusCodes.OK,
+          undefined,
+          findYears
+        )
   } catch (error) {
     logger.error(`${Message.ERROR_RETRIEVING_APPLICANTS}: ${error.message}`, {
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: Message.ERROR_RETRIEVING_APPLICANTS,
-      error,
-    });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} view all applicant.`
+    );
   }
 };
 
@@ -113,19 +121,33 @@ export const viewApplicant = async (req, res) => {
     const applicant = await getApplicantById(applicantId);
 
     if (!applicant) {
-      logger.warn(`${Message.APPLICANT_NOT_FOUND}: ${applicantId}`);
-      return res.status(404).json({ message: Message.APPLICANT_NOT_FOUND });
+      logger.warn(Message.APPLICANT_NOT_FOUND);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        Message.APPLICANT_NOT_FOUND,
+      );
     }
     logger.info(`${Message.FETCHED_APPLICANT_SUCCESSFULLY}: ${applicantId}`);
-    res.status(200).json({ success: true, message: Message.FETCHED_APPLICANT_SUCCESSFULLY , data:applicant });
+    HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.FETCHED_APPLICANT_SUCCESSFULLY,
+      applicant
+    )
   } catch (error) {
     logger.error(`${Message.ERROR_RETRIEVING_APPLICANTS}: ${error.message}`, {
       stack: error.stack,
     });
-    res
-      .status(500)
-      .json({ message: Message.ERROR_RETRIEVING_APPLICANTS, error });
   }
+  return HandleResponse(
+    res,
+    false,
+    StatusCodes.INTERNAL_SERVER_ERROR,
+    `${Message.FAILED_TO} view applicant by id.`
+  );
 };
 
 export const updateApplicant = async (req, res) => {
@@ -141,13 +163,29 @@ export const updateApplicant = async (req, res) => {
 
     if (!updatedApplicant) {
       logger.warn(`${Message.USER_NOT_FOUND}: ${applicantId}`);
-      return res.status(404).json({ message: Message.USER_NOT_FOUND });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        Message.USER_NOT_FOUND
+      )
     }
     logger.info(`${Message.UPDATED_SUCCESSFULLY}: ${applicantId}`);
-    res.status(200).json({ success: true, message: Message.UPDATED_SUCCESSFULLY , data:updatedApplicant });
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.UPDATED_SUCCESSFULLY,
+      updatedApplicant
+    )
   } catch (error) {
     logger.error(`${Message.ERROR_UPDATING_APPLICANT}: ${error.message}`);
-    res.status(500).json({ message: Message.ERROR_UPDATING_APPLICANT, error });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update applicant.`
+    );
   }
 };
 
@@ -158,17 +196,32 @@ export const deleteApplicant = async (req, res) => {
 
     if (!applicant) {
       logger.warn(`${Message.APPLICANT_NOT_FOUND}: ${applicantId}`);
-      return res.status(404).json({ message: Message.APPLICANT_NOT_FOUND });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        Message.APPLICANT_NOT_FOUND
+      )
     }
     applicant.isDeleted = true;
     await applicant.save();
 
     logger.info(`${Message.APPLICANT_DELETED_SUCCESSFULLY}: ${applicantId}`);
-    res.status(200).json({ success: true, message: Message.APPLICANT_DELETED_SUCCESSFULLY });
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.APPLICANT_DELETED_SUCCESSFULLY,
+    )
   } catch (error) {
     logger.error(`${Message.ERROR_DELETING_APPLICANT}: ${error.message}`, {
       stack: error.stack,
     });
-    res.status(500).json({ message: Message.ERROR_DELETING_APPLICANT, error });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} delete applicant.`
+    );
   }
 };

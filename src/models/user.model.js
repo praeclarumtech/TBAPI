@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
     type: Number,
     match: [/^\d{3}-\d{3}-\d{4}$/, 'Invalid phone number format (XXX-XXX-XXXX)']
   },
-  profilePicture: {
+profilePicture: {
     type: String
   },
   dateOfBirth: {
@@ -39,12 +39,6 @@ const userSchema = new mongoose.Schema({
   designation: {
     type: String
   },
-  otp: {
-    type: Number
-  },
-  resetOtp:{
-    type:Date
-  }
   
 },{ timestamps: true });
 
