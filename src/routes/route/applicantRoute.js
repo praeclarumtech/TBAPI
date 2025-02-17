@@ -12,10 +12,20 @@ import { authorization } from '../../helpers/user.middleware.js';
 
 const router = express.Router();
 
-router.post('/addApplicant',authorization,validator.body(applicantValidation),addApplicant);
-router.get('/viewAllApplicant',authorization, viewAllApplicant);
-router.get('/viewApplicant/:id',authorization, viewApplicant);
-router.put('/updateApplicant/:id',authorization,validator.body(applicantValidation), updateApplicant);
-router.delete('/deleteApplicant/:id',authorization, deleteApplicant);
+router.post('/addApplicant',
+  // authorization,
+  validator.body(applicantValidation),addApplicant);
+router.get('/viewAllApplicant',
+  // authorization,
+   viewAllApplicant);
+router.get('/viewApplicant/:id',
+  // authorization,
+   viewApplicant);
+router.put('/updateApplicant/:id',
+  // authorization,
+  validator.body(applicantValidation), updateApplicant);
+router.delete('/deleteApplicant/:id',
+  // authorization,
+   deleteApplicant);
 
 export default router;
