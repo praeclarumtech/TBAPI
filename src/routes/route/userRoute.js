@@ -18,8 +18,9 @@ import {
   forgotPasswordValidation,
   changePasswordValidation
 } from '../../validations/userValidation.js';
-import { upload } from '../../helpers/Multer.js';
+import { upload } from '../../helpers/multer.js';
 import { authorization } from '../../helpers/userMiddleware.js';
+
 
 const router = express.Router();
 
