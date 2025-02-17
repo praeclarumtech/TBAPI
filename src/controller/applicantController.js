@@ -15,13 +15,13 @@ import { StatusCodes } from 'http-status-codes';
 export const addApplicant = async (req, res) => {
   try {
     const {
-      name: { first, middle, last },
+      name: { firstName, middleName, lastName },
       ...body
     } = req.body;
     const applicationNo = await generateApplicantNo();
     const applicantData = {
       applicationNo,
-      name: { first, middle, last },
+      name: { firstName, middleName, lastName },
       ...body,
     };
     const applicant = await createApplicant(applicantData);
@@ -32,7 +32,7 @@ export const addApplicant = async (req, res) => {
       StatusCodes.CREATED,
       Message.APPLICANT_SUBMIT_SUCCESSFULLY,
       applicant
-    )
+    );
   } catch (error) {
     logger.error(`${Message.ERROR_ADDING_AAPLICANT}: ${error.message}`, {
       stack: error.stack,
@@ -53,7 +53,7 @@ export const viewAllApplicant = async (req, res) => {
       limit = 10,
       applicationNo,
       appliedSkills,
-      totalExp,
+      totalExperience,
       startDate,
       endDate,
     } = req.body;
@@ -75,8 +75,8 @@ export const viewAllApplicant = async (req, res) => {
       query.appliedSkills = { $in: appliedSkills };
     }
 
-    if (totalExp && !isNaN(totalExp)) {
-      query.totalExp = parseInt(totalExp);
+    if (totalExperience && !isNaN(totalExperience)) {
+      query.totalExperience = parseInt(totalExperience);
     }
 
     if (startDate || endDate) {
@@ -91,17 +91,11 @@ export const viewAllApplicant = async (req, res) => {
       page: pageNum,
       limit: limitNum,
       query,
-      sort: { createdAt: -1 }
+      sort: { createdAt: -1 },
     });
 
-    logger.info(Message.FETCHED_APPLICANT_SUCCESSFULLY)
-    return HandleResponse(
-          res,
-          true,
-          StatusCodes.OK,
-          undefined,
-          findYears
-        )
+    logger.info(Message.FETCHED_APPLICANT_SUCCESSFULLY);
+    return HandleResponse(res, true, StatusCodes.OK, undefined, findYears);
   } catch (error) {
     logger.error(`${Message.ERROR_RETRIEVING_APPLICANTS}: ${error.message}`, {
       stack: error.stack,
@@ -126,17 +120,17 @@ export const viewApplicant = async (req, res) => {
         res,
         false,
         StatusCodes.NOT_FOUND,
-        Message.APPLICANT_NOT_FOUND,
+        Message.APPLICANT_NOT_FOUND
       );
     }
     logger.info(`${Message.FETCHED_APPLICANT_SUCCESSFULLY}: ${applicantId}`);
-    HandleResponse(
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       Message.FETCHED_APPLICANT_SUCCESSFULLY,
       applicant
-    )
+    );
   } catch (error) {
     logger.error(`${Message.ERROR_RETRIEVING_APPLICANTS}: ${error.message}`, {
       stack: error.stack,
@@ -168,8 +162,9 @@ export const updateApplicant = async (req, res) => {
         false,
         StatusCodes.NOT_FOUND,
         Message.USER_NOT_FOUND
-      )
+      );
     }
+
     logger.info(`${Message.UPDATED_SUCCESSFULLY}: ${applicantId}`);
     return HandleResponse(
       res,
@@ -177,7 +172,7 @@ export const updateApplicant = async (req, res) => {
       StatusCodes.OK,
       Message.UPDATED_SUCCESSFULLY,
       updatedApplicant
-    )
+    );
   } catch (error) {
     logger.error(`${Message.ERROR_UPDATING_APPLICANT}: ${error.message}`);
     return HandleResponse(
@@ -201,7 +196,7 @@ export const deleteApplicant = async (req, res) => {
         false,
         StatusCodes.NOT_FOUND,
         Message.APPLICANT_NOT_FOUND
-      )
+      );
     }
     applicant.isDeleted = true;
     await applicant.save();
@@ -211,8 +206,8 @@ export const deleteApplicant = async (req, res) => {
       res,
       true,
       StatusCodes.OK,
-      Message.APPLICANT_DELETED_SUCCESSFULLY,
-    )
+      Message.APPLICANT_DELETED_SUCCESSFULLY
+    );
   } catch (error) {
     logger.error(`${Message.ERROR_DELETING_APPLICANT}: ${error.message}`, {
       stack: error.stack,

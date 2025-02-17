@@ -8,7 +8,6 @@ import {
 } from '../../controller/applicantController.js';
 import { applicantValidation } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
-import { authorization } from '../../helpers/user.middleware.js';
 
 const router = express.Router();
 
