@@ -1,6 +1,6 @@
 import { getAllcountry, getAllstates } from "../services/commonService.js";
 import logger from '../loggers/logger.js';
-import { HandleResponse } from "../helpers/handaleResponse.js";
+import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from "http-status-codes";
 import { Message } from "../utils/message.js";
 

@@ -3,7 +3,7 @@ import connectDB from './src/helpers/db.connection.js';
 import router from './src/routes/routes.js';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import cors from "cors";
+import cors from 'cors';
 import bodyParser from 'body-parser';
 import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
 import { Message } from './src/utils/message.js';
@@ -26,7 +26,6 @@ app.use(errorHandlerMiddleware);
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server is running fine on ${port}`);
-
   logger.info(`${Message.LISTENING_TO_PORT} :  ${port}`);
 });
 

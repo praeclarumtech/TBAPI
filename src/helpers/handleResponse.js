@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { Message } from "../utils/message.js";
 
-export function HandleResponse(res, success, statusCode, message, data,optExpiredIn ,error,) {
+export function HandleResponse(res, success, statusCode, message, data ,error,) {
   if (statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
     const finalMessage = message || Message.SERVER_ERROR;
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -16,7 +16,6 @@ export function HandleResponse(res, success, statusCode, message, data,optExpire
     statusCode,
     message,
     data,
-    optExpiredIn,
     error,
   });
 }
