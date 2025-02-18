@@ -35,11 +35,6 @@ export const applicantEnum = {
   SECOND_INTERVIEW:'2nd interview',
 };
 
-// export const countryEnum = {
-//   INDIA:'india',
-//   CANADA:'canada'
-// };
-
 export const countryEnum = Object.freeze({
   INDIA: "india",
   CANADA: "canada",
