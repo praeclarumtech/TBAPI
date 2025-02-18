@@ -49,7 +49,6 @@ export const dashboard = async (req, res) => {
       logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
         stack: error.stack,
       });
-
       return HandleResponse(
         false,
         StatusCodes.SERVER_ERROR,
