@@ -5,7 +5,7 @@ import {
   getYears,
   updateYear,
   deleteYear,
-} from '../../controller/passingYear.controller.js';
+} from '../../controller/passingYearController.js';
 import {
   validateId,
   passingYearValidation,

@@ -16,7 +16,7 @@ import{
   findEmailForOtp,
   deleteOtp,
   storeOtp
-} from "../services/user.service.js";
+} from '../services/userService.js';
 import { HandleResponse } from "../helpers/handleResponse.js";
 
 export const register = async (req, res, next) => {

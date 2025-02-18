@@ -9,7 +9,7 @@ import {
   verifyOtp,
   forgotPassword,
   changePassword,
-} from '../../controller/user.controller.js';
+} from '../../controller/userController.js';
 import { validator } from '../../helpers/validator.js';
 import {
   registerValidation,
@@ -17,9 +17,10 @@ import {
   sendEmailValidation,
   forgotPasswordValidation,
   changePasswordValidation
-} from '../../validations/user.validation.js';
+} from '../../validations/userValidation.js';
 import { upload } from '../../helpers/multer.js';
-import { authorization } from '../../helpers/user.middleware.js';
+import { authorization } from '../../helpers/userMiddleware.js';
+
 
 const router = express.Router();
 
