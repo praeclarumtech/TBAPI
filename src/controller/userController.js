@@ -17,7 +17,7 @@ import{
   deleteOtp,
   storeOtp
 } from '../services/userService.js';
-import { HandleResponse } from '../helpers/handleResponse.js';
+import { HandleResponse } from "../helpers/handleResponse.js";
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
