@@ -5,11 +5,9 @@ import { getDashboard } from "../services/dashboardService.js";
 import { HandleResponse } from "../helpers/handaleResponse.js";
 import { StatusCodes } from "http-status-codes";
 
-
-export const dashboard = async (req, res) => {
+export const reports = async (req, res) => {
     try {
-      
-      const { totalApplicants, holdApplicants, pendingApplicants, selectedApplicants, rejectedApplicants, inProcessApplicants} = await getDashboard();
+      const { hrRoundPercentage, firstInterviewPercentage, secondterviewPercentage, technicalRoundPercentage, finalRoundPercentage} = await getDashboard();
 
     logger.info(Message.FETCHED_DASHBOARD);
       HandleResponse(
@@ -17,7 +15,7 @@ export const dashboard = async (req, res) => {
         true,
         StatusCodes.OK,
         Message.FETCHED_DASHBOARD,
-        {totalApplicants, holdApplicants, pendingApplicants, selectedApplicants, rejectedApplicants, inProcessApplicants}
+        { hrRoundPercentage: `${hrRoundPercentage}%`, firstInterviewPercentage: `${firstInterviewPercentage}%`, secondterviewPercentage:`${secondterviewPercentage}%`, technicalRoundPercentage:`${technicalRoundPercentage}%`, finalRoundPercentage:`${finalRoundPercentage}%`}
       );
     } catch (error) {
       logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
