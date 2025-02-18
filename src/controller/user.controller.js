@@ -371,7 +371,6 @@ export const changePassword = async (req, res) => {
         Message.USER_NOT_FOUND
       );
     }
-
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       logger.warn(Message.OLD_PASSWORD_INCORRECT);
