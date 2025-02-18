@@ -1,12 +1,12 @@
 import express from 'express';
-import connectDB from './src/helpers/db.connection.js';
+import connectDB from './src/helpers/dbConnection.js';
 import router from './src/routes/routes.js';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
-import { Message } from './src/utils/message.js';
+import { Message } from '../TBAPI/src/utils/constant/message.js';
 import logger from './src/loggers/logger.js';
 dotenv.config();
 

@@ -1,5 +1,5 @@
-import { StatusCodes } from "http-status-codes";
-import { Message } from "../utils/message.js";
+import { StatusCodes } from 'http-status-codes';
+import { Message } from '../utils/constant/message.js';
 
 export function HandleResponse(res, success, statusCode, message, data ,error,) {
   if (statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {

@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 
-export const sendingEmail = async ({ email_to, email_bcc, subject, date, description }) => {
+export const sendingEmail = async ({email,newOtp,email_to, email_bcc, subject, description, }) => {
   const transporter = nodemailer.createTransport({
     service:'gmail',
     auth: {
@@ -11,12 +11,15 @@ export const sendingEmail = async ({ email_to, email_bcc, subject, date, descrip
         pass: process.env.PASS,
     },
   });
+
+  const emailText = newOtp ? `New OTP: ${newOtp}` : description;
+
   const mailOptions = {
     from: process.env.FROM,
-    to: email_to,
-    bcc: email_bcc,
+    to: email_to || email,
+    bcc: email_bcc || '',
     subject,
-    text: description,
+    text: emailText,
   };
 
   const data = await transporter.sendMail(mailOptions);

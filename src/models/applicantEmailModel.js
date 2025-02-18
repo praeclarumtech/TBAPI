@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const applicantEmailSchema = new mongoose.Schema(
   {
@@ -24,6 +24,6 @@ const applicantEmailSchema = new mongoose.Schema(
   },
 );
 
-const applicantEmail = mongoose.model("applicantEmail", applicantEmailSchema, "applicant_email");
+const applicantEmail = mongoose.model('applicantEmail', applicantEmailSchema, 'applicant_email');
 
 export default applicantEmail;

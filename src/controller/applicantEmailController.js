@@ -1,15 +1,14 @@
 import {
-  deleteSingleEMail,
   removeManyEmails,
   createEmail,
-} from "../services/applicantEmailService.js";
-import logger from "../loggers/logger.js";
-import { Message } from "../utils/message.js";
-import { pagination } from "../helpers/commonFunction/sendEmailPagination.js";
-import applicantEmail from "../models/applicantEmailModel.js";
-import { HandleResponse } from "../helpers/handleResponse.js";
-import { StatusCodes } from "http-status-codes";
-import { sendingEmail } from "../helpers/commonFunction/sendEmailApplicant.js";
+} from '../services/applicantEmailService.js';
+import logger from '../loggers/logger.js';
+import { Message } from '../utils/constant/message.js';
+import { pagination } from '../helpers/commonFunction/handlePagination.js';
+import applicantEmail from '../models/applicantEmailModel.js';
+import { HandleResponse } from '../helpers/handleResponse.js';
+import { StatusCodes } from 'http-status-codes';
+import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 
 export const sendEmail = async (req, res) => {
   try {
@@ -28,13 +27,13 @@ export const sendEmail = async (req, res) => {
     logger.info(Message.MAIL_SENT);
     return HandleResponse(res, true, StatusCodes.CREATED, Message.MAIL_SENT);
   } catch (error) {
-    console.error("Error occurred:", error.message);
+    console.error('Error occurred:', error.message);
     logger.error(Message.SERVER_ERROR);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `Failed to send email: ${error.message}`
+      `${Message.FAILED_TO} Send mail.`
     );
   }
 };
@@ -49,11 +48,11 @@ export const getAllEmails = async (req, res) => {
     let query = {};
 
     if (email_to) {
-      query.email_to = { $regex: email_to, $options: "i" };
+      query.email_to = { $regex: email_to, $options: 'i' };
     }
 
     if (subject) {
-      query.subject = { $regex: subject, $options: "i" };
+      query.subject = { $regex: subject, $options: 'i' };
     }
 
     if (date) {
@@ -81,40 +80,7 @@ export const getAllEmails = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} Send find all emails.`
-    );
-  }
-};
-
-export const deleteOneEmail = async (req, res) => {
-  try {
-    const mailId = req.params.id;
-    const removeSingleEmail = await deleteSingleEMail(mailId);
-    console.log(mailId);
-    logger.warn(Message.EMAIL_NOT_FOUND);
-    if (!removeSingleEmail) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        Message.EMAIL_NOT_FOUND
-      );
-    }
-    logger.info(Message.EMAIL_DELETED);
-    return HandleResponse(
-      res,
-      true,
-      StatusCodes.OK,
-      Message.EMAIL_DELETED,
-      removeManyEmails
-    );
-  } catch (error) {
-    logger.error(Message.SERVER_ERROR);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} Delete single email.`
+      `${Message.FAILED_TO}  find all emails.`
     );
   }
 };
@@ -122,7 +88,6 @@ export const deleteOneEmail = async (req, res) => {
 export const deleteManyEmails = async (req, res) => {
   try {
     const { ids } = req.body;
-    console.log("IDs received for deletion:", ids);
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       logger.warn(Message.OBJ_ID_NOT_FOUND);
@@ -133,7 +98,7 @@ export const deleteManyEmails = async (req, res) => {
         Message.OBJ_ID_NOT_FOUND
       );
     }
-
+    
     const removeEmails = await removeManyEmails(ids);
 
     if (removeEmails.deletedCount === 0) {

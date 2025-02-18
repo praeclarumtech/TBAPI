@@ -1,9 +1,8 @@
-import logger from "../loggers/logger.js";
-// import Applicant from "../models/applicantModel.js";
-import { Message } from "../utils/message.js";
+import logger from '../loggers/logger.js';
+import { Message } from '../utils/constant/message.js';
 import { getDashboard } from '../services/dashboardService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
-import { StatusCodes } from "http-status-codes";
+import { StatusCodes } from 'http-status-codes';
 
 
 export const dashboard = async (req, res) => {
@@ -12,7 +11,7 @@ export const dashboard = async (req, res) => {
       const { totalApplicants, holdApplicants, pendingApplicants, selectedApplicants, rejectedApplicants, inProcessApplicants} = await getDashboard();
 
     logger.info(Message.FETCHED_DASHBOARD);
-      HandleResponse(
+      return HandleResponse(
         res,
         true,
         StatusCodes.OK,
@@ -25,9 +24,11 @@ export const dashboard = async (req, res) => {
       });
 
       return HandleResponse(
+        res,
         false,
         StatusCodes.SERVER_ERROR,
         Message.ERROR_FETCHING_DASHBOARD,
+        undefined,
         error,
       );
     }
@@ -38,7 +39,7 @@ export const dashboard = async (req, res) => {
       const { hrRoundPercentage } = await getDashboard();
 
     logger.info(Message.FETCHED_DASHBOARD);
-      HandleResponse(
+      return HandleResponse(
         res,
         true,
         StatusCodes.OK,
@@ -50,9 +51,11 @@ export const dashboard = async (req, res) => {
         stack: error.stack,
       });
       return HandleResponse(
+        res,
         false,
         StatusCodes.SERVER_ERROR,
         Message.ERROR_FETCHING_DASHBOARD,
+        undefined,
         error,
       );
     }

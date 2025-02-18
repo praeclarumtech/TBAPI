@@ -9,7 +9,6 @@ const router = express.Router();
 
 router.use('/year', yearRoute);
 router.use('/user', userRouter);
-router.use('/user', applicantRouter);
 router.use('/applicant',applicantEmailrouter);
 router.use('/applicants', applicantRouter);
 router.use('/dashboard', dashboardRouter);
