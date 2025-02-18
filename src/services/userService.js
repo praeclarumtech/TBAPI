@@ -1,4 +1,4 @@
-import User from '../models/user.model.js';
+import User from '../models/userModel.js';
 import otpModel from '../models/otp.model.js'
 export const getUser = async (body) => {
   return User.findOne({ ...body });

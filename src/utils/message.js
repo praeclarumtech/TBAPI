@@ -1,4 +1,5 @@
 export const Message = {
+  NOT_FOUND:'not found.',
   ALREADY_EXIST: 'User already exit.',
   REGISTERED_SUCCESSFULLY: 'Congratulation! You are registered successfully..',
   MONGODB_CONNECTED: 'MongoDB Connected.',
