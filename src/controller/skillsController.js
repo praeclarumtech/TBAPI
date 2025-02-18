@@ -86,7 +86,7 @@ export const getSkillsById = async (req, res) => {
       );
     }
     logger.info(Message.FETCHED_SKILLS_SUCCESSFULLY);
-    HandleResponse(
+     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -121,10 +121,10 @@ export const updateSkills = async (req, res) => {
       );
     }
     logger.info(`${Message.SUCCESSFULLY_UPDATED}: ${skillId}`);
-    HandleResponse(
+    return HandleResponse(
       res,
       true,
-      StatusCodes.OK,
+      StatusCodes.ACCEPTED,
       Message.UPDATED_SUCCESSFULLY,
       updatedSkill
     );
@@ -153,7 +153,7 @@ export const deleteSkills = async (req, res) => {
       );
     }
     logger.info(`${Message.DELETED_SUCCESSFULLY}: ${skillId}`);
-    HandleResponse(
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,

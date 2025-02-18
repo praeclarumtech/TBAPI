@@ -20,9 +20,8 @@ export const updateSkill = async (skillId, updateData) => {
 };
 
 export const deleteSkillById = async (skillId) => {
-  const skill = await Skills.findById(skillId);
+  const skill = await Skills.findByIdAndUpdate(skillId);
   skill.isDeleted = true;
-  await skill.save();
 
   return skill;
 };
