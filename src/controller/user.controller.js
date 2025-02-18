@@ -381,12 +381,11 @@ export const changePassword = async (req, res) => {
         Message.OLD_PASSWORD_INCORRECT
       );
     }
-
-    user.password = await newPassword;
-    await user.save();
+        user.password = await newPassword;
+        await user.save();
 
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
-    return(
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,

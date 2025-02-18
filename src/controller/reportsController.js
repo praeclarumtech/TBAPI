@@ -5,7 +5,7 @@ import { getDashboard } from "../services/dashboardService.js";
 import { HandleResponse } from "../helpers/handaleResponse.js";
 import { StatusCodes } from "http-status-codes";
 
-export const reports = async (req, res) => {
+export const applicationOnProcessCount = async (req, res) => {
     try {
     
       const { hrRoundPercentage, 
@@ -13,27 +13,27 @@ export const reports = async (req, res) => {
         // secondterviewPercentage, 
         technicalRoundPercentage, finalRoundPercentage} = await getDashboard();
 
-    logger.info(Message.FETCHED_DASHBOARD);
-      HandleResponse(
+    logger.info(Message.FETCHED_REPORTS);
+    return HandleResponse(
         res,
         true,
         StatusCodes.OK,
-        Message.FETCHED_DASHBOARD,
+        Message.FETCHED_REPORTS,
         { hrRoundPercentage: `${hrRoundPercentage}%`, 
         // firstInterviewPercentage: `${firstInterviewPercentage}%`, 
         // secondterviewPercentage:`${secondterviewPercentage}%`, 
         technicalRoundPercentage:`${technicalRoundPercentage}%`, finalRoundPercentage:`${finalRoundPercentage}%`}
       );
     } catch (error) {
-      logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
+      logger.error(`${Message.ERROR_FETCHING_REPORTS}: ${error.message}`, {
         stack: error.stack,
       });
 
       return HandleResponse(
         res,
         false,
-        StatusCodes.SERVER_ERROR,
-        Message.ERROR_FETCHING_DASHBOARD,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        Message.ERROR_FETCHING_REPORTS,
         error,
       );
     }
@@ -44,24 +44,52 @@ export const reports = async (req, res) => {
     
       const { holdApplicantsPercentage, pendingApplicantsPercentage, selectedApplicantsPercentage, rejectedApplicantsPercentage, inProcessApplicantsPercentage} = await getDashboard();
 
-    logger.info(Message.FETCHED_DASHBOARD);
-      HandleResponse(
+    logger.info(Message.FETCHED_REPORTS);
+    return HandleResponse(
         res,
         true,
         StatusCodes.OK,
-        Message.FETCHED_DASHBOARD,
+        Message.FETCHED_REPORTS,
         { holdApplicantsPercentage:`${holdApplicantsPercentage}%`, pendingApplicantsPercentage:`${pendingApplicantsPercentage}%`, selectedApplicantsPercentage:`${selectedApplicantsPercentage}%`, rejectedApplicantsPercentage:`${rejectedApplicantsPercentage}%`, inProcessApplicantsPercentage:`${inProcessApplicantsPercentage}%`}
       );
     } catch (error) {
-      logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
+      logger.error(`${Message.ERROR_FETCHING_REPORTS}: ${error.message}`, {
         stack: error.stack,
       });
 
       return HandleResponse(
         res,
         false,
-        StatusCodes.SERVER_ERROR,
-        Message.ERROR_FETCHING_DASHBOARD,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        Message.ERROR_FETCHING_REPORTS,
+        error,
+      );
+    }
+  };
+
+  export const technologyStatistics = async (req, res) => {
+    try {
+    
+      const { nodeJsApplicantsPercentage, reactJsApplicantsPercentage, dotNetApplicantsPercentage, angularApplicantsPercentage, uiuxApplicantsPercentage} = await getDashboard();
+
+    logger.info(Message.FETCHED_REPORTS);
+    return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        Message.FETCHED_REPORTS,
+        { nodeJsApplicantsPercentage:`${nodeJsApplicantsPercentage}%`, reactJsApplicantsPercentage:`${reactJsApplicantsPercentage}%`, dotNetApplicantsPercentage:`${dotNetApplicantsPercentage}%`, angularApplicantsPercentage:`${angularApplicantsPercentage}%`, uiuxApplicantsPercentage:`${uiuxApplicantsPercentage}%`}
+      );
+    } catch (error) {
+      logger.error(`${Message.ERROR_FETCHING_REPORTS}: ${error.message}`, {
+        stack: error.stack,
+      });
+
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        Message.ERROR_FETCHING_REPORTS,
         error,
       );
     }

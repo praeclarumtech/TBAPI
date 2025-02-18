@@ -12,7 +12,7 @@ export const dashboard = async (req, res) => {
       const { totalApplicants, holdApplicants, pendingApplicants, selectedApplicants, rejectedApplicants, inProcessApplicants} = await getDashboard();
 
     logger.info(Message.FETCHED_DASHBOARD);
-      HandleResponse(
+    return HandleResponse(
         res,
         true,
         StatusCodes.OK,
@@ -27,7 +27,7 @@ export const dashboard = async (req, res) => {
       return HandleResponse(
         res,
         false,
-        StatusCodes.SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
         Message.ERROR_FETCHING_DASHBOARD,
         error,
       );
