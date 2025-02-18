@@ -25,6 +25,7 @@ export const dashboard = async (req, res) => {
       });
 
       return HandleResponse(
+        res,
         false,
         StatusCodes.SERVER_ERROR,
         Message.ERROR_FETCHING_DASHBOARD,
@@ -35,7 +36,7 @@ export const dashboard = async (req, res) => {
 
   export const dashboardProcess = async (req, res) => {
     try {
-      const { hrRoundPercentage } = await getDashboard();
+      const { hrRoundPercentage, firstInterviewPercentage, secondterviewPercentage, technicalRoundPercentage, finalRoundPercentage} = await getDashboard();
 
     logger.info(Message.FETCHED_DASHBOARD);
       HandleResponse(
@@ -43,7 +44,7 @@ export const dashboard = async (req, res) => {
         true,
         StatusCodes.OK,
         Message.FETCHED_DASHBOARD,
-        { hrRoundPercentage: `${hrRoundPercentage}%`}
+        { hrRoundPercentage: `${hrRoundPercentage}%`, firstInterviewPercentage: `${firstInterviewPercentage}%`, secondterviewPercentage:`${secondterviewPercentage}%`, technicalRoundPercentage:`${technicalRoundPercentage}%`, finalRoundPercentage:`${finalRoundPercentage}%`}
       );
     } catch (error) {
       logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
@@ -51,6 +52,7 @@ export const dashboard = async (req, res) => {
       });
 
       return HandleResponse(
+        res,
         false,
         StatusCodes.SERVER_ERROR,
         Message.ERROR_FETCHING_DASHBOARD,

@@ -18,6 +18,7 @@ export const viewCountry = async (req, res) => {
     } catch (error) {
         logger.error(`${Message.ERROR_FETCHING_COUNTRI}: ${error.message}`, {stack: error.stack,});
         return HandleResponse(
+          res,
           false,
           StatusCodes.SERVER_ERROR,
           Message.ERROR_FETCHING_COUNTRI,
@@ -40,6 +41,7 @@ export const viewCountry = async (req, res) => {
     } catch (error) {
         logger.error(`Error fetching states: ${error.message}`, {stack: error.stack,});
         return HandleResponse(
+          res,
           false,
           StatusCodes.SERVER_ERROR,
           Message.ERROR_FETCHING_STATES,
