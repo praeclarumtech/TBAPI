@@ -8,7 +8,7 @@ export const viewCountry = async (req, res) => {
     try {
       const  countries = await getAllcountry();
       logger.info(Message.FETCHING_COUNTRI);
-       HandleResponse(
+      return HandleResponse(
               res,
               true,
               StatusCodes.OK,
@@ -31,7 +31,7 @@ export const viewCountry = async (req, res) => {
     try {
       const  states = await getAllstates();
       logger.info(Message.FETCHING_STATES);
-      HandleResponse(
+      return HandleResponse(
         res,
         true,
         StatusCodes.OK,
