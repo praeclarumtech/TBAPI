@@ -1,10 +1,10 @@
-import { Message } from "../utils/message.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import logger from "../loggers/logger.js";
-import dotenv from "dotenv";
-import { StatusCodes } from "http-status-codes";
-import { sendingEmail } from "../helpers/commonFunction/sendEmail.js";
+import { Message } from '../utils/message.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import logger from '../loggers/logger.js';
+import dotenv from 'dotenv';
+import { StatusCodes } from 'http-status-codes';
+import { sendingEmail } from '../helpers/commonFunction/sendEmail.js';
 dotenv.config();
 import{
   createUser,
@@ -16,8 +16,8 @@ import{
   findEmailForOtp,
   deleteOtp,
   storeOtp
-} from "../services/user.service.js";
-import { HandleResponse } from "../helpers/handleResponse.js";
+} from '../services/user.service.js';
+import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -82,7 +82,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "5h" }
+      { expiresIn: '5h' }
     );
 
     logger.info(Message.USER_LOGGED_IN_SUCCESSFULLY);

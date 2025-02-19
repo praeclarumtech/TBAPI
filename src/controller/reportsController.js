@@ -6,28 +6,34 @@ import { HandleResponse } from '../helpers/handaleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 
 export const reports = async (req, res) => {
-    try {
-      const { hrRoundPercentage, firstInterviewPercentage, secondterviewPercentage, technicalRoundPercentage, finalRoundPercentage} = await getDashboard();
+  try {
+    const {
+      hrRoundPercentage,
+      firstInterviewPercentage,
+      secondterviewPercentage,
+      technicalRoundPercentage,
+      finalRoundPercentage,
+    } = await getDashboard();
 
     logger.info(Message.FETCHED_DASHBOARD);
-      HandleResponse(
-        res,
-        true,
-        StatusCodes.OK,
-        Message.FETCHED_DASHBOARD,
-        { hrRoundPercentage: `${hrRoundPercentage}%`, firstInterviewPercentage: `${firstInterviewPercentage}%`, secondterviewPercentage:`${secondterviewPercentage}%`, technicalRoundPercentage:`${technicalRoundPercentage}%`, finalRoundPercentage:`${finalRoundPercentage}%`}
-      );
-    } catch (error) {
-      logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
-        stack: error.stack,
-      });
+    HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_DASHBOARD, {
+      hrRoundPercentage: `${hrRoundPercentage}%`,
+      firstInterviewPercentage: `${firstInterviewPercentage}%`,
+      secondterviewPercentage: `${secondterviewPercentage}%`,
+      technicalRoundPercentage: `${technicalRoundPercentage}%`,
+      finalRoundPercentage: `${finalRoundPercentage}%`,
+    });
+  } catch (error) {
+    logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
+      stack: error.stack,
+    });
 
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.SERVER_ERROR,
-        Message.ERROR_FETCHING_DASHBOARD,
-        error,
-      );
-    }
-  };
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.SERVER_ERROR,
+      Message.ERROR_FETCHING_DASHBOARD,
+      error
+    );
+  }
+};
