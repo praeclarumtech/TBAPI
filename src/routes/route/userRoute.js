@@ -32,7 +32,6 @@ router.put('/updateProfile/:id', authorization, upload, updateProfile);
 router.post('/sendEmail',authorization,validator.body(sendEmailValidation),sendEmail);
 router.post('/sendEmail/verifyOtp',verifyOtp);
 router.put('/forgotPassword/:id',validator.body(forgotPasswordValidation),forgotPassword);
-
 router.post('/changePassword/:id',validator.body(changePasswordValidation), authorization, changePassword);
 
 export default router;

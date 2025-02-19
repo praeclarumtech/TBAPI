@@ -27,7 +27,6 @@ export const sendEmail = async (req, res) => {
     logger.info(Message.MAIL_SENT);
     return HandleResponse(res, true, StatusCodes.CREATED, Message.MAIL_SENT);
   } catch (error) {
-    console.error('Error occurred:', error.message);
     logger.error(Message.SERVER_ERROR);
     return HandleResponse(
       res,

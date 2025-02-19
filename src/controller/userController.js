@@ -17,7 +17,7 @@ import{
   deleteOtp,
   storeOtp
 } from '../services/userService.js';
-import { HandleResponse } from "../helpers/handleResponse.js";
+import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -85,7 +85,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '5h' }
+      { expiresIn: process.env.EXPIRES_IN }
     );
 
     logger.info(Message.USER_LOGGED_IN_SUCCESSFULLY);
