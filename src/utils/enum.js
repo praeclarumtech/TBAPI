@@ -7,7 +7,7 @@ export const Enum = {
 export const genderEnum = {
   MALE: 'male',
   FEMALE: 'female',
-  OTHER: 'other'
+  OTHER: 'other',
 };
 
 export const applicantEnum = {
@@ -15,26 +15,25 @@ export const applicantEnum = {
   FEMALE: 'female',
   OTHER: 'other',
 
-  YES:'yes',
-  NO:'no',
+  YES: 'yes',
+  NO: 'no',
 
-  REMOTE:'remote', 
-  HYBRID:'hybrid', 
-  ONSITE:'onsite',
+  REMOTE: 'remote',
+  HYBRID: 'hybrid',
+  ONSITE: 'onsite',
 
-  PENDING:'pending', 
-  SELECTED:'selected', 
-  REJECTED:'rejected',
-  HOLD:'hold',
-  IN_PROCESS:'in-process',
+  PENDING: 'pending',
+  SELECTED: 'selected',
+  REJECTED: 'rejected',
+  HOLD: 'hold',
+  IN_PROCESS: 'in-process',
 
-  HR_ROUND:'hr round', 
-  TECHNICAL:'technical', 
-  FIRST_INTERVIEW:'1st interview', 
-  FINAL:'final',
-  SECOND_INTERVIEW:'2nd interview',
+  HR_ROUND: 'hr round',
+  TECHNICAL: 'technical',
+  FIRST_INTERVIEW: '1st interview',
+  FINAL: 'final',
+  SECOND_INTERVIEW: '2nd interview',
 };
-
 
 export const countryEnum = Object.freeze({
   INDIA: 'india',
@@ -74,4 +73,3 @@ export const stateEnum = Object.freeze({
   UTTARAKHAND: 'Uttarakhand',
   WEST_BENGAL: 'West Bengal',
 });
-
