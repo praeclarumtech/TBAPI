@@ -7,22 +7,21 @@ import { Message } from '../utils/constant/message.js';
 export const viewCountry = async (req, res) => {
     try {
       const  countries = await getAllcountry();
-      logger.info(Message.FETCHING_COUNTRIES);
+      logger.info(Message.FETCHING_COUNTRI);
        return HandleResponse(
               res,
               true,
               StatusCodes.OK,
-              Message.FETCHING_COUNTRIES,
+              Message.FETCHING_COUNTRI,
               countries
             );
     } catch (error) {
-        logger.error(`${Message.ERROR_FETCHING_COUNTRIES}: ${error.message}`, {stack: error.stack,});
+        logger.error(`${Message.ERROR_FETCHING_COUNTRI}: ${error.message}`, {stack: error.stack,});
         return HandleResponse(
           res,
           false,
-          StatusCodes.SERVER_ERROR,
-          Message.ERROR_FETCHING_COUNTRIES,
-          undefined,
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          Message.ERROR_FETCHING_COUNTRI,
           error,
         );
     }
@@ -44,7 +43,7 @@ export const viewCountry = async (req, res) => {
         return HandleResponse(
           res,
           false,
-          StatusCodes.SERVER_ERROR,
+          StatusCodes.INTERNAL_SERVER_ERROR,
           Message.ERROR_FETCHING_STATES,
           undefined,
           error,
