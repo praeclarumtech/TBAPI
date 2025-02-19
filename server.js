@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import cors from "cors";
 import bodyParser from 'body-parser';
 import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
-import { Message } from '../TBAPI/src/utils/constant/message.js';
+import { Message } from './src/utils/constant/message.js';
 import logger from './src/loggers/logger.js';
 dotenv.config();
 
