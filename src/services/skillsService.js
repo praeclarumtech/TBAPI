@@ -15,8 +15,8 @@ export const getSkillById = async (id) => {
   return Skills.findById(id);
 };
 
-export const updateSkill = async (skillId, updateData) => {
-  return Skills.findByIdAndUpdate(skillId, updateData, { new: true });
+export const updateSkill = async (id, updateData) => {
+  return Skills.updateOne({_id: id}, updateData);
 };
 
 export const deleteSkillById = async (skillId) => {

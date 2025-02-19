@@ -1,9 +1,9 @@
 import logger from '../loggers/logger.js';
 // import Applicant from '../models/applicantModel.js';
 import { Message } from '../utils/constant/message.js';
-import { getDashboard } from '../services/dashboardService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
-import { StatusCodes } from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes'; 
+import { getDashboard } from '../services/dashboardService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
   try {

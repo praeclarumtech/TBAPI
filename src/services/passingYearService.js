@@ -9,9 +9,9 @@ export const getOneYear = async (id) => {
 };
 
 export const updateYearById = async (id, updateData) => {
-  return await PassingYear.findByIdAndUpdate(id, updateData);
+  return await PassingYear.updateOne({_id: id}, updateData); 
 };
 
 export const deleteYearById = async (id) => {
   return await PassingYear.findByIdAndUpdate(id, { is_deleted: true });
-};
+}; 
