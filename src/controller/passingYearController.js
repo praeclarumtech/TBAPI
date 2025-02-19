@@ -1,11 +1,11 @@
-import { Message } from '../utils/constant/passingYearMessage.js';
+import { Message } from '../utils/constant/message.js';
 import {
   createYear,
   getOneYear,
   updateYearById,
   deleteYearById,
-} from '../services/passingYear.js';
-import { pagination } from '../helpers/commonFunction/passingYearPagination.js';
+} from '../services/passingYearService.js';
+import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import PassingYear from '../models/passingYear.js';
 import logger from '../loggers/logger.js';
 import {HandleResponse} from '../helpers/handleResponse.js'
@@ -15,19 +15,19 @@ export const addYear = async (req, res) => {
   try {
     await createYear(req.body.year);
     logger.info(Message.NEW_YEAR);
-    HandleResponse(
+    return HandleResponse(
           res,
           true,
           StatusCodes.CREATED,
           Message.NEW_YEAR,
         );
   } catch (error) {
-    logger.error(Message.INT_SE_ERR);
+    logger.error(Message.SERVER_ERROR);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.INT_SE_ERR
+      Message.SERVER_ERROR
     )
   }
 };
@@ -47,12 +47,12 @@ export const getYears = async (req, res) => {
       findYears
     )
       } catch (error) {
-    logger.error(Message.INT_SE_ERR);
+    logger.error(Message.SERVER_ERROR);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.INT_SE_ERR
+      Message.SERVER_ERROR
     )
   }
 };
@@ -75,7 +75,7 @@ export const getYearById = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.YEAR_NF
+      Message.SERVER_ERROR
     )
   }
 };
@@ -92,12 +92,12 @@ export const updateYear = async (req, res) => {
       updateYear
     );
   } catch (error) {
-    logger.error(Message.INV_CR);
+    logger.error(Message.INVALID_CREDENTIALS);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      Message.INV_CR
+      Message.INVALID_CREDENTIALS
     )
   }
 };
@@ -108,12 +108,12 @@ export const deleteYear = async (req, res) => {
       is_deleted: true,
     });
     if (!deleteYear) {
-      logger.warn(Message.DATA_NF);
+      logger.warn(Message.YEAR_NOT_FOUND);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        Message.DATA_NF
+        Message.YEAR_NOT_FOUND
       )
     }
     logger.info(Message.YEAR_DEL);
@@ -125,12 +125,12 @@ export const deleteYear = async (req, res) => {
       deleteYear
     )
   } catch (error) {
-    logger.error(Message.INT_SE_ERR);
+    logger.error(Message.SERVER_ERROR);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.INT_SE_ERR
+      Message.SERVER_ERROR
     )
   }
 };

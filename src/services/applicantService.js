@@ -15,5 +15,5 @@ export const getApplicantById = async (id) => {
 };
 
 export const updateApplicantById = async (id, updateData) => {
-  return Applicant.findByIdAndUpdate(id, updateData);
+  return Applicant.updateOne({_id: id}, updateData);
 };

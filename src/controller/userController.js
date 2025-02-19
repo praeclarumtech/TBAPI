@@ -1,10 +1,10 @@
-import { Message } from "../utils/message.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import logger from "../loggers/logger.js";
-import dotenv from "dotenv";
-import { StatusCodes } from "http-status-codes";
-import { sendingEmail } from "../helpers/commonFunction/sendEmail.js";
+import { Message } from '../utils/constant/message.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import logger from '../loggers/logger.js';
+import dotenv from 'dotenv';
+import { StatusCodes } from 'http-status-codes';
+import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 dotenv.config();
 import{
   createUser,
@@ -17,7 +17,7 @@ import{
   deleteOtp,
   storeOtp
 } from '../services/userService.js';
-import { HandleResponse } from "../helpers/handleResponse.js";
+import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -33,6 +33,8 @@ export const register = async (req, res, next) => {
         Message.USER_ALREADY_EXISTS
       );
     }
+
+    
     await createUser({ userName, email, password, confirmPassword, role });
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
@@ -47,6 +49,7 @@ export const register = async (req, res, next) => {
       stack: error.stack,
     });
     return HandleResponse(
+      res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} register.`
@@ -82,9 +85,9 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "5h" }
+      { expiresIn: process.env.EXPIRES_IN} 
     );
-
+    
     logger.info(Message.USER_LOGGED_IN_SUCCESSFULLY);
 
     return HandleResponse(
@@ -96,8 +99,9 @@ export const login = async (req, res) => {
     );
 
   } catch (error) {
-    logger.error(error);
+    logger.error(Message.SERVER_ERROR);
     return HandleResponse(
+      res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} login.`
@@ -118,6 +122,7 @@ export const viewProfile = async (req, res) => {
       );
     }
 
+    logger.info(Message.VIEW_ALL_PROFILE)
    return HandleResponse(
       res,
       true,
@@ -128,6 +133,7 @@ export const viewProfile = async (req, res) => {
   } catch (error) {
     logger.error(Message.SERVER_ERROR);
     return HandleResponse(
+      res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} View profile.`
@@ -149,17 +155,18 @@ export const viewProfileById = async (req, res) => {
       );
     }
     
-    logger.info(Message.VIEW_SINLE_PROFILE)
+    logger.info(Message.VIEW_SINGLE_PROFILE)
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.VIEW_SINLE_PROFILE,
+      Message.VIEW_SINGLE_PROFILE,
       user
     );
   } catch (error) {
     logger.error(Message.SERVER_ERROR);
     return HandleResponse(
+      res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} View prfofile by Id.`
@@ -210,6 +217,7 @@ export const updateProfile = async (req, res) => {
   } catch (error) {
     logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     return HandleResponse(
+      res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} update profile.`
@@ -233,9 +241,9 @@ export const sendEmail = async (req, res) => {
     const newOtp = Math.floor(1000 + Math.random() * 9000);
     const expireOtp = new Date(Date.now() + 2 * 60 * 1000);
 
+    logger.info(`${Message.OTP_SEND} OTP IS:- ${newOtp}`)
     
-    
-    const data = await sendingEmail({ email, otp: newOtp });
+    const data = await sendingEmail({ email, otp: newOtp});
     if (!data) {
       logger.warn(Message.UNABLE_SENT_MAIL);
       return HandleResponse(
@@ -251,12 +259,12 @@ export const sendEmail = async (req, res) => {
         true,
         StatusCodes.OK,
         Message.MAIL_SENT,
-        `OTP:-${newOtp}`,
-        `otp will expird in:${expireOtp}`
+        `OTP:-${newOtp}, will be expire in:${expireOtp}`,
       );
     } catch (error) {
     logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     return HandleResponse(
+      res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} send mail.`
@@ -302,6 +310,7 @@ export const verifyOtp = async (req, res) => {
   } catch (error) {
     logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     return HandleResponse(
+      res,
       false,
       StatusCodes.SERVER_ERROR,
       `${Message.FAILED_TO} verify otp.`
@@ -327,19 +336,19 @@ export const forgotPassword = async (req, res) => {
     const { newPassword, confirmPassword } = req.body;
 
     if (newPassword !== confirmPassword) {
-    logger.warn(Message.PASS_NOT_MATCHED)
+    logger.warn(Message.PASSWORD_MISMATCH)
      return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      Message.PASS_NOT_MATCHED
+      Message.PASSWORD_MISMATCH
      )
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUserById(userId, { password: hashedPassword });
 
     logger.info(`${Message.PASS_UPDATED}`);
-    HandleResponse(
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
@@ -348,6 +357,7 @@ export const forgotPassword = async (req, res) => {
   } catch (error) {
     logger.error(`${Message.SERVER_ERROR}: ${error.message}`);
     return HandleResponse(
+      res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} updated passoword.`
@@ -357,7 +367,7 @@ export const forgotPassword = async (req, res) => {
 
 export const changePassword = async (req, res) => {
   try {
-    const { oldPassword, newPassword } = req.body;
+    const { oldPassword, newPassword} = req.body;
 
     const userId = req.params.id;
     const user = await getUserById(userId);
@@ -371,7 +381,6 @@ export const changePassword = async (req, res) => {
         Message.USER_NOT_FOUND
       );
     }
-
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       logger.warn(Message.OLD_PASSWORD_INCORRECT);
@@ -382,12 +391,11 @@ export const changePassword = async (req, res) => {
         Message.OLD_PASSWORD_INCORRECT
       );
     }
-
-    user.password = await newPassword;
-    await user.save();
+        user.password = await newPassword;
+        await user.save();
 
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
-    return(
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
