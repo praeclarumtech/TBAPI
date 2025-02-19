@@ -1,9 +1,9 @@
-import logger from "../loggers/logger.js";
-// import Applicant from "../models/applicantModel.js";
-import { Message } from "../utils/message.js";
-import { getDashboard } from "../services/dashboardService.js";
-import { HandleResponse } from "../helpers/handaleResponse.js";
-import { StatusCodes } from "http-status-codes";
+import logger from '../loggers/logger.js';
+// import Applicant from '../models/applicantModel.js';
+import { Message } from '../utils/message.js';
+import { getDashboard } from '../services/dashboardService.js';
+import { HandleResponse } from '../helpers/handaleResponse.js';
+import { StatusCodes } from 'http-status-codes';
 
 export const reports = async (req, res) => {
     try {
