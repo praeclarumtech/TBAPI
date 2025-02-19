@@ -4,7 +4,6 @@ import router from './src/routes/routes.js';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cors from "cors";
-import { upload } from './src/helpers/multer.js';
 import bodyParser from 'body-parser';
 import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
 import { Message } from '../TBAPI/src/utils/constant/message.js';
@@ -13,11 +12,10 @@ dotenv.config();
 
 const app = express();
 connectDB();
-
-app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
+app.use(cors());
 app.use(helmet());
 app.use('uploads/profile', express.static('uploads'));
 
