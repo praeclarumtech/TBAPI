@@ -3,6 +3,7 @@ import { applicantEnum } from '../utils/enum.js';
 
 export const getDashboard = async () => {
   const totalApplicants = await Applicant.countDocuments({ isDeleted: false });
+  
   const holdApplicants = await Applicant.countDocuments({
     status: applicantEnum.HOLD,
     isDeleted: false,

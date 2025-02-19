@@ -1,7 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { Message } from '../utils/message.js';
+import { Message } from '../utils/constant/message.js';
 
 
 const uploadDir = 'src/uploads/profile';

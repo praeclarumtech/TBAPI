@@ -6,9 +6,9 @@ import {
   updateSkill,
   deleteSkillById,
 } from '../services/skillsService.js';
-import { HandleResponse } from '../helpers/handaleResponse.js';
+import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-import { Message } from '../utils/message.js';
+import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 
 export const addSkills = async (req, res) => {
