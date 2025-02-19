@@ -1,5 +1,5 @@
 import express from 'express';
-import { applicationOnProcessCount, statusByPercentage, technologyStatistics } from '../../controller/reportsController.js';
+import { applicationOnProcessCount, statusByPercentage, technologyStatistics,} from '../../controller/reportsController.js';
 
 const router = express.Router();
 

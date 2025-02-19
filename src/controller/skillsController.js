@@ -142,7 +142,9 @@ export const updateSkills = async (req, res) => {
 export const deleteSkills = async (req, res) => {
   try {
     const { skillId } = req.params;
-    const deletedSkill = await deleteSkillById(skillId);
+    const deletedSkill = await deleteSkillById(skillId, {
+      isDeleted: true,
+    });
 
     if (!deletedSkill) {
       return HandleResponse(
