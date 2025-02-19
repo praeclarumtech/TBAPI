@@ -1,14 +1,14 @@
-import { getAllcountry, getAllstates } from "../services/commonService.js";
+import { getAllcountry, getAllstates } from '../services/commonService.js';
 import logger from '../loggers/logger.js';
-import { HandleResponse } from "../helpers/handaleResponse.js";
-import { StatusCodes } from "http-status-codes";
-import { Message } from "../utils/message.js";
+import { HandleResponse } from '../helpers/handleResponse.js';
+import { StatusCodes } from 'http-status-codes';
+import { Message } from '../utils/constant/message.js';
 
 export const viewCountry = async (req, res) => {
     try {
       const  countries = await getAllcountry();
       logger.info(Message.FETCHING_COUNTRI);
-      return HandleResponse(
+       return HandleResponse(
               res,
               true,
               StatusCodes.OK,
@@ -20,7 +20,7 @@ export const viewCountry = async (req, res) => {
         return HandleResponse(
           res,
           false,
-          StatusCodes.SERVER_ERROR,
+          StatusCodes.INTERNAL_SERVER_ERROR,
           Message.ERROR_FETCHING_COUNTRI,
           error,
         );
@@ -31,7 +31,7 @@ export const viewCountry = async (req, res) => {
     try {
       const  states = await getAllstates();
       logger.info(Message.FETCHING_STATES);
-      return HandleResponse(
+     return HandleResponse(
         res,
         true,
         StatusCodes.OK,
@@ -43,8 +43,9 @@ export const viewCountry = async (req, res) => {
         return HandleResponse(
           res,
           false,
-          StatusCodes.SERVER_ERROR,
+          StatusCodes.INTERNAL_SERVER_ERROR,
           Message.ERROR_FETCHING_STATES,
+          undefined,
           error,
         );
     }

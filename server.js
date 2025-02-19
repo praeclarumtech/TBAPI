@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import cors from "cors";
 import bodyParser from 'body-parser';
 import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
-import { Message } from './src/utils/message.js';
+import { Message } from '../TBAPI/src/utils/constant/message.js';
 import logger from './src/loggers/logger.js';
 dotenv.config();
 
@@ -15,6 +15,7 @@ connectDB();
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
+app.use(cors());
 app.use(helmet());
 app.use('uploads/profile', express.static('uploads'));
 
@@ -25,7 +26,6 @@ app.use(errorHandlerMiddleware);
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server is running fine on ${port}`);
-
   logger.info(`${Message.LISTENING_TO_PORT} :  ${port}`);
 });
 

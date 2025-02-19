@@ -1,17 +1,16 @@
 import {
   createApplicant,
   getApplicantById,
-  updateApplicantById,
-  deleteApplicantById,
+  updateApplicantById
 } from '../services/applicantService.js';
-import { Message } from '../utils/message.js';
+import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 import { generateApplicantNo } from '../helpers/generateApplicationNo.js';
 import Applicant from '../models/applicantModel.js';
-import { pagination } from '../helpers/commonFunction/passingYearPagination.js';
+import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-
+ 
 export const addApplicant = async (req, res) => {
   try {
     const {
@@ -45,10 +44,10 @@ export const addApplicant = async (req, res) => {
     );
   }
 };
-
+ 
 export const viewAllApplicant = async (req, res) => {
   try {
-    const {
+    const{
       page = 1,
       limit = 10,
       applicationNo,
@@ -57,16 +56,16 @@ export const viewAllApplicant = async (req, res) => {
       startDate,
       endDate,
     } = req.body;
-
+ 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
-
+ 
     let query = { isDeleted: false };
-
+ 
     if (applicationNo && !isNaN(applicationNo)) {
       query.applicationNo = parseInt(applicationNo);
     }
-
+ 
     if (
       appliedSkills &&
       Array.isArray(appliedSkills) &&
@@ -74,18 +73,18 @@ export const viewAllApplicant = async (req, res) => {
     ) {
       query.appliedSkills = { $in: appliedSkills };
     }
-
+ 
     if (totalExperience && !isNaN(totalExperience)) {
       query.totalExperience = parseInt(totalExperience);
     }
-
+ 
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate)
         query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
     }
-
+ 
     const findYears = await pagination({
       Schema: Applicant,
       page: pageNum,
@@ -93,9 +92,9 @@ export const viewAllApplicant = async (req, res) => {
       query,
       sort: { createdAt: -1 },
     });
-
+ 
     logger.info(Message.FETCHED_APPLICANT_SUCCESSFULLY);
-    return HandleResponse(res, true, StatusCodes.OK, undefined, findYears);
+    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_APPLICANT_SUCCESSFULLY, findYears);
   } catch (error) {
     logger.error(`${Message.ERROR_RETRIEVING_APPLICANTS}: ${error.message}`, {
       stack: error.stack,
@@ -108,12 +107,12 @@ export const viewAllApplicant = async (req, res) => {
     );
   }
 };
-
+ 
 export const viewApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const applicant = await getApplicantById(applicantId);
-
+ 
     if (!applicant) {
       logger.warn(Message.APPLICANT_NOT_FOUND);
       return HandleResponse(
@@ -143,7 +142,7 @@ export const viewApplicant = async (req, res) => {
     `${Message.FAILED_TO} view applicant by id.`
   );
 };
-
+ 
 export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
@@ -151,10 +150,10 @@ export const updateApplicant = async (req, res) => {
       name: { first, middle, last },
       ...body
     } = req.body;
-
+ 
     let updateData = { name: { first, middle, last }, ...body };
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
-
+ 
     if (!updatedApplicant) {
       logger.warn(`${Message.USER_NOT_FOUND}: ${applicantId}`);
       return HandleResponse(
@@ -164,7 +163,7 @@ export const updateApplicant = async (req, res) => {
         Message.USER_NOT_FOUND
       );
     }
-
+ 
     logger.info(`${Message.UPDATED_SUCCESSFULLY}: ${applicantId}`);
     return HandleResponse(
       res,
@@ -183,14 +182,15 @@ export const updateApplicant = async (req, res) => {
     );
   }
 };
-
+ 
 export const deleteApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
-    const applicant = await deleteApplicantById(applicantId, false);
-
+   
+    const applicant = await updateApplicantById(applicantId, {isDeleted: true});
+ 
     if (!applicant) {
-      logger.warn(`${Message.APPLICANT_NOT_FOUND}: ${applicantId}`);
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -198,9 +198,7 @@ export const deleteApplicant = async (req, res) => {
         Message.APPLICANT_NOT_FOUND
       );
     }
-    applicant.isDeleted = true;
-    await applicant.save();
-
+ 
     logger.info(`${Message.APPLICANT_DELETED_SUCCESSFULLY}: ${applicantId}`);
     return HandleResponse(
       res,
@@ -220,3 +218,43 @@ export const deleteApplicant = async (req, res) => {
     );
   }
 };
+ 
+export const updateStatus = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { interviewStage, status } = req.body;
+ 
+    const updateStatus = await updateApplicantById(applicantId, {
+      interviewStage,
+      status,
+    });
+ 
+    if (!updateStatus) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+ 
+    logger.info(`Applicant status ${Message.UPDATED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.ACCEPTED,
+      `Applicant status ${Message.UPDATED_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.ERROR_UPDATING_APPLICANT}: ${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update applicant.`
+    );
+  }
+};
+ 
+ 

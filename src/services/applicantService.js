@@ -17,8 +17,3 @@ export const getApplicantById = async (id) => {
 export const updateApplicantById = async (id, updateData) => {
   return Applicant.findByIdAndUpdate(id, updateData);
 };
-
-export const deleteApplicantById = async (id, excludeDeleted = true) => {
-  const filter = excludeDeleted ? { _id: id, isDeleted: false } : { _id: id };
-  return await Applicant.findOne(filter);
-};

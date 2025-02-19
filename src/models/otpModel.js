@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const sendingOtpSchema = new mongoose.Schema(
   {
@@ -12,11 +12,11 @@ const sendingOtpSchema = new mongoose.Schema(
     },
     resetOtp: {
       type: Date,
-      required:true,
+      default:Date.now,
       expires:120
     }
   },
 );
 
-const sendingOtp = mongoose.model("sendingOtp", sendingOtpSchema);
+const sendingOtp = mongoose.model('sendingOtp', sendingOtpSchema);
 export default sendingOtp;

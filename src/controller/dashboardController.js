@@ -1,8 +1,8 @@
 import logger from '../loggers/logger.js';
 // import Applicant from '../models/applicantModel.js';
-import { Message } from '../utils/message.js';
+import { Message } from '../utils/constant/message.js';
 import { getDashboard } from '../services/dashboardService.js';
-import { HandleResponse } from '../helpers/handaleResponse.js';
+import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 
 export const dashboard = async (req, res) => {
@@ -39,7 +39,7 @@ export const dashboard = async (req, res) => {
     return HandleResponse(
       res,
       false,
-      StatusCodes.SERVER_ERROR,
+      StatusCodes.INTERNAL_SERVER_ERROR,
       Message.ERROR_FETCHING_DASHBOARD,
       error
     );
