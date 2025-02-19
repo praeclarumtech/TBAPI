@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import logger from '../loggers/logger.js';
-import { Message } from '../utils/message.js';
+import { Message } from '../utils/constant/message.js';
 import dotenv from 'dotenv';
 dotenv.config();
 

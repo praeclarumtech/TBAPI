@@ -2,7 +2,6 @@ import express from 'express';
 import { addSkills, getSkills, updateSkills, deleteSkills, getSkillsById } from '../../controller/skillsController.js';
 import { skillsValidation } from '../../validations/skillsValidation.js';
 import { validator } from '../../helpers/validator.js';
-import { authorization } from '../../helpers/userMiddleware.js';
 
 const router = express.Router();
 

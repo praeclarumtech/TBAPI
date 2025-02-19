@@ -12,6 +12,5 @@ const stateSchema = new mongoose.Schema(
 );
 
 const  states= mongoose.model('states', stateSchema);
-// const country = mongoose.model('country', countrySchema, 'country');
 
 export default states;

@@ -33,7 +33,7 @@ const ApplicantSchema = new mongoose.Schema(
     resume: { type: String, required: false },
     totalExperience: { type: Number, required: true },
     relevantSkillExperience: { type: Number, required: true },
-    otherSkills: { type: String }, //*********** */
+    otherSkills: { type: String },
     rating: { type: Number, required: true },
     currentPkg: { type: String },
     expectedPkg: { type: String },
@@ -65,7 +65,7 @@ const ApplicantSchema = new mongoose.Schema(
     },
     interviewStage: {
       type: String,
-      enum: [
+      enum:[
         applicantEnum.HR_ROUND,
         applicantEnum.TECHNICAL,
         applicantEnum.FIRST_INTERVIEW,

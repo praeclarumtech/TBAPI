@@ -1,5 +1,5 @@
-import Applicant from "../models/applicantModel.js";
-import { applicantEnum } from "../utils/enum.js";
+import Applicant from '../models/applicantModel.js';
+import { applicantEnum } from '../utils/enum.js';
 
 export const getDashboard = async () => {
 

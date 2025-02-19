@@ -3,11 +3,11 @@ import {
   getApplicantById,
   updateApplicantById
 } from '../services/applicantService.js';
-import { Message } from '../utils/message.js';
+import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 import { generateApplicantNo } from '../helpers/generateApplicationNo.js';
 import Applicant from '../models/applicantModel.js';
-import { pagination } from '../helpers/commonFunction/passingYearPagination.js';
+import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
  
@@ -47,7 +47,7 @@ export const addApplicant = async (req, res) => {
  
 export const viewAllApplicant = async (req, res) => {
   try {
-    const {
+    const{
       page = 1,
       limit = 10,
       applicationNo,
@@ -94,7 +94,7 @@ export const viewAllApplicant = async (req, res) => {
     });
  
     logger.info(Message.FETCHED_APPLICANT_SUCCESSFULLY);
-    return HandleResponse(res, true, StatusCodes.OK, undefined, findYears);
+    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_APPLICANT_SUCCESSFULLY, findYears);
   } catch (error) {
     logger.error(`${Message.ERROR_RETRIEVING_APPLICANTS}: ${error.message}`, {
       stack: error.stack,

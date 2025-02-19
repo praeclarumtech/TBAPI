@@ -26,7 +26,6 @@ const logger = createLogger({
       level: 'error',
       db: process.env.DBURL, 
       collection: 'logs',
-      // options: { useUnifiedTopology: true },
     }),
   ],
   exceptionHandlers: [
