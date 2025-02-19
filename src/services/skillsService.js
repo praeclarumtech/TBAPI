@@ -18,9 +18,7 @@ export const getSkillById = async (id) => {
 export const updateSkill = async (id, updateData) => {
   return Skills.updateOne({_id: id}, updateData);
 };
-
-export const deleteSkillById = async (skillId) => {
-  const skill = await Skills.findByIdAndUpdate(skillId);
-  skill.isDeleted = true;
-  return skill;
+ 
+export const deleteSkillById = async (id) => {
+  return Skills.updateOne({_id: id}, { isDeleted: true });
 };

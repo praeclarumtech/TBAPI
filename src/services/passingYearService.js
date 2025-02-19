@@ -13,5 +13,5 @@ export const updateYearById = async (id, updateData) => {
 };
 
 export const deleteYearById = async (id) => {
-  return await PassingYear.findByIdAndUpdate(id, { is_deleted: true });
+  return await PassingYear.updateOne({_id: id}, { is_deleted: true }); 
 }; 
