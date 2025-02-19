@@ -1,5 +1,5 @@
-import Applicant from "../models/applicantModel.js";
-import { applicantEnum } from "../utils/enum.js";
+import Applicant from '../models/applicantModel.js';
+import { applicantEnum } from '../utils/enum.js';
 
 export const getDashboard = async () => {
   const totalApplicants = await Applicant.countDocuments({ isDeleted: false });
@@ -70,20 +70,77 @@ export const getDashboard = async () => {
     ? ((inProcessApplicants / totalApplicants) * 100).toFixed(2)
     : 0;
 
-  const nodeJsApplicants = await Applicant.countDocuments({appliedSkills: "Node.js",isDeleted: false,});
-  const nodeJsApplicantsPercentage = totalApplicants? ((nodeJsApplicants / totalApplicants) * 100).toFixed(2): 0;
+  const nodeJsApplicants = await Applicant.countDocuments({
+    appliedSkills: 'Node.js',
+    isDeleted: false,
+  });
+  const nodeJsApplicantsPercentage = totalApplicants
+    ? ((nodeJsApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
 
-  const reactJsApplicants = await Applicant.countDocuments({appliedSkills: "React",isDeleted: false,});
-  const reactJsApplicantsPercentage = totalApplicants? ((reactJsApplicants / totalApplicants) * 100).toFixed(2): 0;
+  const reactJsApplicants = await Applicant.countDocuments({
+    appliedSkills: 'React',
+    isDeleted: false,
+  });
+  const reactJsApplicantsPercentage = totalApplicants
+    ? ((reactJsApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
 
-  const dotNetApplicants = await Applicant.countDocuments({appliedSkills: "DotNet",isDeleted: false,});
-  const dotNetApplicantsPercentage = totalApplicants? ((dotNetApplicants / totalApplicants) * 100).toFixed(2): 0;
+  const dotNetApplicants = await Applicant.countDocuments({
+    appliedSkills: 'DotNet',
+    isDeleted: false,
+  });
+  const dotNetApplicantsPercentage = totalApplicants
+    ? ((dotNetApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
 
-  const angularApplicants = await Applicant.countDocuments({appliedSkills: "Angular",isDeleted: false,});
-  const angularApplicantsPercentage = totalApplicants? ((angularApplicants / totalApplicants) * 100).toFixed(2): 0;
+  const angularApplicants = await Applicant.countDocuments({
+    appliedSkills: 'Angular',
+    isDeleted: false,
+  });
+  const angularApplicantsPercentage = totalApplicants
+    ? ((angularApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
 
-  const uiuxApplicants = await Applicant.countDocuments({appliedSkills: "Angular",isDeleted: false,});
-  const uiuxApplicantsPercentage = totalApplicants? ((uiuxApplicants / totalApplicants) * 100).toFixed(2): 0;
+  const uiuxApplicants = await Applicant.countDocuments({
+    appliedSkills: 'UI UX',
+    isDeleted: false,
+  });
+  const uiuxApplicantsPercentage = totalApplicants
+    ? ((uiuxApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
+
+  const pythonApplicants = await Applicant.countDocuments({
+    appliedSkills: 'Python',
+    isDeleted: false,
+  });
+  const pythonApplicantsPercentage = totalApplicants
+    ? ((pythonApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
+
+  const javaScriptApplicants = await Applicant.countDocuments({
+    appliedSkills: 'JavaScript',
+    isDeleted: false,
+  });
+  const javaScriptApplicantsPercentage = totalApplicants
+    ? ((javaScriptApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
+
+  const javaApplicants = await Applicant.countDocuments({
+    appliedSkills: 'Java',
+    isDeleted: false,
+  });
+  const javaApplicantsPercentage = totalApplicants
+    ? ((javaApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
+
+  const cApplicants = await Applicant.countDocuments({
+    appliedSkills: 'C++',
+    isDeleted: false,
+  });
+  const cApplicantsPercentage = totalApplicants
+    ? ((cApplicants / totalApplicants) * 100).toFixed(2)
+    : 0;
 
   return {
     totalApplicants,
@@ -107,5 +164,9 @@ export const getDashboard = async () => {
     dotNetApplicantsPercentage,
     angularApplicantsPercentage,
     uiuxApplicantsPercentage,
+    pythonApplicantsPercentage,
+    javaScriptApplicantsPercentage,
+    javaApplicantsPercentage,
+    cApplicantsPercentage,
   };
 };

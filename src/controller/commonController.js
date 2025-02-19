@@ -1,8 +1,8 @@
-import { getAllcountry, getAllstates } from "../services/commonService.js";
+import { getAllcountry, getAllstates } from '../services/commonService.js';
 import logger from '../loggers/logger.js';
-import { HandleResponse } from "../helpers/handaleResponse.js";
-import { StatusCodes } from "http-status-codes";
-import { Message } from "../utils/message.js";
+import { HandleResponse } from '../helpers/handaleResponse.js';
+import { StatusCodes } from 'http-status-codes';
+import { Message } from '../utils/message.js';
 
 export const viewCountry = async (req, res) => {
     try {

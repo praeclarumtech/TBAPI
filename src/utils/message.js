@@ -5,7 +5,7 @@ export const Message = {
   MONGODB_CONNECTED: 'MongoDB Connected.',
   USER_LOGGED_IN_SUCCESSFULLY: 'User logged in successfully',
   USER_ALREADY_EXISTS: 'User already exists.',
-  UNABLE_UP_USER:"Unable to update",
+  UNABLE_UP_USER:'Unable to update',
   REGISTRATION_ERROR: 'Registration error',
   PASSWORD_MISMATCH: 'password Mismatch',
   USER_NOT_FOUND: 'User not found',
@@ -20,7 +20,7 @@ export const Message = {
   PROFILE_FRTCHDES_SUCCESSFULLY: 'Profile fetched successfully for user',
   NEW_PROFILE_CREATED_SUCCESSFULLY: 'New profile created successfully for user',
   MAIL_SENT: 'Mail sent successfully',
-  UNABLE_SENT_MAIL:"Unable to sent to mail",
+  UNABLE_SENT_MAIL:'Unable to sent to mail',
   OTP_MATCHED: 'Otp matched',
   OTP_NOT_MATCHED: 'Otp not matched',
   OPT_SEND: 'Otp sended successfuuly',
@@ -72,6 +72,6 @@ export const Message = {
   ERROR_FETCHING_STATES:'error fetching states.',
   FAILED_TO: 'Failed to',
   VIEW_ALL_PROFILE:'View all profiles',
-  VIEW_SINLE_PROFILE:"View Profile By id",
-  OTP_EXPIRED:"Otp expired"
+  VIEW_SINLE_PROFILE:'View Profile By id',
+  OTP_EXPIRED:'Otp expired'
 };

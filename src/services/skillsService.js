@@ -1,4 +1,4 @@
-import Skills from "../models/skillsModel.js";
+import Skills from '../models/skillsModel.js';
 
 export const create = async (body) => {
   const skill = new Skills({ ...body });
@@ -22,6 +22,5 @@ export const updateSkill = async (skillId, updateData) => {
 export const deleteSkillById = async (skillId) => {
   const skill = await Skills.findByIdAndUpdate(skillId);
   skill.isDeleted = true;
-
   return skill;
 };

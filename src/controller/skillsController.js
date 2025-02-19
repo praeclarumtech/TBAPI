@@ -1,15 +1,15 @@
-import Skills from "../models/skillsModel.js";
+import Skills from '../models/skillsModel.js';
 import {
   create,
   getAllSkills,
   getSkillById,
   updateSkill,
   deleteSkillById,
-} from "../services/skillsService.js";
-import { HandleResponse } from "../helpers/handaleResponse.js";
-import { StatusCodes } from "http-status-codes";
-import { Message } from "../utils/message.js";
-import logger from "../loggers/logger.js";
+} from '../services/skillsService.js';
+import { HandleResponse } from '../helpers/handaleResponse.js';
+import { StatusCodes } from 'http-status-codes';
+import { Message } from '../utils/message.js';
+import logger from '../loggers/logger.js';
 
 export const addSkills = async (req, res) => {
   const { skills } = req.body;
