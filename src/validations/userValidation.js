@@ -24,7 +24,7 @@ export const registerValidation = Joi.object().keys({
       'string.base': `Password should be a type of 'text'`,
       'string.empty': `Password cannot be an empty field`,
       'string.min': 'Password length must be at least 8 characters.',
-      // 'any.required': `Password is Required`,
+      'any.required': `Password is Required`,
       'string.pattern.name':
         'Password must contain a capital letter, a special character and a digit. Password length must be minimum 8 characters.',
     }),

@@ -27,12 +27,12 @@ export const sendEmail = async (req, res) => {
     logger.info(Message.MAIL_SENT);
     return HandleResponse(res, true, StatusCodes.CREATED, Message.MAIL_SENT);
   } catch (error) {
-    logger.error(Message.SERVER_ERROR);
+    logger.error(`${Message.FAILED_TO} send mail.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} Send mail.`
+      `${Message.FAILED_TO} send mail.`
     );
   }
 };
@@ -65,21 +65,21 @@ export const getAllEmails = async (req, res) => {
       query: query,
     });
 
-    logger.info(Message.SHOW_ALL_EMAILS);
+    logger.info(`All emails are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.SHOW_ALL_EMAILS,
+      `All emails are ${Message.FETCH_SUCCESSFULLY}`,
       findEmails
     );
   } catch (error) {
-    logger.error(Message.SERVER_ERROR);
+    logger.error(`${Message.FAILED_TO} fetch all emails.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO}  find all emails.`
+      `${Message.FAILED_TO} fetch all emails.`
     );
   }
 };
@@ -89,7 +89,7 @@ export const deleteManyEmails = async (req, res) => {
     const { ids } = req.body;
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      logger.warn(Message.OBJ_ID_NOT_FOUND);
+      logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -97,29 +97,29 @@ export const deleteManyEmails = async (req, res) => {
         Message.OBJ_ID_NOT_FOUND
       );
     }
-    
+
     const removeEmails = await removeManyEmails(ids);
 
     if (removeEmails.deletedCount === 0) {
-      logger.warn(Message.EMAIL_NOT_FOUND);
+      logger.warn(`Email is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        Message.EMAIL_NOT_FOUND
+        `Email is ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(Message.EMAIL_DELETED);
+    logger.info(`Email is ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.EMAIL_DELETED,
+      `Email is ${Message.DELETED_SUCCESSFULLY}`,
       removeEmails
     );
   } catch (error) {
-    logger.error(Message.SERVER_ERROR);
+    logger.error(`${Message.FAILED_TO} deleteMany emails.`);
     return HandleResponse(
       res,
       false,
