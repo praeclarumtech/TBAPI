@@ -54,13 +54,13 @@ export const applicantDetails = async (req, res) => {
     const { applicantsInRange, totalApplicants, percentage } =
       await getApplicantsDetailsByDate(startDate, endDate);
 
-    logger.info(Message.FETCHED_DASHBOARD);
+    logger.info(`Dashboard data ${Message.FETCH_SUCCESSFULLY}`);
 
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.FETCHED_DASHBOARD,
+      `Dashboard data ${Message.FETCH_SUCCESSFULLY}`,
       {
         applicantsInRange,
         // totalApplicants,
@@ -68,15 +68,13 @@ export const applicantDetails = async (req, res) => {
       }
     );
   } catch (error) {
-    logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
-      stack: error.stack,
-    });
+    logger.error(`${Message.FAILED_TO} fetch dashboard data`);
 
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch dashboard data`,
       error
     );
   }
