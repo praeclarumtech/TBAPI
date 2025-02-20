@@ -2,10 +2,10 @@
   "name": "talent-box",
   "version": "1.0.0",
   "description": "Talent-box",
-  "type": "module",
   "main": "server.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha src/test/**/*.test.js",
     "start": "nodemon server"
   },
   "author": "",
@@ -27,5 +27,11 @@
     "nodemon": "^3.1.9",
     "winston": "^3.17.0",
     "winston-mongodb": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/chai-http": "^3.0.5",
+    "chai": "^5.2.0",
+    "chai-http": "^5.1.1",
+    "mocha": "^11.1.0"
   }
 }
