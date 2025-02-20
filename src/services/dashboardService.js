@@ -171,3 +171,23 @@ export const getDashboard = async () => {
     cApplicantsPercentage,
   };
 };
+
+
+export const getApplicantsDetailsByDate = async (startDate, endDate) => {
+  const today = new Date();
+  const lastMonthDate = new Date();
+  lastMonthDate.setMonth(today.getMonth() - 1);
+
+  const filter = { createdAt: { 
+    $gte: startDate ? new Date(startDate) : lastMonthDate, 
+    $lte: endDate ? new Date(endDate) : today 
+  }};
+
+  const applicantsInRange = await Applicant.countDocuments(filter);
+
+  const totalApplicants = await Applicant.countDocuments();
+
+  const percentage = totalApplicants ? ((applicantsInRange / totalApplicants) * 100).toFixed(2) : 0;
+
+  return { applicantsInRange, totalApplicants, percentage };
+};

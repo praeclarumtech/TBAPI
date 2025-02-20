@@ -60,5 +60,5 @@ export const Message = {
   ERROR_FETCHING_STATES:'An error occurred while retrieving the states.',
   VIEW_ALL_PROFILE:'View all profiles',
   VIEW_SINLE_PROFILE:'View Profile By id',
-  OTP_EXPIRED:'Otp expired'
+  OTP_EXPIRED:'Otp expired',
 };

@@ -17,10 +17,19 @@ export const addApplicant = async (req, res) => {
       name: { firstName, middleName, lastName },
       ...body
     } = req.body;
+
+    console.log('----->',req.user)
+
+    let id = null
+    if (req?.user) {
+     const request = req?.user;
+     id = request.id
+    }
     const applicationNo = await generateApplicantNo();
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
+      user_id: id,
       ...body,
     };
     const applicant = await createApplicant(applicantData);
@@ -39,7 +48,7 @@ export const addApplicant = async (req, res) => {
     return HandleResponse(
       res,
       false,
-      StatusCodes.BAD_REQUEST,
+      StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} add aplicant.`
     );
   }

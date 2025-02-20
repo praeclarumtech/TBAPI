@@ -29,24 +29,22 @@ export const viewCountry = async (req, res) => {
 
   export const viewState = async (req, res) => {
     try {
-      const  states = await getAllstates();
+      const { country_id } = req.query;
+      const states = await getAllstates({ country_id });
+  
       logger.info(Message.FETCHING_STATES);
-     return HandleResponse(
-        res,
-        true,
-        StatusCodes.OK,
-        Message.FETCHING_STATES,
-        states
-      );
+      return HandleResponse(res, true, StatusCodes.OK, undefined, states);
     } catch (error) {
-        logger.error(`Error fetching states: ${error.message}`, {stack: error.stack,});
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          Message.ERROR_FETCHING_STATES,
-          undefined,
-          error,
-        );
+      logger.error(`Error fetching states: ${error.message}`, {
+        stack: error.stack,
+      });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        Message.ERROR_FETCHING_STATES,
+        undefined,
+        error
+      );
     }
   };
