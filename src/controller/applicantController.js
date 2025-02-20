@@ -18,8 +18,6 @@ export const addApplicant = async (req, res) => {
       ...body
     } = req.body;
 
-    console.log('----->',req.user)
-
     let id = null
     if (req?.user) {
      const request = req?.user;
