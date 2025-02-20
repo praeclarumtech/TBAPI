@@ -3,7 +3,7 @@ import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes'; 
-import { getDashboard } from '../services/dashboardService.js';
+import { getDashboard, getApplicantsReports } from '../services/dashboardService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
   try {
@@ -107,6 +107,31 @@ export const technologyStatistics = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       Message.ERROR_FETCHING_REPORTS,
+      error
+    );
+  }
+};
+
+export const applicantWeekCount = async (req, res) => {
+  try {
+    const { lastWeek, lastMonth, lastThreeMonths  } = await getApplicantsReports();
+
+    logger.info(Message.FETCHED_APPLICANT_STATS);
+    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_APPLICANT_STATS, {
+      lastWeek,
+      lastMonth,
+      lastThreeMonths,
+    });
+  } catch (error) {
+    logger.error(`${Message.ERROR_FETCHING_APPLICANT_STATS}: ${error.message}`, {
+      stack: error.stack,
+    });
+
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      Message.ERROR_FETCHING_APPLICANT_STATS,
       error
     );
   }

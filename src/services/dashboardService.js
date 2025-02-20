@@ -172,3 +172,28 @@ export const getDashboard = async () => {
   };
 };
 
+export const getApplicantsReports = async () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const lastWeekDate = new Date();
+  lastWeekDate.setDate(today.getDate() - 7);
+
+  const lastMonthDate = new Date();
+  lastMonthDate.setMonth(today.getMonth() - 1);
+
+  const lastThreeMonthsDate = new Date();
+  lastThreeMonthsDate.setMonth(today.getMonth() - 3);
+
+  const [lastWeekCount, lastMonthCount, lastThreeMonthsCount] = await Promise.all([
+    Applicant.countDocuments({ createdAt: { $gte: lastWeekDate } }),
+    Applicant.countDocuments({ createdAt: { $gte: lastMonthDate } }),
+    Applicant.countDocuments({ createdAt: { $gte: lastThreeMonthsDate } }),
+  ]);
+
+  return {
+    lastWeek: lastWeekCount,
+    lastMonth: lastMonthCount,
+    lastThreeMonths: lastThreeMonthsCount,
+  };
+};
