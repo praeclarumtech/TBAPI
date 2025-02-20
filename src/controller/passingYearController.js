@@ -8,27 +8,27 @@ import {
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import PassingYear from '../models/passingYear.js';
 import logger from '../loggers/logger.js';
-import {HandleResponse} from '../helpers/handleResponse.js'
+import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 
 export const addYear = async (req, res) => {
   try {
     await createYear(req.body.year);
-    logger.info(Message.NEW_YEAR);
+    logger.info(`Near year is ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
-          res,
-          true,
-          StatusCodes.CREATED,
-          Message.NEW_YEAR,
-        );
+      res,
+      true,
+      StatusCodes.CREATED,
+      `Near year is ${Message.ADDED_SUCCESSFULLY}`
+    );
   } catch (error) {
-    logger.error(Message.SERVER_ERROR);
+    logger.error(`${Message.FAILED_TO} add year.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.SERVER_ERROR
-    )
+      `${Message.FAILED_TO} add year.`
+    );
   }
 };
 
@@ -36,24 +36,24 @@ export const getYears = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const findYears = await pagination({ Schema: PassingYear, page, limit });  
+    const findYears = await pagination({ Schema: PassingYear, page, limit });
 
-    logger.info(Message.SHOW_YEARS);
+    logger.info(`All years are is ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.SHOW_YEARS,
+      `All years are ${Message.FETCH_SUCCESSFULLY}`,
       findYears
-    )
-      } catch (error) {
-    logger.error(Message.SERVER_ERROR);
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch years.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.SERVER_ERROR
-    )
+      `${Message.FAILED_TO} fetch years.`
+    );
   }
 };
 
@@ -61,44 +61,44 @@ export const getYearById = async (req, res) => {
   try {
     const yearId = req.params.id;
     const yearDetail = await getOneYear(yearId);
-    logger.info(Message.YEAR_BY_ID);
-   return HandleResponse(
+    logger.info(`Year is ${Message.FETCH_BY_ID}`);
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.YEAR_BY_ID,
+      `Year is ${Message.FETCH_BY_ID}`,
       yearDetail
-    )
+    );
   } catch (error) {
-    logger.warn(Message.YEAR_NF);
+    logger.warn(`${Message.FAILED_TO} fetch Year.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.SERVER_ERROR
-    )
+      `${Message.FAILED_TO} fetch Year.`
+    );
   }
 };
 
 export const updateYear = async (req, res) => {
   try {
     const updateYear = await updateYearById(req.params.id, req.body);
-    logger.info(Message.YEAR_UP);
-   return HandleResponse(
+    logger.info(`Year is ${Message.UPDATED_SUCCESSFULLY}`);
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.YEAR_UP,
+      `Year is ${Message.UPDATED_SUCCESSFULLY}`,
       updateYear
     );
   } catch (error) {
-    logger.error(Message.INVALID_CREDENTIALS);
+    logger.error(`${Message.FAILED_TO} update year.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      Message.INVALID_CREDENTIALS
-    )
+      `${Message.FAILED_TO} update year.`
+    );
   }
 };
 
@@ -108,29 +108,29 @@ export const deleteYear = async (req, res) => {
       is_deleted: true,
     });
     if (!deleteYear) {
-      logger.warn(Message.YEAR_NOT_FOUND);
+      logger.warn(`Year is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        Message.YEAR_NOT_FOUND
-      )
+        `Year is ${Message.NOT_FOUND}`
+      );
     }
-    logger.info(Message.YEAR_DEL);
-   return HandleResponse(
+    logger.info(`Year is ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.YEAR_DEL,
+      `Year is ${Message.DELETED_SUCCESSFULLY}`,
       deleteYear
-    )
+    );
   } catch (error) {
-    logger.error(Message.SERVER_ERROR);
+    logger.error(`${Message.FAILED_TO} deleted year`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.SERVER_ERROR
-    )
+      `${Message.FAILED_TO} deleted year`
+    );
   }
 };
