@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Message } from '../utils/constant/message.js';
-import {HandleResponse} from './handleResponse.js'
+import { HandleResponse } from './handleResponse.js'
 import { StatusCodes } from 'http-status-codes';
 import logger from '../loggers/logger.js';
 
@@ -21,7 +21,7 @@ export const authorization = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    logger.error(Message.TOKEN_IS_NOT_VALID,error)
+    logger.error(Message.TOKEN_IS_NOT_VALID)
     return HandleResponse(
       res,
       false,
