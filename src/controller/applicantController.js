@@ -17,10 +17,17 @@ export const addApplicant = async (req, res) => {
       name: { firstName, middleName, lastName },
       ...body
     } = req.body;
+
+    let id = null
+    if (req?.user) {
+     const request = req?.user;
+     id = request.id
+    }
     const applicationNo = await generateApplicantNo();
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
+      user_id: id,
       ...body,
     };
     const applicant = await createApplicant(applicantData);
