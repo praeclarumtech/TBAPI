@@ -41,7 +41,7 @@ export const register = async (req, res, next) => {
    return HandleResponse(
       res,
       true,
-      StatusCodes.OK,
+      StatusCodes.CREATED,
       Message.REGISTERED_SUCCESSFULLY,
     );
   } catch (error) {
