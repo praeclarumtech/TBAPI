@@ -5,7 +5,6 @@ export const getAllcountry = async () => {
     return await country.find();
   };
 
-
   export const getAllstates = async () => {
     return  await states.find();
   };

@@ -1,4 +1,5 @@
 import logger from '../loggers/logger.js';
+// import Applicant from '../models/applicantModel.js';
 import { Message } from '../utils/constant/message.js';
 import { getDashboard } from '../services/dashboardService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
@@ -35,7 +36,7 @@ export const dashboard = async (req, res) => {
     return HandleResponse(
       res,
       false,
-      StatusCodes.SERVER_ERROR,
+      StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch dashboard data`,
       undefined,
       error
@@ -63,7 +64,14 @@ export const dashboardProcess = async (req, res) => {
       StatusCodes.SERVER_ERROR,
       `${Message.FAILED_TO} fetch dashboard data`,
       undefined,
-      error
+      {
+        totalApplicants,
+        holdApplicants,
+        pendingApplicants,
+        selectedApplicants,
+        rejectedApplicants,
+        inProcessApplicants,
+      }
     );
   }
 };

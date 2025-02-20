@@ -147,11 +147,11 @@ export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const {
-      name: { first, middle, last },
+      name: { firstName, middleName, lastName },
       ...body
     } = req.body;
-
-    let updateData = { name: { first, middle, last }, ...body };
+ 
+    let updateData = { name: { firstName, middleName, lastName }, ...body }; 
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {

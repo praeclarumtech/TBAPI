@@ -81,9 +81,9 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.EXPIRES_IN }
+      { expiresIn: process.env.EXPIRES_IN} 
     );
-
+    
     logger.info(Message.USER_LOGGED_IN_SUCCESSFULLY);
 
     return HandleResponse(
@@ -369,7 +369,6 @@ export const changePassword = async (req, res) => {
         `User is ${Message.NOT_FOUND}`
       );
     }
-
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       logger.warn(Message.OLD_PASSWORD_INCORRECT);
@@ -380,8 +379,8 @@ export const changePassword = async (req, res) => {
         Message.OLD_PASSWORD_INCORRECT
       );
     }
-    user.password = await newPassword;
-    await user.save();
+        user.password = await newPassword;
+        await user.save();
 
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
     return HandleResponse(
