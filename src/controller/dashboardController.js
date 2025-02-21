@@ -3,7 +3,7 @@ import logger from "../loggers/logger.js";
 import { Message } from "../utils/constant/message.js";
 import {
   getDashboard,
-  getApplicantsDetailsByDate,
+  getApplicantsByMonth,
 } from "../services/dashboardService.js";
 import { HandleResponse } from "../helpers/handleResponse.js";
 import { StatusCodes } from "http-status-codes";
@@ -51,24 +51,20 @@ export const dashboard = async (req, res) => {
 
 export const applicantDetails = async (req, res) => {
   try {
-    const { startDate, endDate } = req.body;
+    const { month, year } = req.body;
 
-    const { applicantsInRange, totalApplicants, percentage } =
-      await getApplicantsDetailsByDate(startDate, endDate);
+    if (!month || !year) {
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, "Month and Year are required.");
+    }
+
+    const { totalApplicantsInMonth, weeklyCounts } = await getApplicantsByMonth(month, year);
 
     logger.info(Message.FETCHED_DASHBOARD);
 
-    return HandleResponse(
-      res,
-      true,
-      StatusCodes.OK,
-      Message.FETCHED_DASHBOARD,
-      {
-        applicantsInRange,
-        // totalApplicants,
-        percentage: `${percentage}%`,
-      }
-    );
+    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_DASHBOARD, {
+      totalApplicantsInMonth,
+      weeklyCounts
+    });
   } catch (error) {
     logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
       stack: error.stack,
@@ -78,8 +74,9 @@ export const applicantDetails = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.INTERNAL_SERVER_ERROR,
+      Message.ERROR_FETCHING_DASHBOARD,
       error
     );
   }
 };
+
