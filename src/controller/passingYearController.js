@@ -13,6 +13,19 @@ import { StatusCodes } from 'http-status-codes';
 
 export const addYear = async (req, res) => {
   try {
+    const { year } = req.body;
+
+    const existingYear = await PassingYear.findOne({ year, is_deleted: false });
+    if (existingYear) {
+      logger.warn(`Year ${year} ${Message.ALREADY_EXIST}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        `Year ${year} ${Message.ALREADY_EXIST}`
+      );
+    }
+
     await createYear(req.body.year);
     logger.info(`Near year is ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
@@ -36,7 +49,7 @@ export const getYears = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const findYears = await pagination({ Schema: PassingYear, page, limit });
+    const findYears = await pagination({ Schema: PassingYear, page, limit ,query: { is_deleted: false }},);
 
     logger.info(`All years are is ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
