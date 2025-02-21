@@ -4,7 +4,7 @@ import {viewAllApplicant} from '../../controller/applicantController.js';
 
 const router = express.Router();
 
-router.get("/count", dashboard);
+router.get('/count', dashboard);
 router.get('/recentApplicant', viewAllApplicant);
 router.post('/applicantDetails', applicantDetails); 
 

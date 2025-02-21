@@ -13,7 +13,7 @@ export const pagination = async ({
 
   const totalPages =
     totalRecords && limit > 0 ? Math.ceil(totalRecords / limit) : 0;
-    
+
   return {
     item: getItem,
     totalRecords,

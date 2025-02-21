@@ -19,12 +19,12 @@ export const dashboard = async (req, res) => {
       inProcessApplicants,
     } = await getDashboard();
 
-    logger.info(Message.FETCHED_DASHBOARD);
+    logger.info(`Dashboard data ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      Message.FETCHED_DASHBOARD,
+      `Dashboard data ${Message.FETCH_SUCCESSFULLY}`,
       {
         totalApplicants,
         holdApplicants,
@@ -35,15 +35,13 @@ export const dashboard = async (req, res) => {
       }
     );
   } catch (error) {
-    logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
-      stack: error.stack,
-    });
-
+    logger.error(`${Message.FAILED_TO} fetch dashboard data`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.ERROR_FETCHING_DASHBOARD,
+      `${Message.FAILED_TO} fetch dashboard data`,
+      undefined,
       error
     );
   }
@@ -59,16 +57,14 @@ export const applicantDetails = async (req, res) => {
 
     const { totalApplicantsInMonth, weeklyCounts } = await getApplicantsByMonth(month, year);
 
-    logger.info(Message.FETCHED_DASHBOARD);
+    logger.info(`Dashboard data ${Message.FETCH_SUCCESSFULLY}`);
 
     return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_DASHBOARD, {
       totalApplicantsInMonth,
       weeklyCounts
     });
   } catch (error) {
-    logger.error(`${Message.ERROR_FETCHING_DASHBOARD}: ${error.message}`, {
-      stack: error.stack,
-    });
+    logger.error(`${Message.FAILED_TO} fetch dashboard data`);
 
     return HandleResponse(
       res,

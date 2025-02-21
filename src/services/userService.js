@@ -15,13 +15,11 @@ export const getAllusers = async () => {
 };
 
 export const getUserById = async (id) => {
-  return await User.findById(id);
+  return await User.findById(id); 
 };
 
 export const updateUserById = async (id, updateData) => {
-  return await User.findByIdAndUpdate(id, updateData, { new: true }).select(
-    '-password'
-  );
+  return User.updateOne({_id: id}, updateData);
 };
 
 export const findUserEmail = async ({ email }) => {
