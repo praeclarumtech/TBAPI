@@ -170,24 +170,31 @@ export const getDashboard = async () => {
     javaApplicantsPercentage,
     cApplicantsPercentage,
   };
-};
+}; 
 
+export const getApplicantsByMonth = async (month, year) => {
 
-export const getApplicantsDetailsByDate = async (startDate, endDate) => {
-  const today = new Date();
-  const lastMonthDate = new Date();
-  lastMonthDate.setMonth(today.getMonth() - 1);
+  const startDate = new Date(year, month - 1, 1); // 1st day of the month
+  const endDate = new Date(year, month, 0); // Last day of the month
 
-  const filter = { createdAt: { 
-    $gte: startDate ? new Date(startDate) : lastMonthDate, 
-    $lte: endDate ? new Date(endDate) : today 
-  }};
+  const weekRanges = [
+    { start: new Date(year, month - 1, 1), end: new Date(year, month - 1, 7) },  // Week 1
+    { start: new Date(year, month - 1, 8), end: new Date(year, month - 1, 14) }, // Week 2
+    { start: new Date(year, month - 1, 15), end: new Date(year, month - 1, 21) }, // Week 3
+    { start: new Date(year, month - 1, 22), end: new Date(year, month - 1, 28) }, // Week 3
+    { start: new Date(year, month - 1, 29), end: new Date(year, month - 1, 31) }, // Week 3
+    // { start: new Date(year, month - 1, 29), end: endDate } // Week 4 (until last day)
+  ];
 
-  const applicantsInRange = await Applicant.countDocuments(filter);
+  const totalApplicantsInMonth = await Applicant.countDocuments({createdAt: { $gte: startDate, $lte: endDate }  });
 
-  const totalApplicants = await Applicant.countDocuments();
+  const weeklyCounts = await Promise.all(
+    weekRanges.map(async ({ start, end }) => {
+      const count = await Applicant.countDocuments({ createdAt: { $gte: start, $lte: end } });
+      const percentage = totalApplicantsInMonth > 0 ? (count / totalApplicantsInMonth) * 100 : 0;
+      return { start, end, count, percentage: percentage.toFixed(2) + "%" };
+    })
+  );
 
-  const percentage = totalApplicants ? ((applicantsInRange / totalApplicants) * 100).toFixed(2) : 0;
-
-  return { applicantsInRange, totalApplicants, percentage };
+  return { totalApplicantsInMonth, weeklyCounts };
 };

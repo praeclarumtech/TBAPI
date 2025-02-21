@@ -6,13 +6,13 @@ export const create = async (body) => {
 };
 
 export const getAllSkills = async (page, limit) => {
-  return Skills.find()
+  return Skills.find({ isDeleted: false })
     .skip((page - 1) * limit)
     .limit(limit);
 };
 
 export const getSkillById = async (id) => {
-  return Skills.findById(id);
+  return Skills.findOne({ _id: id, isDeleted: false });
 };
 
 export const updateSkill = async (id, updateData) => {
