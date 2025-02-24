@@ -5,7 +5,7 @@ export const createYear = async (year) => {
 };
 
 export const getOneYear = async (id) => {
-  return await PassingYear.findById(id);
+  return await PassingYear.findOne({ _id: id, is_deleted: false });
 };
 
 export const updateYearById = async (id, updateData) => {
