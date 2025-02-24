@@ -33,6 +33,17 @@ export const applicantEnum = {
   FIRST_INTERVIEW: '1st interview',
   FINAL: 'final',
   SECOND_INTERVIEW: '2nd interview',
+
+  NODE_JS:'Node.js',
+  REACT:'React',
+  DOTNET:'DotNet',
+  ANGULAR:'Angular',
+  UI_UX:'UI UX',
+  PYTHON:'Python',
+  JAVASCRIPT:'JavaScript',
+  JAVA:'Java',
+  C:'C++',
+  
 };
 
 export const countryEnum = Object.freeze({
