@@ -184,12 +184,6 @@ const totalApplicants = await Applicant.countDocuments({ isDeleted: false, ...da
     : 0;
 
   return {
-    totalApplicants,
-    holdApplicants,
-    pendingApplicants,
-    selectedApplicants,
-    rejectedApplicants,
-    inProcessApplicants,
     hrRoundPercentage,
     // firstInterviewPercentage,
     // secondterviewPercentage,

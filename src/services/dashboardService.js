@@ -61,13 +61,3 @@ export const getApplicantsByMonth = async (month, year) => {
 
   return { totalApplicantsInMonth, weeklyCounts }; 
 };
-
-// import { getDateRange } from "../helpers/commonFunction/moment.js";
-
-// export const getApplicationCount = async (calendarType, customStartDate, customEndDate) => {
-//     const { startDate, endDate } = getDateRange(calendarType, customStartDate, customEndDate);
-
-//     return await Applicant.countDocuments({
-//         createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
-//     });
-// };
