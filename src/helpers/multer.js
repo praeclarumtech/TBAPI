@@ -3,7 +3,6 @@ import path from 'path';
 import fs from 'fs';
 import { Message } from '../utils/constant/message.js';
 
-
 const uploadDir = 'src/uploads/profile';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });

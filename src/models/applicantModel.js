@@ -3,6 +3,11 @@ import { applicantEnum } from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: false,
+    },
     applicationNo: { type: Number, required: true },
     name: {
       firstName: { type: String, required: true },

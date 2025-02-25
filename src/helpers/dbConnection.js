@@ -7,10 +7,11 @@ dotenv.config();
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.DBURL, {
-      useNewUrlParser: true });
+      useNewUrlParser: true,
+    });
     logger.info(Message.MONGODB_CONNECTED);
   } catch (error) {
-    logger.error(`${Message.MONGODB_CONNECTION_ERROR}: ${error.message}`);
+    logger.error(`${Message.MONGODB_CONNECTION_ERROR}`);
     process.exit(1);
   }
 };

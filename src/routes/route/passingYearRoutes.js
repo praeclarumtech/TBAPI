@@ -11,10 +11,10 @@ import {
   passingYearValidation,
 } from '../../validations/yearsValidation.js';
 import { validator } from '../../helpers/validator.js';
-
+import { authorization } from '../../helpers/userMiddleware.js';
 const router = express.Router();
 
-router.post('/', validator.body(passingYearValidation), addYear);
+router.post('/', authorization, validator.body(passingYearValidation), addYear);
 router.get('/listOfYears', getYears);
 router.get('/getYearById/:id', validator.params(validateId), getYearById);
 router.put(

@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "mocha src/test/**/*.test.js",
-    "start": "nodemon server"
+    "start": "nodemon server",
+    "lint": "eslint . --fix",
+    "format": "prettier --write ."
   },
   "author": "",
   "license": "ISC",
@@ -32,6 +34,10 @@
     "@types/chai-http": "^3.0.5",
     "chai": "^5.2.0",
     "chai-http": "^5.1.1",
-    "mocha": "^11.1.0"
+    "eslint": "^9.20.1",
+    "globals": "^15.15.0",
+    "mocha": "^11.1.0",
+    "supertest": "^7.0.0",
+    "typescript-eslint": "^8.24.1"
   }
 }
