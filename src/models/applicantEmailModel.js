@@ -15,11 +15,14 @@ const applicantEmailSchema = new mongoose.Schema(
       required: true,
     },
     description: {
-        type: String,
+      type: String,
     },
-    date:{
-        type:Date,
-        default:Date.now
+    file: {
+      type: String
+    },
+    date: {
+      type: Date,
+      default: Date.now
     },
   },
 );

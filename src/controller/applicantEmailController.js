@@ -13,8 +13,16 @@ import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 export const sendEmail = async (req, res) => {
   try {
     const { email_to, email_bcc, subject, date, description } = req.body;
+    const file = req.file ? req.file.filename : null;
 
-    await sendingEmail({ email_to, email_bcc, subject, date, description });
+    await sendingEmail({
+      email_to,
+      email_bcc,
+      subject,
+      date,
+      description,
+      file,
+    });
 
     const storedEmail = await createEmail({
       email_to,
@@ -22,7 +30,9 @@ export const sendEmail = async (req, res) => {
       subject,
       description,
       date,
+      file,
     });
+    console.log('storeEmail', storedEmail);
 
     logger.info(Message.MAIL_SENT);
     return HandleResponse(res, true, StatusCodes.CREATED, Message.MAIL_SENT);
