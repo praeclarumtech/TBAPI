@@ -113,7 +113,6 @@ export const updateSkills = async (req, res) => {
     const updateData = req.body;
 
     const updatedSkill = await updateSkill(skillId, updateData);
-
     if (!updatedSkill) {
       logger.warn(`Skill is ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -155,15 +154,15 @@ export const deleteSkills = async (req, res) => {
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Skill is ${Message.NOT_FOUND}`
+        `Skills is ${Message.NOT_FOUND}`
       );
     }
-    logger.info(`year ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Skills is ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `year is ${Message.DELETED_SUCCESSFULLY}`,
+      `Skills is ${Message.DELETED_SUCCESSFULLY}`,
       deletedSkill
     );
   } catch (error) {

@@ -21,6 +21,15 @@ import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
+
+  if (!userName || !email || !password || !confirmPassword || !role) {
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.BAD_REQUEST,
+      `All fields ${Message.FIELD_REQUIRED}`
+    );
+  }
   try {
     const existingUser = await getUser({ email });
 
@@ -29,7 +38,7 @@ export const register = async (req, res, next) => {
       return HandleResponse(
         res,
         false,
-        StatusCodes.BAD_REQUEST,
+        StatusCodes.CONFLICT,
         `User is ${Message.ALREADY_EXIST}`
       );
     }
@@ -73,7 +82,7 @@ export const login = async (req, res) => {
       return HandleResponse(
         res,
         false,
-        StatusCodes.BAD_REQUEST,
+        StatusCodes.UNAUTHORIZED,
         Message.INVALID_CREDENTIALS
       );
     }
