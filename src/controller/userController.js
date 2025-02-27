@@ -244,7 +244,6 @@ export const sendEmail = async (req, res) => {
     const newOtp = Math.floor(1000 + Math.random() * 9000);
     const expireOtp = new Date(Date.now() + 2 * 60 * 1000);
 
-    logger.info(`${Message.OTP_SEND} OTP IS:- ${newOtp}`);
 
     const data = await sendingEmail({ email, otp: newOtp });
     if (!data) {
@@ -257,6 +256,8 @@ export const sendEmail = async (req, res) => {
       );
     }
     await storeOtp(email, newOtp, expireOtp);
+
+    logger.info(`${Message.OTP_SEND} OTP IS:- ${newOtp}`);
     return HandleResponse(
       res,
       true,
