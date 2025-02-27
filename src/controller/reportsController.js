@@ -2,37 +2,44 @@ import logger from '../loggers/logger.js';
 // import Applicant from '../models/applicantModel.js';
 import { Message } from '../utils/constant/message.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
-import { StatusCodes } from 'http-status-codes'; 
-import { getDashboard } from '../services/dashboardService.js';
+import { StatusCodes } from 'http-status-codes';
+import { getReport } from '../services/reportService.js';
+import { getApplicationCount } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
+  const { calendarType, startDate, endDate } = req.query;
+
   try {
     const {
-      hrRoundPercentage,
-      // firstInterviewPercentage,
-      // secondterviewPercentage,
-      technicalRoundPercentage,
-      finalRoundPercentage,
-    } = await getDashboard();
+      hrRoundApplicants,
+      // firstInterviewApplicants,
+      // secondInterviewApplicants,
+      technicalRoundApplicants,
+      finalRoundApplicants,
+    } = await getReport(calendarType, startDate, endDate);
 
-    logger.info(Message.FETCHED_REPORTS);
-    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_REPORTS, {
-      hrRoundPercentage: `${hrRoundPercentage}%`,
-      // firstInterviewPercentage: `${firstInterviewPercentage}%`,
-      // secondterviewPercentage:`${secondterviewPercentage}%`,
-      technicalRoundPercentage: `${technicalRoundPercentage}%`,
-      finalRoundPercentage: `${finalRoundPercentage}%`,
-    });
+    logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}`);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Report data ${Message.FETCH_SUCCESSFULLY}`,
+      {
+        hrRoundApplicants,
+        // firstInterviewApplicants,
+        // secondInterviewApplicants,
+        technicalRoundApplicants,
+        finalRoundApplicants,
+      }
+    );
   } catch (error) {
-    logger.error(`${Message.ERROR_FETCHING_REPORTS}: ${error.message}`, {
-      stack: error.stack,
-    });
-
+    logger.error(`${Message.FAILED_TO} Fetching Report.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.ERROR_FETCHING_REPORTS,
+      `${Message.FAILED_TO} Fetching Report.`,
       error
     );
   }
@@ -40,32 +47,37 @@ export const applicationOnProcessCount = async (req, res) => {
 
 export const statusByPercentage = async (req, res) => {
   try {
+    const { calendarType, startDate, endDate } = req.query;
+
     const {
-      holdApplicantsPercentage,
-      pendingApplicantsPercentage,
-      selectedApplicantsPercentage,
-      rejectedApplicantsPercentage,
-      inProcessApplicantsPercentage,
-    } = await getDashboard();
+      holdApplicants,
+      pendingApplicants,
+      selectedApplicants,
+      rejectedApplicants,
+      inProcessApplicants,
+    } = await getReport(calendarType, startDate, endDate);
 
-    logger.info(Message.FETCHED_REPORTS);
-    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_REPORTS, {
-      holdApplicantsPercentage: `${holdApplicantsPercentage}%`,
-      pendingApplicantsPercentage: `${pendingApplicantsPercentage}%`,
-      selectedApplicantsPercentage: `${selectedApplicantsPercentage}%`,
-      rejectedApplicantsPercentage: `${rejectedApplicantsPercentage}%`,
-      inProcessApplicantsPercentage: `${inProcessApplicantsPercentage}%`,
-    });
+    logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}.`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Report data ${Message.FETCH_SUCCESSFULLY}.`,
+      {
+        holdApplicants,
+        pendingApplicants,
+        selectedApplicants,
+        rejectedApplicants,
+        inProcessApplicants,
+      }
+    );
   } catch (error) {
-    logger.error(`${Message.ERROR_FETCHING_REPORTS}: ${error.message}`, {
-      stack: error.stack,
-    });
-
+    logger.error(`${Message.FAILED_TO} Fetching Report.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.ERROR_FETCHING_REPORTS,
+      `${Message.FAILED_TO} Fetching Report.`,
       error
     );
   }
@@ -73,32 +85,40 @@ export const statusByPercentage = async (req, res) => {
 
 export const technologyStatistics = async (req, res) => {
   try {
-    const {
-      nodeJsApplicantsPercentage,
-      reactJsApplicantsPercentage,
-      dotNetApplicantsPercentage,
-      angularApplicantsPercentage,
-      uiuxApplicantsPercentage,
-      pythonApplicantsPercentage,
-      javaScriptApplicantsPercentage,
-      javaApplicantsPercentage,
-      cApplicantsPercentage,
-    } = await getDashboard();
+    const { calendarType, startDate, endDate } = req.query;
 
-    logger.info(Message.FETCHED_REPORTS);
-    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_REPORTS, {
-      nodeJsApplicantsPercentage: `${nodeJsApplicantsPercentage}%`,
-      reactJsApplicantsPercentage: `${reactJsApplicantsPercentage}%`,
-      dotNetApplicantsPercentage: `${dotNetApplicantsPercentage}%`,
-      angularApplicantsPercentage: `${angularApplicantsPercentage}%`,
-      uiuxApplicantsPercentage: `${uiuxApplicantsPercentage}%`,
-      pythonApplicantsPercentage: `${pythonApplicantsPercentage}%`,
-      javaScriptApplicantsPercentage: `${javaScriptApplicantsPercentage}%`,
-      javaApplicantsPercentage: `${javaApplicantsPercentage}%`,
-      cApplicantsPercentage: `${cApplicantsPercentage}%`,
-    });
+    const {
+      nodeJsApplicants,
+      reactJsApplicants,
+      dotNetApplicants,
+      angularApplicants,
+      uiuxApplicants,
+      pythonApplicants,
+      javaScriptApplicants,
+      javaApplicants,
+      cApplicants,
+    } = await getReport(calendarType, startDate, endDate);
+
+    logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}.`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Report data ${Message.FETCH_SUCCESSFULLY}.`,
+      {
+        nodeJsApplicants,
+        reactJsApplicants,
+        dotNetApplicants,
+        angularApplicants,
+        uiuxApplicants,
+        pythonApplicants,
+        javaScriptApplicants,
+        javaApplicants,
+        cApplicants,
+      }
+    );
   } catch (error) {
-    logger.error(`${Message.ERROR_FETCHING_REPORTS}: ${error.message}`, {
+    logger.error(`${Message.FAILED_TO} Fetching Report.: ${error.message}`, {
       stack: error.stack,
     });
 
@@ -106,7 +126,43 @@ export const technologyStatistics = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.ERROR_FETCHING_REPORTS,
+      `${Message.FAILED_TO} Fetching Report.`,
+      error
+    );
+  }
+};
+
+export const getApplicationsByDate = async (req, res) => {
+  try {
+    const { calendarType, startDate, endDate } = req.query;
+    let count;
+
+    logger.info(`Reports data ${Message.FETCH_SUCCESSFULLY}.`);
+
+    if (!calendarType && !startDate && !endDate) {
+      count = await getApplicationCount(null, null, null);
+    } else {
+      count = await getApplicationCount(calendarType, startDate, endDate);
+    }
+
+    logger.info(`Reports data ${Message.FETCH_SUCCESSFULLY}.`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Reports data ${Message.FETCH_SUCCESSFULLY}.`,
+      {
+        calendarType:
+          calendarType || (startDate ? 'custom (start to today)' : 'all'),
+        totalApplications: count,
+      }
+    );
+  } catch (error) {
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} Fetching Report.`,
       error
     );
   }

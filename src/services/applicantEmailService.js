@@ -8,12 +8,11 @@ export const removeManyEmails = async(ids)=>{
     return await applicantEmail.deleteMany({_id: { $in: ids}})
 }
 
-export const createEmail = async({ email_to, email_bcc, subject, description, date })=>{
+export const createEmail = async({ email_to, email_bcc, subject, description, })=>{
   return await applicantEmail.create({
     email_to,
     email_bcc,
     subject,
     text:description,
-    date,
   })
 }

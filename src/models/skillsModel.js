@@ -4,6 +4,7 @@ const skillsSchema = new mongoose.Schema(
   {
     skills: {
       type: String,
+      unique: true,
       required: true,
     },
     isDeleted: {
