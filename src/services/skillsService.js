@@ -7,6 +7,7 @@ export const create = async (body) => {
 
 export const getAllSkills = async (page, limit) => {
   return Skills.find({ isDeleted: false })
+    .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit);
 };
