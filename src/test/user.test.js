@@ -246,14 +246,53 @@ describe('USER MODULE', () => {
         })
     })
 
-    describe('VERYFY OTP api/user/sendEmail/verifyOtp', () => {
+    describe('VERIFY OTP /api/user/sendEmail/verifyOtp', () => {
         it('should return 404 if email not found', async () => {
-            const res = await request(app).post('api/user/sendEmail/verifyOtp')
-                .send({ email: 'kishan@gmail.com' }) // wrong email
 
-            expect(res.status).to.equal(404)
-            expect(res.body).to.have.property('success', false)
-            expect(res.body).to.have.property('message', 'User is not found.')
-        })
-    })
+            const response = await request(app)
+                .post('/api/user/sendEmail')
+                .send({ email: 'kishan132@gmail.com' });
+
+            const generatedOtp = response.body.otp || await findOtp('kishan132@gmail.com');
+
+            const res = await request(app).post('/api/user/sendEmail/verifyOtp')
+                .send({ email: 'wrong@gmail.com', otp: generatedOtp });
+
+            expect(res.status).to.equal(404);
+            expect(res.body).to.have.property('success', false);
+            expect(res.body).to.have.property('message', 'User is not found.');
+        });
+
+        it('should return 400 if OTP is incorrect', async () => {
+
+            const response = await request(app)
+                .post('/api/user/sendEmail')
+                .send({ email: 'kishan132@gmail.com' });
+
+            const generatedOtp = response.body.otp || await findOtp('kishan132@gmail.com');
+
+            const res = await request(app).post('/api/user/sendEmail/verifyOtp')
+                .send({ email: 'kishan132@gmail.com', otp: '9999' }); // Wrong OTP
+
+            expect(res.status).to.equal(400);
+            expect(res.body).to.have.property('success', false);
+            expect(res.body).to.have.property('message', 'Invalid OTP.');
+        });
+
+        it('should verify OTP successfully', async () => {
+            const response = await request(app)
+                .post('/api/user/sendEmail')
+                .send({ email: 'kishan132@gmail.com' });
+
+            const generatedOtp = response.body.otp || await findOtp('kishan132@gmail.com');
+
+            const res = await request(app).post('/api/user/sendEmail/verifyOtp')
+                .send({ email: 'kishan132@gmail.com', otp: generatedOtp });
+
+            expect(res.status).to.equal(200);
+            expect(res.body).to.have.property('success', true);
+            expect(res.body).to.have.property('message', 'OTP verified successfully.');
+        });
+    });
+
 })
