@@ -25,6 +25,9 @@ const applicantEmailSchema = new mongoose.Schema(
       default: Date.now
     },
   },
+  {
+    timestamps: true,
+  }
 );
 
 const applicantEmail = mongoose.model('applicantEmail', applicantEmailSchema, 'applicant_email');

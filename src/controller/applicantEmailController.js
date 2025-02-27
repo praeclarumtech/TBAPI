@@ -32,7 +32,6 @@ export const sendEmail = async (req, res) => {
       date,
       file,
     });
-    console.log('storeEmail', storedEmail);
 
     logger.info(Message.MAIL_SENT);
     return HandleResponse(res, true, StatusCodes.CREATED, Message.MAIL_SENT);
@@ -49,7 +48,7 @@ export const sendEmail = async (req, res) => {
 
 export const getAllEmails = async (req, res) => {
   try {
-    const { page = 1, limit = 10, email_to, date, subject } = req.body;
+    const { page = 1, limit = 10, email_to, subject } = req.body;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
@@ -62,10 +61,6 @@ export const getAllEmails = async (req, res) => {
 
     if (subject) {
       query.subject = { $regex: subject, $options: 'i' };
-    }
-
-    if (date) {
-      query.date = date;
     }
 
     const findEmails = await pagination({
