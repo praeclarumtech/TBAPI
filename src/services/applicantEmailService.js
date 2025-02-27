@@ -1,20 +1,25 @@
 import applicantEmail from '../models/applicantEmailModel.js';
 
 export const findAllEmails = async () => {
-  return await applicantEmail.find()
-}
+  return await applicantEmail.find();
+};
 
 export const removeManyEmails = async (ids) => {
-  return await applicantEmail.deleteMany({ _id: { $in: ids } })
-}
+  return await applicantEmail.deleteMany({ _id: { $in: ids } });
+};
 
-export const createEmail = async ({ email_to, email_bcc, subject, description, date, file }) => {
+export const createEmail = async ({
+  email_to,
+  email_bcc,
+  subject,
+  description,
+  file,
+}) => {
   return await applicantEmail.create({
     email_to,
     email_bcc,
     subject,
     description,
-    date,
-    file
-  })
-}
+    file,
+  });
+};

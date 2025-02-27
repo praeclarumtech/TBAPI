@@ -12,24 +12,16 @@ import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 
 export const sendEmail = async (req, res) => {
   try {
-    const { email_to, email_bcc, subject, date, description } = req.body;
+    const { email_to, email_bcc, subject, description } = req.body;
     const file = req.file ? req.file.filename : null;
 
-    await sendingEmail({
-      email_to,
-      email_bcc,
-      subject,
-      date,
-      description,
-      file,
-    });
+    await sendingEmail({ email_to, email_bcc, subject, description, file });
 
     const storedEmail = await createEmail({
       email_to,
       email_bcc,
       subject,
       description,
-      date,
       file,
     });
 
