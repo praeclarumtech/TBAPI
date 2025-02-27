@@ -23,7 +23,7 @@ export const addApplicant = async (req, res) => {
      const request = req?.user;
      id = request.id
     }
-    const applicationNo = await generateApplicantNo();
+    const applicationNo = await generateApplicantNo();  
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
@@ -60,7 +60,10 @@ export const viewAllApplicant = async (req, res) => {
       totalExperience,
       startDate,
       endDate,
-      currentLocation,
+      city,
+      interviewStage,
+      expectedPkg,
+      noticePeriod
     } = req.body;
 
     const pageNum = parseInt(page) || 1;
@@ -81,7 +84,7 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (totalExperience && !isNaN(totalExperience)) {
-      query.totalExperience = parseInt(totalExperience);
+      query.totalExperience = parseFloat(totalExperience);
     }
 
     if (startDate || endDate) {
@@ -91,8 +94,20 @@ export const viewAllApplicant = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
     }
 
-    if (currentLocation && typeof currentLocation === "string") {
-      query.currentLocation = { $regex: new RegExp(currentLocation, "i") };
+    if (city && typeof city === "string") {
+      query.city = { $regex: new RegExp(city, "i") };
+    }
+
+    if (interviewStage && typeof interviewStage === "string") {
+      query.interviewStage = interviewStage;
+    }
+
+    if (expectedPkg && typeof expectedPkg === "string") {
+      query.expectedPkg = expectedPkg;
+    }
+
+    if (noticePeriod && typeof noticePeriod === "string") {
+      query.noticePeriod = noticePeriod;
     }
 
     const findYears = await pagination({
