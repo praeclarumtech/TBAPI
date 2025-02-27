@@ -12,16 +12,15 @@ import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 
 export const sendEmail = async (req, res) => {
   try {
-    const { email_to, email_bcc, subject, date, description } = req.body;
+    const { email_to, email_bcc, subject, description } = req.body;
 
-    await sendingEmail({ email_to, email_bcc, subject, date, description });
+    await sendingEmail({ email_to, email_bcc, subject, description });
 
     const storedEmail = await createEmail({
       email_to,
       email_bcc,
       subject,
       description,
-      date,
     });
 
     logger.info(Message.MAIL_SENT);
@@ -39,7 +38,7 @@ export const sendEmail = async (req, res) => {
 
 export const getAllEmails = async (req, res) => {
   try {
-    const { page = 1, limit = 10, email_to, date, subject } = req.body;
+    const { page = 1, limit = 10, email_to, subject } = req.body;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
@@ -52,10 +51,6 @@ export const getAllEmails = async (req, res) => {
 
     if (subject) {
       query.subject = { $regex: subject, $options: 'i' };
-    }
-
-    if (date) {
-      query.date = date;
     }
 
     const findEmails = await pagination({

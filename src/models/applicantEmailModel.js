@@ -17,11 +17,10 @@ const applicantEmailSchema = new mongoose.Schema(
     description: {
         type: String,
     },
-    date:{
-        type:Date,
-        default:Date.now
-    },
   },
+  {
+    timestamps: true,
+  }
 );
 
 const applicantEmail = mongoose.model('applicantEmail', applicantEmailSchema, 'applicant_email');
