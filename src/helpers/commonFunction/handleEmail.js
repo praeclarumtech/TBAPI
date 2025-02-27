@@ -9,7 +9,7 @@ export const sendingEmail = async ({
   email_bcc,
   subject,
   description,
-  file
+  file,
 }) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -18,7 +18,6 @@ export const sendingEmail = async ({
       pass: process.env.PASS,
     },
   });
-
   const emailText = newOtp ? `New OTP: ${newOtp}` : description;
 
   const attachments = file
@@ -30,14 +29,13 @@ export const sendingEmail = async ({
     ]
     : [];
 
-
   const mailOptions = {
     from: process.env.FROM,
     to: email_to || email,
     bcc: email_bcc || '',
     subject,
     text: emailText,
-    file: attachments
+    file: attachments,
   };
 
   const data = await transporter.sendMail(mailOptions);

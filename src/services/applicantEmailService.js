@@ -13,7 +13,7 @@ export const createEmail = async ({ email_to, email_bcc, subject, description, d
     email_to,
     email_bcc,
     subject,
-    text: description,
+    description,
     date,
     file
   })

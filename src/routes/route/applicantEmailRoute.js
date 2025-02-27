@@ -9,6 +9,7 @@ import { uploadAttachments } from '../../helpers/multer.js';
 const router = express.Router();
 
 router.post('/sendEmail', authorization, uploadAttachments, sendEmail);
+router.post('/updateEmail', authorization, uploadAttachments, sendEmail);
 router.get('/getAllEmails', getAllEmails);
 router.delete('/deleteManyEmails', deleteManyEmails);
 export default router;
