@@ -22,10 +22,5 @@ export const sendEmailValidation = Joi.object().keys({
     'string.empty': `Description cannot be an empty field`,
     'string.min': `Description should be at least 1 character long`,
     'string.max': `Description should not exceed 500 characters`,
-  }),
-  date: Joi.date().iso().max('now').required().messages({
-    'date.base': 'Date must be a valid date.',
-    'date.max': 'Date cannot be in the future.',
-    'any.required': 'Date is required.',
-  }),
+  })
 });
