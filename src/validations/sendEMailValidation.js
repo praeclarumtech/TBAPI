@@ -18,5 +18,9 @@ export const sendEmailValidation = Joi.object()
       "string.min": `Subject should be at least 1 character long`,
       "string.max": `Subject should not exceed 100 characters`,
     }),
+    description: Joi.string().optional().min(1).max(500).messages({
+      'string.min': `Description should be at least 1 character long`,
+      'string.max': `Description should not exceed 500 characters`,
+    }),
   })
-  .unknown(true);
+
