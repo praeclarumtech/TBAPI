@@ -23,7 +23,7 @@ export const addApplicant = async (req, res) => {
      const request = req?.user;
      id = request.id
     }
-    const applicationNo = await generateApplicantNo();
+    const applicationNo = await generateApplicantNo();  
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
@@ -60,6 +60,10 @@ export const viewAllApplicant = async (req, res) => {
       totalExperience,
       startDate,
       endDate,
+      city,
+      interviewStage,
+      expectedPkg,
+      noticePeriod
     } = req.body;
 
     const pageNum = parseInt(page) || 1;
@@ -80,7 +84,7 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (totalExperience && !isNaN(totalExperience)) {
-      query.totalExperience = parseInt(totalExperience);
+      query.totalExperience = parseFloat(totalExperience);
     }
 
     if (startDate || endDate) {
@@ -88,6 +92,22 @@ export const viewAllApplicant = async (req, res) => {
       if (startDate)
         query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+
+    if (city && typeof city === "string") {
+      query.city = { $regex: new RegExp(city, "i") };
+    }
+
+    if (interviewStage && typeof interviewStage === "string") {
+      query.interviewStage = interviewStage;
+    }
+
+    if (expectedPkg && typeof expectedPkg === "string") {
+      query.expectedPkg = expectedPkg;
+    }
+
+    if (noticePeriod && typeof noticePeriod === "string") {
+      query.noticePeriod = noticePeriod;
     }
 
     const findYears = await pagination({
@@ -154,11 +174,13 @@ export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const {
-      name: { firstName, middleName, lastName },
+      // name: { firstName, middleName, lastName },
       ...body
     } = req.body;
  
-    let updateData = { name: { firstName, middleName, lastName }, ...body }; 
+    let updateData = { 
+      // name: { firstName, middleName, lastName },
+     ...body }; 
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {

@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.get('/count', dashboard);
 router.get('/recentApplicant', viewAllApplicant);
-router.post('/applicantDetails', applicantDetails); 
+router.get('/applicantDetails', applicantDetails); 
 
 export default router;
