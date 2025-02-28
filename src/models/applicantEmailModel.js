@@ -8,7 +8,6 @@ const applicantEmailSchema = new mongoose.Schema(
     },
     email_bcc: {
       type: String,
-      required: true,
     },
     subject: {
       type: String,
