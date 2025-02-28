@@ -80,6 +80,8 @@ const ApplicantSchema = new mongoose.Schema(
       default: applicantEnum.HR_ROUND,
       required: false,
     },
+    practicalUrl: { type: String },
+    practicalFeedback:{ type: String },
     referral: { type: String },
     url: { type: String },
     isDeleted: { type: Boolean, default: false },

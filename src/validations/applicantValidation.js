@@ -76,6 +76,7 @@ export const applicantValidation = Joi.object({
   pincode: Joi.number().integer().required(),
   city: Joi.string().required(),
   url: Joi.string(),
+  practicalUrl: Joi.string(),
 
   appliedSkills: Joi.array().items(Joi.string()).required().messages({
     'array.base': 'Applied skills must be an array of strings.',
@@ -127,6 +128,7 @@ export const applicantValidation = Joi.object({
 
   aboutUs: Joi.string().allow(null, ''),
   feedback: Joi.string().allow(null, ''),
+  practicalFeedback: Joi.string().allow(null, ''),
 
   status: Joi.string()
     .valid(
