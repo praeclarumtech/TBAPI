@@ -2,7 +2,7 @@ import logger from '../loggers/logger.js';
 // import Applicant from '../models/applicantModel.js';
 import { Message } from '../utils/constant/message.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
-import { StatusCodes } from 'http-status-codes'; 
+import { StatusCodes } from 'http-status-codes';
 import { getDashboard } from '../services/dashboardService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
@@ -15,8 +15,8 @@ export const applicationOnProcessCount = async (req, res) => {
       finalRoundPercentage,
     } = await getDashboard();
 
-    logger.info(Message.FETCHED_REPORTS);
-    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_REPORTS, {
+    logger.info(`Reports is ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(res, true, StatusCodes.OK, `Reports is ${Message.FETCH_SUCCESSFULLY}`, {
       hrRoundPercentage: `${hrRoundPercentage}%`,
       // firstInterviewPercentage: `${firstInterviewPercentage}%`,
       // secondterviewPercentage:`${secondterviewPercentage}%`,
@@ -32,7 +32,7 @@ export const applicationOnProcessCount = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.ERROR_FETCHING_REPORTS,
+      `${Message.FAILED_TO} fetching reports.`,
       error
     );
   }
@@ -48,8 +48,8 @@ export const statusByPercentage = async (req, res) => {
       inProcessApplicantsPercentage,
     } = await getDashboard();
 
-    logger.info(Message.FETCHED_REPORTS);
-    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_REPORTS, {
+    logger.info(`Reports is ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(res, true, StatusCodes.OK, `Reports is ${Message.FETCH_SUCCESSFULLY}`, {
       holdApplicantsPercentage: `${holdApplicantsPercentage}%`,
       pendingApplicantsPercentage: `${pendingApplicantsPercentage}%`,
       selectedApplicantsPercentage: `${selectedApplicantsPercentage}%`,
@@ -65,7 +65,7 @@ export const statusByPercentage = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.ERROR_FETCHING_REPORTS,
+      `${Message.FAILED_TO} fetching reports.`,
       error
     );
   }
@@ -85,8 +85,8 @@ export const technologyStatistics = async (req, res) => {
       cApplicantsPercentage,
     } = await getDashboard();
 
-    logger.info(Message.FETCHED_REPORTS);
-    return HandleResponse(res, true, StatusCodes.OK, Message.FETCHED_REPORTS, {
+    logger.info(`Reports is ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(res, true, StatusCodes.OK, `Reports is ${Message.FETCH_SUCCESSFULLY}`, {
       nodeJsApplicantsPercentage: `${nodeJsApplicantsPercentage}%`,
       reactJsApplicantsPercentage: `${reactJsApplicantsPercentage}%`,
       dotNetApplicantsPercentage: `${dotNetApplicantsPercentage}%`,
@@ -106,7 +106,7 @@ export const technologyStatistics = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      Message.ERROR_FETCHING_REPORTS,
+      `${Message.FAILED_TO} fetching reports.`,
       error
     );
   }

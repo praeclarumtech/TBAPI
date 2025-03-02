@@ -1,12 +1,12 @@
-import logger from "../loggers/logger.js";
+import logger from '../loggers/logger.js';
 // import Applicant from '../models/applicantModel.js';
-import { Message } from "../utils/constant/message.js";
+import { Message } from '../utils/constant/message.js';
 import {
   getDashboard,
   getApplicantsDetailsByDate,
-} from "../services/dashboardService.js";
-import { HandleResponse } from "../helpers/handleResponse.js";
-import { StatusCodes } from "http-status-codes";
+} from '../services/dashboardService.js';
+import { HandleResponse } from '../helpers/handleResponse.js';
+import { StatusCodes } from 'http-status-codes';
 
 export const dashboard = async (req, res) => {
   try {

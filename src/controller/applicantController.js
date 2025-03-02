@@ -20,8 +20,8 @@ export const addApplicant = async (req, res) => {
 
     let id = null
     if (req?.user) {
-     const request = req?.user;
-     id = request.id
+      const request = req?.user;
+      id = request.id
     }
     const applicationNo = await generateApplicantNo();
     const applicantData = {
@@ -31,7 +31,7 @@ export const addApplicant = async (req, res) => {
       ...body,
     };
     const applicant = await createApplicant(applicantData);
-    logger.info(`Applicant is ${Message.ADDED_SUCCESSFULLY}: ${applicant._id}`);
+    logger.info(`Applicant is ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
@@ -123,12 +123,12 @@ export const viewApplicant = async (req, res) => {
     const applicant = await getApplicantById(applicantId);
 
     if (!applicant) {
-      logger.warn(Message.APPLICANT_NOT_FOUND);
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        Message.APPLICANT_NOT_FOUND
+        `Applicant is ${Message.NOT_FOUND}`
       );
     }
     logger.info(`Applicant is ${Message.FETCH_BY_ID}: ${applicantId}`);
@@ -136,7 +136,7 @@ export const viewApplicant = async (req, res) => {
       res,
       true,
       StatusCodes.OK,
-      `Applicant is  ${Message.FETCH_BY_ID}`,
+      `Applicant is ${Message.FETCH_BY_ID}`,
       applicant
     );
   } catch (error) {
@@ -157,10 +157,9 @@ export const updateApplicant = async (req, res) => {
       name: { firstName, middleName, lastName },
       ...body
     } = req.body;
- 
-    let updateData = { name: { firstName, middleName, lastName }, ...body }; 
-    const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
+    let updateData = { name: { firstName, middleName, lastName }, ...body };
+    const updatedApplicant = await updateApplicantById(applicantId, updateData);
     if (!updatedApplicant) {
       logger.warn(`User is ${Message.NOT_FOUND}`);
       return HandleResponse(
