@@ -12,10 +12,6 @@ export const sendEmailValidation = Joi.object().keys({
     .messages({
       'string.pattern.base': `Email_bcc should be in the correct format`,
     }),
-  subject: Joi.string().required().min(1).max(100).messages({
-    'string.empty': `Subject cannot be an empty field`,
-    'string.min': `Subject should be at least 1 character long`,
-    'string.max': `Subject should not exceed 100 characters`,
-  }),
+  subject: Joi.string().required(),
   description: Joi.string().allow('').optional(),
 });
