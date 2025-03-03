@@ -14,7 +14,7 @@ import { validator } from '../../helpers/validator.js';
 const router = express.Router();
  
 router.post('/addApplicant', validator.body(applicantValidation), addApplicant);
-router.post('/viewAllApplicant', viewAllApplicant);
+router.get('/viewAllApplicant', viewAllApplicant);
 router.get('/viewApplicant/:id', viewApplicant);
 router.put('/updateApplicant/:id',validator.body(updateApplicantValidation), updateApplicant);
  
