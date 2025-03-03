@@ -12,6 +12,7 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import ExcelJS from 'exceljs'
+import { commonSearch } from '../helpers/commonFunction/search.js';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -20,10 +21,10 @@ export const addApplicant = async (req, res) => {
       ...body
     } = req.body;
 
-    let id = null
+    let id = null;
     if (req?.user) {
       const request = req?.user;
-      id = request.id
+      id = request.id;
     }
     const applicationNo = await generateApplicantNo();
     const applicantData = {
@@ -58,6 +59,7 @@ export const viewAllApplicant = async (req, res) => {
       page = 1,
       limit = 10,
       applicationNo,
+      name,
       appliedSkills,
       totalExperience,
       startDate,
@@ -65,7 +67,7 @@ export const viewAllApplicant = async (req, res) => {
       city,
       interviewStage,
       expectedPkg,
-      noticePeriod
+      noticePeriod,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -78,7 +80,7 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (appliedSkills) {
-      const skillsArray = appliedSkills.split(',').map(skill => skill.trim());
+      const skillsArray = appliedSkills.split(',').map((skill) => skill.trim());
       query.appliedSkills = { $all: skillsArray };
     }
 
@@ -93,29 +95,48 @@ export const viewAllApplicant = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
     }
 
-    if (city && typeof city === "string") {
-      query.city = { $regex: new RegExp(city, "i") };
+    if (city && typeof city === 'string') {
+      query.city = { $regex: new RegExp(city, 'i') };
     }
 
-    if (interviewStage && typeof interviewStage === "string") {
+    if (interviewStage && typeof interviewStage === 'string') {
       query.interviewStage = interviewStage;
     }
 
-    if (expectedPkg && !isNaN(expectedPkg)) {
-      query.expectedPkg = parseFloat(expectedPkg);
+    if (expectedPkg && typeof expectedPkg === 'string') {
+      query.expectedPkg = expectedPkg;
     }
 
-    if (noticePeriod && !isNaN(noticePeriod)) {
-      query.noticePeriod = parseFloat(noticePeriod);
+    if (noticePeriod && typeof noticePeriod === 'string') {
+      query.noticePeriod = noticePeriod;
     }
 
-    const findYears = await pagination({
-      Schema: Applicant,
-      page: pageNum,
-      limit: limitNum,
-      query,
-      sort: { createdAt: -1 },
-    });
+    let searchResults = { results: [], totalRecords: 0 };
+
+    if (name) {
+      const searchFields = [
+        'name.firstName',
+        'name.middleName',
+        'name.lastName',
+      ];
+
+      searchResults = await commonSearch(
+        Applicant,
+        searchFields,
+        name,
+        pageNum,
+        limitNum
+      );
+    }
+    const findApplicants = searchResults.results.length
+      ? searchResults
+      : await pagination({
+          Schema: Applicant,
+          page: pageNum,
+          limit: limitNum,
+          query,
+          sort: { createdAt: -1 },
+        });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -123,7 +144,7 @@ export const viewAllApplicant = async (req, res) => {
       true,
       StatusCodes.OK,
       `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
-      findYears
+      findApplicants
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} view all applicant.`);
@@ -172,12 +193,11 @@ export const viewApplicant = async (req, res) => {
 export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
-    const {
-      name: { firstName, middleName, lastName },
-      ...body
-    } = req.body;
+    const { ...body } = req.body;
 
-    let updateData = { name: { firstName, middleName, lastName }, ...body };
+    let updateData = {
+      ...body,
+    };
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
