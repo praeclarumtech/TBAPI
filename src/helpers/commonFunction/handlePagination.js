@@ -16,7 +16,7 @@ export const pagination = async ({
 
   return {
     item: getItem,
-    totalRecords,
+    totalRecords, 
     currentPage: page,
     totalPages,
     limit,

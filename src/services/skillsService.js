@@ -1,4 +1,5 @@
 import Skills from '../models/skillsModel.js';
+import { pagination } from '../helpers/commonFunction/handlePagination.js';
 
 export const create = async (body) => {
   const skill = new Skills({ ...body });

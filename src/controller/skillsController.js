@@ -10,6 +10,7 @@ import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
+import { commonSearch } from '../helpers/commonFunction/search.js';
 
 export const addSkills = async (req, res) => {
   const { skills } = req.body;
@@ -57,8 +58,20 @@ export const getSkills = async (req, res) => {
   try {
     let page = Math.max(1, parseInt(req.query.page)) || 1;
     let limit = Math.min(100, Math.max(1, parseInt(req.query.limit))) || 10;
-    const totalRecords = await Skills.countDocuments({ isDeleted: false });
-    const getskills = await getAllSkills(page, limit);
+    let search = req.query.search || "";
+
+    let data;
+    let totalRecords;
+    
+    if (search) {
+      const searchFields = ['skills'];
+      const searchResult = await commonSearch(Skills, searchFields, search,);
+      data = searchResult.results;
+      totalRecords = searchResult.totalRecords;
+    } else {
+      totalRecords = await Skills.countDocuments({ isDeleted: false });
+      data = await getAllSkills(page, limit);
+    }
 
     logger.info(`All skills are ${Message.FETCH_SUCCESSFULLY}`);
     HandleResponse(
@@ -67,7 +80,7 @@ export const getSkills = async (req, res) => {
       StatusCodes.OK,
       `All skills are ${Message.FETCH_SUCCESSFULLY}`,
       {
-        getskills,
+        data,
         pagination: {
           totalRecords: totalRecords,
           currentPage: page,
