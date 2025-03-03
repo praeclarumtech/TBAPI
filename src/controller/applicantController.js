@@ -60,7 +60,11 @@ export const viewAllApplicant = async (req, res) => {
       totalExperience,
       startDate,
       endDate,
-    } = req.body;
+      city,
+      interviewStage,
+      expectedPkg,
+      noticePeriod
+    } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
@@ -71,16 +75,13 @@ export const viewAllApplicant = async (req, res) => {
       query.applicationNo = parseInt(applicationNo);
     }
 
-    if (
-      appliedSkills &&
-      Array.isArray(appliedSkills) &&
-      appliedSkills.length > 0
-    ) {
-      query.appliedSkills = { $in: appliedSkills };
+    if (appliedSkills) {
+      const skillsArray = appliedSkills.split(',').map(skill => skill.trim());
+      query.appliedSkills = { $all: skillsArray };
     }
-
+    
     if (totalExperience && !isNaN(totalExperience)) {
-      query.totalExperience = parseInt(totalExperience);
+      query.totalExperience = parseFloat(totalExperience);
     }
 
     if (startDate || endDate) {
@@ -88,6 +89,22 @@ export const viewAllApplicant = async (req, res) => {
       if (startDate)
         query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+
+    if (city && typeof city === "string") {
+      query.city = { $regex: new RegExp(city, "i") };
+    }
+
+    if (interviewStage && typeof interviewStage === "string") {
+      query.interviewStage = interviewStage;
+    }
+
+    if (expectedPkg && !isNaN(expectedPkg)) {
+      query.expectedPkg = parseFloat(expectedPkg);
+    }
+
+    if (noticePeriod && !isNaN(noticePeriod)) {
+      query.noticePeriod = parseFloat(noticePeriod);
     }
 
     const findYears = await pagination({

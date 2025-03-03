@@ -4,6 +4,7 @@ const passingYearSchema = new mongoose.Schema(
   {
     year: {
       type: Number,
+      unique: true,
     },
     is_deleted: {
       type: Boolean,

@@ -13,23 +13,34 @@ import logger from '../loggers/logger.js';
 
 export const addSkills = async (req, res) => {
   const { skills } = req.body;
-  if (!skills) {
+  if (!skills || typeof skills !== "string") {
     logger.warn(`skills is ${Message.NOT_FOUND}`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Skills field is ${Message.FIELD_REQUIRED}`
+      `Skills ${Message.FIELD_REQUIRED}`
     );
   }
   try {
+    const existingSkill = await Skills.findOne({ skills });
+    if (existingSkill) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        `Skill ${Message.ALREADY_EXIST}: ${skills}`
+      );
+    }
+
     const result = await create({ skills });
     logger.info(`Skills is ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `Skills is ${Message.ADDED_SUCCESSFULLY}`
+      `Skills is ${Message.ADDED_SUCCESSFULLY}`,
+      result
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} add skills.`);
@@ -46,7 +57,7 @@ export const getSkills = async (req, res) => {
   try {
     let page = Math.max(1, parseInt(req.query.page)) || 1;
     let limit = Math.min(100, Math.max(1, parseInt(req.query.limit))) || 10;
-    const totalRecords = await Skills.countDocuments();
+    const totalRecords = await Skills.countDocuments({ isDeleted: false });
     const getskills = await getAllSkills(page, limit);
 
     logger.info(`All skills are ${Message.FETCH_SUCCESSFULLY}`);

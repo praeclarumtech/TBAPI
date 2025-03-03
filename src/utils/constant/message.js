@@ -33,4 +33,5 @@ export const Message = {
   OTP_NOT_MATCHED: 'Otp not matched.',
   OTP_MATCHED: 'Otp matched.',
   FORGOT_SUCCESSFULLY: 'Forgot successfully.',
+  ENTER_CALENDAR_TYPE:'Provide a calendarType (week, month, year) or both startDate and endDate.',
 };
