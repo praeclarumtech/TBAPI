@@ -12,12 +12,12 @@ export const createEmail = async ({
   email_to,
   email_bcc,
   subject,
-  description = ' ',
+  description,
 }) => {
   return await applicantEmail.create({
     email_to,
     email_bcc,
     subject,
-    description: description || '',
+    description,
   });
 };
