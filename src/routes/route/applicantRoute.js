@@ -6,7 +6,7 @@ import {
   updateApplicant,
   deleteApplicant,
   updateStatus,
-  exportInToExcell
+  exportInToCSV
 } from '../../controller/applicantController.js';
 import { applicantValidation, updateApplicantValidation } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
@@ -21,7 +21,7 @@ router.put('/updateApplicant/:id', validator.body(updateApplicantValidation), up
 
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);
-router.get('/donwloadInToExcell', exportInToExcell);
+router.get('/donwloadInToCsv', exportInToCSV);
 
 
 export default router;

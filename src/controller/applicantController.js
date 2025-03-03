@@ -11,8 +11,10 @@ import Applicant from '../models/applicantModel.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-import ExcelJS from 'exceljs'
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import { Parser } from 'json2csv';
+
+
 
 export const addApplicant = async (req, res) => {
   try {
@@ -131,12 +133,12 @@ export const viewAllApplicant = async (req, res) => {
     const findApplicants = searchResults.results.length
       ? searchResults
       : await pagination({
-          Schema: Applicant,
-          page: pageNum,
-          limit: limitNum,
-          query,
-          sort: { createdAt: -1 },
-        });
+        Schema: Applicant,
+        page: pageNum,
+        limit: limitNum,
+        query,
+        sort: { createdAt: -1 },
+      });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -303,102 +305,76 @@ export const updateStatus = async (req, res) => {
   }
 };
 
-export const exportInToExcell = async (req, res) => {
+
+
+export const exportInToCSV = async (req, res) => {
   try {
     const applicants = await getAllapplicant();
-    console.log('all applicants are here', applicants)
+
     if (!applicants.length) {
-      logger.warn(`Applicants are ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Applicants are ${Message.NOT_FOUND}`
-      );
+      logger.warn('Applicants not found');
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, 'Applicants not found');
     }
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('applicants');
-
-    worksheet.columns = [
-      { header: 'Name', key: 'name' },
-      { header: 'Phone Number', key: 'phone' },
-      { header: 'WhatsApp Number', key: 'whatsapp' },
-      { header: 'Date of Birth', key: 'dob' },
-      { header: 'Gender', key: 'gender' },
-      { header: 'Full Address', key: 'fullAddress' },
-      { header: 'Email', key: 'email' },
-      { header: 'State', key: 'state' },
-      { header: 'Country', key: 'country' },
-      { header: 'City', key: 'city' },
-      { header: 'Pincode', key: 'pincode' },
-      { header: 'Qualification', key: 'qualification' },
-      { header: 'Degree', key: 'degree' },
-      { header: 'Passing Year', key: 'passingYear' },
-      { header: 'Applied Skills', key: 'appliedSkills' },
-      { header: 'Total Experience (months)', key: 'totalExperience' },
-      { header: 'Relevant Skill Experience', key: 'relevantExperience' },
-      { header: 'Other Skills', key: 'otherSkills' },
-      { header: 'Current Package', key: 'currentPkg' },
-      { header: 'Expected Package', key: 'expectedPkg' },
-      { header: 'Notice Period', key: 'noticePeriod' },
-      { header: 'Negotiation', key: 'negotiation' },
-      { header: 'Ready for Work (WFO)', key: 'wfo' },
-      { header: 'Work Preference', key: 'workPreference' },
-      { header: 'Referral', key: 'referral' },
-      { header: 'Interview Stage', key: 'interviewStage' },
-      { header: 'Status', key: 'status' },
-      { header: 'About Us', key: 'aboutUs' },
-      { header: 'Portfolio URL', key: 'portfolioUrl' },
+    // Define CSV fields
+    const fields = [
+      { label: 'First Name', value: (row) => row.name?.firstName || '' },
+      { label: 'Middle Name', value: (row) => row.name?.middleName || '' },
+      { label: 'Last Name', value: (row) => row.name?.lastName || '' },
+      { label: 'Phone Number', value: (row) => row.phone?.phoneNumber || '' },
+      { label: 'WhatsApp Number', value: (row) => row.phone?.whatsappNumber || '' },
+      { label: 'Email', value: (row) => row.email || '' },
+      { label: 'Gender', value: (row) => row.gender || '' },
+      { label: 'Date of Birth', value: (row) => row.dateOfBirth || '' },
+      { label: 'Qualification', value: (row) => row.qualification || '' },
+      { label: 'Degree', value: (row) => row.degree || '' },
+      { label: 'Passing Year', value: (row) => row.passingYear || '' },
+      { label: 'Full Address', value: (row) => row.fullAddress || '' },
+      { label: 'State', value: (row) => row.state || '' },
+      { label: 'Country', value: (row) => row.country || '' },
+      { label: 'Pincode', value: (row) => row.pincode || '' },
+      { label: 'City', value: (row) => row.city || '' },
+      { label: 'Applied Skills', value: (row) => row.appliedSkills?.join(', ') || '' },
+      { label: 'Total Experience (months)', value: (row) => row.totalExperience || '' },
+      { label: 'Relevant Skill Experience', value: (row) => row.relevantSkillExperience || '' },
+      { label: 'Other Skills', value: (row) => row.otherSkills || '' },
+      { label: 'Current Package', value: (row) => row.currentPkg || '' },
+      { label: 'Expected Package', value: (row) => row.expectedPkg || '' },
+      { label: 'Notice Period', value: (row) => row.noticePeriod || '' },
+      { label: 'Negotiation', value: (row) => row.negotiation || '' },
+      { label: 'Ready for Work (WFO)', value: (row) => row.readyForWork || '' },
+      { label: 'Work Preference', value: (row) => row.workPreference || '' },
+      { label: 'Referral', value: (row) => row.referral || '' },
+      { label: 'Interview Stage', value: (row) => row.interviewStage || '' },
+      { label: 'Status', value: (row) => row.status || '' },
+      { label: 'About Us', value: (row) => row.aboutUs || '' },
+      { label: 'Portfolio URL', value: (row) => row.portfolioUrl || '' }
     ];
 
-    applicants.forEach((applicant) => {
-      worksheet.addRow({
-        name: `${applicant.name?.firstName || ''} ${applicant.name?.middleName || ''} ${applicant.name?.lastName || ''}`,
-        phone: applicant.phone || '',
-        whatsapp: applicant.whatsapp || '',
-        dob: applicant.dob || '',
-        gender: applicant.gender || '',
-        fullAddress: applicant.fullAddress || '',
-        email: applicant.email || '',
-        state: applicant.state || '',
-        country: applicant.country || '',
-        city: applicant.city || '',
-        pincode: applicant.pincode || '',
-        qualification: applicant.education.qualification || '',
-        degree: applicant.education.degree || '',
-        passingYear: applicant.education.passingYear || '',
-        appliedSkills: applicant.appliedSkills.join(', ') || '',
-        totalExperience: applicant.totalExperience || '',
-        relevantExperience: applicant.relevantExperience || '',
-        otherSkills: applicant.otherSkills || '',
-        currentPkg: applicant.job.currentPkg || '',
-        expectedPkg: applicant.job.expectedPkg || '',
-        noticePeriod: applicant.job.noticePeriod || '',
-        negotiation: applicant.job.negotiation || '',
-        wfo: applicant.job.wfo || '',
-        workPreference: applicant.job.workPreference || '',
-        referral: applicant.job.referral || '',
-        interviewStage: applicant.job.interviewStage || '',
-        status: applicant.job.status || '',
-        aboutUs: applicant.aboutUs || '',
-        portfolioUrl: applicant.portfolioUrl || '',
-      });
-    });
+    const json2csvParser = new Parser({ fields });
+    const csvData = json2csvParser.parse(applicants);
 
-    res.header('Content-Type', 'text/csv');
-    res.header('Content-Disposition', 'attachment; filename=applicants.csv');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=applicants.csv');
 
-    const csvBuffer = await workbook.csv.writeBuffer();
-    console.log('csv file', csvBuffer)
-    res.send(csvBuffer);
+    res.status(200).send(csvData);
+    logger.info(Message.DONWLOADED)
   } catch (error) {
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} export CSV file.`
-    );
+    console.error('Error exporting to CSV:', error);
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to export CSV file.');
   }
 };
+
+
+// export const importCsv = async (req, res) => {
+//   try {
+
+//   } catch (error) {
+
+//   }
+// }
+
+
+
+
 
