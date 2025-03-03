@@ -1,5 +1,4 @@
 import logger from '../loggers/logger.js';
-// import Applicant from '../models/applicantModel.js';
 import { Message } from '../utils/constant/message.js';
 import {
   getDashboard,
