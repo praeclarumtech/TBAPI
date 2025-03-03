@@ -6,6 +6,7 @@ import {
   updateApplicant,
   deleteApplicant,
   updateStatus,
+  searchApplicants
 } from '../../controller/applicantController.js';
 import { applicantValidation } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
@@ -20,6 +21,7 @@ router.put('/updateApplicant/:id',validator.body(applicantValidation), updateApp
  
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);
+router.get('/search', searchApplicants);
  
 export default router;
  

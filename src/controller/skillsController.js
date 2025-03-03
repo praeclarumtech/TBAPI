@@ -5,6 +5,7 @@ import {
   getSkillById,
   updateSkill,
   deleteSkillById,
+  searchSkillsService
 } from '../services/skillsService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
@@ -187,3 +188,35 @@ export const deleteSkills = async (req, res) => {
     );
   }
 };
+
+export const searchSkills = async (req, res) => {
+  try {
+    const { query, page = 1, limit = 10 } = req.query;
+
+    if (!query) {
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, "Search query is required.");
+    }
+
+    const { results, totalRecords } = await searchSkillsService(query, parseInt(page), parseInt(limit));
+
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    logger.info(`Skills Search ${Message.FETCH_SUCCESSFULLY}`);
+    HandleResponse(res, true, StatusCodes.OK, `Skills Search ${Message.FETCH_SUCCESSFULLY}`, {
+      skills: results,
+      pagination: {
+        totalRecords,
+        currentPage: parseInt(page),
+        totalPages,
+        limit: parseInt(limit),
+      },
+    });
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} search skills.`);
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} search skills.`);
+  }
+};
+
+
+
+

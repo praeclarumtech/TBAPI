@@ -2,6 +2,7 @@ import {
   createApplicant,
   getApplicantById,
   updateApplicantById,
+  searchApplicantsService
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -263,3 +264,32 @@ export const updateStatus = async (req, res) => {
     );
   }
 };
+
+export const searchApplicants = async (req, res) => {
+  try {
+    const { query, page = 1, limit = 10 } = req.query;
+
+    if (!query) {
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, "Search query is required.");
+    }
+
+    const { results, totalRecords } = await searchApplicantsService(query, parseInt(page), parseInt(limit));
+
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    logger.info(`Applicant Search ${Message.FETCH_SUCCESSFULLY}`);
+    HandleResponse(res, true, StatusCodes.OK, `Applicant Search ${Message.FETCH_SUCCESSFULLY}`, {
+      Applicant: results,
+      pagination: {
+        totalRecords,
+        currentPage: parseInt(page),
+        totalPages,
+        limit: parseInt(limit),
+      },
+    });
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} search Applicant.`);
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR,`${Message.FAILED_TO} search Applicant.`);
+  }
+};
+
