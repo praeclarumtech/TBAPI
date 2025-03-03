@@ -11,6 +11,7 @@ import Applicant from '../models/applicantModel.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
+import { commonSearch } from '../helpers/commonFunction/search.js';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -57,11 +58,12 @@ export const viewAllApplicant = async (req, res) => {
       page = 1,
       limit = 10,
       applicationNo,
+      name,
       appliedSkills,
       totalExperience,
       startDate,
       endDate,
-    } = req.body;
+    } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
@@ -91,13 +93,16 @@ export const viewAllApplicant = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
     }
 
-    const findYears = await pagination({
-      Schema: Applicant,
-      page: pageNum,
-      limit: limitNum,
-      query,
-      sort: { createdAt: -1 },
-    });
+    let searchResults = { results: [], totalRecords: 0 };
+
+if (name) {
+  const searchFields = ["name.firstName", "name.middleName", "name.lastName"];
+
+  searchResults = await commonSearch(Applicant, searchFields, name, pageNum, limitNum);
+}
+    const findApplicants = searchResults.results.length
+      ? searchResults
+      : await pagination({ Schema: Applicant, page: pageNum, limit: limitNum, query, sort: { createdAt: -1 } });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -105,7 +110,7 @@ export const viewAllApplicant = async (req, res) => {
       true,
       StatusCodes.OK,
       `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
-      findYears
+      findApplicants
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} view all applicant.`);

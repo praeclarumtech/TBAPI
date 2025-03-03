@@ -21,6 +21,6 @@ export const commonSearch = async (model, searchFields, query, page = 1, limit =
     .limit(limit)
     .lean();
 
-  return { results, totalRecords };
+  return { results, totalRecords }; 
 };
 
