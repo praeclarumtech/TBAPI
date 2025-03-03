@@ -19,12 +19,12 @@ export const addApplicant = async (req, res) => {
       ...body
     } = req.body;
 
-    let id = null
+    let id = null;
     if (req?.user) {
-     const request = req?.user;
-     id = request.id
+      const request = req?.user;
+      id = request.id;
     }
-    const applicationNo = await generateApplicantNo();  
+    const applicationNo = await generateApplicantNo();
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
@@ -65,7 +65,7 @@ export const viewAllApplicant = async (req, res) => {
       city,
       interviewStage,
       expectedPkg,
-      noticePeriod
+      noticePeriod,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -78,10 +78,10 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (appliedSkills) {
-      const skillsArray = appliedSkills.split(',').map(skill => skill.trim());
+      const skillsArray = appliedSkills.split(',').map((skill) => skill.trim());
       query.appliedSkills = { $all: skillsArray };
     }
-    
+
     if (totalExperience && !isNaN(totalExperience)) {
       query.totalExperience = parseFloat(totalExperience);
     }
@@ -93,32 +93,48 @@ export const viewAllApplicant = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
     }
 
-    if (city && typeof city === "string") {
-      query.city = { $regex: new RegExp(city, "i") };
+    if (city && typeof city === 'string') {
+      query.city = { $regex: new RegExp(city, 'i') };
     }
 
-    if (interviewStage && typeof interviewStage === "string") {
+    if (interviewStage && typeof interviewStage === 'string') {
       query.interviewStage = interviewStage;
     }
 
-    if (expectedPkg && typeof expectedPkg === "string") {
+    if (expectedPkg && typeof expectedPkg === 'string') {
       query.expectedPkg = expectedPkg;
     }
 
-    if (noticePeriod && typeof noticePeriod === "string") {
+    if (noticePeriod && typeof noticePeriod === 'string') {
       query.noticePeriod = noticePeriod;
     }
 
     let searchResults = { results: [], totalRecords: 0 };
 
-if (name) {
-  const searchFields = ["name.firstName", "name.middleName", "name.lastName"];
+    if (name) {
+      const searchFields = [
+        'name.firstName',
+        'name.middleName',
+        'name.lastName',
+      ];
 
-  searchResults = await commonSearch(Applicant, searchFields, name, pageNum, limitNum);
-}
+      searchResults = await commonSearch(
+        Applicant,
+        searchFields,
+        name,
+        pageNum,
+        limitNum
+      );
+    }
     const findApplicants = searchResults.results.length
       ? searchResults
-      : await pagination({ Schema: Applicant, page: pageNum, limit: limitNum, query, sort: { createdAt: -1 } });
+      : await pagination({
+          Schema: Applicant,
+          page: pageNum,
+          limit: limitNum,
+          query,
+          sort: { createdAt: -1 },
+        });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -175,12 +191,11 @@ export const viewApplicant = async (req, res) => {
 export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
-    const {
-      ...body
-    } = req.body;
- 
-    let updateData = { 
-     ...body }; 
+    const { ...body } = req.body;
+
+    let updateData = {
+      ...body,
+    };
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
@@ -285,4 +300,3 @@ export const updateStatus = async (req, res) => {
     );
   }
 };
-
