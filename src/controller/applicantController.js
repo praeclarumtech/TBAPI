@@ -23,7 +23,7 @@ export const addApplicant = async (req, res) => {
      const request = req?.user;
      id = request.id
     }
-    const applicationNo = await generateApplicantNo();
+    const applicationNo = await generateApplicantNo();  
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
@@ -64,7 +64,7 @@ export const viewAllApplicant = async (req, res) => {
       interviewStage,
       expectedPkg,
       noticePeriod
-    } = req.query;
+    } = req.body;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
@@ -99,12 +99,12 @@ export const viewAllApplicant = async (req, res) => {
       query.interviewStage = interviewStage;
     }
 
-    if (expectedPkg && !isNaN(expectedPkg)) {
-      query.expectedPkg = parseFloat(expectedPkg);
+    if (expectedPkg && typeof expectedPkg === "string") {
+      query.expectedPkg = expectedPkg;
     }
 
-    if (noticePeriod && !isNaN(noticePeriod)) {
-      query.noticePeriod = parseFloat(noticePeriod);
+    if (noticePeriod && typeof noticePeriod === "string") {
+      query.noticePeriod = noticePeriod;
     }
 
     const findYears = await pagination({
@@ -171,11 +171,13 @@ export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const {
-      name: { firstName, middleName, lastName },
+      // name: { firstName, middleName, lastName },
       ...body
     } = req.body;
  
-    let updateData = { name: { firstName, middleName, lastName }, ...body }; 
+    let updateData = { 
+      // name: { firstName, middleName, lastName },
+     ...body }; 
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
