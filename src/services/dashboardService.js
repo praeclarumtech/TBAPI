@@ -35,30 +35,23 @@ export const getDashboard = async () => {
   };
 }; 
 
-// dashBoard
 export const getApplicantsByMonth = async (month, year) => {
+  const currentDate = new Date();
+  const selectedMonth = month ? Number(month) : currentDate.getMonth() + 1; 
+  const selectedYear = year ? Number(year) : currentDate.getFullYear();
 
-  const startDate = new Date(year, month - 1, 1); // 1st day of the month
-  const endDate = new Date(year, month, 0); // Last day of the month
+  const startDate = new Date(selectedYear, selectedMonth - 1, 1); 
+  const endDate = new Date(selectedYear, selectedMonth, 0);
 
-  const weekRanges = [
-    { start: new Date(year, month - 1, 1), end: new Date(year, month - 1, 7) },  // Week 1
-    { start: new Date(year, month - 1, 8), end: new Date(year, month - 1, 14) }, // Week 2
-    { start: new Date(year, month - 1, 15), end: new Date(year, month - 1, 21) }, // Week 3
-    { start: new Date(year, month - 1, 22), end: new Date(year, month - 1, 28) }, // Week 3
-    { start: new Date(year, month - 1, 29), end: new Date(year, month - 1, 31) }, // Week 3
-    // { start: new Date(year, month - 1, 29), end: endDate } // Week 4 (until last day)
-  ];
+  const totalApplicantsInMonth = await Applicant.countDocuments({
+    createdAt: { $gte: startDate, $lte: endDate }
+  });
 
-  const totalApplicantsInMonth = await Applicant.countDocuments({createdAt: { $gte: startDate, $lte: endDate }  });
+  const totalApplicants = await Applicant.countDocuments();
 
-  const weeklyCounts = await Promise.all(
-    weekRanges.map(async ({ start, end }) => {
-      const count = await Applicant.countDocuments({ createdAt: { $gte: start, $lte: end } });
-      const percentage = totalApplicantsInMonth > 0 ? (count / totalApplicantsInMonth) * 100 : 0;
-      return { start, end, count, percentage: percentage.toFixed(2) + "%" };
-    })
-  );
+  const percentage = totalApplicants
+    ? ((totalApplicantsInMonth / totalApplicants) * 100).toFixed(2)
+    : 0;
 
-  return { totalApplicantsInMonth, weeklyCounts };
+  return { totalApplicantsInMonth, percentage };
 };

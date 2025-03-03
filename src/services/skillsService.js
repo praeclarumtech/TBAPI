@@ -1,5 +1,4 @@
 import Skills from '../models/skillsModel.js';
-import { commonSearch } from '../helpers/commonFunction/search.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 
 export const create = async (body) => {
@@ -24,8 +23,4 @@ export const updateSkill = async (id, updateData) => {
  
 export const deleteSkillById = async (id) => {
   return Skills.updateOne({_id: id}, { isDeleted: true });
-};
-
-export const searchSkillsService = async (query, page, limit) => {
-  return await commonSearch(Skills, ['skills'], query, page, limit, { createdAt: -1 });
 };

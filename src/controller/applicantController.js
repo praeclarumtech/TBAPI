@@ -2,7 +2,6 @@ import {
   createApplicant,
   getApplicantById,
   updateApplicantById,
-  searchApplicantsService
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -25,7 +24,7 @@ export const addApplicant = async (req, res) => {
      const request = req?.user;
      id = request.id
     }
-    const applicationNo = await generateApplicantNo();
+    const applicationNo = await generateApplicantNo();  
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
@@ -63,6 +62,10 @@ export const viewAllApplicant = async (req, res) => {
       totalExperience,
       startDate,
       endDate,
+      city,
+      interviewStage,
+      expectedPkg,
+      noticePeriod
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -74,16 +77,13 @@ export const viewAllApplicant = async (req, res) => {
       query.applicationNo = parseInt(applicationNo);
     }
 
-    if (
-      appliedSkills &&
-      Array.isArray(appliedSkills) &&
-      appliedSkills.length > 0
-    ) {
-      query.appliedSkills = { $in: appliedSkills };
+    if (appliedSkills) {
+      const skillsArray = appliedSkills.split(',').map(skill => skill.trim());
+      query.appliedSkills = { $all: skillsArray };
     }
-
+    
     if (totalExperience && !isNaN(totalExperience)) {
-      query.totalExperience = parseInt(totalExperience);
+      query.totalExperience = parseFloat(totalExperience);
     }
 
     if (startDate || endDate) {
@@ -91,6 +91,22 @@ export const viewAllApplicant = async (req, res) => {
       if (startDate)
         query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+
+    if (city && typeof city === "string") {
+      query.city = { $regex: new RegExp(city, "i") };
+    }
+
+    if (interviewStage && typeof interviewStage === "string") {
+      query.interviewStage = interviewStage;
+    }
+
+    if (expectedPkg && typeof expectedPkg === "string") {
+      query.expectedPkg = expectedPkg;
+    }
+
+    if (noticePeriod && typeof noticePeriod === "string") {
+      query.noticePeriod = noticePeriod;
     }
 
     let searchResults = { results: [], totalRecords: 0 };
@@ -160,11 +176,11 @@ export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const {
-      name: { firstName, middleName, lastName },
       ...body
     } = req.body;
  
-    let updateData = { name: { firstName, middleName, lastName }, ...body }; 
+    let updateData = { 
+     ...body }; 
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
@@ -267,34 +283,6 @@ export const updateStatus = async (req, res) => {
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} update applicant.`
     );
-  }
-};
-
-export const searchApplicants = async (req, res) => {
-  try {
-    const { query, page = 1, limit = 10 } = req.query;
-
-    if (!query) {
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, "Search query is required.");
-    }
-
-    const { results, totalRecords } = await searchApplicantsService(query, parseInt(page), parseInt(limit));
-
-    const totalPages = Math.ceil(totalRecords / limit);
-
-    logger.info(`Applicant Search ${Message.FETCH_SUCCESSFULLY}`);
-    HandleResponse(res, true, StatusCodes.OK, `Applicant Search ${Message.FETCH_SUCCESSFULLY}`, {
-      Applicant: results,
-      pagination: {
-        totalRecords,
-        currentPage: parseInt(page),
-        totalPages,
-        limit: parseInt(limit),
-      },
-    });
-  } catch (error) {
-    logger.error(`${Message.FAILED_TO} search Applicant.`);
-    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR,`${Message.FAILED_TO} search Applicant.`);
   }
 };
 

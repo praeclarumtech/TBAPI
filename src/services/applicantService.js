@@ -1,5 +1,4 @@
 import Applicant from '../models/applicantModel.js';
-import { commonSearch } from '../helpers/commonFunction/search.js';
 
 export const createApplicant = async (body) => {
   const applicant = new Applicant({ ...body });
@@ -17,8 +16,4 @@ export const getApplicantById = async (id) => {
 
 export const updateApplicantById = async (id, updateData) => {
   return Applicant.updateOne({_id: id}, updateData);
-};
-
-export const searchApplicantsService = async (query) => {
-  return await commonSearch(Applicant, ['name.firstName', 'name.middleName', 'name.lastName', 'appliedSkills'], query, );
 };
