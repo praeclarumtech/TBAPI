@@ -45,11 +45,6 @@ const ApplicantSchema = new mongoose.Schema(
     expectedPkg: { type: String },
     noticePeriod: { type: String },
     negotiation: { type: String },
-    readyForWork: {
-      type: String,
-      enum: [applicantEnum.YES, applicantEnum.NO],
-      required: false,
-    },
     workPreference: {
       type: String,
       enum: [applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE],
