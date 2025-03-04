@@ -81,9 +81,9 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.EXPIRES_IN} 
+      { expiresIn: process.env.EXPIRES_IN }
     );
-    
+
     logger.info(Message.USER_LOGGED_IN_SUCCESSFULLY);
 
     return HandleResponse(
@@ -223,6 +223,7 @@ export const sendEmail = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await findUserEmail({ email });
+    console.log("user is exist", user)
     if (!user) {
       logger.warn(`User is ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -308,9 +309,10 @@ export const verifyOtp = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   try {
-    const userId = req.params.id;
+    // const userId = req.params.id;
+    const { email, newPassword, confirmPassword } = req.body;
 
-    const user = await getUserById(userId);
+    const user = await findUserEmail({ email });
     if (!user) {
       logger.warn(`User is ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -320,8 +322,6 @@ export const forgotPassword = async (req, res) => {
         `User is ${Message.NOT_FOUND}`
       );
     }
-
-    const { newPassword, confirmPassword } = req.body;
 
     if (newPassword !== confirmPassword) {
       logger.warn(Message.PASSWORD_MISMATCH);
@@ -333,7 +333,7 @@ export const forgotPassword = async (req, res) => {
       );
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await updateUserById(userId, { password: hashedPassword });
+    await updateUserById(email, { password: hashedPassword });
 
     logger.info(`Password is ${Message.FORGOT_SUCCESSFULLY}`);
     return HandleResponse(
@@ -379,8 +379,8 @@ export const changePassword = async (req, res) => {
         Message.OLD_PASSWORD_INCORRECT
       );
     }
-        user.password = await newPassword;
-        await user.save();
+    user.password = await newPassword;
+    await user.save();
 
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
     return HandleResponse(
