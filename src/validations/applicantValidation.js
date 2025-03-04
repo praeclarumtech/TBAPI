@@ -116,13 +116,6 @@ export const applicantValidation = Joi.object({
   noticePeriod: Joi.string().required(),
   negotiation: Joi.string().required(),
 
-  readyForWork: Joi.string()
-    .valid(applicantEnum.YES, applicantEnum.NO)
-    .messages({
-      'any.only': 'Ready WFO must be yes or no.',
-      'any.required': 'Ready WFO is required.',
-    }),
-
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
     .required()
@@ -147,7 +140,6 @@ export const applicantValidation = Joi.object({
       applicantEnum.TECHNICSL_SUPPORT,
       applicantEnum.OTHER
     )
-    .required()
     .messages({
       'any.required': 'CurrentCompanyDesignation is required.',
     }),
@@ -294,12 +286,6 @@ export const updateApplicantValidation = Joi.object({
   noticePeriod: Joi.string(),
   negotiation: Joi.string(),
 
-  readyForWork: Joi.string()
-    .valid(applicantEnum.YES, applicantEnum.NO)
-    .messages({
-      'any.only': 'Ready WFO must be yes or no.',
-    }),
-
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
     .messages({
@@ -364,7 +350,7 @@ export const updateApplicantValidation = Joi.object({
   MaritalStatus: Joi.string()
     .valid(applicantEnum.SINGAL, applicantEnum.MARRIED)
     .messages({
-      'any.only': 'Work Preference must be Singal, hybrid, or Married.',
+      'any.only': 'Work Preference must be Singal, Married.',
     }),
   lastFollowUpDate: Joi.date().messages({
     'date.base': 'Date of birth must be a valid date.',
