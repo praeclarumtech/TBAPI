@@ -116,13 +116,6 @@ export const applicantValidation = Joi.object({
   noticePeriod: Joi.string().required(),
   negotiation: Joi.string().required(),
 
-  readyForWork: Joi.string()
-    .valid(applicantEnum.YES, applicantEnum.NO)
-    .messages({
-      'any.only': 'Ready WFO must be yes or no.',
-      'any.required': 'Ready WFO is required.',
-    }),
-
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
     .required()
