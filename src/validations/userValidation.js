@@ -71,6 +71,12 @@ export const sendEmailValidation = Joi.object({
 });
 
 export const forgotPasswordValidation = Joi.object({
+  email: Joi.string().required().email().messages({
+    'string.base': `Email id should be a type of 'text'`,
+    'string.email': `Email id should be in correct format`,
+    'string.empty': `Email id cannot be an empty field`,
+    'any.required': `Email id is required`,
+  }),
   newPassword: Joi.string()
     .required()
     .min(8)
