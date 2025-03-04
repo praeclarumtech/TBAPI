@@ -1,8 +1,9 @@
-import { getAllcountry, getAllstates } from '../services/commonService.js';
-import logger from '../loggers/logger.js';
-import { HandleResponse } from '../helpers/handleResponse.js';
+import { getAllcountry, getAllstates, getAllCity} from '../services/commonService.js';
 import { StatusCodes } from 'http-status-codes';
 import { Message } from '../utils/constant/message.js';
+import logger from '../loggers/logger.js';
+import { HandleResponse } from '../helpers/handleResponse.js';
+
 
 export const viewCountry = async (req, res) => {
   try {
@@ -49,3 +50,25 @@ export const viewCountry = async (req, res) => {
       );
     }
   };
+
+  export const viewCity = async (req, res) => { 
+    try {
+      const { state_id } = req.query;
+      const City = await getAllCity({ state_id });
+  
+      logger.info(Message.FETCHING_CITIES);
+      return HandleResponse(res, true, StatusCodes.OK, undefined, City);
+    } catch (error) {
+      logger.error(`Error fetching cities: ${error.message}`, {
+        stack: error.stack,
+      });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        Message.ERROR_FETCHING_CITIES,
+        undefined,
+        error
+      );      
+    }
+  };        
