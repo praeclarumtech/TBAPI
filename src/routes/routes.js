@@ -10,7 +10,7 @@ import reportsRouter from './route/reportsRoute.js';
 const router = express.Router();
 
 router.use('/year', yearRoute);
-router.use('/user', userRouter);
+router.use('user/', userRouter);
 router.use('/email/applicant',applicantEmailRouter);
 router.use('/skill', skillsRoute);
 router.use('/applicants', applicantRouter);
