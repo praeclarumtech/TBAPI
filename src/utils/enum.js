@@ -34,16 +34,32 @@ export const applicantEnum = {
   FINAL: 'final',
   SECOND_INTERVIEW: '2nd interview',
 
-  NODE_JS:'Node.js',
-  REACT:'React',
-  DOTNET:'DotNet',
-  ANGULAR:'Angular',
-  UI_UX:'UI UX',
-  PYTHON:'Python',
-  JAVASCRIPT:'JavaScript',
-  JAVA:'Java',
-  C:'C++',
-  
+  NODE_JS: 'Node.js',
+  REACT: 'React',
+  DOTNET: 'DotNet',
+  ANGULAR: 'Angular',
+  UI_UX: 'UI UX',
+  PYTHON: 'Python',
+  JAVASCRIPT: 'JavaScript',
+  JAVA: 'Java',
+  C: 'C++',
+
+  SOFTWARE_ENGINNER: 'Software Engineer',
+  FRONTED_DEVLOPER: 'Frontend Developer',
+  BACKEND_DEVLOPER: 'Backend Developer',
+  FULL_STACK_DEVLOPER: 'Full Stack Developer',
+  DATA_ANALYST: 'Data Analyst',
+  DATA_SCIENTIST: 'Data Scientist',
+  PRODUCT_MANAGER: 'Product Manager',
+  UI_UX: 'UX/UI Designer',
+  QA: 'QA Engineer',
+  DEVOPS: 'DevOps Engineer',
+  BUSNESS_ANALYST: 'Business Analyst',
+  TECHNICSL_SUPPORT: 'Technical Support Engineer',
+  OTHER:'Other',
+
+  SINGAL:'Singal',
+  MARRIED:'married',
 };
 
 export const countryEnum = Object.freeze({
