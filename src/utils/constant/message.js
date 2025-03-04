@@ -32,7 +32,8 @@ export const Message = {
   FETCH_BY_ID: 'Successfull Fetched by id.',
   OTP_NOT_MATCHED: 'Otp not matched.',
   OTP_MATCHED: 'Otp matched.',
-  FORGOT_SUCCESSFULLY: 'Forgot successfully.',
+  FORGOT_SUCCESSFULLY: 'forgot successfully.',
   ENTER_CALENDAR_TYPE: 'Provide a calendarType (week, month, year) or both startDate and endDate.',
-  DONWLOADED: 'File downloaded successfully.'
+  DONWLOADED: 'File downloaded successfully.',
+  IMPORTED: 'File imported successfully.'
 };

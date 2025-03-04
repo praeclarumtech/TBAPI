@@ -3,6 +3,7 @@ import {
   getAllapplicant,
   getApplicantById,
   updateApplicantById,
+  createApplicants,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -12,9 +13,13 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
-import { Parser } from 'json2csv';
-
-
+import { uploadCv } from '../helpers/multer.js';
+import fs from 'fs';
+import csvParser from 'csv-parser';
+import {
+  generateApplicantCsv,
+  processCsvRow,
+} from '../helpers/commonFunction/applicantExport.js';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -305,76 +310,74 @@ export const updateStatus = async (req, res) => {
   }
 };
 
-
-
-export const exportInToCSV = async (req, res) => {
+export const exportApplicantCsv = async (req, res) => {
   try {
     const applicants = await getAllapplicant();
 
     if (!applicants.length) {
       logger.warn('Applicants not found');
-      return HandleResponse(res, false, StatusCodes.NOT_FOUND, 'Applicants not found');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'Applicants not found'
+      );
     }
 
-    // Define CSV fields
-    const fields = [
-      { label: 'First Name', value: (row) => row.name?.firstName || '' },
-      { label: 'Middle Name', value: (row) => row.name?.middleName || '' },
-      { label: 'Last Name', value: (row) => row.name?.lastName || '' },
-      { label: 'Phone Number', value: (row) => row.phone?.phoneNumber || '' },
-      { label: 'WhatsApp Number', value: (row) => row.phone?.whatsappNumber || '' },
-      { label: 'Email', value: (row) => row.email || '' },
-      { label: 'Gender', value: (row) => row.gender || '' },
-      { label: 'Date of Birth', value: (row) => row.dateOfBirth || '' },
-      { label: 'Qualification', value: (row) => row.qualification || '' },
-      { label: 'Degree', value: (row) => row.degree || '' },
-      { label: 'Passing Year', value: (row) => row.passingYear || '' },
-      { label: 'Full Address', value: (row) => row.fullAddress || '' },
-      { label: 'State', value: (row) => row.state || '' },
-      { label: 'Country', value: (row) => row.country || '' },
-      { label: 'Pincode', value: (row) => row.pincode || '' },
-      { label: 'City', value: (row) => row.city || '' },
-      { label: 'Applied Skills', value: (row) => row.appliedSkills?.join(', ') || '' },
-      { label: 'Total Experience (months)', value: (row) => row.totalExperience || '' },
-      { label: 'Relevant Skill Experience', value: (row) => row.relevantSkillExperience || '' },
-      { label: 'Other Skills', value: (row) => row.otherSkills || '' },
-      { label: 'Current Package', value: (row) => row.currentPkg || '' },
-      { label: 'Expected Package', value: (row) => row.expectedPkg || '' },
-      { label: 'Notice Period', value: (row) => row.noticePeriod || '' },
-      { label: 'Negotiation', value: (row) => row.negotiation || '' },
-      { label: 'Ready for Work (WFO)', value: (row) => row.readyForWork || '' },
-      { label: 'Work Preference', value: (row) => row.workPreference || '' },
-      { label: 'Referral', value: (row) => row.referral || '' },
-      { label: 'Interview Stage', value: (row) => row.interviewStage || '' },
-      { label: 'Status', value: (row) => row.status || '' },
-      { label: 'About Us', value: (row) => row.aboutUs || '' },
-      { label: 'Portfolio URL', value: (row) => row.portfolioUrl || '' }
-    ];
-
-    const json2csvParser = new Parser({ fields });
-    const csvData = json2csvParser.parse(applicants);
-
+    const csvData = generateApplicantCsv(applicants);
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=applicants.csv');
 
     res.status(200).send(csvData);
-    logger.info(Message.DONWLOADED)
+    logger.info(Message.DONWLOADED);
   } catch (error) {
     console.error('Error exporting to CSV:', error);
-    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to export CSV file.');
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to export CSV file.'
+    );
   }
 };
+export const importApplicantCsv = async (req, res) => {
+  try {
+    uploadCv(req, res, async () => {
+      if (!req.file) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `${Message.FAILED_TO} upload csv`
+        );
+      }
 
+      const results = [];
+      const promises = [];
 
-// export const importCsv = async (req, res) => {
-//   try {
+      fs.createReadStream(req.file.path)
+        .pipe(csvParser())
+        .on('data', async (data) => {
+          promises.push(
+            processCsvRow(data).then((applicant) => results.push(applicant))
+          );
+        })
+        .on('end', async () => {
+          await Promise.all(promises);
+          await createApplicants(results);
+          fs.unlinkSync(req.file.path);
+          return HandleResponse(res, true, StatusCodes.OK, Message.IMPORTED);
+        });
+    });
 
-//   } catch (error) {
-
-//   }
-// }
-
-
-
-
-
+    logger.info(Message.IMPORTED);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} import csv,`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} import csv,`
+    );
+  }
+};

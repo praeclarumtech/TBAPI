@@ -5,7 +5,7 @@ const ApplicantSchema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: 'user',
       required: false,
     },
     applicationNo: { type: Number, required: true },
@@ -71,23 +71,24 @@ const ApplicantSchema = new mongoose.Schema(
     interviewStage: {
       type: String,
       enum: [
-        applicantEnum.HR_ROUND,//** */
-        applicantEnum.TECHNICAL,//** */
+        applicantEnum.HR_ROUND, //** */
+        applicantEnum.TECHNICAL, //** */
         applicantEnum.FIRST_INTERVIEW,
-        applicantEnum.FINAL,//** */
+        applicantEnum.FINAL, //** */
         applicantEnum.SECOND_INTERVIEW,
       ],
       default: applicantEnum.HR_ROUND,
       required: false,
     },
     practicalUrl: { type: String },
-    practicalFeedback:{ type: String },
-    portfolioUrl:{ type: String },
+    practicalFeedback: { type: String },
+    portfolioUrl: { type: String },
     referral: { type: String },
     resumeUrl: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
   },
+
   { timestamps: true }
 );
 
