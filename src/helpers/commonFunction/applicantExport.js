@@ -125,8 +125,6 @@ export const processCsvRow = async (data) => {
         referral: data['Referral']?.trim() || '',
         resumeUrl: data['Resume URL']?.trim() || '',
         rating,
-
-        // Newly added missing fields
         communicationSkill: data['Communication Skill']?.trim() || '',
         CurrentCompanyDesignation: data['Current Company Designation']?.trim() || '',
         PreferredLocations: data['Preferred Locations']?.trim() || '',
@@ -138,4 +136,3 @@ export const processCsvRow = async (data) => {
         HomeTownCity: data['Home Town City']?.trim() || '',
     };
 };
-
