@@ -32,8 +32,8 @@ const ApplicantSchema = new mongoose.Schema(
     currentLocation: { type: String },
     state: { type: String, required: true },
     country: { type: String, required: true },
-    pincode: { type: Number, required: true },
-    city: { type: String, required: true },
+    cuttentPincode: { type: Number, required: true },
+    currentCity: { type: String, required: true },
     appliedSkills: { type: [String], required: true },
     resume: { type: String, required: false },
     totalExperience: { type: Number, required: true },
@@ -76,7 +76,7 @@ const ApplicantSchema = new mongoose.Schema(
       default: applicantEnum.HR_ROUND,
       required: false,
     },
-    CurrentCompanyDesignation:{
+    currentCompanyDesignation:{
       type: String,
       enum: [
         applicantEnum.FRONTED_DEVLOPER,
@@ -100,9 +100,9 @@ const ApplicantSchema = new mongoose.Schema(
     portfolioUrl:{ type: String },
     referral: { type: String },
     resumeUrl: { type: String },
-    PreferredLocations: { type: String, },
-    CurrentCompanyName: { type: String, },
-    MaritalStatus:{
+    preferredLocations: { type: String, },
+    currentCompanyName: { type: String, },
+    maritalStatus:{
       type: String,
       enum: [
         applicantEnum.SINGAL,
@@ -110,7 +110,8 @@ const ApplicantSchema = new mongoose.Schema(
       ],
     },
     lastFollowUpDate: { type: Date },
-    HomeTownCity:{ type: String},
+    homeTownCity:{ type: String},
+    homePincode: { type: Number, required: true },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
   },
