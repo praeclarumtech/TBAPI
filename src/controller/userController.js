@@ -20,10 +20,10 @@ import {
 import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const register = async (req, res, next) => {
-  let { firstName, lastName, email, phoneNumber, dateOfBirth, password, confirmPassword, role } = req.body;
   try {
+    let { firstName, lastName, email, phoneNumber, dateOfBirth, password, confirmPassword, role } = req.body;
     const existingUser = await getUser({ email });
-    console.log("exist user", existingUser)
+    console.log("Existing user", existingUser)
 
     if (existingUser) {
       logger.warn(`User is ${Message.ALREADY_EXIST}`);
