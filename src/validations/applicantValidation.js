@@ -254,6 +254,7 @@ export const updateApplicantValidation = Joi.object({
   pincode: Joi.number().integer(),
   city: Joi.string(),
   url: Joi.string(),
+  resumeUrl: Joi.string(),
 
   appliedSkills: Joi.array().items(Joi.string()).messages({
     'array.base': 'Applied skills must be an array of strings.',
