@@ -172,8 +172,7 @@ export const viewProfileById = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { userName, email, phoneNumber, dateOfBirth, gender, designation } =
-      req.body;
+    const { userName, email, phoneNumber, dateOfBirth, gender, designation } = req.body;
 
     let updateData = {
       userName,
@@ -184,8 +183,21 @@ export const updateProfile = async (req, res) => {
       designation,
     };
 
+    console.log("Uploaded file:", req.file);
+
     if (req.file) {
-      updateData.profilePicture = req.file.filename;
+      const { filename, mimetype } = req.file;
+      const filePath = `/src/uploads/profile/${filename}`
+      const baseUrl = "http://localhost:3000/uploads/profile";
+
+      updateData.profilePicture = {
+        path: `user/${Date.now()}`,
+        pathWithFilename: `user/${Date.now()}/${filename}`,
+        filename: filename,
+        completedUrl: `${baseUrl}${filename}`,
+        baseUrl: baseUrl,
+        mime: mimetype.toUpperCase(),
+      };
     }
 
     const updatedUser = await updateUserById(userId, updateData);
@@ -218,6 +230,7 @@ export const updateProfile = async (req, res) => {
     );
   }
 };
+
 
 export const sendEmail = async (req, res) => {
   try {
