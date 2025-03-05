@@ -41,7 +41,6 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'Expected Package', value: (row) => row.expectedPkg || '' },
         { label: 'Notice Period', value: (row) => row.noticePeriod || '' },
         { label: 'Negotiation', value: (row) => row.negotiation || '' },
-        { label: 'Ready for Work (WFO)', value: (row) => row.readyForWork || '' },
         { label: 'Work Preference', value: (row) => row.workPreference || '' },
         { label: 'Referral', value: (row) => row.referral || '' },
         { label: 'Interview Stage', value: (row) => row.interviewStage || '' },
@@ -49,12 +48,18 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'About Us', value: (row) => row.aboutUs || '' },
         { label: 'Portfolio URL', value: (row) => row.portfolioUrl || '' },
         { label: 'Practical URL', value: (row) => row.practicalUrl || '' },
-        {
-            label: 'Practical Feedback',
-            value: (row) => row.practicalFeedback || '',
-        },
-        { label: 'Referral', value: (row) => row.referral || '' },
+        { label: 'Practical Feedback', value: (row) => row.practicalFeedback || '', },
         { label: 'Resume URL', value: (row) => row.resumeUrl || '' },
+        { label: 'Current Location', value: (row) => row.currentLocation || '' },
+        { label: 'Communication Skill', value: (row) => row.communicationSkill || '' },
+        { label: 'Current Company Designation', value: (row) => row.CurrentCompanyDesignation || '' },
+        { label: 'Preferred Locations', value: (row) => row.PreferredLocations || '' },
+        { label: 'Current Company Name', value: (row) => row.CurrentCompanyName || '' },
+        { label: 'Marital Status', value: (row) => row.MaritalStatus || '' },
+        { label: 'Last Follow-Up Date', value: (row) => row.lastFollowUpDate || '' },
+        { label: 'Home Town City', value: (row) => row.HomeTownCity || '' },
+        { label: 'Rating', value: (row) => row.rating || '' },
+        { label: 'Feedback', value: (row) => row.feedback || '' }
     ];
     const json2csvParser = new Parser({ fields });
     return json2csvParser.parse(applicants);
@@ -63,8 +68,10 @@ export const generateApplicantCsv = (applicants) => {
 // import csv function
 
 export const processCsvRow = async (data) => {
-    const applicationNo = data['Application No']?.trim() || (await generateApplicantNo());
+    const applicationNo =
+        data['Application No']?.trim() || (await generateApplicantNo());
     const rating = data['Rating']?.trim() ? Number(data['Rating'].trim()) : 0;
+
     return {
         applicationNo,
         name: {
@@ -93,7 +100,7 @@ export const processCsvRow = async (data) => {
         pincode: data['Pincode'] ? Number(data['Pincode'].trim()) : null,
         city: data['City']?.trim() || '',
         appliedSkills: data['Applied Skills']
-            ? data['Applied Skills'].trim().split(',')
+            ? data['Applied Skills'].trim().split(',').map(skill => skill.trim())
             : [],
         resume: data['Resume']?.trim() || '',
         totalExperience: data['Total Experience (months)']
@@ -102,12 +109,11 @@ export const processCsvRow = async (data) => {
         relevantSkillExperience: data['Relevant Skill Experience']
             ? Number(data['Relevant Skill Experience'].trim())
             : 0,
-        otherSkills: data['Other Skill']?.trim() || '',
+        otherSkills: data['Other Skills']?.trim() || '',
         currentPkg: data['Current Package']?.trim() || '',
         expectedPkg: data['Expected Package']?.trim() || '',
         noticePeriod: data['Notice Period']?.trim() || '',
         negotiation: data['Negotiation']?.trim() || '',
-        readyForWork: data['Ready for Work (WFO)']?.trim() || '',
         workPreference: data['Work Preference']?.trim() || '',
         aboutUs: data['About Us']?.trim() || '',
         feedback: data['Feedback']?.trim() || '',
@@ -119,5 +125,17 @@ export const processCsvRow = async (data) => {
         referral: data['Referral']?.trim() || '',
         resumeUrl: data['Resume URL']?.trim() || '',
         rating,
+
+        // Newly added missing fields
+        communicationSkill: data['Communication Skill']?.trim() || '',
+        CurrentCompanyDesignation: data['Current Company Designation']?.trim() || '',
+        PreferredLocations: data['Preferred Locations']?.trim() || '',
+        CurrentCompanyName: data['Current Company Name']?.trim() || '',
+        MaritalStatus: data['Marital Status']?.trim() || '',
+        lastFollowUpDate: data['Last Follow-Up Date']
+            ? new Date(data['Last Follow-Up Date'].trim())
+            : null,
+        HomeTownCity: data['Home Town City']?.trim() || '',
     };
 };
+
