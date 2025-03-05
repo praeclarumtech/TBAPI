@@ -20,9 +20,10 @@ import {
 import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const register = async (req, res, next) => {
-  let { userName, email, password, confirmPassword, role } = req.body;
+  let { firstName, lastName, email, phoneNumber, dateOfBirth, password, confirmPassword, role } = req.body;
   try {
     const existingUser = await getUser({ email });
+    console.log("exist user", existingUser)
 
     if (existingUser) {
       logger.warn(`User is ${Message.ALREADY_EXIST}`);
@@ -34,7 +35,7 @@ export const register = async (req, res, next) => {
       );
     }
 
-    await createUser({ userName, email, password, confirmPassword, role });
+    await createUser({ firstName, lastName, email, phoneNumber, dateOfBirth, password, confirmPassword, role });
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
     return HandleResponse(
