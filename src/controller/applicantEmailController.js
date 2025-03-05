@@ -38,7 +38,7 @@ export const sendEmail = async (req, res) => {
 
 export const getAllEmails = async (req, res) => {
   try {
-    const { page = 1, limit = 10, email_to, subject } = req.body;
+    const { page = 1, limit = 10, email_to, subject, startDate, endDate } = req.body;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
@@ -51,6 +51,16 @@ export const getAllEmails = async (req, res) => {
 
     if (subject) {
       query.subject = { $regex: subject, $options: 'i' };
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate + "T00:00:00.000Z");
+      }
+      if (endDate) {
+        query.createdAt.$lte = new Date(endDate + "T23:59:59.999Z");
+      }
     }
 
     const findEmails = await pagination({

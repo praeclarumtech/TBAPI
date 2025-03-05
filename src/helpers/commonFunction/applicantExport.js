@@ -63,8 +63,7 @@ export const generateApplicantCsv = (applicants) => {
 // import csv function
 
 export const processCsvRow = async (data) => {
-    const applicationNo =
-        data['Application No']?.trim() || (await generateApplicantNo());
+    const applicationNo = data['Application No']?.trim() || (await generateApplicantNo());
     const rating = data['Rating']?.trim() ? Number(data['Rating'].trim()) : 0;
     return {
         applicationNo,

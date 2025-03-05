@@ -335,12 +335,12 @@ export const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUserById(email, { password: hashedPassword });
 
-    logger.info(`Password is ${Message.FORGOT_SUCCESSFULLY}`);
+    logger.info(`Password is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
-      StatusCodes.OK,
-      `Password is ${Message.FORGOT_SUCCESSFULLY}`
+      StatusCodes.ACCEPTED,
+      `Password is ${Message.UPDATED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} forgot passoword.`);

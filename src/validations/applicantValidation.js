@@ -50,9 +50,9 @@ export const applicantValidation = Joi.object({
     'any.required': 'Date of birth is required.',
   }),
 
-  qualification: Joi.string().required().messages({
-    'string.empty': 'Qualification cannot be empty.',
-    'any.required': 'Qualification is required.',
+  qualification: Joi.array().items(Joi.string()).required().messages({
+    'array.base': 'Qualification must be an array of strings.',
+    'any.required': 'Qualification are required.',
   }),
 
   degree: Joi.string().required().messages({
@@ -94,6 +94,11 @@ export const applicantValidation = Joi.object({
     'any.required': 'Total experience is required.',
   }),
 
+  communicationSkill: Joi.number().required().messages({
+    'number.base': 'Communication Skill must be a number.',
+    'any.required': 'Communication Skill is required.',
+  }),
+
   relevantSkillExperience: Joi.number().required().messages({
     'number.base': 'Relevant experience must be a number.',
     'any.required': 'Relevant experience is required.',
@@ -111,20 +116,32 @@ export const applicantValidation = Joi.object({
   noticePeriod: Joi.string().required(),
   negotiation: Joi.string().required(),
 
-  readyForWork: Joi.string()
-    .valid(applicantEnum.YES, applicantEnum.NO)
-    .required()
-    .messages({
-      'any.only': 'Ready WFO must be yes or no.',
-      'any.required': 'Ready WFO is required.',
-    }),
-
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
     .required()
     .messages({
       'any.only': 'Work Preference must be remote, hybrid, or onsite.',
       'any.required': 'Work Preference is required.',
+    }),
+
+  CurrentCompanyDesignation: Joi.string()
+    .valid(
+      applicantEnum.FRONTED_DEVLOPER,
+      applicantEnum.SOFTWARE_ENGINNER,
+      applicantEnum.BACKEND_DEVLOPER,
+      applicantEnum.FULL_STACK_DEVLOPER,
+      applicantEnum.DATA_ANALYST,
+      applicantEnum.DATA_SCIENTIST,
+      applicantEnum.PRODUCT_MANAGER,
+      applicantEnum.UI_UX,
+      applicantEnum.QA,
+      applicantEnum.DEVOPS,
+      applicantEnum.BUSNESS_ANALYST,
+      applicantEnum.TECHNICSL_SUPPORT,
+      applicantEnum.OTHER
+    )
+    .messages({
+      'any.required': 'CurrentCompanyDesignation is required.',
     }),
 
   aboutUs: Joi.string().allow(null, ''),
@@ -158,6 +175,18 @@ export const applicantValidation = Joi.object({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
     }),
+
+  PreferredLocations: Joi.string(),
+  CurrentCompanyName: Joi.string(),
+  MaritalStatus: Joi.string()
+    .valid(applicantEnum.SINGAL, applicantEnum.MARRIED)
+    .messages({
+      'any.only': 'Work Preference must be Singal, hybrid, or Married.',
+    }),
+  lastFollowUpDate: Joi.date().messages({
+    'date.base': 'Date of birth must be a valid date.',
+  }),
+  HomeTownCity: Joi.string(),
 
   referral: Joi.string().allow(null, ''),
 });
@@ -203,8 +232,8 @@ export const updateApplicantValidation = Joi.object({
     'date.base': 'Date of birth must be a valid date.',
   }),
 
-  qualification: Joi.string().messages({
-    'string.empty': 'Qualification cannot be empty.',
+  qualification: Joi.array().items(Joi.string()).messages({
+    'array.base': 'Qualification must be an array of strings.',
   }),
 
   degree: Joi.string().messages({
@@ -238,6 +267,10 @@ export const updateApplicantValidation = Joi.object({
     'number.base': 'Total experience must be a number.',
   }),
 
+  communicationSkill: Joi.number().messages({
+    'number.base': 'Communication Skill must be a number.',
+  }),
+
   relevantSkillExperience: Joi.number().messages({
     'number.base': 'Relevant experience must be a number.',
   }),
@@ -253,20 +286,35 @@ export const updateApplicantValidation = Joi.object({
   noticePeriod: Joi.string(),
   negotiation: Joi.string(),
 
-  readyForWork: Joi.string()
-    .valid(applicantEnum.YES, applicantEnum.NO)
-    .messages({
-      'any.only': 'Ready WFO must be yes or no.',
-    }),
-
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
     .messages({
       'any.only': 'Work Preference must be remote, hybrid, or onsite.',
     }),
 
+  CurrentCompanyDesignation: Joi.string()
+    .valid(
+      applicantEnum.FRONTED_DEVLOPER,
+      applicantEnum.SOFTWARE_ENGINNER,
+      applicantEnum.BACKEND_DEVLOPER,
+      applicantEnum.FULL_STACK_DEVLOPER,
+      applicantEnum.DATA_ANALYST,
+      applicantEnum.DATA_SCIENTIST,
+      applicantEnum.PRODUCT_MANAGER,
+      applicantEnum.UI_UX,
+      applicantEnum.QA,
+      applicantEnum.DEVOPS,
+      applicantEnum.BUSNESS_ANALYST,
+      applicantEnum.TECHNICSL_SUPPORT,
+      applicantEnum.OTHER
+    )
+    .messages({
+      'any.required': 'CurrentCompanyDesignation is required.',
+    }),
+
   aboutUs: Joi.string().allow(null, ''),
   feedback: Joi.string().allow(null, ''),
+  practicalFeedback: Joi.string().allow(null, ''),
 
   status: Joi.string()
     .valid(
@@ -294,6 +342,20 @@ export const updateApplicantValidation = Joi.object({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
     }),
+
+  practicalUrl: Joi.string(),
+  portfolioUrl: Joi.string(),
+  PreferredLocations: Joi.string(),
+  CurrentCompanyName: Joi.string(),
+  MaritalStatus: Joi.string()
+    .valid(applicantEnum.SINGAL, applicantEnum.MARRIED)
+    .messages({
+      'any.only': 'Work Preference must be Singal, Married.',
+    }),
+  lastFollowUpDate: Joi.date().messages({
+    'date.base': 'Date of birth must be a valid date.',
+  }),
+  HomeTownCity: Joi.string(),
 
   referral: Joi.string().allow(null, ''),
 });

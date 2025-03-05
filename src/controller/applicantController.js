@@ -75,6 +75,9 @@ export const viewAllApplicant = async (req, res) => {
       interviewStage,
       expectedPkg,
       noticePeriod,
+      status,
+      gender,
+      CurrentCompanyDesignation,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -111,11 +114,41 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (expectedPkg && typeof expectedPkg === 'string') {
-      query.expectedPkg = expectedPkg;
+      const rangeMatch = expectedPkg.match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = rangeMatch[1];
+        const max = rangeMatch[2];
+
+        query.expectedPkg = { $gte: min, $lte: max };
+      } else {
+        query.expectedPkg = expectedPkg;
+      }
     }
 
     if (noticePeriod && typeof noticePeriod === 'string') {
-      query.noticePeriod = noticePeriod;
+      const rangeMatch = noticePeriod.match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = rangeMatch[1];
+        const max = rangeMatch[2];
+
+        query.noticePeriod = { $gte: min, $lte: max };
+      } else {
+        query.noticePeriod = noticePeriod;
+      }
+    }
+
+    if (gender && typeof gender === 'string') {
+      query.gender = gender;
+    }
+
+    if (status && typeof status === 'string') {
+      query.status = status;
+    }
+
+    if (CurrentCompanyDesignation && typeof CurrentCompanyDesignation === 'string') {
+      query.CurrentCompanyDesignation = CurrentCompanyDesignation;
     }
 
     let searchResults = { results: [], totalRecords: 0 };
