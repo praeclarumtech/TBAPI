@@ -20,9 +20,10 @@ import {
 import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const register = async (req, res, next) => {
-  let { userName, email, password, confirmPassword, role } = req.body;
+  let { firstName, lastName, email, phoneNumber, dateOfBirth, password, confirmPassword, role } = req.body;
   try {
     const existingUser = await getUser({ email });
+    console.log("exist user", existingUser)
 
     if (existingUser) {
       logger.warn(`User is ${Message.ALREADY_EXIST}`);
@@ -34,7 +35,7 @@ export const register = async (req, res, next) => {
       );
     }
 
-    await createUser({ userName, email, password, confirmPassword, role });
+    await createUser({ firstName, lastName, email, phoneNumber, dateOfBirth, password, confirmPassword, role });
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
     return HandleResponse(
@@ -172,7 +173,8 @@ export const viewProfileById = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { userName, email, phoneNumber, dateOfBirth, gender, designation } = req.body;
+    const { userName, email, phoneNumber, dateOfBirth, gender, designation } =
+      req.body;
 
     let updateData = {
       userName,
@@ -183,21 +185,8 @@ export const updateProfile = async (req, res) => {
       designation,
     };
 
-    console.log("Uploaded file:", req.file);
-
     if (req.file) {
-      const { filename, mimetype } = req.file;
-      const filePath = `/src/uploads/profile/${filename}`
-      const baseUrl = "http://localhost:3000/uploads/profile";
-
-      updateData.profilePicture = {
-        path: `user/${Date.now()}`,
-        pathWithFilename: `user/${Date.now()}/${filename}`,
-        filename: filename,
-        completedUrl: `${baseUrl}${filename}`,
-        baseUrl: baseUrl,
-        mime: mimetype.toUpperCase(),
-      };
+      updateData.profilePicture = req.file.filename;
     }
 
     const updatedUser = await updateUserById(userId, updateData);
@@ -230,7 +219,6 @@ export const updateProfile = async (req, res) => {
     );
   }
 };
-
 
 export const sendEmail = async (req, res) => {
   try {
