@@ -358,7 +358,7 @@ export const updateApplicantValidation = Joi.object({
   }),
   homeTownCity: Joi.string().required(),
   homePincode: Joi.number().integer().required(),
-
+  anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
   appliedRole: Joi.string().required()
 });
