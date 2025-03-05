@@ -32,7 +32,7 @@ const ApplicantSchema = new mongoose.Schema(
     currentLocation: { type: String },
     state: { type: String, required: true },
     country: { type: String, required: true },
-    cuttentPincode: { type: Number, required: true },
+    currentPincode: { type: Number, required: true },
     currentCity: { type: String, required: true },
     appliedSkills: { type: [String], required: true },
     resume: { type: String, required: false },
@@ -92,6 +92,7 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.BUSNESS_ANALYST,
         applicantEnum.TECHNICSL_SUPPORT,
         applicantEnum.OTHER,
+        applicantEnum.NA,
       ],
       required: false
     },
