@@ -1,7 +1,9 @@
 import {
   createApplicant,
+  getAllapplicant,
   getApplicantById,
   updateApplicantById,
+  createApplicants,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -11,6 +13,13 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import { uploadCv } from '../helpers/multer.js';
+import fs from 'fs';
+import csvParser from 'csv-parser';
+import {
+  generateApplicantCsv,
+  processCsvRow,
+} from '../helpers/commonFunction/applicantExport.js';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -162,12 +171,12 @@ export const viewAllApplicant = async (req, res) => {
     const findApplicants = searchResults.results.length
       ? searchResults
       : await pagination({
-          Schema: Applicant,
-          page: pageNum,
-          limit: limitNum,
-          query,
-          sort: { createdAt: -1 },
-        });
+        Schema: Applicant,
+        page: pageNum,
+        limit: limitNum,
+        query,
+        sort: { createdAt: -1 },
+      });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -330,6 +339,78 @@ export const updateStatus = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} update applicant.`
+    );
+  }
+};
+
+export const exportApplicantCsv = async (req, res) => {
+  try {
+    const applicants = await getAllapplicant();
+
+    if (!applicants.length) {
+      logger.warn('Applicants not found');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'Applicants not found'
+      );
+    }
+
+    const csvData = generateApplicantCsv(applicants);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=applicants.csv');
+
+    res.status(200).send(csvData);
+    logger.info(Message.DONWLOADED);
+  } catch (error) {
+    console.error('Error exporting to CSV:', error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to export CSV file.'
+    );
+  }
+};
+export const importApplicantCsv = async (req, res) => {
+  try {
+    uploadCv(req, res, async () => {
+      if (!req.file) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `${Message.FAILED_TO} upload csv`
+        );
+      }
+
+      const results = [];
+      const promises = [];
+
+      fs.createReadStream(req.file.path)
+        .pipe(csvParser())
+        .on('data', async (data) => {
+          promises.push(
+            processCsvRow(data).then((applicant) => results.push(applicant))
+          );
+        })
+        .on('end', async () => {
+          await Promise.all(promises);
+          await createApplicants(results);
+          fs.unlinkSync(req.file.path);
+          return HandleResponse(res, true, StatusCodes.OK, Message.IMPORTED);
+        });
+    });
+
+    logger.info(Message.IMPORTED);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} import csv,`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} import csv,`
     );
   }
 };
