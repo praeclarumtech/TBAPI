@@ -73,8 +73,8 @@ export const applicantValidation = Joi.object({
 
   state: Joi.string().required(),
   country: Joi.string().required(),
-  pincode: Joi.number().integer().required(),
-  city: Joi.string().required(),
+  cuttentPincode: Joi.number().integer().required(),
+  currentCity: Joi.string().required(),
   resumeUrl: Joi.string(),
   practicalUrl: Joi.string(),
   portfolioUrl: Joi.string(),
@@ -124,7 +124,7 @@ export const applicantValidation = Joi.object({
       'any.required': 'Work Preference is required.',
     }),
 
-  CurrentCompanyDesignation: Joi.string()
+  currentCompanyDesignation: Joi.string()
     .valid(
       applicantEnum.FRONTED_DEVLOPER,
       applicantEnum.SOFTWARE_ENGINNER,
@@ -176,9 +176,9 @@ export const applicantValidation = Joi.object({
       'any.required': 'Interview stage is required.',
     }),
 
-  PreferredLocations: Joi.string(),
-  CurrentCompanyName: Joi.string(),
-  MaritalStatus: Joi.string()
+  preferredLocations: Joi.string(),
+  currentCompanyName: Joi.string(),
+  maritalStatus: Joi.string()
     .valid(applicantEnum.SINGAL, applicantEnum.MARRIED)
     .messages({
       'any.only': 'Work Preference must be Singal, hybrid, or Married.',
@@ -186,7 +186,8 @@ export const applicantValidation = Joi.object({
   lastFollowUpDate: Joi.date().messages({
     'date.base': 'Date of birth must be a valid date.',
   }),
-  HomeTownCity: Joi.string(),
+  homeTownCity: Joi.string(),
+  homePincode: Joi.number().integer(),
 
   referral: Joi.string().allow(null, ''),
 });
@@ -251,8 +252,8 @@ export const updateApplicantValidation = Joi.object({
 
   state: Joi.string(),
   country: Joi.string(),
-  pincode: Joi.number().integer(),
-  city: Joi.string(),
+  cuttentPincode: Joi.number().integer(),
+  currentCity: Joi.string(),
   url: Joi.string(),
   resumeUrl: Joi.string(),
 
@@ -293,7 +294,7 @@ export const updateApplicantValidation = Joi.object({
       'any.only': 'Work Preference must be remote, hybrid, or onsite.',
     }),
 
-  CurrentCompanyDesignation: Joi.string()
+  currentCompanyDesignation: Joi.string()
     .valid(
       applicantEnum.FRONTED_DEVLOPER,
       applicantEnum.SOFTWARE_ENGINNER,
@@ -346,9 +347,9 @@ export const updateApplicantValidation = Joi.object({
 
   practicalUrl: Joi.string(),
   portfolioUrl: Joi.string(),
-  PreferredLocations: Joi.string(),
-  CurrentCompanyName: Joi.string(),
-  MaritalStatus: Joi.string()
+  preferredLocations: Joi.string(),
+  currentCompanyName: Joi.string(),
+  maritalStatus: Joi.string()
     .valid(applicantEnum.SINGAL, applicantEnum.MARRIED)
     .messages({
       'any.only': 'Work Preference must be Singal, Married.',
@@ -356,7 +357,8 @@ export const updateApplicantValidation = Joi.object({
   lastFollowUpDate: Joi.date().messages({
     'date.base': 'Date of birth must be a valid date.',
   }),
-  HomeTownCity: Joi.string(),
+  homeTownCity: Joi.string(),
+  homePincode: Joi.number().integer(),
 
   referral: Joi.string().allow(null, ''),
 });

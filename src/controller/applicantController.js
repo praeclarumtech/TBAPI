@@ -62,13 +62,13 @@ export const viewAllApplicant = async (req, res) => {
       totalExperience,
       startDate,
       endDate,
-      city,
+      currentCity,
       interviewStage,
       expectedPkg,
       noticePeriod,
       status,
       gender,
-      CurrentCompanyDesignation,
+      currentCompanyDesignation,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -96,8 +96,8 @@ export const viewAllApplicant = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
     }
 
-    if (city && typeof city === 'string') {
-      query.city = { $regex: new RegExp(city, 'i') };
+    if (currentCity && typeof currentCity === 'string') {
+      query.currentCity = { $regex: new RegExp(currentCity, 'i') };
     }
 
     if (interviewStage && typeof interviewStage === 'string') {
@@ -138,8 +138,8 @@ export const viewAllApplicant = async (req, res) => {
       query.status = status;
     }
 
-    if (CurrentCompanyDesignation && typeof CurrentCompanyDesignation === 'string') {
-      query.CurrentCompanyDesignation = CurrentCompanyDesignation;
+    if (currentCompanyDesignation && typeof currentCompanyDesignation === 'string') {
+      query.currentCompanyDesignation = currentCompanyDesignation;
     }
 
     let searchResults = { results: [], totalRecords: 0 };
