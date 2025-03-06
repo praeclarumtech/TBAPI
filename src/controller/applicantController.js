@@ -162,12 +162,12 @@ export const viewAllApplicant = async (req, res) => {
     const findApplicants = searchResults.results.length
       ? searchResults
       : await pagination({
-          Schema: Applicant,
-          page: pageNum,
-          limit: limitNum,
-          query,
-          sort: { createdAt: -1 },
-        });
+        Schema: Applicant,
+        page: pageNum,
+        limit: limitNum,
+        query,
+        sort: { createdAt: -1 },
+      });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
