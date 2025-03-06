@@ -7,6 +7,7 @@ import skillsRoute from './route/skillsRoute.js'
 import dashboardRouter from './route/dashboardRoute.js';
 import countryRouter from './route/commonRoute.js';
 import reportsRouter from './route/reportsRoute.js';
+import groupRouter from './route/groupRoute.js';
 const router = express.Router();
 
 router.use('/year', yearRoute);
@@ -17,5 +18,6 @@ router.use('/applicants', applicantRouter);
 router.use('/dashboard/applicant', dashboardRouter);
 router.use('/reports/applicants', reportsRouter);
 router.use('/', countryRouter);
+router.use('/group', groupRouter);
 
 export default router;
