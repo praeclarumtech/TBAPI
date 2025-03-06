@@ -56,9 +56,10 @@ export const applicantEnum = {
   DEVOPS: 'DevOps Engineer',
   BUSNESS_ANALYST: 'Business Analyst',
   TECHNICSL_SUPPORT: 'Technical Support Engineer',
-  OTHER:'Other',
+  OTHER: 'Other',
+  NA: 'Na',
 
-  SINGAL:'Singal',
-  MARRIED:'married',
+  SINGLE: 'Single',
+  MARRIED: 'Married',
 };
 
