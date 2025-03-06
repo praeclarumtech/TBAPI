@@ -2,20 +2,10 @@ import Joi from 'joi';
 import { Enum } from '../utils/enum.js';
 
 export const registerValidation = Joi.object().keys({
-  // userName: Joi.string().required().messages({
-  //   'string.base': `username should be a type of 'text'`,
-  //   'string.empty': `username cannot be an empty field`,
-  //   'any.required': `username is a required field`,
-  // }),
-  firstName: Joi.string().required().messages({
-    'string.base': `firstName should be a type of 'text'`,
-    'string.empty': `firstName cannot be an empty field`,
-    'any.required': `firstName is a required field`,
-  }),
-  lastName: Joi.string().required().messages({
-    'string.base': `lastName should be a type of 'text'`,
-    'string.empty': `lastName cannot be an empty field`,
-    'any.required': `lastName is a required field`,
+  userName: Joi.string().required().messages({
+    'string.base': `username should be a type of 'text'`,
+    'string.empty': `username cannot be an empty field`,
+    'any.required': `username is a required field`,
   }),
   email: Joi.string().trim().lowercase().required().email().messages({
     'string.base': `Email id should be a type of 'text'`,
@@ -23,20 +13,6 @@ export const registerValidation = Joi.object().keys({
     'string.email': `Email id should be in correct format`,
     'any.required': `Email id is required`,
   }),
-  phoneNumber: Joi.number().required().messages({
-    'string.base': `phoneNumber should be a type of 'number`,
-    'string.empty': `phoneNumber cannot be an empty field`,
-    'any.required': `phoneNumber is a required field`,
-  }),
-  dateOfBirth: Joi.date()
-    .iso() //format (YYYY-MM-DD)
-    .required()
-    .messages({
-      'date.base': `dateOfBirth should be a valid date.`,
-      'date.format': `dateOfBirth must be in YYYY-MM-DD format.`,
-      'any.required': `dateOfBirth is a required field.`,
-    }),
-
   password: Joi.string()
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`'])[A-Za-z\d@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`']{8,}$/,

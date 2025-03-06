@@ -1,13 +1,12 @@
 import User from '../models/userModel.js';
 import otpModel from '../models/otpModel.js'
 
-export const getUser = async ({ email }) => {
-  console.log("recieved email", email)
-  return await User.findOne({ email: email.trim().toLowerCase() });
+export const getUser = async (body) => {
+  return await User.findOne({ ...body });
 };
 
 export const createUser = async (body) => {
-  const user = new User.create({ ...body });
+  const user = new User({ ...body });
   return await user.save();
 };
 

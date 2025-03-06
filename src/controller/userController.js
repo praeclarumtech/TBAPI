@@ -20,10 +20,9 @@ import {
 import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const register = async (req, res, next) => {
+  let { userName, email, password, confirmPassword, role } = req.body;
   try {
-    let { firstName, lastName, email, phoneNumber, dateOfBirth, password, confirmPassword, role } = req.body;
     const existingUser = await getUser({ email });
-    console.log("Existing user", existingUser)
 
     if (existingUser) {
       logger.warn(`User is ${Message.ALREADY_EXIST}`);
@@ -35,7 +34,7 @@ export const register = async (req, res, next) => {
       );
     }
 
-    await createUser({ firstName, lastName, email, phoneNumber, dateOfBirth, password, confirmPassword, role });
+    await createUser({ userName, email, password, confirmPassword, role });
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
     return HandleResponse(
@@ -172,11 +171,21 @@ export const viewProfileById = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { userName, email, phoneNumber, dateOfBirth, gender, designation } =
-      req.body;
+    const userId = req.params.id;
+    const {
+      firstName,
+      lastName,
+      userName,
+      email,
+      phoneNumber,
+      dateOfBirth,
+      gender,
+      designation,
+    } = req.body;
 
     let updateData = {
+      firstName,
+      lastName,
       userName,
       email,
       phoneNumber,
@@ -292,7 +301,6 @@ export const verifyOtp = async (req, res) => {
     }
 
     logger.info(Message.OTP_MATCHED);
-
     await deleteOtp({ otp });
 
     return HandleResponse(res, true, StatusCodes.OK, Message.OTP_MATCHED);
