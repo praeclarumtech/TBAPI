@@ -177,13 +177,13 @@ export const applicantValidation = Joi.object({
 
   preferredLocations: Joi.string(),
   currentCompanyName: Joi.string().allow(''),
-  maritalStatus: Joi.string().allow('')
-    .valid(applicantEnum.SINGLE, applicantEnum.MARRIED)
+  maritalStatus: Joi.string()
+    .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '').optional()
     .messages({
       'any.only': 'Maritial status must be Single,or Married.',
     }),
-  lastFollowUpDate: Joi.date().messages({
-    'date.base': 'Date of birth must be a valid date.',
+  lastFollowUpDate: Joi.date().allow('').messages({
+    'date.base': 'lastFollowUpDate must be a valid date.',
   }),
   appliedRole: Joi.string().required(),
   homeTownCity: Joi.string().required(),
@@ -229,8 +229,9 @@ export const updateApplicantValidation = Joi.object({
       'any.only': 'Gender must be male, female, or other.',
     }),
 
-  dateOfBirth: Joi.date().messages({
+  dateOfBirth: Joi.date().required().messages({
     'date.base': 'Date of birth must be a valid date.',
+    'any.required': 'Date of birth is required.',
   }),
 
   qualification: Joi.array().items(Joi.string()).messages({
@@ -348,17 +349,18 @@ export const updateApplicantValidation = Joi.object({
   portfolioUrl: Joi.string().allow(''),
   preferredLocations: Joi.string(),
   currentCompanyName: Joi.string().allow(''),
+
   maritalStatus: Joi.string()
-    .valid(applicantEnum.SINGLE, applicantEnum.MARRIED)
+    .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '').optional()
     .messages({
-      'any.only': 'Maritial status  must be Single, Married.',
-    }).allow(''),
-  lastFollowUpDate: Joi.date().messages({
-    'date.base': 'Date of birth must be a valid date.',
+      'any.only': 'Maritial status must be Single,or Married.',
+    }),
+  lastFollowUpDate: Joi.date().allow('').messages({
+    'date.base': 'lastFollowUpDate must be a valid date.',
   }),
   homeTownCity: Joi.string().required(),
   homePincode: Joi.number().integer().required(),
-
+  anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
   appliedRole: Joi.string().required()
 });

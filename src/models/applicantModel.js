@@ -35,7 +35,7 @@ const ApplicantSchema = new mongoose.Schema(
     currentPincode: { type: Number, required: true },
     currentCity: { type: String, required: false },
     appliedSkills: { type: [String], required: true },
-    anyHandOnOffers: { type: Boolean },
+    anyHandOnOffers: { type: Boolean, default: false },
     resume: { type: String, required: false },
     totalExperience: { type: Number, required: false },
     relevantSkillExperience: { type: Number, required: false },
@@ -128,6 +128,7 @@ const ApplicantSchema = new mongoose.Schema(
       enum: [
         applicantEnum.SINGLE,
         applicantEnum.MARRIED,
+        '',
       ],
     },
     lastFollowUpDate: { type: Date },
