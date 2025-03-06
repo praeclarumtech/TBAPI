@@ -7,7 +7,7 @@ export const registerValidation = Joi.object().keys({
     'string.empty': `username cannot be an empty field`,
     'any.required': `username is a required field`,
   }),
-  email: Joi.string().trim().lowercase().required().email().messages({
+  email: Joi.string().required().email().messages({
     'string.base': `Email id should be a type of 'text'`,
     'string.empty': `Email id cannot be an empty field`,
     'string.email': `Email id should be in correct format`,
