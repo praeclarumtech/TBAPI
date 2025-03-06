@@ -36,7 +36,7 @@ const ApplicantSchema = new mongoose.Schema(
     currentCity: { type: String, required: false },
     appliedSkills: { type: [String], required: true },
     anyHandOnOffers: { type: Boolean, default: false },
-    resume: { type: String, required: false },
+    // resume: { type: String, required: false },
     totalExperience: { type: Number, required: false },
     relevantSkillExperience: { type: Number, required: false },
     communicationSkill: { type: Number, required: true },

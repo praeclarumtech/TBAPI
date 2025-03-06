@@ -44,18 +44,15 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'Portfolio URL', value: (row) => row.portfolioUrl || '' },
         { label: 'Referral', value: (row) => row.referral || '' },
         { label: 'Resume URL', value: (row) => row.resumeUrl || '' },
-        { label: 'Preferred Locations', value: (row) => row.preferredLocations?.join(', ') || '' },
+        { label: 'Preferred Locations', value: (row) => row.preferredLocations || '' },
         { label: 'Current Company Name', value: (row) => row.currentCompanyName || '' },
         { label: 'Marital Status', value: (row) => row.maritalStatus || 'Not Provided' },
         { label: 'Last Follow-Up Date', value: (row) => row.lastFollowUpDate || 'Not Provided' },
-        { label: 'Hands-On Offers', value: (row) => row.anyHandOnOffers ? 'Yes' : 'No' },
-        { label: 'Resume', value: (row) => row.resume || '' },
+        { label: 'Any Hands-On Offers', value: (row) => row.anyHandOnOffers ? 'true' : 'false' },
     ];
     const json2csvParser = new Parser({ fields });
     return json2csvParser.parse(applicants);
 };
-
-// import csv function
 
 export const processCsvRow = async (data) => {
     const applicationNo =
@@ -75,58 +72,27 @@ export const processCsvRow = async (data) => {
         },
         email: data['Email']?.trim() || '',
         gender: data['Gender']?.trim() || '',
-        dateOfBirth: data['Date of Birth']
-            ? new Date(data['Date of Birth'].trim())
-            : null,
-        qualification: data['Qualification']
-            ? data['Qualification']
-                .trim()
-                .split(',')
-                .map((q) => q.trim())
-            : [],
+        dateOfBirth: data['Date of Birth'] ? new Date(data['Date of Birth'].trim()) : null,
+        qualification: data['Qualification']?.trim()?.split(',').map(q => q.trim()) || [],
         degree: data['Degree']?.trim() || '',
-        passingYear: data['Passing Year']
-            ? Number(data['Passing Year'].trim())
-            : null,
-        currentLocation: data['Current Location']?.trim() || '',
-        state: data['State']?.trim() || '',
-        country: data['Country']?.trim() || '',
-        currentPincode: data['Current Pincode']
-            ? Number(data['Current Pincode'].trim())
-            : null,
-        currentCity: data['Current City']?.trim() || '',
-        homeTownCity: data['Home Town City']?.trim() || '',
-        homePincode: data['Home Pincode']
-            ? Number(data['Home Pincode'].trim())
-            : null,
-        appliedSkills: data['Applied Skills']
-            ? data['Applied Skills']
-                .trim()
-                .split(',')
-                .map((skill) => skill.trim())
-            : [],
-        anyHandOnOffers:
-            data['Any Hands-On Offers']?.trim().toLowerCase() === 'yes',
-        totalExperience: data['Total Experience (months)']
-            ? Number(data['Total Experience (months)'].trim())
-            : 0,
-        relevantSkillExperience: data['Relevant Skill Experience']
-            ? Number(data['Relevant Skill Experience'].trim())
+        passingYear: data['Passing Year']?.trim() ? Number(data['Passing Year'].trim()) : null,
+        totalExperience: data['Total Experience (years)'] ? Number(data['Total Experience (years)'].trim()) : 0,
+        relevantSkillExperience: data['Relevant Skill Experience (years)']
+            ? Number(data['Relevant Skill Experience (years)'].trim())
             : 0,
         communicationSkill: data['Communication Skill']?.trim() || '',
         otherSkills: data['Other Skills']?.trim() || '',
         rating,
-        currentPkg: data['Current Package']?.trim() || '',
-        expectedPkg: data['Expected Package']?.trim() || '',
-        noticePeriod: data['Notice Period']?.trim() || '',
+        currentPkg: data['Current Package (LPA)']?.trim() || '',
+        expectedPkg: data['Expected Package (LPA)']?.trim() || '',
+        noticePeriod: data['Notice Period (months)']?.trim() || '',
         negotiation: data['Negotiation']?.trim() || '',
         workPreference: data['Work Preference']?.trim() || '',
         aboutUs: data['About Us']?.trim() || '',
         feedback: data['Feedback']?.trim() || '',
         status: data['Status']?.trim() || '',
         interviewStage: data['Interview Stage']?.trim() || '',
-        currentCompanyDesignation:
-            data['Current Company Designation']?.trim() || '',
+        currentCompanyDesignation: data['Current Company Designation']?.trim() || '',
         appliedRole: data['Applied Role']?.trim() || '',
         practicalUrl: data['Practical URL']?.trim() || '',
         practicalFeedback: data['Practical Feedback']?.trim() || '',
@@ -134,17 +100,18 @@ export const processCsvRow = async (data) => {
         referral: data['Referral']?.trim() || '',
         resumeUrl: data['Resume URL']?.trim() || '',
         preferredLocations: data['Preferred Locations']
-            ? data['Preferred Locations']
-                .trim()
-                .split(',')
-                .map((loc) => loc.trim())
+            ? data['Preferred Locations'].trim().split(',').map(loc => loc.trim())
             : [],
         currentCompanyName: data['Current Company Name']?.trim() || '',
-        maritalStatus: data['Marital Status']?.trim() || '',
-        lastFollowUpDate: data['Last Follow-Up Date']
-            ? new Date(data['Last Follow-Up Date'].trim())
-            : null,
-        resume: data['Resume']?.trim() || ''
+        maritalStatus: data['Marital Status']?.trim() || 'Not Provided',
+        lastFollowUpDate: data['Last Follow-Up Date'] ? new Date(data['Last Follow-Up Date'].trim()) : null,
+        anyHandOnOffers: data['Any Hands-On Offers']?.trim().toLowerCase() === 'yes',
+        currentLocation: data['Current Location']?.trim() || '',
+        state: data['State']?.trim() || '',
+        country: data['Country']?.trim() || '',
+        currentPincode: data['Current Pincode']?.trim() ? Number(data['Current Pincode'].trim()) : null,
+        currentCity: data['Current City']?.trim() || '',
+        homeTownCity: data['Home Town City']?.trim() || '',
+        homePincode: data['Home Pincode']?.trim() ? Number(data['Home Pincode'].trim()) : null,
     };
 };
-

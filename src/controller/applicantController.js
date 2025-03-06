@@ -115,11 +115,11 @@ export const viewAllApplicant = async (req, res) => {
 
     if (expectedPkg) {
       const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
-    
+
       if (rangeMatch) {
         const min = parseInt(rangeMatch[1], 10);
         const max = parseInt(rangeMatch[2], 10);
-    
+
         query.expectedPkg = { $gte: min, $lte: max };
       } else if (!isNaN(expectedPkg)) {
         query.expectedPkg = parseInt(expectedPkg, 10);
@@ -128,11 +128,11 @@ export const viewAllApplicant = async (req, res) => {
 
     if (noticePeriod) {
       const rangeMatch = noticePeriod.toString().match(/^(\d+)-(\d+)$/);
-    
+
       if (rangeMatch) {
         const min = parseInt(rangeMatch[1], 10);
         const max = parseInt(rangeMatch[2], 10);
-    
+
         query.noticePeriod = { $gte: min, $lte: max };
       } else if (!isNaN(noticePeriod)) {
         query.noticePeriod = parseInt(noticePeriod, 10);
@@ -421,12 +421,12 @@ export const importApplicantCsv = async (req, res) => {
   try {
     uploadCv(req, res, async (err) => {
       if (err) {
-        console.error("Error uploading CSV:", err);
+        // console.error("Error uploading CSV:", err);
         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV`);
       }
 
       if (!req.file) {
-        console.error("No file provided for upload");
+        // console.error("No file provided for upload");
         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV - No file provided`);
       }
 
@@ -437,13 +437,13 @@ export const importApplicantCsv = async (req, res) => {
       const promises = [];
 
       fs.createReadStream(req.file.path)
-        .pipe(csvParser({ headers: true, skipEmptyLines: true })) 
+        .pipe(csvParser({ headers: true, skipEmptyLines: true }))
         .on('data', async (data) => {
           try {
-            console.log("Row Data:", data);
-            console.log("Keys in Row:", Object.keys(data));
+            // console.log("Row Data:", data);
+            // console.log("Keys in Row:", Object.keys(data));
 
-            if (Object.values(data).some(val => val)) {  
+            if (Object.values(data).some(val => val)) {
               const applicant = await processCsvRow(data);
               results.push(applicant);
             } else {
@@ -454,20 +454,21 @@ export const importApplicantCsv = async (req, res) => {
           }
         })
         .on('error', (error) => {
-          console.error("CSV Read Stream Error:", error);
+          // console.error("CSV Read Stream Error:", error);
           return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'Error reading CSV file');
         })
         .on('end', async () => {
           try {
+            console.log("Results", results)
             console.log("CSV Processing Completed. Total Records:", results.length);
 
             if (results.length === 0) {
-              console.warn("No valid records found in the CSV.");
+              // console.warn("No valid records found in the CSV.");
               return HandleResponse(res, false, StatusCodes.BAD_REQUEST, "No valid records found in the CSV.");
             }
 
             await createApplicants(results);
-            console.log("Applicants successfully added to the database");
+            // console.log("Applicants successfully added to the database");
 
             fs.unlinkSync(req.file.path);
             console.log(" CSV file deleted after processing");
