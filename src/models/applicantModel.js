@@ -43,8 +43,8 @@ const ApplicantSchema = new mongoose.Schema(
     otherSkills: { type: String },
     rating: { type: Number, required: true },
     currentPkg: { type: String },
-    expectedPkg: { type: String },
-    noticePeriod: { type: String },
+    expectedPkg: { type: Number },
+    noticePeriod: { type: Number },
     negotiation: { type: String, required: true },
     workPreference: {
       type: String,

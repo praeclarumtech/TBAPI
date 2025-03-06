@@ -7,7 +7,7 @@ export const sendEmailValidation = Joi.object().keys({
     .messages({
       'string.pattern.base': `Email_to should be in the correct format`,
     }),
-  email_bcc: Joi.string()
+  email_bcc: Joi.string().allow('').optional()
     .pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
     .messages({
       'string.pattern.base': `Email_bcc should be in the correct format`,

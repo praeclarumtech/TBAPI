@@ -110,8 +110,8 @@ export const applicantValidation = Joi.object({
   }),
 
   currentPkg: Joi.string().allow(null, ''),
-  expectedPkg: Joi.string().allow(null, ''),
-  noticePeriod: Joi.string().allow(''),
+  expectedPkg: Joi.number().allow(null, ''),
+  noticePeriod: Joi.number().allow(''),
   negotiation: Joi.string().required(),
 
   workPreference: Joi.string()
@@ -283,8 +283,8 @@ export const updateApplicantValidation = Joi.object({
   }),
 
   currentPkg: Joi.string().allow(null, ''),
-  expectedPkg: Joi.string().allow(null, ''),
-  noticePeriod: Joi.string().allow(''),
+  expectedPkg: Joi.number().allow(null, ''),
+  noticePeriod: Joi.number().allow(''),
   negotiation: Joi.string().required(),
 
   workPreference: Joi.string()
