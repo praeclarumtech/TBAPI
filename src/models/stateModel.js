@@ -1,11 +1,9 @@
 import mongoose from 'mongoose';
-import { stateEnum } from '../utils/enum.js';
 
 const stateSchema = new mongoose.Schema(
   {
     state_name : {
       type: String,
-      enum: Object.values(stateEnum),
       required: true,
     },
     country_id: {

@@ -62,10 +62,13 @@ export const viewAllApplicant = async (req, res) => {
       totalExperience,
       startDate,
       endDate,
-      city,
+      currentCity,
       interviewStage,
       expectedPkg,
       noticePeriod,
+      status,
+      gender,
+      currentCompanyDesignation,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -93,20 +96,50 @@ export const viewAllApplicant = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
     }
 
-    if (city && typeof city === 'string') {
-      query.city = { $regex: new RegExp(city, 'i') };
+    if (currentCity && typeof currentCity === 'string') {
+      query.currentCity = { $regex: new RegExp(currentCity, 'i') };
     }
 
     if (interviewStage && typeof interviewStage === 'string') {
       query.interviewStage = interviewStage;
     }
 
-    if (expectedPkg && typeof expectedPkg === 'string') {
-      query.expectedPkg = expectedPkg;
+    if (expectedPkg) {
+      const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
+    
+      if (rangeMatch) {
+        const min = parseInt(rangeMatch[1], 10);
+        const max = parseInt(rangeMatch[2], 10);
+    
+        query.expectedPkg = { $gte: min, $lte: max };
+      } else if (!isNaN(expectedPkg)) {
+        query.expectedPkg = parseInt(expectedPkg, 10);
+      }
     }
 
-    if (noticePeriod && typeof noticePeriod === 'string') {
-      query.noticePeriod = noticePeriod;
+    if (noticePeriod) {
+      const rangeMatch = noticePeriod.toString().match(/^(\d+)-(\d+)$/);
+    
+      if (rangeMatch) {
+        const min = parseInt(rangeMatch[1], 10);
+        const max = parseInt(rangeMatch[2], 10);
+    
+        query.noticePeriod = { $gte: min, $lte: max };
+      } else if (!isNaN(noticePeriod)) {
+        query.noticePeriod = parseInt(noticePeriod, 10);
+      }
+    }
+
+    if (gender && typeof gender === 'string') {
+      query.gender = gender;
+    }
+
+    if (status && typeof status === 'string') {
+      query.status = status;
+    }
+
+    if (currentCompanyDesignation && typeof currentCompanyDesignation === 'string') {
+      query.currentCompanyDesignation = currentCompanyDesignation;
     }
 
     let searchResults = { results: [], totalRecords: 0 };
@@ -129,12 +162,12 @@ export const viewAllApplicant = async (req, res) => {
     const findApplicants = searchResults.results.length
       ? searchResults
       : await pagination({
-          Schema: Applicant,
-          page: pageNum,
-          limit: limitNum,
-          query,
-          sort: { createdAt: -1 },
-        });
+        Schema: Applicant,
+        page: pageNum,
+        limit: limitNum,
+        query,
+        sort: { createdAt: -1 },
+      });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
