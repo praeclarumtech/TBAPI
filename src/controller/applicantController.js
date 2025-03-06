@@ -108,12 +108,12 @@ export const viewAllApplicant = async (req, res) => {
       const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
     
       if (rangeMatch) {
-        const min = parseInt(rangeMatch[1], 10);
-        const max = parseInt(rangeMatch[2], 10);
+        const min = parseFloat(rangeMatch[1], 10);
+        const max = parseFloat(rangeMatch[2], 10);
     
         query.expectedPkg = { $gte: min, $lte: max };
       } else if (!isNaN(expectedPkg)) {
-        query.expectedPkg = parseInt(expectedPkg, 10);
+        query.expectedPkg = parseFloat(expectedPkg, 10);
       }
     }
 
