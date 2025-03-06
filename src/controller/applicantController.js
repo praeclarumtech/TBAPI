@@ -113,29 +113,29 @@ export const viewAllApplicant = async (req, res) => {
       query.interviewStage = interviewStage;
     }
 
-    if (expectedPkg && typeof expectedPkg === 'string') {
-      const rangeMatch = expectedPkg.match(/^(\d+)-(\d+)$/);
-
+    if (expectedPkg) {
+      const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
+    
       if (rangeMatch) {
-        const min = rangeMatch[1];
-        const max = rangeMatch[2];
-
+        const min = parseInt(rangeMatch[1], 10);
+        const max = parseInt(rangeMatch[2], 10);
+    
         query.expectedPkg = { $gte: min, $lte: max };
-      } else {
-        query.expectedPkg = expectedPkg;
+      } else if (!isNaN(expectedPkg)) {
+        query.expectedPkg = parseInt(expectedPkg, 10);
       }
     }
 
-    if (noticePeriod && typeof noticePeriod === 'string') {
-      const rangeMatch = noticePeriod.match(/^(\d+)-(\d+)$/);
-
+    if (noticePeriod) {
+      const rangeMatch = noticePeriod.toString().match(/^(\d+)-(\d+)$/);
+    
       if (rangeMatch) {
-        const min = rangeMatch[1];
-        const max = rangeMatch[2];
-
+        const min = parseInt(rangeMatch[1], 10);
+        const max = parseInt(rangeMatch[2], 10);
+    
         query.noticePeriod = { $gte: min, $lte: max };
-      } else {
-        query.noticePeriod = noticePeriod;
+      } else if (!isNaN(noticePeriod)) {
+        query.noticePeriod = parseInt(noticePeriod, 10);
       }
     }
 
