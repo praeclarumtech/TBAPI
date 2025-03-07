@@ -1,7 +1,7 @@
 import applicantEmail from '../models/applicantEmailModel.js';
 
 export const findAllEmails = async () => {
-  return await applicantEmail.find().sort({ createdAt: -1 });
+  return await applicantEmail.find();
 };
 
 export const removeManyEmails = async (ids) => {
