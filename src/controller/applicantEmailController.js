@@ -38,7 +38,7 @@ export const sendEmail = async (req, res) => {
 
 export const getAllEmails = async (req, res) => {
   try {
-    const { page = 1, limit = 10, email_to, subject, startDate, endDate } = req.body;
+    const { page = 1, limit = 10, email_to, subject, startDate, endDate } = req.query;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
