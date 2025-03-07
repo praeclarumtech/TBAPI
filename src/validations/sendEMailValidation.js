@@ -23,7 +23,7 @@ export const sendEmailValidation = Joi.object().keys({
   ),
     email_bcc: Joi.array()
     .items(
-      Joi.string()
+      Joi.string().allow('')
         .email({ tlds: { allow: false } })
     )
     .optional()
