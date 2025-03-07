@@ -1,17 +1,35 @@
 import Joi from 'joi';
 
 export const sendEmailValidation = Joi.object().keys({
-  email_to: Joi.string()
-    .required()
-    .pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+  email_to: Joi.alternatives().try(
+    Joi.string()
+      .email()
+      .required()
+      .messages({
+        "string.email": "Email_to should be in a valid email format",
+      }),
+    Joi.array()
+      .items(
+        Joi.string()
+          .email()
+          .required()
+      )
+      .min(1)
+      .required()
+      .messages({
+        "array.min": "At least one recipient email is required",
+        "string.email": "Each email in the list should be valid",
+      })
+  ),
+    email_bcc: Joi.array()
+    .items(
+      Joi.string()
+        .email({ tlds: { allow: false } })
+    )
+    .optional()
     .messages({
-      'string.pattern.base': `Email_to should be in the correct format`,
+      'array.base': `"email_bcc" must be an array`,
     }),
-  email_bcc: Joi.string().allow('').optional()
-    .pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
-    .messages({
-      'string.pattern.base': `Email_bcc should be in the correct format`,
-    }),
-  subject: Joi.string().required(),
+    subject: Joi.string().required(),
   description: Joi.string().allow('').optional(),
 });
