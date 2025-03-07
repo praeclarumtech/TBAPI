@@ -10,6 +10,6 @@ export const getAllcountry = async () => {
     return await states.find(body);
   };
 
-  export const getAllCity = async (body) => {
+  export const getAllCity = async (body) => {   
     return await city.find(body);
   };  

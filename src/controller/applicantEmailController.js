@@ -14,14 +14,27 @@ export const sendEmail = async (req, res) => {
   try {
     const { email_to, email_bcc, subject, description } = req.body;
 
-    await sendingEmail({ email_to, email_bcc, subject, description });
+    if (!email_to || (Array.isArray(email_to) && email_to.length === 0)) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        "Recipient email list is required."
+      );
+    }
 
-    const storedEmail = await createEmail({
-      email_to,
-      email_bcc,
+    const recipients = Array.isArray(email_to) ? email_to : [email_to];
+
+    await sendingEmail({ email_to: recipients, email_bcc, subject, description });
+
+    const storedEmails = recipients.map(email => ({
+      email_to: email,
+      email_bcc: email_bcc || [],
       subject,
       description,
-    });
+    }));
+
+    const insertedEmails = await createEmail(storedEmails);
 
     logger.info(Message.MAIL_SENT);
     return HandleResponse(res, true, StatusCodes.CREATED, Message.MAIL_SENT);
@@ -38,7 +51,7 @@ export const sendEmail = async (req, res) => {
 
 export const getAllEmails = async (req, res) => {
   try {
-    const { page = 1, limit = 10, email_to, subject, startDate, endDate } = req.body;
+    const { page = 1, limit = 10, email_to, subject, startDate, endDate  } = req.query;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
@@ -68,6 +81,7 @@ export const getAllEmails = async (req, res) => {
       page: numOfpage,
       limit: limitOfRec,
       query: query,
+      sort: { createdAt: -1 }
     });
 
     logger.info(`All emails are ${Message.FETCH_SUCCESSFULLY}`);
