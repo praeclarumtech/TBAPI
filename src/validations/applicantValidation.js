@@ -50,8 +50,8 @@ export const applicantValidation = Joi.object({
     'any.required': 'Date of birth is required.',
   }),
 
-  qualification: Joi.array().items(Joi.string()).required().messages({
-    'array.base': 'Qualification must be an array of strings.',
+  qualification: Joi.string().required().messages({
+    'string.empty': 'Qualification cannot be empty.',
     'any.required': 'Qualification are required.',
   }),
 
@@ -65,13 +65,13 @@ export const applicantValidation = Joi.object({
     'any.required': 'Passing Year is required.',
   }),
 
-  currentLocation: Joi.string().required().messages({
+  currentAddress: Joi.string().required().messages({
     'string.empty': 'Current location cannot be empty.',
     'any.required': 'Current location is required.',
   }),
   state: Joi.string().required(),
   country: Joi.string().required(),
-  currentPincode: Joi.number().integer().required(),
+  currentPincode: Joi.number().integer().allow(''),
   currentCity: Joi.string().required(),
   resumeUrl: Joi.string(),
   practicalUrl: Joi.string().allow(''),
@@ -143,7 +143,7 @@ export const applicantValidation = Joi.object({
       'any.required': 'CurrentCompanyDesignation is required.',
     }),
 
-  aboutUs: Joi.string().allow(null, ''),
+  comment: Joi.string().allow(null, ''),
   feedback: Joi.string().allow(null, ''),
   practicalFeedback: Joi.string().allow(null, ''),
 
@@ -186,10 +186,10 @@ export const applicantValidation = Joi.object({
     'date.base': 'lastFollowUpDate must be a valid date.',
   }),
   appliedRole: Joi.string().required(),
-  homeTownCity: Joi.string().required(),
+  permanentAddress: Joi.string().required(),
   anyHandOnOffers: Joi.boolean(),
-  homePincode: Joi.number().integer().required(),
   referral: Joi.string().allow(null, ''),
+  cgpa: Joi.number().allow(''),
 });
 
 export const updateApplicantValidation = Joi.object({
@@ -234,8 +234,8 @@ export const updateApplicantValidation = Joi.object({
     'any.required': 'Date of birth is required.',
   }),
 
-  qualification: Joi.array().items(Joi.string()).messages({
-    'array.base': 'Qualification must be an array of strings.',
+  qualification: Joi.string().messages({
+    'string.base': 'Qualification must be a string.',
   }),
 
   degree: Joi.string().messages({
@@ -246,12 +246,12 @@ export const updateApplicantValidation = Joi.object({
     'number.base': 'Passing Year must be a number.',
   }),
 
-  currentLocation: Joi.string().required().messages({
+  currentAddress: Joi.string().messages({
     'string.empty': 'Current location cannot be empty.',
   }),
   state: Joi.string(),
   country: Joi.string(),
-  currentPincode: Joi.number().required(),
+  currentPincode: Joi.number().integer().allow(''),
   currentCity: Joi.string(),
   url: Joi.string(),
   resumeUrl: Joi.string(),
@@ -314,7 +314,7 @@ export const updateApplicantValidation = Joi.object({
       'any.required': 'CurrentCompanyDesignation is required.',
     }),
 
-  aboutUs: Joi.string().allow(null, ''),
+  comment: Joi.string().allow(null, ''),
   feedback: Joi.string().allow(null, ''),
   practicalFeedback: Joi.string().allow(null, ''),
 
@@ -358,9 +358,9 @@ export const updateApplicantValidation = Joi.object({
   lastFollowUpDate: Joi.date().allow('').messages({
     'date.base': 'lastFollowUpDate must be a valid date.',
   }),
-  homeTownCity: Joi.string().required(),
-  homePincode: Joi.number().integer().required(),
+  permanentAddress: Joi.string().required(),
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
-  appliedRole: Joi.string().required()
+  appliedRole: Joi.string().required(),
+  cgpa: Joi.number().allow(''),
 });

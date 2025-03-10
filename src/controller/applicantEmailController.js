@@ -9,6 +9,7 @@ import applicantEmail from '../models/applicantEmailModel.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
+import Applicant from '../models/applicantModel.js';
 
 export const sendEmail = async (req, res) => {
   try {
@@ -84,13 +85,22 @@ export const getAllEmails = async (req, res) => {
       sort: { createdAt: -1 }
     });
 
+    const emailsWithDetails = await Promise.all(findEmails.item.map(async (email) => {
+        const applicant = await Applicant.findOne({ email: email.email_to }).select('name appliedSkills');
+        return {
+          ...email.toObject(),
+          name: applicant ? applicant.name : null,
+          appliedSkills: applicant ? applicant.appliedSkills : null,
+        };
+      }));
+
     logger.info(`All emails are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `All emails are ${Message.FETCH_SUCCESSFULLY}`,
-      findEmails
+      emailsWithDetails
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} fetch all emails.`);
