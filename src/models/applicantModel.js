@@ -8,7 +8,7 @@ const ApplicantSchema = new mongoose.Schema(
       ref: 'user',
       required: false,
     },
-    applicationNo: { type: Number, required: true },
+    // applicationNo: { type: Number, required: true },
     name: {
       firstName: { type: String, required: true },
       middleName: { type: String },

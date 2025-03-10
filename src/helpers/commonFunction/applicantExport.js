@@ -1,10 +1,10 @@
 import { Parser } from 'json2csv';
-import { generateApplicantNo } from '../generateApplicationNo.js';
+// import { generateApplicantNo } from '../generateApplicationNo.js';
 import { applicantEnum } from '../../utils/enum.js';
 
 export const generateApplicantCsv = (applicants) => {
     const fields = [
-        { label: 'Application Number', value: (row) => row.applicationNo || '' },
+        // { label: 'Application Number', value: (row) => row.applicationNo || '' },
         { label: 'First Name', value: (row) => row.name?.firstName || '' },
         { label: 'Middle Name', value: (row) => row.name?.middleName || '' },
         { label: 'Last Name', value: (row) => row.name?.lastName || '' },
@@ -55,32 +55,19 @@ export const generateApplicantCsv = (applicants) => {
     return json2csvParser.parse(applicants);
 };
 
-
 const parseDate = (dateString) => {
     if (!dateString || dateString.toLowerCase() === "not provided") return null;
     const dateParts = dateString.split("-");
     if (dateParts.length !== 3) return null;
-
     let [day, month, year] = dateParts.map(num => num.trim());
-
     if (year.length === 2) {
         year = `20${year}`;
     }
-
     const formattedDate = new Date(`${year}-${month}-${day}`);
-
     return isNaN(formattedDate.getTime()) ? null : formattedDate;
 };
-
-
 const validateAndFillFields = async (data) => {
-    let applicationNo = Number(data["Application Number"]);
-
-    if (!applicationNo || applicationNo <= 0) {
-        applicationNo = await generateApplicantNo();
-    }
     return {
-        applicationNo,
         name: {
             firstName: data["First Name"] || "N/A",
             middleName: data["Middle Name"] || "",
@@ -144,7 +131,6 @@ export const processCsvRow = async (data) => {
         }
         const validatedData = await validateAndFillFields(data);
         console.log("Validated Data:", validatedData);
-
         return validatedData;
     } catch (error) {
         console.error("Error in processCsvRow:", error);
