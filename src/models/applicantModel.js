@@ -133,6 +133,7 @@ const ApplicantSchema = new mongoose.Schema(
     },
     lastFollowUpDate: { type: Date },
     permanentAddress: { type: String, required: true },
+    collegeName: { type: String},
     cgpa: { type: Number},
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },

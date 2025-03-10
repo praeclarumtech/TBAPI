@@ -66,8 +66,8 @@ export const applicantValidation = Joi.object({
   }),
 
   currentAddress: Joi.string().required().messages({
-    'string.empty': 'Current location cannot be empty.',
-    'any.required': 'Current location is required.',
+    'string.empty': 'Current Address cannot be empty.',
+    'any.required': 'Current Address is required.',
   }),
   state: Joi.string().required(),
   country: Joi.string().required(),
@@ -189,6 +189,7 @@ export const applicantValidation = Joi.object({
   permanentAddress: Joi.string().required(),
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
+  collegeName: Joi.string().allow(null, ''),
   cgpa: Joi.number().allow(''),
 });
 
@@ -247,7 +248,7 @@ export const updateApplicantValidation = Joi.object({
   }),
 
   currentAddress: Joi.string().messages({
-    'string.empty': 'Current location cannot be empty.',
+    'string.empty': 'Current Address cannot be empty.',
   }),
   state: Joi.string(),
   country: Joi.string(),
@@ -361,6 +362,7 @@ export const updateApplicantValidation = Joi.object({
   permanentAddress: Joi.string().required(),
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
+  collegeName: Joi.string().allow(null, ''),
   appliedRole: Joi.string().required(),
   cgpa: Joi.number().allow(''),
 });
