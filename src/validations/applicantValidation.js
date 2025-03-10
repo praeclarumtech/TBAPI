@@ -55,9 +55,9 @@ export const applicantValidation = Joi.object({
     'any.required': 'Qualification are required.',
   }),
 
-  degree: Joi.string().required().messages({
-    'string.empty': 'Degree cannot be empty.',
-    'any.required': 'Degree is required.',
+  specialization: Joi.string().required().messages({
+    'string.empty': 'specialization cannot be empty.',
+    'any.required': 'specialization is required.',
   }),
 
   passingYear: Joi.number().integer().required().messages({
@@ -238,8 +238,8 @@ export const updateApplicantValidation = Joi.object({
     'string.base': 'Qualification must be a string.',
   }),
 
-  degree: Joi.string().messages({
-    'string.empty': 'Degree cannot be empty.',
+  specialization: Joi.string().messages({
+    'string.empty': 'specialization cannot be empty.',
   }),
 
   passingYear: Joi.number().integer().messages({

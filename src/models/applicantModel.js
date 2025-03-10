@@ -26,7 +26,7 @@ const ApplicantSchema = new mongoose.Schema(
     },
     dateOfBirth: { type: Date, required: true },
     qualification: { type: String, required: true },
-    degree: { type: String, required: true },
+    specialization: { type: String, required: true },
     passingYear: { type: Number, required: true },
 
     currentAddress: { type: String, required: true },
