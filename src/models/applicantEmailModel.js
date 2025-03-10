@@ -3,11 +3,11 @@ import mongoose from 'mongoose';
 const applicantEmailSchema = new mongoose.Schema(
   {
     email_to: {
-      type: String,
+      type: [String], 
       required: true,
     },
     email_bcc: {
-      type: String,
+      type: [String],
     },
     subject: {
       type: String,

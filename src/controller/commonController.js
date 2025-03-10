@@ -32,7 +32,9 @@ export const viewCountry = async (req, res) => {
   export const viewState = async (req, res) => {
     try {
       const { country_id } = req.query;
-      const states = await getAllstates({ country_id });
+      const query = country_id ? { country_id } : {}
+
+      const states = await getAllstates(query);
   
       logger.info(Message.FETCHING_STATES);
       return HandleResponse(res, true, StatusCodes.OK, undefined, states);
@@ -54,7 +56,9 @@ export const viewCountry = async (req, res) => {
   export const viewCity = async (req, res) => { 
     try {
       const { state_id } = req.query;
-      const City = await getAllCity({ state_id });
+      const query = state_id ? { state_id } : {}
+
+      const City = await getAllCity(query);
   
       logger.info(Message.FETCHING_CITIES);
       return HandleResponse(res, true, StatusCodes.OK, undefined, City);

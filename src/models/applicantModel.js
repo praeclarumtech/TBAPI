@@ -28,14 +28,14 @@ const ApplicantSchema = new mongoose.Schema(
     qualification: { type: [String], required: true },
     degree: { type: String, required: true },
     passingYear: { type: Number, required: true },
-    fullAddress: { type: String },
-    currentLocation: { type: String },
+
+    currentLocation: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
     currentPincode: { type: Number, required: true },
     currentCity: { type: String, required: false },
     appliedSkills: { type: [String], required: true },
-    anyHandOnOffers: { type: Boolean },
+    anyHandOnOffers: { type: Boolean, default: false },
     resume: { type: String, required: false },
     totalExperience: { type: Number, required: false },
     relevantSkillExperience: { type: Number, required: false },
@@ -43,9 +43,9 @@ const ApplicantSchema = new mongoose.Schema(
     otherSkills: { type: String },
     rating: { type: Number, required: true },
     currentPkg: { type: String },
-    expectedPkg: { type: String },
-    noticePeriod: { type: String },
-    negotiation: { type: String },
+    expectedPkg: { type: Number },
+    noticePeriod: { type: Number },
+    negotiation: { type: String, required: true },
     workPreference: {
       type: String,
       enum: [applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE],
@@ -98,7 +98,8 @@ const ApplicantSchema = new mongoose.Schema(
       required: false
     },
     appliedRole: {
-      type: String, enum: [
+      type: String, required: true,
+      enum: [
         applicantEnum.FRONTED_DEVLOPER,
         applicantEnum.SOFTWARE_ENGINNER,
         applicantEnum.BACKEND_DEVLOPER,
@@ -127,11 +128,12 @@ const ApplicantSchema = new mongoose.Schema(
       enum: [
         applicantEnum.SINGLE,
         applicantEnum.MARRIED,
+        '',
       ],
     },
     lastFollowUpDate: { type: Date },
-    homeTownCity: { type: String },
-    homePincode: { type: Number },
+    homeTownCity: { type: String, required: true },
+    homePincode: { type: Number, required: true },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
   },

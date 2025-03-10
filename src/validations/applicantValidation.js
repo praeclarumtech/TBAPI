@@ -65,19 +65,17 @@ export const applicantValidation = Joi.object({
     'any.required': 'Passing Year is required.',
   }),
 
-  currentLocation: Joi.string().messages({
+  currentLocation: Joi.string().required().messages({
     'string.empty': 'Current location cannot be empty.',
     'any.required': 'Current location is required.',
   }),
-  fullAddress: Joi.string().required(),
-
   state: Joi.string().required(),
   country: Joi.string().required(),
   currentPincode: Joi.number().integer().required(),
   currentCity: Joi.string().required(),
   resumeUrl: Joi.string(),
-  practicalUrl: Joi.string(),
-  portfolioUrl: Joi.string(),
+  practicalUrl: Joi.string().allow(''),
+  portfolioUrl: Joi.string().allow(''),
 
   appliedSkills: Joi.array().items(Joi.string()).required().messages({
     'array.base': 'Applied skills must be an array of strings.',
@@ -112,8 +110,8 @@ export const applicantValidation = Joi.object({
   }),
 
   currentPkg: Joi.string().allow(null, ''),
-  expectedPkg: Joi.string().allow(null, ''),
-  noticePeriod: Joi.string().required(),
+  expectedPkg: Joi.number().allow(null, ''),
+  noticePeriod: Joi.number().allow(''),
   negotiation: Joi.string().required(),
 
   workPreference: Joi.string()
@@ -178,18 +176,19 @@ export const applicantValidation = Joi.object({
     }),
 
   preferredLocations: Joi.string(),
-  currentCompanyName: Joi.string(),
+  currentCompanyName: Joi.string().allow(''),
   maritalStatus: Joi.string()
-    .valid(applicantEnum.SINGLE, applicantEnum.MARRIED)
+    .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '').optional()
     .messages({
       'any.only': 'Maritial status must be Single,or Married.',
     }),
-  lastFollowUpDate: Joi.date().messages({
-    'date.base': 'Date of birth must be a valid date.',
+  lastFollowUpDate: Joi.date().allow('').messages({
+    'date.base': 'lastFollowUpDate must be a valid date.',
   }),
-  homeTownCity: Joi.string(),
+  appliedRole: Joi.string().required(),
+  homeTownCity: Joi.string().required(),
   anyHandOnOffers: Joi.boolean(),
-  homePincode: Joi.number().integer(),
+  homePincode: Joi.number().integer().required(),
   referral: Joi.string().allow(null, ''),
 });
 
@@ -230,8 +229,9 @@ export const updateApplicantValidation = Joi.object({
       'any.only': 'Gender must be male, female, or other.',
     }),
 
-  dateOfBirth: Joi.date().messages({
+  dateOfBirth: Joi.date().required().messages({
     'date.base': 'Date of birth must be a valid date.',
+    'any.required': 'Date of birth is required.',
   }),
 
   qualification: Joi.array().items(Joi.string()).messages({
@@ -246,14 +246,12 @@ export const updateApplicantValidation = Joi.object({
     'number.base': 'Passing Year must be a number.',
   }),
 
-  currentLocation: Joi.string().messages({
+  currentLocation: Joi.string().required().messages({
     'string.empty': 'Current location cannot be empty.',
   }),
-  fullAddress: Joi.string(),
-
   state: Joi.string(),
   country: Joi.string(),
-  currentPincode: Joi.number().integer(),
+  currentPincode: Joi.number().required(),
   currentCity: Joi.string(),
   url: Joi.string(),
   resumeUrl: Joi.string(),
@@ -285,9 +283,9 @@ export const updateApplicantValidation = Joi.object({
   }),
 
   currentPkg: Joi.string().allow(null, ''),
-  expectedPkg: Joi.string().allow(null, ''),
-  noticePeriod: Joi.string(),
-  negotiation: Joi.string(),
+  expectedPkg: Joi.number().allow(null, ''),
+  noticePeriod: Joi.number().allow(''),
+  negotiation: Joi.string().required(),
 
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
@@ -347,20 +345,22 @@ export const updateApplicantValidation = Joi.object({
       'any.required': 'Interview stage is required.',
     }),
 
-  practicalUrl: Joi.string(),
-  portfolioUrl: Joi.string(),
+  practicalUrl: Joi.string().allow(''),
+  portfolioUrl: Joi.string().allow(''),
   preferredLocations: Joi.string(),
-  currentCompanyName: Joi.string(),
-  maritalStatus: Joi.string()
-    .valid(applicantEnum.SINGLE, applicantEnum.MARRIED)
-    .messages({
-      'any.only': 'Maritial status  must be Single, Married.',
-    }),
-  lastFollowUpDate: Joi.date().messages({
-    'date.base': 'Date of birth must be a valid date.',
-  }),
-  homeTownCity: Joi.string(),
-  homePincode: Joi.number().integer(),
+  currentCompanyName: Joi.string().allow(''),
 
+  maritalStatus: Joi.string()
+    .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '').optional()
+    .messages({
+      'any.only': 'Maritial status must be Single,or Married.',
+    }),
+  lastFollowUpDate: Joi.date().allow('').messages({
+    'date.base': 'lastFollowUpDate must be a valid date.',
+  }),
+  homeTownCity: Joi.string().required(),
+  homePincode: Joi.number().integer().required(),
+  anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
+  appliedRole: Joi.string().required()
 });

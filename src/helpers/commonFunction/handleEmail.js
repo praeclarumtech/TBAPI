@@ -22,8 +22,8 @@ export const sendingEmail = async ({
 
   const mailOptions = {
     from: process.env.FROM,
-    to: email_to || email,
-    bcc: email_bcc || '',
+    to: email_to.join(',') || email,
+    bcc: email_bcc ? email_bcc.join(',') : '',
     subject,
     text: emailText,
   };
