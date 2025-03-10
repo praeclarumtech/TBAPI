@@ -2,8 +2,8 @@ import Degree from '../models/degreeModel.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 
 export const create = async (body) => {
-    const skill = new Degree({ ...body });
-    return skill.save();
+    const degree = new Degree({ ...body });
+    return degree.save();
 };
 
 export const getAllDegree = async (page, limit) => {
