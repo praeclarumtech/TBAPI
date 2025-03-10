@@ -1,5 +1,6 @@
 import { Parser } from 'json2csv';
 import { generateApplicantNo } from '../generateApplicationNo.js';
+import { applicantEnum } from '../../utils/enum.js';
 
 export const generateApplicantCsv = (applicants) => {
     const fields = [
@@ -11,7 +12,7 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'WhatsApp Number', value: (row) => row.phone?.whatsappNumber || '' },
         { label: 'Email', value: (row) => row.email || '' },
         { label: 'Gender', value: (row) => row.gender || '' },
-        { label: 'Date of Birth', value: (row) => row.dateOfBirth || '' },
+        { label: 'Date of Birth', value: (row) => row.dateOfBirth ? new Date(row.dateOfBirth).toISOString().split('T')[0] : '' },
         { label: 'Qualification', value: (row) => row.qualification?.join(', ') || '' },
         { label: 'Degree', value: (row) => row.degree || '' },
         { label: 'Passing Year', value: (row) => row.passingYear || '' },
@@ -29,8 +30,8 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'Other Skills', value: (row) => row.otherSkills || '' },
         { label: 'Rating', value: (row) => row.rating || '' },
         { label: 'Current Package (LPA)', value: (row) => row.currentPkg || '' },
-        { label: 'Expected Package (LPA)', value: (row) => row.expectedPkg ? `${row.expectedPkg} LPA` : '' },
-        { label: 'Notice Period (months)', value: (row) => row.noticePeriod ? `${row.noticePeriod} months` : '' },
+        { label: 'Expected Package (LPA)', value: (row) => row.expectedPkg || '' },
+        { label: 'Notice Period (months)', value: (row) => row.noticePeriod || '' },
         { label: 'Negotiation', value: (row) => row.negotiation || '' },
         { label: 'Work Preference', value: (row) => row.workPreference || '' },
         { label: 'About Us', value: (row) => row.aboutUs || '' },
@@ -47,71 +48,111 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'Preferred Locations', value: (row) => row.preferredLocations || '' },
         { label: 'Current Company Name', value: (row) => row.currentCompanyName || '' },
         { label: 'Marital Status', value: (row) => row.maritalStatus || 'Not Provided' },
-        { label: 'Last Follow-Up Date', value: (row) => row.lastFollowUpDate || 'Not Provided' },
-        { label: 'Any Hands-On Offers', value: (row) => row.anyHandOnOffers ? 'true' : 'false' },
+        { label: 'Last Follow-Up Date', value: (row) => row.lastFollowUpDate ? new Date(row.lastFollowUpDate).toISOString().split('T')[0] : 'Not Provided' },
+        { label: 'Any Hands-On Offers', value: (row) => row.anyHandOnOffers ? 'Yes' : 'No' },
     ];
     const json2csvParser = new Parser({ fields });
     return json2csvParser.parse(applicants);
 };
 
-export const processCsvRow = async (data) => {
-    const applicationNo =
-        data['Application Number']?.trim() || (await generateApplicantNo());
-    const rating = data['Rating']?.trim() ? Number(data['Rating'].trim()) : 0;
 
+const parseDate = (dateString) => {
+    if (!dateString || dateString.toLowerCase() === "not provided") return null;
+    const dateParts = dateString.split("-");
+    if (dateParts.length !== 3) return null;
+
+    let [day, month, year] = dateParts.map(num => num.trim());
+
+    if (year.length === 2) {
+        year = `20${year}`;
+    }
+
+    const formattedDate = new Date(`${year}-${month}-${day}`);
+
+    return isNaN(formattedDate.getTime()) ? null : formattedDate;
+};
+
+
+const validateAndFillFields = async (data) => {
+    let applicationNo = Number(data["Application Number"]);
+
+    if (!applicationNo || applicationNo <= 0) {
+        applicationNo = await generateApplicantNo();
+    }
     return {
         applicationNo,
         name: {
-            firstName: data['First Name']?.trim() || '',
-            middleName: data['Middle Name']?.trim() || '',
-            lastName: data['Last Name']?.trim() || '',
+            firstName: data["First Name"] || "N/A",
+            middleName: data["Middle Name"] || "",
+            lastName: data["Last Name"] || "N/A",
         },
+
         phone: {
-            phoneNumber: data['Phone Number']?.trim() || '',
-            whatsappNumber: data['WhatsApp Number']?.trim() || '',
+            phoneNumber: data["Phone Number"] || "0000000000",
+            whatsappNumber: data["WhatsApp Number"] || "0000000000",
         },
-        email: data['Email']?.trim() || '',
-        gender: data['Gender']?.trim() || '',
-        dateOfBirth: data['Date of Birth'] ? new Date(data['Date of Birth'].trim()) : null,
-        qualification: data['Qualification']?.trim()?.split(',').map(q => q.trim()) || [],
-        degree: data['Degree']?.trim() || '',
-        passingYear: data['Passing Year']?.trim() ? Number(data['Passing Year'].trim()) : null,
-        totalExperience: data['Total Experience (years)'] ? Number(data['Total Experience (years)'].trim()) : 0,
-        relevantSkillExperience: data['Relevant Skill Experience (years)']
-            ? Number(data['Relevant Skill Experience (years)'].trim())
-            : 0,
-        communicationSkill: data['Communication Skill']?.trim() || '',
-        otherSkills: data['Other Skills']?.trim() || '',
-        rating,
-        currentPkg: data['Current Package (LPA)']?.trim() || '',
-        expectedPkg: data['Expected Package (LPA)']?.trim() || '',
-        noticePeriod: data['Notice Period (months)']?.trim() || '',
-        negotiation: data['Negotiation']?.trim() || '',
-        workPreference: data['Work Preference']?.trim() || '',
-        aboutUs: data['About Us']?.trim() || '',
-        feedback: data['Feedback']?.trim() || '',
-        status: data['Status']?.trim() || '',
-        interviewStage: data['Interview Stage']?.trim() || '',
-        currentCompanyDesignation: data['Current Company Designation']?.trim() || '',
-        appliedRole: data['Applied Role']?.trim() || '',
-        practicalUrl: data['Practical URL']?.trim() || '',
-        practicalFeedback: data['Practical Feedback']?.trim() || '',
-        portfolioUrl: data['Portfolio URL']?.trim() || '',
-        referral: data['Referral']?.trim() || '',
-        resumeUrl: data['Resume URL']?.trim() || '',
-        preferredLocations: data['Preferred Locations']
-            ? data['Preferred Locations'].trim().split(',').map(loc => loc.trim())
-            : [],
-        currentCompanyName: data['Current Company Name']?.trim() || '',
-        maritalStatus: data['Marital Status']?.trim() || 'Not Provided',
-        lastFollowUpDate: data['Last Follow-Up Date'] ? new Date(data['Last Follow-Up Date'].trim()) : null,
-        anyHandOnOffers: data['Any Hands-On Offers']?.trim().toLowerCase() === 'yes',
-        currentLocation: data['Current Location']?.trim() || '',
-        state: data['State']?.trim() || '',
-        country: data['Country']?.trim() || '',
-        currentPincode: data['Current Pincode']?.trim() ? Number(data['Current Pincode'].trim()) : null,
-        currentCity: data['Current City']?.trim() || '',
-        homeTownCity: data['Home Town City']?.trim() || '',
-        homePincode: data['Home Pincode']?.trim() ? Number(data['Home Pincode'].trim()) : null,
+
+        email: data["Email"] || "notprovided@example.com",
+        gender: applicantEnum[data["Gender"]?.toUpperCase()] || applicantEnum.OTHER,
+
+        dateOfBirth: parseDate(data["Date of Birth"]),
+
+        homePincode: !isNaN(Number(data["Home Pincode"])) ? Number(data["Home Pincode"]) : null,
+        homeTownCity: data["Home Town/City"] || "Unknown",
+        appliedRole: applicantEnum[data["Applied Role"]?.toUpperCase()] || applicantEnum.NA,
+
+        currentPincode: !isNaN(Number(data["Current Pincode"])) ? Number(data["Current Pincode"]) : null,
+        country: data["Country"] || "N/A",
+        state: data["State"] || "N/A",
+        currentLocation: data["Current Location"] || "N/A",
+
+        qualification: data["Qualification"] ? data["Qualification"].split(",").map(q => q.trim()) : [],
+        degree: data["Degree"] || "N/A",
+        passingYear: !isNaN(Number(data["Passing Year"])) ? Number(data["Passing Year"]) : new Date().getFullYear(),
+
+        totalExperience: !isNaN(Number(data["Total Experience (years)"])) ? Number(data["Total Experience (years)"]) : 0,
+        relevantSkillExperience: !isNaN(Number(data["Relevant Skill Experience (years)"])) ? Number(data["Relevant Skill Experience (years)"]) : 0,
+
+        communicationSkill: !isNaN(Number(data["Communication Skill"])) ? Number(data["Communication Skill"]) : 1,
+        rating: !isNaN(Number(data["Rating"])) ? Number(data["Rating"]) : 0,
+
+        currentPkg: data["Current Package (LPA)"] || "N/A",
+        expectedPkg: !isNaN(Number(data["Expected Package (LPA)"])) ? Number(data["Expected Package (LPA)"]) : 0,
+        noticePeriod: !isNaN(Number(data["Notice Period (months)"])) ? Number(data["Notice Period (months)"]) : 0,
+
+        negotiation: data["Negotiation"] || "N/A",
+        workPreference: applicantEnum[data["Work Preference"]?.toUpperCase()] || applicantEnum.REMOTE,
+
+        aboutUs: data["About Us"] || "",
+        feedback: data["Feedback"] || "",
+
+        status: applicantEnum[data["Status"]?.toUpperCase()] || applicantEnum.PENDING,
+        interviewStage: applicantEnum[data["Interview Stage"]?.toUpperCase()] || applicantEnum.HR_ROUND,
+
+        appliedSkills: data["Applied Skills"] ? data["Applied Skills"].split(",").map(skill => skill.trim()) : [],
+        lastFollowUpDate: parseDate(data["Last Follow-Up Date"]),
+        anyHandOnOffers: data["Any Hands-On Offers"]?.toLowerCase() === "yes",
     };
 };
+
+
+
+export const processCsvRow = async (data) => {
+    try {
+        if (!data || typeof data !== "object") {
+            throw new Error("Invalid data provided to processCsvRow");
+        }
+        const validatedData = await validateAndFillFields(data);
+        console.log("Validated Data:", validatedData);
+
+        return validatedData;
+    } catch (error) {
+        console.error("Error in processCsvRow:", error);
+        return null;
+    }
+};
+
+
+
+
+

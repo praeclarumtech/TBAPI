@@ -49,7 +49,7 @@ export const applicantValidation = Joi.object({
     'date.base': 'Date of birth must be a valid date.',
     'any.required': 'Date of birth is required.',
   }),
-
+  
   qualification: Joi.array().items(Joi.string()).required().messages({
     'array.base': 'Qualification must be an array of strings.',
     'any.required': 'Qualification are required.',

@@ -34,11 +34,19 @@ export const uploadCv = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['text/csv', 'application/vnd.ms-excel'];
+    const allowedTypes = [
+      'text/csv',
+      'application/csv',
+      // 'application/vnd.ms-excel'
+    ];
+
+    console.log("File MIME Type:", file.mimetype);
+
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
+      console.error("Invalid file type:", file.mimetype);
       cb(new Error(Message.INVALID_FILE_TYPE));
     }
   },
-}).single('csvFile')
+}).single('csvFile');
