@@ -171,11 +171,21 @@ export const viewProfileById = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { userName, email, phoneNumber, dateOfBirth, gender, designation } =
-      req.body;
+    const userId = req.params.id;
+    const {
+      firstName,
+      lastName,
+      userName,
+      email,
+      phoneNumber,
+      dateOfBirth,
+      gender,
+      designation,
+    } = req.body;
 
     let updateData = {
+      firstName,
+      lastName,
       userName,
       email,
       phoneNumber,
@@ -291,7 +301,6 @@ export const verifyOtp = async (req, res) => {
     }
 
     logger.info(Message.OTP_MATCHED);
-
     await deleteOtp({ otp });
 
     return HandleResponse(res, true, StatusCodes.OK, Message.OTP_MATCHED);
