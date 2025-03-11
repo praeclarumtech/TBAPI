@@ -78,6 +78,11 @@ export const viewAllApplicant = async (req, res) => {
       status,
       gender,
       currentCompanyDesignation,
+      state,
+      workPreference,
+      anyHandOnOffers,
+      rating,
+      communicationSkill,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -94,8 +99,17 @@ export const viewAllApplicant = async (req, res) => {
       query.appliedSkills = { $all: skillsArray };
     }
 
-    if (totalExperience && !isNaN(totalExperience)) {
-      query.totalExperience = parseFloat(totalExperience);
+    if (totalExperience) {
+      const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.totalExperience = { $gte: min, $lte: max };
+      } else {
+        query.totalExperience = parseFloat(totalExperience);
+      }
     }
 
     if (startDate || endDate) {
@@ -117,12 +131,12 @@ export const viewAllApplicant = async (req, res) => {
       const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
 
       if (rangeMatch) {
-        const min = parseFloat(rangeMatch[1], 10);
-        const max = parseFloat(rangeMatch[2], 10);
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
 
         query.expectedPkg = { $gte: min, $lte: max };
-      } else if (!isNaN(expectedPkg)) {
-        query.expectedPkg = parseFloat(expectedPkg, 10);
+      } else {
+        query.expectedPkg = parseFloat(expectedPkg);
       }
     }
 
@@ -130,12 +144,12 @@ export const viewAllApplicant = async (req, res) => {
       const rangeMatch = noticePeriod.toString().match(/^(\d+)-(\d+)$/);
 
       if (rangeMatch) {
-        const min = parseInt(rangeMatch[1], 10);
-        const max = parseInt(rangeMatch[2], 10);
+        const min = parseInt(rangeMatch[1]);
+        const max = parseInt(rangeMatch[2]);
 
         query.noticePeriod = { $gte: min, $lte: max };
-      } else if (!isNaN(noticePeriod)) {
-        query.noticePeriod = parseInt(noticePeriod, 10);
+      } else {
+        query.noticePeriod = parseInt(noticePeriod);
       }
     }
 
@@ -149,6 +163,44 @@ export const viewAllApplicant = async (req, res) => {
 
     if (currentCompanyDesignation && typeof currentCompanyDesignation === 'string') {
       query.currentCompanyDesignation = currentCompanyDesignation;
+    }
+
+    if (state && typeof state === 'string') {
+      query.state = { $regex: new RegExp(state, 'i') };
+    }
+
+    if (workPreference && typeof workPreference === 'string') {
+      query.workPreference = workPreference;
+    }
+    
+    if (anyHandOnOffers !== undefined) {
+      query.anyHandOnOffers = anyHandOnOffers === 'true';
+    }
+
+    if (rating) {
+      const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
+    
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+    
+        query.rating = { $gte: min, $lte: max };
+      } else {
+        query.rating = parseFloat(rating);
+      }
+    }
+
+    if (communicationSkill) {
+      const rangeMatch = communicationSkill.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.communicationSkill = { $gte: min, $lte: max };
+      } else {
+        query.communicationSkill = parseFloat(communicationSkill);
+      }
     }
 
     let searchResults = { results: [], totalRecords: 0 };

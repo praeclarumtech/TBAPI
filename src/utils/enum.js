@@ -11,10 +11,6 @@ export const genderEnum = {
 };
 
 export const applicantEnum = {
-  MALE: 'male',
-  FEMALE: 'female',
-  OTHER: 'other',
-
   YES: 'yes',
   NO: 'no',
 
