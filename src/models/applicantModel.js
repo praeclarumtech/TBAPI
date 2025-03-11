@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { applicantEnum } from '../utils/enum.js';
+import { applicantEnum, genderEnum } from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
@@ -21,7 +21,7 @@ const ApplicantSchema = new mongoose.Schema(
     email: { type: String, required: true },
     gender: {
       type: String,
-      enum: [applicantEnum.MALE, applicantEnum.FEMALE, applicantEnum.OTHER],
+      enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER],
       required: true,
     },
     dateOfBirth: { type: Date, required: true },

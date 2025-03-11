@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { applicantEnum } from '../utils/enum.js';
+import { applicantEnum, genderEnum} from '../utils/enum.js';
 
 export const applicantValidation = Joi.object({
   name: Joi.object({
@@ -38,7 +38,7 @@ export const applicantValidation = Joi.object({
   }),
 
   gender: Joi.string()
-    .valid(applicantEnum.MALE, applicantEnum.FEMALE, applicantEnum.OTHER)
+    .valid(genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER)
     .required()
     .messages({
       'any.only': 'Gender must be male, female, or other.',
@@ -71,7 +71,7 @@ export const applicantValidation = Joi.object({
   }),
   state: Joi.string().required(),
   country: Joi.string().required(),
-  currentPincode: Joi.number().integer().allow(''),
+  currentPincode: Joi.number().integer().allow(null,''),
   currentCity: Joi.string().required(),
   resumeUrl: Joi.string(),
   practicalUrl: Joi.string().allow(''),
@@ -225,7 +225,7 @@ export const updateApplicantValidation = Joi.object({
   }),
 
   gender: Joi.string()
-    .valid(applicantEnum.MALE, applicantEnum.FEMALE, applicantEnum.OTHER)
+    .valid(genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER)
     .messages({
       'any.only': 'Gender must be male, female, or other.',
     }),
@@ -252,7 +252,7 @@ export const updateApplicantValidation = Joi.object({
   }),
   state: Joi.string(),
   country: Joi.string(),
-  currentPincode: Joi.number().integer().allow(''),
+  currentPincode: Joi.number().integer().allow(null,''),
   currentCity: Joi.string(),
   url: Joi.string(),
   resumeUrl: Joi.string(),
