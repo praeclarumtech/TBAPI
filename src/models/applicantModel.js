@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { applicantEnum } from '../utils/enum.js';
+import { applicantEnum, genderEnum } from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
@@ -21,18 +21,18 @@ const ApplicantSchema = new mongoose.Schema(
     email: { type: String, required: true },
     gender: {
       type: String,
-      enum: [applicantEnum.MALE, applicantEnum.FEMALE, applicantEnum.OTHER],
+      enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER],
       required: true,
     },
     dateOfBirth: { type: Date, required: true },
-    qualification: { type: [String], required: true },
-    degree: { type: String, required: true },
+    qualification: { type: String, required: true },
+    specialization: { type: String, required: true },
     passingYear: { type: Number, required: true },
 
-    currentLocation: { type: String, required: true },
+    currentAddress: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
-    currentPincode: { type: Number, required: true },
+    currentPincode: { type: Number, required: false },
     currentCity: { type: String, required: false },
     appliedSkills: { type: [String], required: true },
     anyHandOnOffers: { type: Boolean, default: false },
@@ -51,7 +51,7 @@ const ApplicantSchema = new mongoose.Schema(
       enum: [applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE],
       required: true,
     },
-    aboutUs: { type: String },
+    comment: { type: String },
     feedback: { type: String },
     status: {
       type: String,
@@ -132,8 +132,9 @@ const ApplicantSchema = new mongoose.Schema(
       ],
     },
     lastFollowUpDate: { type: Date },
-    homeTownCity: { type: String, required: true },
-    homePincode: { type: Number, required: true },
+    permanentAddress: { type: String, required: false },
+    collegeName: { type: String},
+    cgpa: { type: Number},
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
   },
