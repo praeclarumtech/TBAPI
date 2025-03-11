@@ -1,6 +1,7 @@
 import {
   removeManyEmails,
   createEmail,
+  findAllEmails,
 } from '../services/applicantEmailService.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
@@ -9,7 +10,6 @@ import applicantEmail from '../models/applicantEmailModel.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
-import Applicant from '../models/applicantModel.js';
 
 export const sendEmail = async (req, res) => {
   try {
@@ -20,15 +20,20 @@ export const sendEmail = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        "Recipient email list is required."
+        'Recipient email list is required.'
       );
     }
 
     const recipients = Array.isArray(email_to) ? email_to : [email_to];
 
-    await sendingEmail({ email_to: recipients, email_bcc, subject, description });
+    await sendingEmail({
+      email_to: recipients,
+      email_bcc,
+      subject,
+      description,
+    });
 
-    const storedEmails = recipients.map(email => ({
+    const storedEmails = recipients.map((email) => ({
       email_to: email,
       email_bcc: email_bcc || [],
       subject,
@@ -52,7 +57,14 @@ export const sendEmail = async (req, res) => {
 
 export const getAllEmails = async (req, res) => {
   try {
-    const { page = 1, limit = 10, email_to, subject, startDate, endDate  } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      email_to,
+      subject,
+      startDate,
+      endDate,
+    } = req.query;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
@@ -62,7 +74,6 @@ export const getAllEmails = async (req, res) => {
     if (email_to) {
       query.email_to = { $regex: email_to, $options: 'i' };
     }
-
     if (subject) {
       query.subject = { $regex: subject, $options: 'i' };
     }
@@ -70,37 +81,31 @@ export const getAllEmails = async (req, res) => {
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) {
-        query.createdAt.$gte = new Date(startDate + "T00:00:00.000Z");
+        query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
       }
       if (endDate) {
-        query.createdAt.$lte = new Date(endDate + "T23:59:59.999Z");
+        query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
       }
     }
 
-    const findEmails = await pagination({
-      Schema: applicantEmail,
-      page: numOfpage,
-      limit: limitOfRec,
-      query: query,
-      sort: { createdAt: -1 }
-    });
+    const { emails, totalRecords, totalPages } = await findAllEmails(
+      query,
+      numOfpage,
+      limitOfRec
+    );
 
-    const emailsWithDetails = await Promise.all(findEmails.item.map(async (email) => {
-        const applicant = await Applicant.findOne({ email: email.email_to }).select('name appliedSkills');
-        return {
-          ...email.toObject(),
-          name: applicant ? applicant.name : null,
-          appliedSkills: applicant ? applicant.appliedSkills : null,
-        };
-      }));
-
-    logger.info(`All emails are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `All emails are ${Message.FETCH_SUCCESSFULLY}`,
-      emailsWithDetails
+      {
+        emails,
+        totalRecords,
+        totalPages,
+        currentPage: numOfpage,
+        limit: limitOfRec,
+      }
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} fetch all emails.`);

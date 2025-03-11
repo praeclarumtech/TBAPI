@@ -186,7 +186,7 @@ export const applicantValidation = Joi.object({
     'date.base': 'lastFollowUpDate must be a valid date.',
   }),
   appliedRole: Joi.string().required(),
-  permanentAddress: Joi.string().required(),
+  permanentAddress: Joi.string().allow(null, ''),
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
   collegeName: Joi.string().allow(null, ''),
@@ -230,7 +230,7 @@ export const updateApplicantValidation = Joi.object({
       'any.only': 'Gender must be male, female, or other.',
     }),
 
-  dateOfBirth: Joi.date().required().messages({
+  dateOfBirth: Joi.date().messages({
     'date.base': 'Date of birth must be a valid date.',
     'any.required': 'Date of birth is required.',
   }),
@@ -286,7 +286,7 @@ export const updateApplicantValidation = Joi.object({
   currentPkg: Joi.string().allow(null, ''),
   expectedPkg: Joi.number().allow(null, ''),
   noticePeriod: Joi.number().allow(''),
-  negotiation: Joi.string().required(),
+  negotiation: Joi.string().allow(''),
 
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
@@ -359,10 +359,10 @@ export const updateApplicantValidation = Joi.object({
   lastFollowUpDate: Joi.date().allow('').messages({
     'date.base': 'lastFollowUpDate must be a valid date.',
   }),
-  permanentAddress: Joi.string().required(),
+  permanentAddress: Joi.string().allow(null, ''),
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
   collegeName: Joi.string().allow(null, ''),
-  appliedRole: Joi.string().required(),
+  appliedRole: Joi.string(),
   cgpa: Joi.number().allow(''),
 });
