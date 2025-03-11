@@ -373,94 +373,17 @@ export const exportApplicantCsv = async (req, res) => {
     );
   }
 };
-
-
-// this code for convert csv to jsoon 
-// export const importApplicantCsv = async (req, res) => {
-//   try {
-//     uploadCv(req, res, async (err) => {
-//       if (err) {
-//         return HandleResponse(
-//           res,
-//           false,
-//           StatusCodes.BAD_REQUEST,
-//           `${Message.FAILED_TO} upload CSV`
-//         );
-//       }
-
-//       if (!req.file) {
-//         return HandleResponse(
-//           res,
-//           false,
-//           StatusCodes.BAD_REQUEST,
-//           `${Message.FAILED_TO} upload CSV - No file provided`
-//         );
-//       }
-
-//       console.log("Processing CSV file:", req.file.path);
-//       const results = [];
-//       let headers = [];
-
-//       fs.createReadStream(req.file.path)
-//         .pipe(csvParser({ headers: false, skipEmptyLines: true }))
-//         .on("data", (row) => {
-//           if (headers.length === 0) {
-//             headers = Object.values(row);
-//           } else {
-//             const formattedRow = {};
-//             Object.values(row).forEach((value, i) => {
-//               formattedRow[headers[i]] = value;
-//             });
-//             results.push(formattedRow);
-//           }
-//         })
-//         .on("end", async () => {
-//           // Use for...of loop to generate Application Number where missing
-//           for (const applicant of results) {
-//             if (!applicant["Application Number"]?.trim()) {
-//               applicant["Application Number"] = await generateApplicantNo();
-//             }
-//           }
-
-//           fs.unlinkSync(req.file.path); // Clean up uploaded file
-//           return HandleResponse(res, true, StatusCodes.OK, "CSV converted to JSON", results);
-//         })
-//         .on("error", (error) => {
-//           console.error("Error reading CSV:", error);
-//           return HandleResponse(
-//             res,
-//             false,
-//             StatusCodes.INTERNAL_SERVER_ERROR,
-//             "Error reading CSV file"
-//           );
-//         });
-//     });
-//   } catch (error) {
-//     console.error("Error while importing CSV:", error);
-//     return HandleResponse(
-//       res,
-//       false,
-//       StatusCodes.INTERNAL_SERVER_ERROR,
-//       `${Message.FAILED_TO} import CSV`
-//     );
-//   }
-// };
-
 export const importApplicantCsv = async (req, res) => {
   try {
     uploadCv(req, res, async (err) => {
       if (err) {
         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV`);
       }
-
       if (!req.file) {
         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV - No file provided`);
       }
-
-      console.log("Processing CSV file:", req.file.path);
       const results = [];
       let headers = [];
-
       fs.createReadStream(req.file.path)
         .pipe(csvParser({ headers: false, skipEmptyLines: true }))
         .on("data", (row) => {
@@ -489,17 +412,14 @@ export const importApplicantCsv = async (req, res) => {
             fs.unlinkSync(req.file.path);
             return HandleResponse(res, true, StatusCodes.OK, "CSV Imported and Data Saved", savedApplicants);
           } catch (dbError) {
-            console.error("Error saving applicants:", dbError);
             return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Error saving applicants to the database");
           }
         })
         .on("error", (error) => {
-          console.error("Error reading CSV:", error);
           return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Error reading CSV file");
         });
     });
   } catch (error) {
-    console.error("Error while importing CSV:", error);
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} import CSV`);
   }
 };

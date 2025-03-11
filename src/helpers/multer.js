@@ -36,12 +36,8 @@ export const uploadCv = multer({
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
       'text/csv',
-      'application/csv',
-      // 'application/vnd.ms-excel'
+      'application/csv'
     ];
-
-    console.log("File MIME Type:", file.mimetype);
-
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
