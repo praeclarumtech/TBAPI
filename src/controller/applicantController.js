@@ -139,7 +139,6 @@ export const viewAllApplicant = async (req, res) => {
         query.expectedPkg = parseFloat(expectedPkg);
       }
     }
-
     if (noticePeriod) {
       const rangeMatch = noticePeriod.toString().match(/^(\d+)-(\d+)$/);
 
@@ -172,18 +171,18 @@ export const viewAllApplicant = async (req, res) => {
     if (workPreference && typeof workPreference === 'string') {
       query.workPreference = workPreference;
     }
-    
+
     if (anyHandOnOffers !== undefined) {
       query.anyHandOnOffers = anyHandOnOffers === 'true';
     }
 
     if (rating) {
       const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[2]);
-    
+
         query.rating = { $gte: min, $lte: max };
       } else {
         query.rating = parseFloat(rating);
@@ -400,12 +399,12 @@ export const exportApplicantCsv = async (req, res) => {
     const applicants = await getAllapplicant();
 
     if (!applicants.length) {
-      logger.warn('Applicants not found');
+      logger.warn(`Applicants is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        'Applicants not found'
+        `Applicants is ${Message.NOT_FOUND}`
       );
     }
 
@@ -416,12 +415,12 @@ export const exportApplicantCsv = async (req, res) => {
     res.status(200).send(csvData);
     logger.info(Message.DONWLOADED);
   } catch (error) {
-    console.error('Error exporting to CSV:', error);
+    logger.error(`${Message.FAILED_TO} export file`)
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Failed to export CSV file.'
+      `${Message.FAILED_TO} export file`
     );
   }
 };
