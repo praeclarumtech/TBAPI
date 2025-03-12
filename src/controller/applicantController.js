@@ -439,6 +439,7 @@ export const exportApplicantCsv = async (req, res) => {
     );
   }
 };
+
 export const importApplicantCsv = async (req, res) => {
   try {
     const update = req.query.update === 'true';
@@ -480,15 +481,22 @@ export const importApplicantCsv = async (req, res) => {
                 const existingEmails = existingapplicants.map(app => app.email)
                 return HandleResponse(res, false, StatusCodes.CONFLICT, `Duplicate records found`, { existingEmails });
               }
-
+              const updateOperations = validApplicants.map(applicant => ({
+                updateOne: {
+                  filter: { email: applicant.email },
+                  update: { $set: applicant },
+                  upsert: true
+                }
+              }));
+              if (updateOperations.length > 0) {
+                await Applicant.bulkWrite(updateOperations)
+              }
               const savedApplicants = await createApplicants(validApplicants);
               fs.unlinkSync(req.file.path);
               return HandleResponse(res, true, StatusCodes.OK, 'Existing record udated successfuly', savedApplicants)
             }
-
             const savedApplicants = await createApplicants(validApplicants);
             fs.unlinkSync(req.file.path);
-
             return HandleResponse(res, true, StatusCodes.OK, "CSV Imported and Data Saved", savedApplicants);
           } catch (dbError) {
             console.log("error while saving to db===", dbError)
@@ -505,4 +513,5 @@ export const importApplicantCsv = async (req, res) => {
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} import CSV`);
   }
 };
+
 
