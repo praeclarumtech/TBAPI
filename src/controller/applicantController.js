@@ -83,6 +83,7 @@ export const viewAllApplicant = async (req, res) => {
       anyHandOnOffers,
       rating,
       communicationSkill,
+      currentPkg
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -139,6 +140,20 @@ export const viewAllApplicant = async (req, res) => {
         query.expectedPkg = parseFloat(expectedPkg);
       }
     }
+
+    if (currentPkg) {
+      const rangeMatch = currentPkg.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.currentPkg = { $gte: min, $lte: max };
+      } else {
+        query.currentPkg = parseFloat(currentPkg);
+      }
+    }
+
     if (noticePeriod) {
       const rangeMatch = noticePeriod.toString().match(/^(\d+)-(\d+)$/);
 
@@ -254,12 +269,12 @@ export const viewApplicant = async (req, res) => {
     const applicant = await getApplicantById(applicantId);
 
     if (!applicant) {
-      logger.warn(Message.APPLICANT_NOT_FOUND);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        Message.APPLICANT_NOT_FOUND
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
     logger.info(`Applicant is ${Message.FETCH_BY_ID}: ${applicantId}`);

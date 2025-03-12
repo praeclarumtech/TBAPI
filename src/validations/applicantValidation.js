@@ -76,6 +76,9 @@ export const applicantValidation = Joi.object({
   resumeUrl: Joi.string(),
   practicalUrl: Joi.string().allow(''),
   portfolioUrl: Joi.string().allow(''),
+  linkedinUrl: Joi.string().allow(''),
+  clientCvUrl: Joi.string().allow(''),
+  clientFeedback: Joi.string().allow(''),
 
   appliedSkills: Joi.array().items(Joi.string()).required().messages({
     'array.base': 'Applied skills must be an array of strings.',
@@ -87,7 +90,7 @@ export const applicantValidation = Joi.object({
   //   'any.required': 'Resume is required.',
   // }),
 
-  totalExperience: Joi.number().required().messages({
+  totalExperience: Joi.number().allow(null, '').messages({
     'number.base': 'Total experience must be a number.',
     'any.required': 'Total experience is required.',
   }),
@@ -109,7 +112,7 @@ export const applicantValidation = Joi.object({
     'any.required': 'JavaScript rate is required.',
   }),
 
-  currentPkg: Joi.string().allow(null, ''),
+  currentPkg: Joi.number().allow(null, ''),
   expectedPkg: Joi.number().allow(null, ''),
   noticePeriod: Joi.number().allow(''),
   negotiation: Joi.string().required(),
@@ -265,7 +268,7 @@ export const updateApplicantValidation = Joi.object({
   //   'string.empty': 'Resume cannot be empty.',
   // }),
 
-  totalExperience: Joi.number().messages({
+  totalExperience: Joi.number().allow(null, '').messages({
     'number.base': 'Total experience must be a number.',
   }),
 
@@ -283,7 +286,7 @@ export const updateApplicantValidation = Joi.object({
     'number.base': 'JavaScript rate must be a number.',
   }),
 
-  currentPkg: Joi.string().allow(null, ''),
+  currentPkg: Joi.number().allow(null, ''),
   expectedPkg: Joi.number().allow(null, ''),
   noticePeriod: Joi.number().allow(''),
   negotiation: Joi.string().allow(''),
@@ -365,4 +368,7 @@ export const updateApplicantValidation = Joi.object({
   collegeName: Joi.string().allow(null, ''),
   appliedRole: Joi.string(),
   cgpa: Joi.number().allow(''),
+  linkedinUrl: Joi.string().allow(''),
+  clientCvUrl: Joi.string().allow(''),
+  clientFeedback: Joi.string().allow(''),
 });

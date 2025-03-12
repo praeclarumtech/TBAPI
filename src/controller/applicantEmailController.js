@@ -1,6 +1,8 @@
 import {
   removeManyEmails,
   createEmail,
+  findAllEmails,
+  findEmailById,
 } from '../services/applicantEmailService.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
@@ -19,15 +21,20 @@ export const sendEmail = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        "Recipient email list is required."
+        'Recipient email list is required.'
       );
     }
 
     const recipients = Array.isArray(email_to) ? email_to : [email_to];
 
-    await sendingEmail({ email_to: recipients, email_bcc, subject, description });
+    await sendingEmail({
+      email_to: recipients,
+      email_bcc,
+      subject,
+      description,
+    });
 
-    const storedEmails = recipients.map(email => ({
+    const storedEmails = recipients.map((email) => ({
       email_to: email,
       email_bcc: email_bcc || [],
       subject,
@@ -51,7 +58,14 @@ export const sendEmail = async (req, res) => {
 
 export const getAllEmails = async (req, res) => {
   try {
-    const { page = 1, limit = 10, email_to, subject, startDate, endDate  } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      email_to,
+      subject,
+      startDate,
+      endDate,
+    } = req.query;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
@@ -61,7 +75,6 @@ export const getAllEmails = async (req, res) => {
     if (email_to) {
       query.email_to = { $regex: email_to, $options: 'i' };
     }
-
     if (subject) {
       query.subject = { $regex: subject, $options: 'i' };
     }
@@ -69,28 +82,31 @@ export const getAllEmails = async (req, res) => {
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) {
-        query.createdAt.$gte = new Date(startDate + "T00:00:00.000Z");
+        query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
       }
       if (endDate) {
-        query.createdAt.$lte = new Date(endDate + "T23:59:59.999Z");
+        query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
       }
     }
 
-    const findEmails = await pagination({
-      Schema: applicantEmail,
-      page: numOfpage,
-      limit: limitOfRec,
-      query: query,
-      sort: { createdAt: -1 }
-    });
+    const { emails, totalRecords, totalPages } = await findAllEmails(
+      query,
+      numOfpage,
+      limitOfRec
+    );
 
-    logger.info(`All emails are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `All emails are ${Message.FETCH_SUCCESSFULLY}`,
-      findEmails
+      {
+        emails,
+        totalRecords,
+        totalPages,
+        currentPage: numOfpage,
+        limit: limitOfRec,
+      }
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} fetch all emails.`);
@@ -99,6 +115,40 @@ export const getAllEmails = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch all emails.`
+    );
+  }
+};
+
+export const viewEmailById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const email = await findEmailById(id);
+
+    if (!email) {
+      logger.warn(`Email ${Message.NOT_FOUND}: ${id}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Email ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`email ${Message.FETCH_SUCCESSFULLY} `);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `email ${Message.FETCH_SUCCESSFULLY} `,
+      { email }
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch email by ID.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch email by ID.`
     );
   }
 };
