@@ -74,6 +74,7 @@ export const viewAllApplicant = async (req, res) => {
       anyHandOnOffers,
       rating,
       communicationSkill,
+      currentPkg
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -128,6 +129,19 @@ export const viewAllApplicant = async (req, res) => {
         query.expectedPkg = { $gte: min, $lte: max };
       } else {
         query.expectedPkg = parseFloat(expectedPkg);
+      }
+    }
+
+    if (currentPkg) {
+      const rangeMatch = currentPkg.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.currentPkg = { $gte: min, $lte: max };
+      } else {
+        query.currentPkg = parseFloat(currentPkg);
       }
     }
 
