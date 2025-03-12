@@ -116,7 +116,6 @@ export const viewProfile = async (req, res) => {
         `Profile is ${Message.NOT_FOUND}`
       );
     }
-
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -233,7 +232,7 @@ export const sendEmail = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await findUserEmail({ email });
-    console.log("user is exist", user)
+    console.log('user is exist', user);
     if (!user) {
       logger.warn(`User is ${Message.NOT_FOUND}`);
       return HandleResponse(

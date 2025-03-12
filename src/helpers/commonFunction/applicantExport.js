@@ -18,7 +18,7 @@ export const generateApplicantCsv = (applicants) => {
                     : '',
         },
         { label: 'Qualification', value: (row) => row.qualification || '' },
-        { label: 'Specialization', value: (row) => row.specialization || '' },
+        { label: 'Specialization', value: (row) => row.specialization || 'Not Provided' },
         { label: 'Passing Year', value: (row) => row.passingYear || '' },
         { label: 'College Name', value: (row) => row.collegeName || '' },
         { label: 'CGPA', value: (row) => row.cgpa || '' },
@@ -55,19 +55,29 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'Resume URL', value: (row) => row.resumeUrl || '' },
         { label: 'Preferred Locations', value: (row) => row.preferredLocations || '' },
         { label: 'Current Company Name', value: (row) => row.currentCompanyName || '' },
-        { label: 'Marital Status', value: (row) => row.maritalStatus || 'Not Provided' },
+        { label: 'Marital Status', value: (row) => row.maritalStatus || ' ' },
+        // {
+        //     label: 'Last Follow-Up Date',
+        //     value: (row) => parseDate(row.lastFollowUpDate) || 'Not Provided',
+        // },
         {
             label: 'Last Follow-Up Date',
             value: (row) =>
                 row.lastFollowUpDate
                     ? new Date(row.lastFollowUpDate).toISOString().split('T')[0]
-                    : 'Not Provided',
+                    : '',
         },
         { label: 'Any Hands-On Offers', value: (row) => row.anyHandOnOffers ? 'Yes' : 'No' },
     ];
 
     const json2csvParser = new Parser({ fields });
     return json2csvParser.parse(applicants);
+};
+
+const formatDate = (dateString, isRequired = false) => {
+    if (!dateString) return isRequired ? undefined : '';
+    const parsedDate = new Date(dateString.replace(/[/]/g, '-').split('-').reverse().join('-'));
+    return !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : isRequired ? undefined : '';
 };
 const validateAndFillFields = async (data) => {
     return {
@@ -80,11 +90,10 @@ const validateAndFillFields = async (data) => {
             phoneNumber: data['Phone Number'] || '0000000000',
             whatsappNumber: data['WhatsApp Number'] || '0000000000',
         },
-        email: data['Email'] || 'notprovided@example.com',
+        email: data['Email']?.trim() || 'notprovided@example.com',
         gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
-        dateOfBirth: data['Date of Birth']
-            ? new Date(data['Date of Birth']).toISOString().split('T')[0]
-            : null,
+        // dateOfBirth: parseDate(data['Date of Birth']),
+        dateOfBirth: data['Date of Birth'] ? formatDate(data['Date of Birth']?.trim(), true) : 0,
         currentAddress: data['Current Address'] || 'N/A',
         state: data['State'] || 'N/A',
         country: data['Country'] || 'N/A',
@@ -93,8 +102,8 @@ const validateAndFillFields = async (data) => {
             : null,
         currentCity: data['Current City'] || 'Unknown',
         permanentAddress: data['Permanent Address'] || 'N/A',
-        qualification: data['Qualification']?.trim() || '',
-        specialization: data['Specialization']?.trim() || '',
+        qualification: data['Qualification']?.trim() || 'Not Provided',
+        specialization: data['Specialization']?.trim() || 'Not Provided',
         passingYear: !isNaN(Number(data['Passing Year']))
             ? Number(data['Passing Year'])
             : new Date().getFullYear(),
@@ -147,11 +156,10 @@ const validateAndFillFields = async (data) => {
         preferredLocations: data['Preferred Locations']?.trim() || 'Not Provided',
         maritalStatus:
             applicantEnum[data['Marital Status']?.toUpperCase()?.trim()] ||
-            data['Marital Status']?.trim() ||
+            (data['Marital Status']?.trim() === 'Not Provided' ? '' : data['Marital Status']?.trim()) ||
             '',
-        lastFollowUpDate: data['Last Follow-Up Date']
-            ? new Date(data['Last Follow-Up Date']).toISOString().split('T')[0]
-            : null,
+        // lastFollowUpDate: parseDate(data['Last Follow-Up Date']),
+        lastFollowUpDate: formatDate(data['Last Follow-Up Date']),
         anyHandOnOffers: data['Any Hands-On Offers']?.toLowerCase() === 'yes',
         comment: data['Comment'] || 'No Comments',
         feedback: data['Feedback'] || 'No Feedback',

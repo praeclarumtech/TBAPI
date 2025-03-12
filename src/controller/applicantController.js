@@ -426,6 +426,7 @@ export const exportApplicantCsv = async (req, res) => {
 };
 export const importApplicantCsv = async (req, res) => {
   try {
+    const update = req.query.update === 'true';
     uploadCv(req, res, async (err) => {
       if (err) {
         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV`);
@@ -451,19 +452,33 @@ export const importApplicantCsv = async (req, res) => {
         .on("end", async () => {
           try {
             const processedApplicants = await Promise.all(results.map(processCsvRow));
-
             const validApplicants = processedApplicants.filter(applicant => applicant !== null);
 
             if (validApplicants.length === 0) {
               return HandleResponse(res, false, StatusCodes.BAD_REQUEST, "No valid applicants found in CSV");
             }
 
-            const savedApplicants = await createApplicants(validApplicants);
+            const emails = validApplicants.map(applicant => applicant.email)
+            const existingapplicants = await Applicant.find({ email: { $in: emails } })
+            if (existingapplicants.length > 0) {
+              if (!update) {
+                const existingEmails = existingapplicants.map(app => app.email)
+                return HandleResponse(res, false, StatusCodes.CONFLICT, `Duplicate records found`, { existingEmails });
+              }
 
+              const savedApplicants = await createApplicants(validApplicants);
+              fs.unlinkSync(req.file.path);
+              return HandleResponse(res, true, StatusCodes.OK, 'Existing record udated successfuly', savedApplicants)
+            }
+
+            const savedApplicants = await createApplicants(validApplicants);
             fs.unlinkSync(req.file.path);
+
             return HandleResponse(res, true, StatusCodes.OK, "CSV Imported and Data Saved", savedApplicants);
           } catch (dbError) {
-            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Error saving applicants to the database");
+            console.log("error while saving to db===", dbError)
+            // console.log("Modified error", dbError.stack)
+            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, dbError.message);
           }
         })
         .on("error", (error) => {
@@ -471,6 +486,7 @@ export const importApplicantCsv = async (req, res) => {
         });
     });
   } catch (error) {
+    console.log("last catch bloack error", error)
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} import CSV`);
   }
 };
