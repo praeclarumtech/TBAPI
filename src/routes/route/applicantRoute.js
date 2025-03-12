@@ -28,7 +28,7 @@ router.put(
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);
 // import export applicant
-router.get('/donwloadInToCsv', exportApplicantCsv);
-router.post('/parseCsv', importApplicantCsv);
+router.get('/exportCsv', exportApplicantCsv);
+router.post('/importCsv', importApplicantCsv);
 
 export default router;
