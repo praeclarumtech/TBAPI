@@ -260,12 +260,12 @@ export const viewApplicant = async (req, res) => {
     const applicant = await getApplicantById(applicantId);
 
     if (!applicant) {
-      logger.warn(Message.APPLICANT_NOT_FOUND);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        Message.APPLICANT_NOT_FOUND
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
     logger.info(`Applicant is ${Message.FETCH_BY_ID}: ${applicantId}`);
