@@ -1,7 +1,9 @@
 import {
   createApplicant,
+  getAllapplicant,
   getApplicantById,
   updateApplicantById,
+  createApplicants,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -11,6 +13,13 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import { uploadCv } from '../helpers/multer.js';
+import fs from 'fs';
+import csvParser from 'csv-parser';
+import {
+  generateApplicantCsv,
+  processCsvRow,
+} from '../helpers/commonFunction/applicantExport.js';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -177,18 +186,18 @@ export const viewAllApplicant = async (req, res) => {
     if (workPreference && typeof workPreference === 'string') {
       query.workPreference = workPreference;
     }
-    
+
     if (anyHandOnOffers !== undefined) {
       query.anyHandOnOffers = anyHandOnOffers === 'true';
     }
 
     if (rating) {
       const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[2]);
-    
+
         query.rating = { $gte: min, $lte: max };
       } else {
         query.rating = parseFloat(rating);
@@ -399,3 +408,110 @@ export const updateStatus = async (req, res) => {
     );
   }
 };
+
+export const exportApplicantCsv = async (req, res) => {
+  try {
+    const applicants = await getAllapplicant();
+
+    if (!applicants.length) {
+      logger.warn(`Applicants is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicants is ${Message.NOT_FOUND}`
+      );
+    }
+
+    const csvData = generateApplicantCsv(applicants);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=applicants.csv');
+
+    res.status(200).send(csvData);
+    logger.info(Message.DONWLOADED);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} export file`)
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} export file`
+    );
+  }
+};
+
+export const importApplicantCsv = async (req, res) => {
+  try {
+    const update = req.query.update === 'true';
+    uploadCv(req, res, async (err) => {
+      if (err) {
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV`);
+      }
+      if (!req.file) {
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV - No file provided`);
+      }
+      const results = [];
+      let headers = [];
+      fs.createReadStream(req.file.path)
+        .pipe(csvParser({ headers: false, skipEmptyLines: true }))
+        .on("data", (row) => {
+          if (headers.length === 0) {
+            headers = Object.values(row);
+          } else {
+            const formattedRow = {};
+            Object.values(row).forEach((value, i) => {
+              formattedRow[headers[i]] = value;
+            });
+            results.push(formattedRow);
+          }
+        })
+        .on("end", async () => {
+          try {
+            const processedApplicants = await Promise.all(results.map(processCsvRow));
+            const validApplicants = processedApplicants.filter(applicant => applicant !== null);
+
+            if (validApplicants.length === 0) {
+              return HandleResponse(res, false, StatusCodes.BAD_REQUEST, "No valid applicants found in CSV");
+            }
+
+            const emails = validApplicants.map(applicant => applicant.email)
+            const existingapplicants = await Applicant.find({ email: { $in: emails } })
+            if (existingapplicants.length > 0) {
+              if (!update) {
+                const existingEmails = existingapplicants.map(app => app.email)
+                return HandleResponse(res, false, StatusCodes.CONFLICT, `Duplicate records found`, { existingEmails });
+              }
+              const updateOperations = validApplicants.map(applicant => ({
+                updateOne: {
+                  filter: { email: applicant.email },
+                  update: { $set: applicant },
+                  upsert: true
+                }
+              }));
+              if (updateOperations.length > 0) {
+                await Applicant.bulkWrite(updateOperations)
+              }
+              const savedApplicants = await createApplicants(validApplicants);
+              fs.unlinkSync(req.file.path);
+              return HandleResponse(res, true, StatusCodes.OK, 'Existing record udated successfuly', savedApplicants)
+            }
+            const savedApplicants = await createApplicants(validApplicants);
+            fs.unlinkSync(req.file.path);
+            return HandleResponse(res, true, StatusCodes.OK, "CSV Imported and Data Saved", savedApplicants);
+          } catch (dbError) {
+            console.log("error while saving to db===", dbError)
+            // console.log("Modified error", dbError.stack)
+            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, dbError.message);
+          }
+        })
+        .on("error", (error) => {
+          return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Error reading CSV file");
+        });
+    });
+  } catch (error) {
+    console.log("last catch bloack error", error)
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} import CSV`);
+  }
+};
+
+

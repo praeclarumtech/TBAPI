@@ -5,10 +5,9 @@ const ApplicantSchema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: 'user',
       required: false,
     },
-    applicationNo: { type: Number, required: true },
     name: {
       firstName: { type: String, required: true },
       middleName: { type: String },
@@ -68,10 +67,10 @@ const ApplicantSchema = new mongoose.Schema(
     interviewStage: {
       type: String,
       enum: [
-        applicantEnum.HR_ROUND,//** */
-        applicantEnum.TECHNICAL,//** */
+        applicantEnum.HR_ROUND, //** */
+        applicantEnum.TECHNICAL, //** */
         applicantEnum.FIRST_INTERVIEW,
-        applicantEnum.FINAL,//** */
+        applicantEnum.FINAL, //** */
         applicantEnum.SECOND_INTERVIEW,
       ],
       default: applicantEnum.HR_ROUND,
@@ -141,6 +140,7 @@ const ApplicantSchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
   },
+
   { timestamps: true }
 );
 
