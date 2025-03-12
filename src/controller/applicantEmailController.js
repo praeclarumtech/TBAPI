@@ -2,6 +2,7 @@ import {
   removeManyEmails,
   createEmail,
   findAllEmails,
+  findEmailById,
 } from '../services/applicantEmailService.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
@@ -114,6 +115,40 @@ export const getAllEmails = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch all emails.`
+    );
+  }
+};
+
+export const viewEmailById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const email = await findEmailById(id);
+
+    if (!email) {
+      logger.warn(`Email ${Message.NOT_FOUND}: ${id}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Email ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`email ${Message.FETCH_SUCCESSFULLY} `);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `email ${Message.FETCH_SUCCESSFULLY} `,
+      { email }
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch email by ID.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch email by ID.`
     );
   }
 };
