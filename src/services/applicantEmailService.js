@@ -82,10 +82,6 @@ export const findEmailById = async (id) => {
   return email.length > 0 ? email[0] : null;
 };
 
-// export const findEmailById = async (id) => {
-//   return applicantEmail.findById(id);
-// };
-
 export const removeManyEmails = async (ids) => {
   return await applicantEmail.deleteMany({ _id: { $in: ids } });
 };
