@@ -41,12 +41,12 @@ export const addApplicant = async (req, res) => {
       applicant
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} add aplicant.`);
+    logger.error(`${Message.FAILED_TO} add aplicant.${error}`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} add aplicant.`
+      `${Message.FAILED_TO} add aplicant.${error}`
     );
   }
 };

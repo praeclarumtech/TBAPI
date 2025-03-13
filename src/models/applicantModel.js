@@ -15,10 +15,10 @@ const ApplicantSchema = new mongoose.Schema(
       lastName: { type: String, required: true },
     },
     phone: {
-      whatsappNumber: { type: String, required: true },
-      phoneNumber: { type: String, required: true },
+      whatsappNumber: { type: String, required: true, unique: true },
+      phoneNumber: { type: String, required: true, unique: true },
     },
-    email: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
     gender: {
       type: String,
       enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER],
@@ -68,13 +68,13 @@ const ApplicantSchema = new mongoose.Schema(
     interviewStage: {
       type: String,
       enum: [
-        applicantEnum.HR_ROUND,//** */
-        applicantEnum.TECHNICAL,//** */
-        applicantEnum.FIRST_INTERVIEW,
-        applicantEnum.FINAL,//** */
-        applicantEnum.SECOND_INTERVIEW,
+        applicantEnum.HR_ROUND,
+        applicantEnum.TECHNICAL,
+        applicantEnum.FIRST_ROUND,
+        applicantEnum.PRACTICAL,
+        applicantEnum.CLIENT,
       ],
-      default: applicantEnum.HR_ROUND,
+      default: applicantEnum.FIRST_ROUND,
       required: false,
     },
     currentCompanyDesignation: {
