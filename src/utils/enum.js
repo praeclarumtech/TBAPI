@@ -26,7 +26,7 @@ export const applicantEnum = {
 
   HR_ROUND: 'hr round',
   TECHNICAL: 'technical',
-  FIRST_INTERVIEW: 'first interview',
+  FIRST_ROUND: 'first round',
   PRACTICAL: 'practical',
   CLIENT: 'client',
 

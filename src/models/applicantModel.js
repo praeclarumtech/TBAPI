@@ -70,11 +70,11 @@ const ApplicantSchema = new mongoose.Schema(
       enum: [
         applicantEnum.HR_ROUND,
         applicantEnum.TECHNICAL,
-        applicantEnum.FIRST_INTERVIEW,
+        applicantEnum.FIRST_ROUND,
         applicantEnum.PRACTICAL,
         applicantEnum.CLIENT,
       ],
-      default: applicantEnum.FIRST_INTERVIEW,
+      default: applicantEnum.FIRST_ROUND,
       required: false,
     },
     currentCompanyDesignation: {

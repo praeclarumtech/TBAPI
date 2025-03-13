@@ -77,8 +77,8 @@ export const getReport = async (
     ...dateFilter,
   });
 
-  const firstInterviewApplicants = await Applicant.countDocuments({
-    interviewStage: applicantEnum.FIRST_INTERVIEW,
+  const firstroundApplicants = await Applicant.countDocuments({
+    interviewStage: applicantEnum.FIRST_ROUND,
     isDeleted: false,
     ...dateFilter,
   });
@@ -157,7 +157,7 @@ export const getReport = async (
 
   return {
     hrRoundApplicants,
-    firstInterviewApplicants,
+    firstroundApplicants,
     clientInterviewApplicants,
     technicalRoundApplicants,
     practicalRoundApplicants,

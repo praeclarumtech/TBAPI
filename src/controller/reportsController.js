@@ -12,7 +12,7 @@ export const applicationOnProcessCount = async (req, res) => {
   try {
     const {
       hrRoundApplicants,
-      firstInterviewApplicants,
+      firstroundApplicants,
       clientInterviewApplicants,
       technicalRoundApplicants,
       practicalRoundApplicants,
@@ -27,7 +27,7 @@ export const applicationOnProcessCount = async (req, res) => {
       `Report data ${Message.FETCH_SUCCESSFULLY}`,
       {
         hrRoundApplicants,
-        firstInterviewApplicants,
+        firstroundApplicants,
         clientInterviewApplicants,
         technicalRoundApplicants,
         practicalRoundApplicants,
