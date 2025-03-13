@@ -92,10 +92,6 @@ export const getAllEmails = async (req, res) => {
       }
     }
 
-    // if (name) {
-    //   applicantQuery['applicantDetails.name.firstName'] = { $regex: name, $options: 'i' };
-    // }
-
     if (name) {
       applicantQuery['$or'] = [
         { 'applicantDetails.name.firstName': { $regex: name, $options: 'i' } },

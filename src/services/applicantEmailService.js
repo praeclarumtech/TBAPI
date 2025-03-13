@@ -78,7 +78,6 @@ export const findEmailById = async (id) => {
       },
     },
   ]);
-
   return email.length > 0 ? email[0] : null;
 };
 
