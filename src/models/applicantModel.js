@@ -68,13 +68,13 @@ const ApplicantSchema = new mongoose.Schema(
     interviewStage: {
       type: String,
       enum: [
-        applicantEnum.HR_ROUND,//** */
-        applicantEnum.TECHNICAL,//** */
+        applicantEnum.HR_ROUND,
+        applicantEnum.TECHNICAL,
         applicantEnum.FIRST_INTERVIEW,
-        applicantEnum.FINAL,//** */
-        applicantEnum.SECOND_INTERVIEW,
+        applicantEnum.PRACTICAL,
+        applicantEnum.CLIENT,
       ],
-      default: applicantEnum.HR_ROUND,
+      default: applicantEnum.FIRST_INTERVIEW,
       required: false,
     },
     currentCompanyDesignation: {

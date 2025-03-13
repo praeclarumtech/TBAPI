@@ -12,10 +12,10 @@ export const applicationOnProcessCount = async (req, res) => {
   try {
     const {
       hrRoundApplicants,
-      // firstInterviewApplicants,
-      // secondInterviewApplicants,
+      firstInterviewApplicants,
+      clientInterviewApplicants,
       technicalRoundApplicants,
-      finalRoundApplicants,
+      practicalRoundApplicants,
     } = await getReport(calendarType, startDate, endDate);
 
     logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}`);
@@ -27,10 +27,10 @@ export const applicationOnProcessCount = async (req, res) => {
       `Report data ${Message.FETCH_SUCCESSFULLY}`,
       {
         hrRoundApplicants,
-        // firstInterviewApplicants,
-        // secondInterviewApplicants,
+        firstInterviewApplicants,
+        clientInterviewApplicants,
         technicalRoundApplicants,
-        finalRoundApplicants,
+        practicalRoundApplicants,
       }
     );
   } catch (error) {

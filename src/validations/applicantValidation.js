@@ -169,10 +169,10 @@ export const applicantValidation = Joi.object({
       applicantEnum.HR_ROUND,
       applicantEnum.TECHNICAL,
       applicantEnum.FIRST_INTERVIEW,
-      applicantEnum.SECOND_INTERVIEW,
-      applicantEnum.FINAL
+      applicantEnum.CLIENT,
+      applicantEnum.PRACTICAL
     )
-    .default(applicantEnum.HR_ROUND)
+    .default(applicantEnum.FIRST_INTERVIEW)
     .messages({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
@@ -340,10 +340,10 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.HR_ROUND,
       applicantEnum.TECHNICAL,
       applicantEnum.FIRST_INTERVIEW,
-      applicantEnum.SECOND_INTERVIEW,
-      applicantEnum.FINAL
+      applicantEnum.CLIENT,
+      applicantEnum.PRACTICAL
     )
-    .default(applicantEnum.HR_ROUND)
+    .default(applicantEnum.FIRST_INTERVIEW)
     .messages({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
