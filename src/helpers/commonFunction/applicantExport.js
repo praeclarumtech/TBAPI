@@ -20,17 +20,17 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'Qualification', value: (row) => row.qualification || '' },
         { label: 'Specialization', value: (row) => row.specialization || 'Not Provided' },
         { label: 'Passing Year', value: (row) => row.passingYear || '' },
-        { label: 'College Name', value: (row) => row.collegeName || '' },
-        { label: 'CGPA', value: (row) => row.cgpa || '' },
+        { label: 'Current Pincode', value: (row) => row.currentPincode || '' },
+        { label: 'Current City', value: (row) => row.currentCity || '' },
         { label: 'Current Address', value: (row) => row.currentAddress || '' },
         { label: 'State', value: (row) => row.state || '' },
         { label: 'Country', value: (row) => row.country || '' },
-        { label: 'Current Pincode', value: (row) => row.currentPincode || '' },
-        { label: 'Current City', value: (row) => row.currentCity || '' },
-        { label: 'Permanent Address', value: (row) => row.permanentAddress || '' },
         { label: 'Applied Skills', value: (row) => row.appliedSkills?.join(', ') || '' },
         { label: 'Total Experience (years)', value: (row) => row.totalExperience || '' },
         { label: 'Relevant Skill Experience (years)', value: (row) => row.relevantSkillExperience || '' },
+        { label: 'College Name', value: (row) => row.collegeName || '' },
+        { label: 'CGPA', value: (row) => row.cgpa || '' },
+        { label: 'Permanent Address', value: (row) => row.permanentAddress || '' },
         { label: 'Communication Skill', value: (row) => row.communicationSkill || '' },
         { label: 'Other Skills', value: (row) => row.otherSkills || '' },
         { label: 'Rating', value: (row) => row.rating || '' },
@@ -56,10 +56,6 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'Preferred Locations', value: (row) => row.preferredLocations || '' },
         { label: 'Current Company Name', value: (row) => row.currentCompanyName || '' },
         { label: 'Marital Status', value: (row) => row.maritalStatus || ' ' },
-        // {
-        //     label: 'Last Follow-Up Date',
-        //     value: (row) => parseDate(row.lastFollowUpDate) || 'Not Provided',
-        // },
         {
             label: 'Last Follow-Up Date',
             value: (row) =>
@@ -68,6 +64,9 @@ export const generateApplicantCsv = (applicants) => {
                     : '',
         },
         { label: 'Any Hands-On Offers', value: (row) => row.anyHandOnOffers ? 'Yes' : 'No' },
+        { label: 'LinkedIn URL', value: (row) => row.linkedinUrl || 'Not Provided' },
+        { label: 'Client CV URL', value: (row) => row.clientCvUrl || 'Not Provided' },
+        { label: 'Client Feedback', value: (row) => row.clientFeedback || 'Not Provided' },
     ];
 
     const json2csvParser = new Parser({ fields });
@@ -82,94 +81,106 @@ const formatDate = (dateString, isRequired = false) => {
 const validateAndFillFields = async (data) => {
     return {
         name: {
-            firstName: data['First Name'] || 'N/A',
-            middleName: data['Middle Name'] || '',
-            lastName: data['Last Name'] || 'N/A',
+            firstName: data['First Name']?.trim() || null,
+            middleName: data['Middle Name']?.trim() || null,
+            lastName: data['Last Name']?.trim() || null,
         },
         phone: {
-            phoneNumber: data['Phone Number'] || '0000000000',
-            whatsappNumber: data['WhatsApp Number'] || '0000000000',
+            phoneNumber: data['Phone Number']?.trim() || null,
+            whatsappNumber: data['WhatsApp Number']?.trim() || data['Phone Number']?.trim() || null,
         },
-        email: data['Email']?.trim() || 'notprovided@example.com',
+        email: data['Email']?.trim() || null,
         gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
-        // dateOfBirth: parseDate(data['Date of Birth']),
-        dateOfBirth: data['Date of Birth'] ? formatDate(data['Date of Birth']?.trim(), true) : 0,
-        currentAddress: data['Current Address'] || 'N/A',
-        state: data['State'] || 'N/A',
-        country: data['Country'] || 'N/A',
+        dateOfBirth: data['Date of Birth'] ? formatDate(data['Date of Birth']?.trim(), true) : null,
+        currentAddress: data['Current Address'] || 'Not Provided',
+        state: data['State'] || null,
+        country: data['Country'] || null,
         currentPincode: !isNaN(Number(data['Current Pincode']))
             ? Number(data['Current Pincode'])
             : null,
-        currentCity: data['Current City'] || 'Unknown',
-        permanentAddress: data['Permanent Address'] || 'N/A',
+        currentCity: data['Current City'] || null,
+        permanentAddress: data['Permanent Address'] || null,
         qualification: data['Qualification']?.trim() || 'Not Provided',
         specialization: data['Specialization']?.trim() || 'Not Provided',
         passingYear: !isNaN(Number(data['Passing Year']))
             ? Number(data['Passing Year'])
-            : new Date().getFullYear(),
-        collegeName: data['College Name'] || 'N/A',
-        cgpa: !isNaN(Number(data['CGPA'])) ? Number(data['CGPA']) : 0,
+            : null,
+        collegeName: data['College Name'] || null,
+        cgpa: !isNaN(Number(data['CGPA'])) ? Number(data['CGPA']) : null,
         appliedSkills: data['Applied Skills']
             ? data['Applied Skills'].split(',').map((skill) => skill.trim())
             : [],
         totalExperience: !isNaN(Number(data['Total Experience (years)']))
             ? Number(data['Total Experience (years)'])
-            : 0,
-        relevantSkillExperience: !isNaN(
-            Number(data['Relevant Skill Experience (years)'])
-        )
+            : null,
+        relevantSkillExperience: !isNaN(Number(data['Relevant Skill Experience (years)']))
             ? Number(data['Relevant Skill Experience (years)'])
-            : 0,
+            : null,
         communicationSkill: !isNaN(Number(data['Communication Skill']))
             ? Number(data['Communication Skill'])
-            : 1,
-        otherSkills: data['Other Skills'] || 'Not Provided',
-        rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : 0,
-        currentCompanyName: data['Current Company Name']?.trim() || 'Not Provided',
+            : null,
+        otherSkills: data['Other Skills'] || null,
+        rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : null,
+        currentCompanyName: data['Current Company Name']?.trim() || null,
         currentCompanyDesignation:
-            applicantEnum[data['Current Company Designation']?.toUpperCase()] ||
+            applicantEnum[data['Current Company Designation']?.trim().toUpperCase()] ||
             applicantEnum.NA,
         appliedRole:
-            applicantEnum[data['Applied Role']?.toUpperCase()] || applicantEnum.NA,
-
-        currentPkg: data['Current Package (LPA)'] || 'N/A',
+            applicantEnum[data['Applied Role']?.trim().toUpperCase()] ||
+            applicantEnum[data['Current Company Designation']?.trim().toUpperCase()] ||
+            applicantEnum.NA,
+        currentPkg: !isNaN(Number(data['Current Package (LPA)'])) ? Number(data['Current Package (LPA)']) : null,
         expectedPkg: !isNaN(Number(data['Expected Package (LPA)']))
             ? Number(data['Expected Package (LPA)'])
-            : 0,
+            : null,
         noticePeriod: !isNaN(Number(data['Notice Period (months)']))
             ? Number(data['Notice Period (months)'])
-            : 0,
-        negotiation: data['Negotiation'] || 'N/A',
+            : null,
+        negotiation: data['Negotiation'] || null,
         workPreference:
             applicantEnum[data['Work Preference']?.toUpperCase()] ||
             applicantEnum.REMOTE,
         status:
             applicantEnum[data['Status']?.toUpperCase()] || applicantEnum.PENDING,
         interviewStage:
-            applicantEnum[data['Interview Stage']?.toUpperCase()] ||
-            applicantEnum.HR_ROUND,
-        practicalUrl: data['Practical URL'] || 'Not Provided',
-        practicalFeedback: data['Practical Feedback'] || 'Not Provided',
-        portfolioUrl: data['Portfolio URL'] || 'Not Provided',
-        referral: data['Referral'] || 'Not Provided',
-        resumeUrl: data['Resume URL'] || 'Not Provided',
-        preferredLocations: data['Preferred Locations']?.trim() || 'Not Provided',
+            applicantEnum[data['Interview Stage']?.trim().toUpperCase()] ||
+            applicantEnum.FIRST_ROUND,
+        practicalUrl: data['Practical URL'] || null,
+        practicalFeedback: data['Practical Feedback'] || null,
+        portfolioUrl: data['Portfolio URL'] || null,
+        referral: data['Referral'] || null,
+        resumeUrl: data['Resume URL'] || null,
+        preferredLocations: data['Preferred Locations']?.trim() || null,
         maritalStatus:
             applicantEnum[data['Marital Status']?.toUpperCase()?.trim()] ||
-            (data['Marital Status']?.trim() === 'Not Provided' ? '' : data['Marital Status']?.trim()) ||
-            '',
-        // lastFollowUpDate: parseDate(data['Last Follow-Up Date']),
+            (data['Marital Status']?.trim() === 'Not Provided' ? null : data['Marital Status']?.trim()) ||
+            null,
         lastFollowUpDate: formatDate(data['Last Follow-Up Date']),
         anyHandOnOffers: data['Any Hands-On Offers']?.toLowerCase() === 'yes',
-        comment: data['Comment'] || 'No Comments',
-        feedback: data['Feedback'] || 'No Feedback',
+        comment: data['Comment'] || null,
+        feedback: data['Feedback'] || null,
+        linkedinUrl: data['LinkedIn URL'] || 'Not Provided',
+        clientCvUrl: data['Client CV URL'] || 'Not Provided',
+        clientFeedback: data['Client Feedback'] || 'Not Provided',
     };
-
 };
 export const processCsvRow = async (data) => {
     try {
         if (!data || typeof data !== 'object') {
             throw new Error('Invalid data provided to processCsvRow');
+        }
+        const requiredFields = {
+            email: data['Email']?.trim(),
+            firstName: data['First Name']?.trim(),
+            lastName: data['Last Name']?.trim(),
+            appliedRole: applicantEnum[data['Applied Role']?.toUpperCase()] || applicantEnum.NA,
+        };
+        const missingFields = Object.keys(requiredFields).filter(
+            (key) => !requiredFields[key]
+        );
+        if (missingFields.length > 0) {
+            console.warn(`Invalid row - missing essential fields:`, requiredFields);
+            return null; //Skip invalid row
         }
         const validatedData = await validateAndFillFields(data);
         console.log('Validated Data:', validatedData);

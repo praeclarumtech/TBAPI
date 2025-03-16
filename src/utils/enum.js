@@ -3,7 +3,6 @@ export const Enum = {
   HR: 'hr',
   USER: 'user',
 };
-
 export const genderEnum = {
   MALE: 'male',
   FEMALE: 'female',
@@ -29,6 +28,7 @@ export const applicantEnum = {
   FIRST_INTERVIEW: '1st interview',
   FINAL: 'final',
   SECOND_INTERVIEW: '2nd interview',
+  FIRST_ROUND: 'first round',
 
   NODE_JS: 'Node.js',
   REACT: 'React',
@@ -39,7 +39,6 @@ export const applicantEnum = {
   JAVASCRIPT: 'JavaScript',
   JAVA: 'Java',
   C: 'C++',
-
   SOFTWARE_ENGINNER: 'Software Engineer',
   FRONTED_DEVLOPER: 'Frontend Developer',
   BACKEND_DEVLOPER: 'Backend Developer',

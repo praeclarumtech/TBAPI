@@ -27,7 +27,6 @@ const ApplicantSchema = new mongoose.Schema(
     qualification: { type: String, required: true },
     specialization: { type: String, required: true },
     passingYear: { type: Number, required: true },
-
     currentAddress: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
@@ -36,7 +35,7 @@ const ApplicantSchema = new mongoose.Schema(
     appliedSkills: { type: [String], required: true },
     anyHandOnOffers: { type: Boolean, default: false },
     resume: { type: String, required: false },
-    totalExperience: { type: Number},
+    totalExperience: { type: Number },
     relevantSkillExperience: { type: Number, required: false },
     communicationSkill: { type: Number, required: true },
     otherSkills: { type: String },
@@ -72,8 +71,9 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.FIRST_INTERVIEW,
         applicantEnum.FINAL, //** */
         applicantEnum.SECOND_INTERVIEW,
+        applicantEnum.FIRST_ROUND,
       ],
-      default: applicantEnum.HR_ROUND,
+      default: applicantEnum.FIRST_ROUND,
       required: false,
     },
     currentCompanyDesignation: {
@@ -132,15 +132,14 @@ const ApplicantSchema = new mongoose.Schema(
     },
     lastFollowUpDate: { type: Date },
     permanentAddress: { type: String, required: false },
-    collegeName: { type: String},
-    cgpa: { type: Number},
+    collegeName: { type: String },
+    cgpa: { type: Number },
     linkedinUrl: { type: String },
     clientCvUrl: { type: String },
     clientFeedback: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
   },
-
   { timestamps: true }
 );
 

@@ -14,8 +14,6 @@ import {
   updateApplicantValidation,
 } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
-// import { authorization } from '../../helpers/userMiddleware.js';
-
 const router = express.Router();
 router.post('/addApplicant', validator.body(applicantValidation), addApplicant);
 router.get('/viewAllApplicant', viewAllApplicant);
@@ -29,6 +27,6 @@ router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);
 // import export applicant
 router.get('/exportCsv', exportApplicantCsv);
-router.post('/importCsv', importApplicantCsv);
+router.post('/importCsv/:update', importApplicantCsv);
 
 export default router;

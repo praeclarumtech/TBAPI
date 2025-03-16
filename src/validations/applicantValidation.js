@@ -44,7 +44,6 @@ export const applicantValidation = Joi.object({
       'any.only': 'Gender must be male, female, or other.',
       'any.required': 'Gender is required.',
     }),
-
   dateOfBirth: Joi.date().required().messages({
     'date.base': 'Date of birth must be a valid date.',
     'any.required': 'Date of birth is required.',
