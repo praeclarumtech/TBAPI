@@ -3,6 +3,7 @@ import {
   getAllapplicant,
   getApplicantById,
   updateApplicantById,
+  removeManyApplicants
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -50,12 +51,12 @@ export const addApplicant = async (req, res) => {
       applicant
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} add aplicant.`);
+    logger.error(`${Message.FAILED_TO} add aplicant.${error}`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} add aplicant.`
+      `${Message.FAILED_TO} add aplicant.${error}`
     );
   }
 };
@@ -66,8 +67,9 @@ export const viewAllApplicant = async (req, res) => {
       page = 1,
       limit = 10,
       applicationNo,
-      name,
+      applicantName,
       appliedSkills,
+      searchSkills = '',
       totalExperience,
       startDate,
       endDate,
@@ -217,32 +219,46 @@ export const viewAllApplicant = async (req, res) => {
       }
     }
 
-    let searchResults = { results: [], totalRecords: 0 };
 
-    if (name) {
+    if (applicantName || searchSkills) {
       const searchFields = [
         'name.firstName',
         'name.middleName',
         'name.lastName',
+        'appliedSkills'
       ];
 
-      searchResults = await commonSearch(
-        Applicant,
-        searchFields,
-        name,
-        pageNum,
-        limitNum
-      );
+      const searchQuery = applicantName || searchSkills;
+
+      if (searchQuery) {
+        const searchResults = await commonSearch(
+          Applicant,
+          searchFields,
+          searchQuery,
+          typeof searchSkills === 'string' ? searchSkills : '',
+          pageNum,
+          limitNum
+        );
+
+        if (searchResults.results.length > 0) {
+          return HandleResponse(
+            res,
+            true,
+            StatusCodes.OK,
+            `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+            searchResults
+          );
+        }
+      }
     }
-    const findApplicants = searchResults.results.length
-      ? searchResults
-      : await pagination({
-        Schema: Applicant,
-        page: pageNum,
-        limit: limitNum,
-        query,
-        sort: { createdAt: -1 },
-      });
+
+    const findApplicants = await pagination({
+      Schema: Applicant,
+      page: pageNum,
+      limit: limitNum,
+      query,
+      sort: { createdAt: -1 },
+    });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -253,7 +269,7 @@ export const viewAllApplicant = async (req, res) => {
       findApplicants
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} view all applicant.`);
+    logger.error(`${Message.FAILED_TO} view all applicant.${error}`);
     return HandleResponse(
       res,
       false,
@@ -587,7 +603,53 @@ export const importApplicantCsv = async (req, res) => {
       `${Message.FAILED_TO} import CSV`
     );
   }
+}
+
+export const deleteManyApplicants = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        Message.OBJ_ID_NOT_FOUND
+      );
+    }
+
+    const removeApplicats = await removeManyApplicants(ids);
+
+    if (removeApplicats.deletedCount === 0) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.DELETED_SUCCESSFULLY}`,
+      removeApplicats
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} deleteMany Applicants.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} deleteMany Applicants.`
+    );
+  }
 };
+
 
 
 

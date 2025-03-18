@@ -8,6 +8,7 @@ import {
   updateStatus,
   exportApplicantCsv,
   importApplicantCsv,
+  deleteManyApplicants
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
@@ -30,4 +31,6 @@ router.delete('/deleteApplicant/:id', deleteApplicant);
 router.get('/exportCsv', exportApplicantCsv);
 router.post('/importCsv', authorization, importApplicantCsv);
 
+router.delete('/deleteManyApplicants', deleteManyApplicants);
+ 
 export default router;

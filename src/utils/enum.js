@@ -25,10 +25,9 @@ export const applicantEnum = {
 
   HR_ROUND: 'hr round',
   TECHNICAL: 'technical',
-  FIRST_INTERVIEW: '1st interview',
-  FINAL: 'final',
-  SECOND_INTERVIEW: '2nd interview',
   FIRST_ROUND: 'first round',
+  PRACTICAL: 'practical',
+  CLIENT: 'client',
 
   NODE_JS: 'Node.js',
   REACT: 'React',

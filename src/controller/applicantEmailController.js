@@ -65,12 +65,15 @@ export const getAllEmails = async (req, res) => {
       subject,
       startDate,
       endDate,
+      name,
+      appliedSkills,
     } = req.query;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
 
     let query = {};
+    let applicantQuery = {};
 
     if (email_to) {
       query.email_to = { $regex: email_to, $options: 'i' };
@@ -89,8 +92,21 @@ export const getAllEmails = async (req, res) => {
       }
     }
 
+    if (name) {
+      applicantQuery['$or'] = [
+        { 'applicantDetails.name.firstName': { $regex: name, $options: 'i' } },
+        { 'applicantDetails.name.middleName': { $regex: name, $options: 'i' } },
+        { 'applicantDetails.name.lastName': { $regex: name, $options: 'i' } }
+      ];
+    }
+
+    if (appliedSkills) {
+      applicantQuery['applicantDetails.appliedSkills'] = { $regex: appliedSkills, $options: 'i' };
+    }
+
     const { emails, totalRecords, totalPages } = await findAllEmails(
       query,
+      applicantQuery,
       numOfpage,
       limitOfRec
     );
@@ -109,7 +125,7 @@ export const getAllEmails = async (req, res) => {
       }
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch all emails.`);
+    logger.error(`${Message.FAILED_TO} fetch all emails.${error.message}`);
     return HandleResponse(
       res,
       false,
