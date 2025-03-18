@@ -58,8 +58,9 @@ export const viewAllApplicant = async (req, res) => {
       page = 1,
       limit = 10,
       applicationNo,
-      name,
+      applicantName,
       appliedSkills,
+      searchSkills = '',
       totalExperience,
       startDate,
       endDate,
@@ -209,26 +210,40 @@ export const viewAllApplicant = async (req, res) => {
       }
     }
 
-    let searchResults = { results: [], totalRecords: 0 };
-
-    if (name) {
+    
+    if (applicantName || searchSkills) {
       const searchFields = [
         'name.firstName',
         'name.middleName',
         'name.lastName',
+        'appliedSkills'
       ];
 
-      searchResults = await commonSearch(
-        Applicant,
-        searchFields,
-        name,
-        pageNum,
-        limitNum
-      );
+      const searchQuery = applicantName || searchSkills;
+
+      if (searchQuery) {
+        const searchResults = await commonSearch(
+          Applicant,
+          searchFields,
+          searchQuery,
+          typeof searchSkills === 'string' ? searchSkills : '',
+          pageNum,
+          limitNum
+        );
+
+        if (searchResults.results.length > 0) {
+          return HandleResponse(
+            res,
+            true,
+            StatusCodes.OK,
+            `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+            searchResults
+          );
+        }
+      }
     }
-    const findApplicants = searchResults.results.length
-      ? searchResults
-      : await pagination({
+
+    const findApplicants = await pagination({
         Schema: Applicant,
         page: pageNum,
         limit: limitNum,
@@ -245,7 +260,7 @@ export const viewAllApplicant = async (req, res) => {
       findApplicants
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} view all applicant.`);
+    logger.error(`${Message.FAILED_TO} view all applicant.${error}`);
     return HandleResponse(
       res,
       false,
