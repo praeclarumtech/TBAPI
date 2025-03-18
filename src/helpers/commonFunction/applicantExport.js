@@ -34,9 +34,9 @@ export const generateApplicantCsv = (applicants) => {
         { label: 'Communication Skill', value: (row) => row.communicationSkill || '' },
         { label: 'Other Skills', value: (row) => row.otherSkills || '' },
         { label: 'Rating', value: (row) => row.rating || '' },
-        { label: 'Current Package (LPA)', value: (row) => row.currentPkg || '' },
-        { label: 'Expected Package (LPA)', value: (row) => row.expectedPkg || '' },
-        { label: 'Notice Period (months)', value: (row) => row.noticePeriod || '' },
+        { label: 'Current Package', value: (row) => row.currentPkg || '' },
+        { label: 'Expected Package', value: (row) => row.expectedPkg || '' },
+        { label: 'Notice Period', value: (row) => row.noticePeriod || '' },
         { label: 'Negotiation', value: (row) => row.negotiation || '' },
         { label: 'Work Preference', value: (row) => row.workPreference || '' },
         { label: 'Feedback', value: (row) => row.feedback || '' },
@@ -78,7 +78,7 @@ const formatDate = (dateString, isRequired = false) => {
     const parsedDate = new Date(dateString.replace(/[/]/g, '-').split('-').reverse().join('-'));
     return !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : isRequired ? undefined : '';
 };
-const validateAndFillFields = async (data) => {
+const validateAndFillFields = async (data, userRole) => {
     return {
         name: {
             firstName: data['First Name']?.trim() || null,
@@ -125,16 +125,15 @@ const validateAndFillFields = async (data) => {
         currentCompanyDesignation:
             applicantEnum[data['Current Company Designation']?.trim().toUpperCase()] ||
             applicantEnum.NA,
-        appliedRole:
-            applicantEnum[data['Applied Role']?.trim().toUpperCase()] ||
-            applicantEnum[data['Current Company Designation']?.trim().toUpperCase()] ||
-            applicantEnum.NA,
-        currentPkg: !isNaN(Number(data['Current Package (LPA)'])) ? Number(data['Current Package (LPA)']) : null,
-        expectedPkg: !isNaN(Number(data['Expected Package (LPA)']))
-            ? Number(data['Expected Package (LPA)'])
+        appliedRole: applicantEnum[data['Applied Role']?.trim()] || applicantEnum.NA,
+        currentPkg: !isNaN(Number(data['Current Package']?.trim()))
+            ? Number(data['Current Package'].trim())
             : null,
-        noticePeriod: !isNaN(Number(data['Notice Period (months)']))
-            ? Number(data['Notice Period (months)'])
+        expectedPkg: !isNaN(Number(data['Expected Package']))
+            ? Number(data['Expected Package'])
+            : null,
+        noticePeriod: !isNaN(Number(data['Notice Period']))
+            ? Number(data['Notice Period'])
             : null,
         negotiation: data['Negotiation'] || null,
         workPreference:
@@ -162,9 +161,12 @@ const validateAndFillFields = async (data) => {
         linkedinUrl: data['LinkedIn URL'] || 'Not Provided',
         clientCvUrl: data['Client CV URL'] || 'Not Provided',
         clientFeedback: data['Client Feedback'] || 'Not Provided',
+        createdBy: userRole,
+        updatedBy: userRole,
+        addByManual: false
     };
 };
-export const processCsvRow = async (data) => {
+export const processCsvRow = async (data, userRole) => {
     try {
         if (!data || typeof data !== 'object') {
             throw new Error('Invalid data provided to processCsvRow');
@@ -180,9 +182,9 @@ export const processCsvRow = async (data) => {
         );
         if (missingFields.length > 0) {
             console.warn(`Invalid row - missing essential fields:`, requiredFields);
-            return null; //Skip invalid row
+            return null;
         }
-        const validatedData = await validateAndFillFields(data);
+        const validatedData = await validateAndFillFields(data, userRole);
         console.log('Validated Data:', validatedData);
         return validatedData;
     } catch (error) {

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { applicantEnum, genderEnum } from '../utils/enum.js';
+import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
@@ -139,6 +139,18 @@ const ApplicantSchema = new mongoose.Schema(
     clientFeedback: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
+    createdBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+    },
+    updatedBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER]
+    },
+    addByManual: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );

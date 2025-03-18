@@ -1,7 +1,7 @@
 import Applicant from '../models/applicantModel.js';
 
 export const createApplicant = async (body) => {
-  const applicant = new Applicant({ ...body });
+  const applicant = new Applicant({ ...body, addByManual: true });
   await applicant.save();
   return applicant;
 };

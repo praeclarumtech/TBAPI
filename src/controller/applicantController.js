@@ -3,7 +3,6 @@ import {
   getAllapplicant,
   getApplicantById,
   updateApplicantById,
-  createApplicants,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -20,6 +19,7 @@ import {
   generateApplicantCsv,
   processCsvRow,
 } from '../helpers/commonFunction/applicantExport.js';
+import User from '../models/userModel.js';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -439,124 +439,25 @@ export const exportApplicantCsv = async (req, res) => {
     );
   }
 };
-//  this code save nonExist data and return exist data in response
-// export const importApplicantCsv = async (req, res) => {
-//   try {
-//     uploadCv(req, res, async (err) => {
-//       if (err) {
-//         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV`);
-//       }
-//       if (!req.file) {
-//         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV - No file provided`);
-//       }
-
-//       const results = [];
-//       let headers = [];
-//       fs.createReadStream(req.file.path)
-//         .pipe(csvParser({ headers: false, skipEmptyLines: true }))
-//         .on('data', (row) => {
-//           if (headers.length === 0) {
-//             headers = Object.values(row);
-//           } else {
-//             const formattedRow = {};
-//             Object.values(row).forEach((value, i) => {
-//               formattedRow[headers[i]] = value;
-//             });
-//             results.push(formattedRow);
-//           }
-//         })
-//         .on('end', async () => {
-//           try {
-//             const processedApplicants = await Promise.all(results.map(processCsvRow));
-//             const validApplicants = processedApplicants.filter(applicant => applicant !== null);
-
-//             if (validApplicants.length === 0) {
-//               return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'No valid applicants found in CSV');
-//             }
-
-//             // 🔥 Convert emails to lowercase for consistent comparison
-//             const emails = validApplicants.map(applicant => applicant.email.trim().toLowerCase());
-//             console.log("Extracted Emails from CSV:", emails);
-
-//             // ✅ Use `Set` to remove duplicates
-//             const existingApplicants = await Applicant.find({ email: { $in: [...new Set(emails)] } });
-//             const existingEmails = new Set(existingApplicants.map(app => app.email.trim().toLowerCase()));
-//             console.log("Existing Emails in DB:", [...existingEmails]);
-
-//             // ✅ Separate new and existing records
-//             const toInsert = validApplicants.filter(applicant =>
-//               !existingEmails.has(applicant.email.trim().toLowerCase())
-//             );
-//             console.log("To Insert ===>", toInsert);
-
-//             const existingRecords = validApplicants.filter(applicant =>
-//               existingEmails.has(applicant.email.trim().toLowerCase())
-//             );
-//             console.log("Existing Records ===>", existingRecords);
-
-//             // ✅ Insert only new records
-//             if (toInsert.length > 0) {
-//               const insertOperations = toInsert.map(applicant => ({
-//                 insertOne: { document: applicant }
-//               }));
-
-//               await Applicant.bulkWrite(insertOperations);
-//             }
-
-//             fs.unlinkSync(req.file.path);
-
-//             return HandleResponse(res, true, StatusCodes.OK, 'CSV imported successfully', {
-//               insertedRecords: toInsert,
-//               existingRecords: existingRecords.map(record => record.email) // Only return existing emails
-//             });
-//           } catch (dbError) {
-//             console.log('Error while saving to DB:', dbError);
-//             return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, dbError.message);
-//           }
-//         })
-//         .on('error', (error) => {
-//           return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'Error reading CSV file');
-//         });
-//     });
-//   } catch (error) {
-//     console.log('Last catch block error:', error);
-//     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} import CSV`);
-//   }
-// };
-
-
-
-
-
-
-
-
-
-
 
 
 export const importApplicantCsv = async (req, res) => {
   try {
-    const updateFlag = req.params.update === 'yes';
-    console.log("Update flag (should be true if you want to update):", updateFlag);
+    const updateFlag = req.query.updateFlag === 'true' || req.body.updateFlag === true || false;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `User is ${Message.NOT_FOUND}`);
+    }
 
     uploadCv(req, res, async (err) => {
       if (err) {
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          `${Message.FAILED_TO} upload CSV`
-        );
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV`);
       }
       if (!req.file) {
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          `${Message.FAILED_TO} upload CSV - No file provided`
-        );
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV - No file provided`);
       }
+
       const results = [];
       let headers = [];
 
@@ -570,72 +471,65 @@ export const importApplicantCsv = async (req, res) => {
             Object.values(row).forEach((value, i) => {
               formattedRow[headers[i]] = value;
             });
+
             results.push(formattedRow);
           }
         })
         .on('end', async () => {
           try {
-            const processedApplicants = await Promise.all(
-              results.map(processCsvRow)
-            );
-            const validApplicants = processedApplicants.filter(
-              (applicant) => applicant !== null
-            );
+            const processedApplicants = await Promise.all(results.map(processCsvRow));
+            const validApplicants = processedApplicants.filter(applicant => applicant !== null);
 
             if (validApplicants.length === 0) {
-              return HandleResponse(
-                res,
-                false,
-                StatusCodes.BAD_REQUEST,
-                'No valid applicants found in CSV'
-              );
+              return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'No valid applicants found in CSV');
             }
-            const emails = validApplicants.map((applicant) =>
-              applicant.email.trim().toLowerCase()
-            );
+
+            const emails = validApplicants.map(applicant => applicant.email.trim().toLowerCase());
             const uniqueEmails = [...new Set(emails)];
 
-            console.log("Extracted Emails from CSV:", uniqueEmails);
             const existingApplicants = await Applicant.find({
               email: { $in: uniqueEmails }
             }).lean();
 
-            const existingEmails = new Set(
-              existingApplicants.map((app) =>
-                app.email.trim().toLowerCase()
-              )
-            );
+            const existingEmails = new Set(existingApplicants.map(app => app.email.trim().toLowerCase()));
 
-            console.log("Existing Emails in DB:", [...existingEmails]);
             const toInsert = validApplicants.filter(
-              (applicant) =>
-                !existingEmails.has(applicant.email.trim().toLowerCase())
+              applicant => !existingEmails.has(applicant.email.trim().toLowerCase())
             );
 
             const toUpdate = validApplicants.filter(
-              (applicant) =>
-                existingEmails.has(applicant.email.trim().toLowerCase())
+              applicant => existingEmails.has(applicant.email.trim().toLowerCase())
             );
+
+            // Insert new records
             if (toInsert.length > 0) {
-              const insertOperations = toInsert.map((applicant) => ({
+              const insertOperations = toInsert.map(applicant => ({
                 insertOne: {
                   document: {
                     ...applicant,
                     email: applicant.email.trim().toLowerCase(),
+                    createdBy: user.role,
+                    updatedBy: user.role,
+                    addByManual: false,
                   }
                 }
               }));
+
               await Applicant.bulkWrite(insertOperations);
             }
+
+            // Update existing records (only if updateFlag = true)
             if (toUpdate.length > 0) {
               if (updateFlag) {
-                const updateOperations = toUpdate.map((applicant) => ({
+                const updateOperations = toUpdate.map(applicant => ({
                   updateOne: {
                     filter: { email: applicant.email.trim().toLowerCase() },
                     update: {
                       $set: {
                         ...applicant,
-                        email: applicant.email.trim().toLowerCase(),
+                        createdBy: user.role,
+                        updatedBy: user.role,
+                        addByManual: false,
                       }
                     },
                     upsert: true
@@ -652,6 +546,7 @@ export const importApplicantCsv = async (req, res) => {
                 );
               }
             }
+
             fs.unlinkSync(req.file.path);
             return HandleResponse(
               res,
@@ -659,14 +554,12 @@ export const importApplicantCsv = async (req, res) => {
               StatusCodes.OK,
               'CSV imported successfully',
               {
-                insertedNewRecords: toInsert,
-                updatedRecords: updateFlag
-                  ? toUpdate.map((record) => record.email)
-                  : [],
+                insertedNewRecords: toInsert.map(record => record.email),
+                updatedRecords: updateFlag ? toUpdate.map(record => record.email) : [],
               }
             );
           } catch (dbError) {
-            console.log('Error while saving to DB:', dbError.message);
+            console.error('Error while saving to DB:', dbError.stack);
             return HandleResponse(
               res,
               false,
@@ -695,6 +588,8 @@ export const importApplicantCsv = async (req, res) => {
     );
   }
 };
+
+
 
 
 
