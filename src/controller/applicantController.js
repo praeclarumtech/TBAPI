@@ -12,6 +12,90 @@ import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
 
+import { uploadResume } from '../helpers/Multer.js';
+import { extractTextFromPDF, extractTextFromDocx, parseResumeText } from '../helpers/importResume.js';
+import fs from 'fs';
+
+export const uploadResumeAndCreateApplicant = async (req, res) => {
+  uploadResume(req, res, async (err) => {
+    if (err) {
+      logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        err.message
+      );
+    }
+
+    try {
+      const { file } = req;
+
+      if (!file) {
+        logger.warn(`Resume file is ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `Resume file is ${Message.NOT_FOUND}`
+        );
+      }
+
+      let resumeText = '';
+      const filePath = file.path;
+
+      if (file.mimetype === 'application/pdf') {
+        resumeText = await extractTextFromPDF(filePath);
+      } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        resumeText = await extractTextFromDocx(filePath);
+      } else {
+        throw new Error('Unsupported file type');
+      }
+
+      const { name, email, phone } = parseResumeText(resumeText);
+
+      const applicationNo = await generateApplicantNo();
+      const applicantData = {
+        name: {
+          firstName: name.split(' ')[0] || '',
+          lastName: name.split(' ')[1] || '',
+        },
+        email,
+        applicationNo,
+        phone: {
+          phoneNumber: phone,
+          whatsappNumber: phone,
+        },
+        resumeUrl: `/uploads/resumes/${file.filename}`,
+      };
+
+      const applicant = await createApplicant(applicantData);
+
+      logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.CREATED,
+        `Applicant ${Message.ADDED_SUCCESSFULLY}`,
+        { applicant }
+      );
+    } catch (error) {
+      logger.error(`${Message.FAILED_TO} add applicant: ${error.message}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `${Message.FAILED_TO} add applicant`
+      );
+    } finally {
+      // Delete the uploaded file
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+    }
+  });
+};
+
 export const addApplicant = async (req, res) => {
   try {
     const {
