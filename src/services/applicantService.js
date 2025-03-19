@@ -1,10 +1,15 @@
 import Applicant from '../models/applicantModel.js';
 
 export const createApplicant = async (body) => {
-  const applicant = new Applicant({ ...body });
+  const applicant = new Applicant({ ...body, addByManual: true });
   await applicant.save();
   return applicant;
 };
+
+export const createApplicants = async (applicantsArray) => {
+  const applicants = await Applicant.insertMany(applicantsArray)
+  return applicants
+}
 
 export const getAllapplicant = async () => {
   return Applicant.find();

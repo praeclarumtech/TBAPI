@@ -3,7 +3,6 @@ export const Enum = {
   HR: 'hr',
   USER: 'user',
 };
-
 export const genderEnum = {
   MALE: 'male',
   FEMALE: 'female',
@@ -39,8 +38,7 @@ export const applicantEnum = {
   JAVASCRIPT: 'JavaScript',
   JAVA: 'Java',
   C: 'C++',
-
-  SOFTWARE_ENGINNER: 'Software Engineer',
+  SOFTWARE_ENGINEER: 'Software Engineer',
   FRONTED_DEVLOPER: 'Frontend Developer',
   BACKEND_DEVLOPER: 'Backend Developer',
   FULL_STACK_DEVLOPER: 'Full Stack Developer',

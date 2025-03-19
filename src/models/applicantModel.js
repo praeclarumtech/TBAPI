@@ -1,14 +1,13 @@
 import mongoose from 'mongoose';
-import { applicantEnum, genderEnum } from '../utils/enum.js';
+import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: 'user',
       required: false,
     },
-    applicationNo: { type: Number, required: true },
     name: {
       firstName: { type: String, required: true },
       middleName: { type: String },
@@ -28,7 +27,6 @@ const ApplicantSchema = new mongoose.Schema(
     qualification: { type: String, required: true },
     specialization: { type: String, required: true },
     passingYear: { type: Number, required: true },
-
     currentAddress: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
@@ -37,7 +35,7 @@ const ApplicantSchema = new mongoose.Schema(
     appliedSkills: { type: [String], required: true },
     anyHandOnOffers: { type: Boolean, default: false },
     resume: { type: String, required: false },
-    totalExperience: { type: Number},
+    totalExperience: { type: Number },
     relevantSkillExperience: { type: Number, required: false },
     communicationSkill: { type: Number, required: true },
     otherSkills: { type: String },
@@ -81,7 +79,7 @@ const ApplicantSchema = new mongoose.Schema(
       type: String,
       enum: [
         applicantEnum.FRONTED_DEVLOPER,
-        applicantEnum.SOFTWARE_ENGINNER,
+        applicantEnum.SOFTWARE_ENGINEER,
         applicantEnum.BACKEND_DEVLOPER,
         applicantEnum.FULL_STACK_DEVLOPER,
         applicantEnum.DATA_ANALYST,
@@ -101,7 +99,7 @@ const ApplicantSchema = new mongoose.Schema(
       type: String, required: true,
       enum: [
         applicantEnum.FRONTED_DEVLOPER,
-        applicantEnum.SOFTWARE_ENGINNER,
+        applicantEnum.SOFTWARE_ENGINEER,
         applicantEnum.BACKEND_DEVLOPER,
         applicantEnum.FULL_STACK_DEVLOPER,
         applicantEnum.DATA_ANALYST,
@@ -133,13 +131,25 @@ const ApplicantSchema = new mongoose.Schema(
     },
     lastFollowUpDate: { type: Date },
     permanentAddress: { type: String, required: false },
-    collegeName: { type: String},
-    cgpa: { type: Number},
+    collegeName: { type: String },
+    cgpa: { type: Number },
     linkedinUrl: { type: String },
     clientCvUrl: { type: String },
     clientFeedback: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
+    createdBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+    },
+    updatedBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER]
+    },
+    addByManual: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );

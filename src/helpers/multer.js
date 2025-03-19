@@ -29,3 +29,20 @@ export const upload = multer({
     }
   },
 }).single('profilePicture');
+
+export const uploadCv = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'text/csv',
+      'application/csv'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      console.error("Invalid file type:", file.mimetype);
+      cb(new Error(Message.INVALID_FILE_TYPE));
+    }
+  },
+}).single('csvFile');

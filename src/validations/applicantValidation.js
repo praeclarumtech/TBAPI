@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { applicantEnum, genderEnum} from '../utils/enum.js';
+import { applicantEnum, genderEnum } from '../utils/enum.js';
 
 export const applicantValidation = Joi.object({
   name: Joi.object({
@@ -44,7 +44,6 @@ export const applicantValidation = Joi.object({
       'any.only': 'Gender must be male, female, or other.',
       'any.required': 'Gender is required.',
     }),
-
   dateOfBirth: Joi.date().required().messages({
     'date.base': 'Date of birth must be a valid date.',
     'any.required': 'Date of birth is required.',
@@ -71,7 +70,7 @@ export const applicantValidation = Joi.object({
   }),
   state: Joi.string().required(),
   country: Joi.string().required(),
-  currentPincode: Joi.number().integer().allow(null,''),
+  currentPincode: Joi.number().integer().allow(null, ''),
   currentCity: Joi.string().required(),
   resumeUrl: Joi.string(),
   practicalUrl: Joi.string().allow(''),
@@ -85,10 +84,10 @@ export const applicantValidation = Joi.object({
     'any.required': 'Applied skills are required.',
   }),
 
-  resume: Joi.string().messages({
-    'string.empty': 'Resume cannot be empty.',
-    'any.required': 'Resume is required.',
-  }),
+  // resume: Joi.string().messages({
+  //   'string.empty': 'Resume cannot be empty.',
+  //   'any.required': 'Resume is required.',
+  // }),
 
   totalExperience: Joi.number().allow(null, '').messages({
     'number.base': 'Total experience must be a number.',
@@ -128,7 +127,7 @@ export const applicantValidation = Joi.object({
   currentCompanyDesignation: Joi.string()
     .valid(
       applicantEnum.FRONTED_DEVLOPER,
-      applicantEnum.SOFTWARE_ENGINNER,
+      applicantEnum.SOFTWARE_ENGINEER,
       applicantEnum.BACKEND_DEVLOPER,
       applicantEnum.FULL_STACK_DEVLOPER,
       applicantEnum.DATA_ANALYST,
@@ -226,7 +225,6 @@ export const updateApplicantValidation = Joi.object({
     'string.base': 'Email must be a string.',
     'string.email': 'Invalid email format.',
   }),
-
   gender: Joi.string()
     .valid(genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER)
     .messages({
@@ -255,7 +253,7 @@ export const updateApplicantValidation = Joi.object({
   }),
   state: Joi.string(),
   country: Joi.string(),
-  currentPincode: Joi.number().integer().allow(null,''),
+  currentPincode: Joi.number().integer().allow(null, ''),
   currentCity: Joi.string(),
   url: Joi.string(),
   resumeUrl: Joi.string(),
@@ -264,9 +262,9 @@ export const updateApplicantValidation = Joi.object({
     'array.base': 'Applied skills must be an array of strings.',
   }),
 
-  resume: Joi.string().messages({
-    'string.empty': 'Resume cannot be empty.',
-  }),
+  // resume: Joi.string().messages({
+  //   'string.empty': 'Resume cannot be empty.',
+  // }),
 
   totalExperience: Joi.number().allow(null, '').messages({
     'number.base': 'Total experience must be a number.',
@@ -300,7 +298,7 @@ export const updateApplicantValidation = Joi.object({
   currentCompanyDesignation: Joi.string()
     .valid(
       applicantEnum.FRONTED_DEVLOPER,
-      applicantEnum.SOFTWARE_ENGINNER,
+      applicantEnum.SOFTWARE_ENGINEER,
       applicantEnum.BACKEND_DEVLOPER,
       applicantEnum.FULL_STACK_DEVLOPER,
       applicantEnum.DATA_ANALYST,

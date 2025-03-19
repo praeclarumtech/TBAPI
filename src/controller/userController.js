@@ -116,7 +116,6 @@ export const viewProfile = async (req, res) => {
         `Profile is ${Message.NOT_FOUND}`
       );
     }
-
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -268,6 +267,7 @@ export const sendEmail = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await findUserEmail({ email });
+    console.log('user is exist', user);
     if (!user) {
       logger.warn(`User is ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -352,7 +352,8 @@ export const verifyOtp = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   try {
-    const { newPassword, confirmPassword, email } = req.body;
+    // const userId = req.params.id;
+    const { email, newPassword, confirmPassword } = req.body;
 
     const user = await findUserEmail({ email });
     if (!user) {
@@ -375,7 +376,7 @@ export const forgotPassword = async (req, res) => {
       );
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await updateUserById(user.id, { password: hashedPassword });
+    await updateUserById(email, { password: hashedPassword });
 
     logger.info(`Password is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
