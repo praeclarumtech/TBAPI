@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { applicantEnum, genderEnum} from '../utils/enum.js';
+import { applicantEnum, genderEnum } from '../utils/enum.js';
 
 export const applicantValidation = Joi.object({
   name: Joi.object({
@@ -70,7 +70,7 @@ export const applicantValidation = Joi.object({
   }),
   state: Joi.string().required(),
   country: Joi.string().required(),
-  currentPincode: Joi.number().integer().allow(null,''),
+  currentPincode: Joi.number().integer().allow(null, ''),
   currentCity: Joi.string().required(),
   resumeUrl: Joi.string(),
   practicalUrl: Joi.string().allow(''),
@@ -127,7 +127,7 @@ export const applicantValidation = Joi.object({
   currentCompanyDesignation: Joi.string()
     .valid(
       applicantEnum.FRONTED_DEVLOPER,
-      applicantEnum.SOFTWARE_ENGINNER,
+      applicantEnum.SOFTWARE_ENGINEER,
       applicantEnum.BACKEND_DEVLOPER,
       applicantEnum.FULL_STACK_DEVLOPER,
       applicantEnum.DATA_ANALYST,
@@ -225,7 +225,6 @@ export const updateApplicantValidation = Joi.object({
     'string.base': 'Email must be a string.',
     'string.email': 'Invalid email format.',
   }),
-
   gender: Joi.string()
     .valid(genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER)
     .messages({
@@ -254,7 +253,7 @@ export const updateApplicantValidation = Joi.object({
   }),
   state: Joi.string(),
   country: Joi.string(),
-  currentPincode: Joi.number().integer().allow(null,''),
+  currentPincode: Joi.number().integer().allow(null, ''),
   currentCity: Joi.string(),
   url: Joi.string(),
   resumeUrl: Joi.string(),
@@ -299,7 +298,7 @@ export const updateApplicantValidation = Joi.object({
   currentCompanyDesignation: Joi.string()
     .valid(
       applicantEnum.FRONTED_DEVLOPER,
-      applicantEnum.SOFTWARE_ENGINNER,
+      applicantEnum.SOFTWARE_ENGINEER,
       applicantEnum.BACKEND_DEVLOPER,
       applicantEnum.FULL_STACK_DEVLOPER,
       applicantEnum.DATA_ANALYST,

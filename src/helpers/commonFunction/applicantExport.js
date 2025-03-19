@@ -78,6 +78,7 @@ const formatDate = (dateString, isRequired = false) => {
     const parsedDate = new Date(dateString.replace(/[/]/g, '-').split('-').reverse().join('-'));
     return !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : isRequired ? undefined : '';
 };
+
 const validateAndFillFields = async (data, userRole) => {
     return {
         name: {
@@ -90,7 +91,7 @@ const validateAndFillFields = async (data, userRole) => {
             whatsappNumber: data['WhatsApp Number']?.trim() || data['Phone Number']?.trim() || null,
         },
         email: data['Email']?.trim() || null,
-        gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
+        gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,99+\
         dateOfBirth: data['Date of Birth'] ? formatDate(data['Date of Birth']?.trim(), true) : null,
         currentAddress: data['Current Address'] || 'Not Provided',
         state: data['State'] || null,
@@ -122,13 +123,20 @@ const validateAndFillFields = async (data, userRole) => {
         otherSkills: data['Other Skills'] || null,
         rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : null,
         currentCompanyName: data['Current Company Name']?.trim() || null,
+
         currentCompanyDesignation:
-            applicantEnum[data['Current Company Designation']?.trim().toUpperCase()] ||
-            applicantEnum.NA,
-        appliedRole: applicantEnum[data['Applied Role']?.trim()] || applicantEnum.NA,
-        currentPkg: !isNaN(Number(data['Current Package']?.trim()))
-            ? Number(data['Current Package'].trim())
-            : null,
+            Object.values(applicantEnum).find(
+                (value) =>
+                    value.replace(/\s+/g, '').toUpperCase() ===
+                    data['Current Company Designation']?.trim().replace(/\s+/g, '').toUpperCase()
+            ) || data['Current Company Designation']?.trim() || null,
+        appliedRole:
+            Object.values(applicantEnum).find(
+                (value) =>
+                    value.replace(/\s+/g, '').toUpperCase() ===
+                    data['Applied Role']?.trim().replace(/\s+/g, '').toUpperCase()
+            ) || data['Applied Role']?.trim() || null,
+        currentPkg: data['Current Package'] && !isNaN(Number(data['Current Package'])) ? Number(data['Current Package']) : null,
         expectedPkg: !isNaN(Number(data['Expected Package']))
             ? Number(data['Expected Package'])
             : null,
@@ -166,29 +174,44 @@ const validateAndFillFields = async (data, userRole) => {
         addByManual: false
     };
 };
+
 export const processCsvRow = async (data, userRole) => {
     try {
         if (!data || typeof data !== 'object') {
             throw new Error('Invalid data provided to processCsvRow');
         }
         const requiredFields = {
-            email: data['Email']?.trim(),
-            firstName: data['First Name']?.trim(),
-            lastName: data['Last Name']?.trim(),
-            appliedRole: applicantEnum[data['Applied Role']?.toUpperCase()] || applicantEnum.NA,
+            email: data['Email']?.trim() || null,
+            firstName: data['First Name']?.trim() || null,
+            lastName: data['Last Name']?.trim() || null,
+            appliedRole: applicantEnum[data['Applied Role']?.toUpperCase()] || null,
         };
+
         const missingFields = Object.keys(requiredFields).filter(
             (key) => !requiredFields[key]
         );
+
         if (missingFields.length > 0) {
-            console.warn(`Invalid row - missing essential fields:`, requiredFields);
-            return null;
+            console.warn(`Invalid row - missing essential fields:`, missingFields);
+            return {
+                valid: false,
+                errors: `Missing required fields: ${missingFields.join(', ')}`,
+            };
         }
         const validatedData = await validateAndFillFields(data, userRole);
-        console.log('Validated Data:', validatedData);
-        return validatedData;
+
+        return { valid: true, data: validatedData };
     } catch (error) {
         console.error('Error in processCsvRow:', error);
-        return null;
+        return {
+            valid: false,
+            errors: error.message
+        };
     }
 };
+
+
+
+
+
+

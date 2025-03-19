@@ -30,7 +30,6 @@ router.delete('/deleteApplicant/:id', deleteApplicant);
 // import export applicant
 router.get('/exportCsv', exportApplicantCsv);
 router.post('/importCsv', authorization, importApplicantCsv);
-
 router.delete('/deleteManyApplicants', deleteManyApplicants);
- 
+
 export default router;

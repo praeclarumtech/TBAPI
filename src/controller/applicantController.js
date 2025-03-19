@@ -476,16 +476,20 @@ export const importApplicantCsv = async (req, res) => {
 
       const results = [];
       let headers = [];
+      let newHeaders = [];
 
       fs.createReadStream(req.file.path)
         .pipe(csvParser({ headers: false, skipEmptyLines: true }))
         .on('data', (row) => {
           if (headers.length === 0) {
             headers = Object.values(row);
+            newHeaders = headers.map((item) => {
+              return item.trim()
+            })
           } else {
             const formattedRow = {};
             Object.values(row).forEach((value, i) => {
-              formattedRow[headers[i]] = value;
+              formattedRow[newHeaders[i]] = value;
             });
 
             results.push(formattedRow);
@@ -499,7 +503,6 @@ export const importApplicantCsv = async (req, res) => {
             if (validApplicants.length === 0) {
               return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'No valid applicants found in CSV');
             }
-
             const emails = validApplicants.map(applicant => applicant.email.trim().toLowerCase());
             const uniqueEmails = [...new Set(emails)];
 
@@ -516,8 +519,6 @@ export const importApplicantCsv = async (req, res) => {
             const toUpdate = validApplicants.filter(
               applicant => existingEmails.has(applicant.email.trim().toLowerCase())
             );
-
-            // Insert new records
             if (toInsert.length > 0) {
               const insertOperations = toInsert.map(applicant => ({
                 insertOne: {
@@ -533,8 +534,6 @@ export const importApplicantCsv = async (req, res) => {
 
               await Applicant.bulkWrite(insertOperations);
             }
-
-            // Update existing records (only if updateFlag = true)
             if (toUpdate.length > 0) {
               if (updateFlag) {
                 const updateOperations = toUpdate.map(applicant => ({
@@ -575,7 +574,7 @@ export const importApplicantCsv = async (req, res) => {
               }
             );
           } catch (dbError) {
-            console.error('Error while saving to DB:', dbError.stack);
+            console.error("error while saving to db", dbError.message);
             return HandleResponse(
               res,
               false,
@@ -604,6 +603,9 @@ export const importApplicantCsv = async (req, res) => {
     );
   }
 }
+
+
+
 
 export const deleteManyApplicants = async (req, res) => {
   try {
