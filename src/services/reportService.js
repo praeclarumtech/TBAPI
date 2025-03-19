@@ -77,9 +77,17 @@ export const getReport = async (
     ...dateFilter,
   });
 
-  // const firstInterviewApplicants = await Applicant.countDocuments({interviewStage: applicantEnum.FIRST_INTERVIEW,isDeleted: false,...dateFilter});
+  const firstroundApplicants = await Applicant.countDocuments({
+    interviewStage: applicantEnum.FIRST_ROUND,
+    isDeleted: false,
+    ...dateFilter,
+  });
 
-  // const secondInterviewApplicants = await Applicant.countDocuments({interviewStage: applicantEnum.SECOND_INTERVIEW,isDeleted: false,...dateFilter});
+  const clientInterviewApplicants = await Applicant.countDocuments({
+    interviewStage: applicantEnum.CLIENT,
+    isDeleted: false,
+    ...dateFilter,
+  });
 
   const technicalRoundApplicants = await Applicant.countDocuments({
     interviewStage: applicantEnum.TECHNICAL,
@@ -87,8 +95,8 @@ export const getReport = async (
     ...dateFilter,
   });
 
-  const finalRoundApplicants = await Applicant.countDocuments({
-    interviewStage: applicantEnum.FINAL,
+  const practicalRoundApplicants = await Applicant.countDocuments({
+    interviewStage: applicantEnum.PRACTICAL,
     isDeleted: false,
     ...dateFilter,
   });
@@ -149,10 +157,10 @@ export const getReport = async (
 
   return {
     hrRoundApplicants,
-    // firstInterviewApplicants,
-    // secondInterviewApplicants,
+    firstroundApplicants,
+    clientInterviewApplicants,
     technicalRoundApplicants,
-    finalRoundApplicants,
+    practicalRoundApplicants,
 
     holdApplicants,
     pendingApplicants,

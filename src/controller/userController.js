@@ -136,6 +136,41 @@ export const viewProfile = async (req, res) => {
   }
 };
 
+export const getProfileByToken = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await getUserById(userId);
+    if (!user) {
+      logger.warn(`Profile is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Profile is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`User profile ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `User profile ${Message.FETCH_SUCCESSFULLY}`,
+      user
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch user profile.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch user profile.`
+    );
+  }
+};
+
+
 export const viewProfileById = async (req, res) => {
   try {
     const userId = req.params.id;

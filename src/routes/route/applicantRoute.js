@@ -6,6 +6,7 @@ import {
   updateApplicant,
   deleteApplicant,
   updateStatus,
+  deleteManyApplicants
 } from '../../controller/applicantController.js';
 import { applicantValidation, updateApplicantValidation } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
@@ -20,6 +21,7 @@ router.put('/updateApplicant/:id',validator.body(updateApplicantValidation), upd
  
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);
+router.delete('/deleteManyApplicants', deleteManyApplicants);
  
 export default router;
  

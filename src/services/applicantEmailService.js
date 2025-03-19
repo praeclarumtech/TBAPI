@@ -2,7 +2,7 @@ import applicantEmail from '../models/applicantEmailModel.js';
 import mongoose from "mongoose";
 
 
-export const findAllEmails = async (query, page, limit) => {
+export const findAllEmails = async (query, applicantQuery, page, limit) => {
   const skip = (page - 1) * limit;
 
   const emails = await applicantEmail.aggregate([
@@ -18,6 +18,9 @@ export const findAllEmails = async (query, page, limit) => {
     },
     {
       $unwind: { path: '$applicantDetails', preserveNullAndEmptyArrays: true },
+    },
+    {
+      $match: applicantQuery,
     },
     {
       $project: {
@@ -75,13 +78,8 @@ export const findEmailById = async (id) => {
       },
     },
   ]);
-
   return email.length > 0 ? email[0] : null;
 };
-
-// export const findEmailById = async (id) => {
-//   return applicantEmail.findById(id);
-// };
 
 export const removeManyEmails = async (ids) => {
   return await applicantEmail.deleteMany({ _id: { $in: ids } });
