@@ -29,7 +29,9 @@
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.9",
+    "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^5.0.375",
     "winston": "^3.17.0",
     "winston-mongodb": "^6.0.0"
   },

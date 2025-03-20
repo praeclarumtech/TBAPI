@@ -13,19 +13,18 @@ import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
 
 import { uploadResume } from '../helpers/Multer.js';
-import { extractTextFromPDF, extractTextFromDocx, parseResumeText } from '../helpers/importResume.js';
+import {
+  extractTextFromPDF,
+  extractTextFromDocx,
+  parseResumeText,
+} from '../helpers/importResume.js';
 import fs from 'fs';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
     if (err) {
       logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        err.message
-      );
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, err.message);
     }
 
     try {
@@ -46,26 +45,20 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       if (file.mimetype === 'application/pdf') {
         resumeText = await extractTextFromPDF(filePath);
-      } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      } else if (
+        file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ) {
         resumeText = await extractTextFromDocx(filePath);
       } else {
         throw new Error('Unsupported file type');
       }
 
-      const { name, email, phone } = parseResumeText(resumeText);
-
+      const parsedData = parseResumeText(resumeText);
       const applicationNo = await generateApplicantNo();
+
       const applicantData = {
-        name: {
-          firstName: name.split(' ')[0] || '',
-          lastName: name.split(' ')[1] || '',
-        },
-        email,
+        ...parsedData,
         applicationNo,
-        phone: {
-          phoneNumber: phone,
-          whatsappNumber: phone,
-        },
         resumeUrl: `/uploads/resumes/${file.filename}`,
       };
 
@@ -77,7 +70,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         true,
         StatusCodes.CREATED,
         `Applicant ${Message.ADDED_SUCCESSFULLY}`,
-        { applicant }
+        applicant
       );
     } catch (error) {
       logger.error(`${Message.FAILED_TO} add applicant: ${error.message}`);
@@ -85,10 +78,9 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         res,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `${Message.FAILED_TO} add applicant`
+        `${Message.FAILED_TO} add applicant:${error.message}`
       );
     } finally {
-      // Delete the uploaded file
       if (req.file) {
         fs.unlinkSync(req.file.path);
       }
@@ -158,7 +150,7 @@ export const viewAllApplicant = async (req, res) => {
       anyHandOnOffers,
       rating,
       communicationSkill,
-      currentPkg
+      currentPkg,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -250,7 +242,10 @@ export const viewAllApplicant = async (req, res) => {
       query.status = status;
     }
 
-    if (currentCompanyDesignation && typeof currentCompanyDesignation === 'string') {
+    if (
+      currentCompanyDesignation &&
+      typeof currentCompanyDesignation === 'string'
+    ) {
       query.currentCompanyDesignation = currentCompanyDesignation;
     }
 
@@ -261,18 +256,18 @@ export const viewAllApplicant = async (req, res) => {
     if (workPreference && typeof workPreference === 'string') {
       query.workPreference = workPreference;
     }
-    
+
     if (anyHandOnOffers !== undefined) {
       query.anyHandOnOffers = anyHandOnOffers === 'true';
     }
 
     if (rating) {
       const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[2]);
-    
+
         query.rating = { $gte: min, $lte: max };
       } else {
         query.rating = parseFloat(rating);
@@ -312,12 +307,12 @@ export const viewAllApplicant = async (req, res) => {
     const findApplicants = searchResults.results.length
       ? searchResults
       : await pagination({
-        Schema: Applicant,
-        page: pageNum,
-        limit: limitNum,
-        query,
-        sort: { createdAt: -1 },
-      });
+          Schema: Applicant,
+          page: pageNum,
+          limit: limitNum,
+          query,
+          sort: { createdAt: -1 },
+        });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(

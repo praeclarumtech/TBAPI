@@ -1,27 +1,143 @@
-// import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import fs from 'fs'; 
+import * as pdfjsLib from 'pdfjs-dist';
 
 export const extractTextFromPDF = async (filePath) => {
-  const dataBuffer = fs.readFileSync(filePath);
-  const data = await pdfParse(dataBuffer);
-  return data.text;
+  try {
+    const dataBuffer = fs.readFileSync(filePath);
+    const uint8Array = new Uint8Array(dataBuffer);
+
+    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+    const pdf = await loadingTask.promise;
+    let extractedText = '';
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      extractedText += textContent.items.map((item) => item.str.trim()).join(' ') + '\n';
+    }
+
+    return extractedText.replace(/\s+/g, ' ').trim();
+  } catch (error) {
+    console.error('Error extracting text from PDF:', error);
+    return null;
+  }
 };
 
 export const extractTextFromDocx = async (filePath) => {
-  const result = await mammoth.extractRawText({ path: filePath });
-  return result.value;
+  try {
+    const result = await mammoth.extractRawText({ path: filePath });
+    return result.value.replace(/\s+/g, ' ').trim();
+  } catch (error) {
+    console.error('Error extracting text from DOCX:', error);
+    return null;
+  }
 };
 
 export const parseResumeText = (text) => {
-  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-  const phoneRegex = /(\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}/;
-  const nameRegex = /([A-Z][a-z]+)\s([A-Z][a-z]+)/;
+  const emailRegex = /[a-zA-Z0-9._%+-]+ ?@ ?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const phoneRegex = /(\+91\s?)?[6-9]\d{4}\s?\d{5}/;
+  // const nameMatch = text.match(/Name:\s*(.+)/i);
+  const nameTagRegex = /(?:Name|Full Name)\s*[:\-]\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?(?:\s[A-Z][a-z]+)?)/i;
+  // const genderMatch = text.match(/Gender:\s*(Male|Female|Other|gender)/i);
+  const skillsMatch = text.match(/(Technical Skills|Skills)[:\s]*(.*)/i);
+  const experienceRegex = /(\d+(?:\.\d+)?)\s*(?:\+?\s*years?|yrs?|year)/gi;
+  const matches = [...text.matchAll(experienceRegex)].map(match => parseFloat(match[1]));
+  const qualificationMatch = text.match(/(Bachelor|Master|B\.Sc|M\.Sc|BTech|MTech|PhD|tech).*?\n/i);
+  // const appliedRoleMatch = text.match(/(Applied Role|Position Applied |Role)[:\s]*(.*)/i);
+  const locationMatch = text.match(/(Address|Location|City|Current Address)[:\s]*(.*)/i);
+  const preferredLocationsMatch = text.match(/(preferred location)[:\s]*(.*)/i);
+  const linkedInMatch = text.match(/(https?:\/\/)?(www\.)?linkedin\.com\/[a-zA-Z0-9-_/]+/);
+  const currentCompanyMatch = text.match(/(Current Employer|Current Company|Company Name)[:\s]*(.*)/i);
+  const maritalStatusMatch = text.match(/Marital Status:\s*(Single|Married)/i);
+  const dobMatch = text.match(/Date of Birth:\s*(\d{2}[-/]\d{2}[-/]\d{4})/i);
 
-  const email = text.match(emailRegex)?.[0] || '';
-  const phone = text.match(phoneRegex)?.[0] || '';
-  const nameMatch = text.match(nameRegex);
-  const name = nameMatch ? `${nameMatch[1]} ${nameMatch[2]}` : '';
 
-  return { name, email, phone };
+  const emailMatch = text.match(emailRegex);
+  const email = emailMatch ? emailMatch[0].replace(/\s+/g, '') : '';
+  const phoneMatch = text.match(phoneRegex);
+  const phone = phoneMatch ? phoneMatch[0].replace(/\s+/g, '') : ''; 
+  // const name = nameMatch ? `${nameMatch[1]} ${nameMatch[2]} ${nameMatch[3]}` : '';
+  // const gender = genderMatch ? genderMatch[1] : '';
+  const skills = skillsMatch ? skillsMatch[2].split(',').map(skill => skill.trim()) : [];
+  const totalExperience = matches.length > 0 ? Math.max(...matches) : 0;
+  const qualification = qualificationMatch ? qualificationMatch[1] : "Not Provided";
+  // const appliedRole = appliedRoleMatch ? appliedRoleMatch[2].trim() : "Na";
+  const currentAddress = locationMatch ? locationMatch[0] : "Not Provided";
+  const preferredLocations = preferredLocationsMatch ? preferredLocationsMatch[2] : "Not Provided";
+  const linkedinUrl = linkedInMatch ? linkedInMatch[0] : "Not Found";
+  const currentCompanyName = currentCompanyMatch ? currentCompanyMatch[2].trim() : "Not Provided";
+  const maritalStatus = maritalStatusMatch ? maritalStatusMatch[1] : '';
+  const dateOfBirth = dobMatch ? new Date(dobMatch[1].split('/').reverse().join('-')) : null;
+
+  let potentialName = "Unknown";
+
+  const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+
+  // Step 1: Search for "Name:" tag in text
+  const nameTagMatch = text.match(nameTagRegex);
+  if (nameTagMatch) {
+    potentialName = nameTagMatch[1];
+  }
+
+if (potentialName === "Unknown" && email) {
+  let emailPrefix = email.split("@")[0].replace(/[0-9._]/g, "").trim();
+
+  if (emailPrefix.length >= 4) {
+    emailPrefix = emailPrefix.substring(0, 4);
+  }
+
+  // console.log("Extracted 4 letters:", emailPrefix);
+
+  if (emailPrefix) {
+    const wordRegex = new RegExp(`\\b${emailPrefix}\\w*\\b`, "i");
+    const matchedWord = text.match(wordRegex);
+
+    if (matchedWord) {
+      let firstName = matchedWord[0];
+      // console.log("Matching First Name:", firstName);
+
+      const lastNameRegex = new RegExp(`\\b${firstName}\\b\\s+([A-Z][a-z]+)`, "i");
+      const lastNameMatch = text.match(lastNameRegex);
+
+      let lastName = lastNameMatch ? lastNameMatch[1] : "Unknown";
+      // console.log("Matching Last Name:", lastName);
+
+      potentialName = `${firstName} ${lastName}`;
+    }
+  }
+}
+  
+  console.log('textttttttttttttttt?>>>>>>>>',text)
+  console.log('textttttttttttttttt?>>>>>>>>',email)
+  console.log('textttttttttttttttt?>>>>>>>>',phone)
+
+  const nameParts = potentialName.split(" ");
+  const firstName = nameParts[0] || "Unknown";
+  const middleName = nameParts.length > 2 ? nameParts[1] : "";
+  const lastName = nameParts.length > 2 ? nameParts[2] : nameParts[1] || "Unknown";
+
+  return {
+  name: {
+    firstName,
+    middleName,
+    lastName,
+  }, 
+  email,
+  phone: {
+    phoneNumber: phone,
+    whatsappNumber: phone,
+  },
+  appliedSkills: skills,
+  totalExperience,
+  qualification,
+  // appliedRole,
+  currentAddress,
+  linkedinUrl,
+  currentCompanyName,
+  preferredLocations,
+  // gender,
+  maritalStatus,
+  dateOfBirth,
 };
+}

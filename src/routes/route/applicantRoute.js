@@ -22,7 +22,9 @@ router.put('/updateApplicant/:id',validator.body(updateApplicantValidation), upd
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);
 
-router.post('/upload-resume',validator.body(updateApplicantValidation), uploadResumeAndCreateApplicant);
+router.post('/upload-resume',
+  validator.body(updateApplicantValidation),
+  uploadResumeAndCreateApplicant);
  
 export default router;
  
