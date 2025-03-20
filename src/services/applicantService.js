@@ -17,3 +17,7 @@ export const getApplicantById = async (id) => {
 export const updateApplicantById = async (id, updateData) => {
   return Applicant.updateOne({_id: id}, updateData);
 };
+
+export const removeManyApplicants = async (ids) => {
+  return await Applicant.deleteMany({ _id: { $in: ids } });
+};
