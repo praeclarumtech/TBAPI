@@ -59,7 +59,7 @@ export const parseResumeText = (text) => {
   const phone = phoneMatch ? phoneMatch[0].replace(/\s+/g, '') : ''; 
   // const name = nameMatch ? `${nameMatch[1]} ${nameMatch[2]} ${nameMatch[3]}` : '';
   // const gender = genderMatch ? genderMatch[1] : '';
-  const skills = skillsMatch ? skillsMatch[2].split(',').map(skill => skill.trim()) : [];
+  // const skills = skillsMatch ? skillsMatch[2].split(',').map(skill => skill.trim()) : [];
   const totalExperience = matches.length > 0 ? Math.max(...matches) : 0;
   const qualification = qualificationMatch ? qualificationMatch[1] : "Not Provided";
   // const appliedRole = appliedRoleMatch ? appliedRoleMatch[2].trim() : "Na";
@@ -70,11 +70,45 @@ export const parseResumeText = (text) => {
   const maritalStatus = maritalStatusMatch ? maritalStatusMatch[1] : '';
   const dateOfBirth = dobMatch ? new Date(dobMatch[1].split('/').reverse().join('-')) : null;
 
+  const skillWordList = [
+    "JavaScript", "JS", "TypeScript", "Node.js", "Node", "React", "Angular", "Vue.js", "Vue",
+    "HTML", "CSS", "Bootstrap", "Tailwind", "SASS", "LESS",
+    "Python", "Django", "Flask", "Java", "Spring", "Spring Boot",
+    "C#", ".NET", "ASP.NET", "ADO.NET", "C+", "C",
+    "SQL", "MySQL", "PostgreSQL", "MongoDB", "Firebase", "Oracle",
+    "GraphQL", "REST API", "SOAP", "Git", "GitHub", "GitLab",
+    "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes",
+    "Jenkins", "CI/CD", "Terraform", "Ansible", "Linux", "Bash","Php","Dot Net","ASP.Net", "MVC", "XML", "WPF", "MVVM",
+    "jQuery", "ajax", "Linq", "Sqlite", "Ado.Net", "MSMQ", "IBM Cloud", "DAX", "Magento", "Nest", "laravel", "Agile Methodology",
+    "Codeigniter" 
+  ];
+
+  const escapeRegex = (word) => word.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
+
+// Function to extract skills that match `skillWordList`
+const extractMatchingWords = (text, skillWordList) => {
+  return skillWordList.filter(word =>
+    new RegExp(`\\b${escapeRegex(word)}\\b`, "i").test(text)
+  );
+};
+
+  let skills = [];
+
+  if (skillsMatch) {
+    skills = skillsMatch[2]
+      .replace(/[●►⇨]/g, '')
+      .split(/,|\n|•/) 
+      .map(skill => skill.trim())
+      .filter(skill => skill.length > 1);
+
+      skills = extractMatchingWords(skills.join(" "), skillWordList);
+  }
+
   let potentialName = "Unknown";
 
   const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
 
-  // Step 1: Search for "Name:" tag in text
+  // SSearch for "Name:" tag in text
   const nameTagMatch = text.match(nameTagRegex);
   if (nameTagMatch) {
     potentialName = nameTagMatch[1];
@@ -87,26 +121,22 @@ if (potentialName === "Unknown" && email) {
     emailPrefix = emailPrefix.substring(0, 4);
   }
 
-  // console.log("Extracted 4 letters:", emailPrefix);
-
   if (emailPrefix) {
     const wordRegex = new RegExp(`\\b${emailPrefix}\\w*\\b`, "i");
     const matchedWord = text.match(wordRegex);
 
     if (matchedWord) {
       let firstName = matchedWord[0];
-      // console.log("Matching First Name:", firstName);
 
       const lastNameRegex = new RegExp(`\\b${firstName}\\b\\s+([A-Z][a-z]+)`, "i");
       const lastNameMatch = text.match(lastNameRegex);
 
       let lastName = lastNameMatch ? lastNameMatch[1] : "Unknown";
-      // console.log("Matching Last Name:", lastName);
 
       potentialName = `${firstName} ${lastName}`;
     }
   }
-}
+} 
   
   console.log('textttttttttttttttt?>>>>>>>>',text)
   console.log('textttttttttttttttt?>>>>>>>>',email)

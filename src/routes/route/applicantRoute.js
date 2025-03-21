@@ -7,7 +7,8 @@ import {
   deleteApplicant,
   updateStatus,
   uploadResumeAndCreateApplicant,
-  deleteManyApplicants
+  deleteManyApplicants,
+  getResumeAndCsvApplicants
 } from '../../controller/applicantController.js';
 import { applicantValidation, updateApplicantValidation } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
@@ -18,6 +19,7 @@ const router = express.Router();
 router.post('/addApplicant',validator.body(applicantValidation),addApplicant);
 router.get('/viewAllApplicant', viewAllApplicant);
 router.get('/viewApplicant/:id', viewApplicant);
+router.get('/viewResumeAndCsvApplicant', getResumeAndCsvApplicants);
 router.put('/updateApplicant/:id',validator.body(updateApplicantValidation), updateApplicant);
  
 router.put('/update/status/:id', updateStatus);

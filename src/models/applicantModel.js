@@ -140,6 +140,11 @@ const ApplicantSchema = new mongoose.Schema(
     clientFeedback: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
+    addedBy: {
+      type: String,
+      enum: [applicantEnum.Manual, applicantEnum.CSV, applicantEnum.RESUME],
+      required: true
+    },
   },
   { timestamps: true }
 );
