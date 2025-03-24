@@ -109,7 +109,7 @@ export const viewAllApplicant = async (req, res) => {
         }))
       };
     }
-    
+
 
     if (totalExperience) {
       const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
@@ -434,22 +434,33 @@ export const updateStatus = async (req, res) => {
 
 export const exportApplicantCsv = async (req, res) => {
   try {
-    const applicants = await getAllapplicant();
+    const { filtered } = req.query;
+
+    let query = {};
+
+    if (filtered === 'true') {
+      query = { addedBy: { $in: [applicantEnum.CSV, applicantEnum.RESUME] } };
+    }
+
+    const applicants = await Applicant.find(query);
+    console.log("req.query data=====", applicants)
 
     if (!applicants.length) {
-      logger.warn(`Applicants is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicants are ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicants is ${Message.NOT_FOUND}`
+        `Applicants are ${Message.NOT_FOUND}`
       );
     }
 
     const csvData = generateApplicantCsv(applicants);
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=applicants.csv');
-
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${filtered ? 'filtered_applicants' : 'applicants'}.csv`
+    );
     res.status(200).send(csvData);
     logger.info(Message.DONWLOADED);
   } catch (error) {
@@ -462,6 +473,7 @@ export const exportApplicantCsv = async (req, res) => {
     );
   }
 };
+
 export const importApplicantCsv = async (req, res) => {
   try {
     const updateFlag =
