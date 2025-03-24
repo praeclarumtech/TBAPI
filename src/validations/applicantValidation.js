@@ -84,11 +84,6 @@ export const applicantValidation = Joi.object({
     'any.required': 'Applied skills are required.',
   }),
 
-  // resume: Joi.string().messages({
-  //   'string.empty': 'Resume cannot be empty.',
-  //   'any.required': 'Resume is required.',
-  // }),
-
   totalExperience: Joi.number().allow(null, '').messages({
     'number.base': 'Total experience must be a number.',
     'any.required': 'Total experience is required.',

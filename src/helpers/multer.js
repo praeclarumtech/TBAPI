@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { Message } from '../utils/constant/message.js';
+import logger from '../loggers/logger.js';
 
 const uploadDir = 'src/uploads/profile';
 if (!fs.existsSync(uploadDir)) {
@@ -41,7 +42,7 @@ export const uploadCv = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      console.error("Invalid file type:", file.mimetype);
+      logger.info('Invalid file type:', file.mimetype);
       cb(new Error(Message.INVALID_FILE_TYPE));
     }
   },
