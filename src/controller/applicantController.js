@@ -29,7 +29,6 @@ import {
   extractTextFromDocx,
   parseResumeText,
 } from '../helpers/importResume.js';
-import { applicantEnum } from '../utils/enum.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
