@@ -169,7 +169,6 @@ export const getProfileByToken = async (req, res) => {
   }
 };
 
-
 export const viewProfileById = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -267,7 +266,6 @@ export const sendEmail = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await findUserEmail({ email });
-    console.log('user is exist', user);
     if (!user) {
       logger.warn(`User is ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -352,9 +350,7 @@ export const verifyOtp = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   try {
-    // const userId = req.params.id;
     const { email, newPassword, confirmPassword } = req.body;
-
     const user = await findUserEmail({ email });
     if (!user) {
       logger.warn(`User is ${Message.NOT_FOUND}`);
