@@ -103,8 +103,13 @@ export const viewAllApplicant = async (req, res) => {
 
     if (appliedSkills) {
       const skillsArray = appliedSkills.split(',').map((skill) => skill.trim());
-      query.appliedSkills = { $all: skillsArray };
+      query.appliedSkills = {
+        $all: skillsArray.map((skill) => ({
+          $elemMatch: { $regex: new RegExp(`^${skill}$`, 'i') }
+        }))
+      };
     }
+    
 
     if (totalExperience) {
       const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);

@@ -206,7 +206,7 @@ const validateAndFillFields = async (data, userRole) => {
       applicantEnum[data['Status']?.toUpperCase()] || applicantEnum.PENDING,
     interviewStage:
       applicantEnum[data['Interview Stage']?.trim().toUpperCase()] ||
-      applicantEnum.FIRST_ROUND,
+      applicantEnum.FIRST_INTERVIEW_ROUND,
     practicalUrl: data['Practical URL'] || 'Not Provided',
     practicalFeedback: data['Practical Feedback'] || 'Not Provided',
     portfolioUrl: data['Portfolio URL'] || 'Not Provided',
