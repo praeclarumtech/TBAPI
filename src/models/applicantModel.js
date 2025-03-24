@@ -29,7 +29,7 @@ const ApplicantSchema = new mongoose.Schema(
     passingYear: { type: Number, required: true },
     currentAddress: { type: String, required: true },
     state: { type: String, required: true },
-    country: { type: String, required: true },
+    country: { type: String },
     currentPincode: { type: Number, required: false },
     currentCity: { type: String, required: false },
     appliedSkills: { type: [String], required: true },
@@ -38,12 +38,12 @@ const ApplicantSchema = new mongoose.Schema(
     totalExperience: { type: Number },
     relevantSkillExperience: { type: Number, required: false },
     communicationSkill: { type: Number, required: true },
-    otherSkills: { type: String },
+    otherSkills: { type: String, required: true },
     rating: { type: Number, required: true },
     currentPkg: { type: Number },
     expectedPkg: { type: Number },
     noticePeriod: { type: Number },
-    negotiation: { type: String, required: true },
+    negotiation: { type: String },
     workPreference: {
       type: String,
       enum: [applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE],
@@ -118,7 +118,7 @@ const ApplicantSchema = new mongoose.Schema(
     practicalFeedback: { type: String },
     portfolioUrl: { type: String },
     referral: { type: String },
-    resumeUrl: { type: String },
+    resumeUrl: { type: String, required: true },
     preferredLocations: { type: String, },
     currentCompanyName: { type: String, },
     maritalStatus: {
@@ -146,9 +146,8 @@ const ApplicantSchema = new mongoose.Schema(
       type: String,
       enum: [Enum.ADMIN, Enum.HR, Enum.USER]
     },
-    addByManual: {
-      type: Boolean,
-      default: false
+    addedBy: {
+      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME]
     }
   },
   { timestamps: true }

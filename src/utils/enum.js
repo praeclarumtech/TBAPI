@@ -55,5 +55,9 @@ export const applicantEnum = {
 
   SINGLE: 'Single',
   MARRIED: 'Married',
+
+  MANUAL: 'Manual',
+  CSV: 'Csv',
+  RESUME: 'Resume'
 };
 
