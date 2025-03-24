@@ -147,7 +147,9 @@ const ApplicantSchema = new mongoose.Schema(
       enum: [Enum.ADMIN, Enum.HR, Enum.USER]
     },
     addedBy: {
-      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME]
+      type: String,
+      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
+      required: true
     }
   },
   { timestamps: true }
