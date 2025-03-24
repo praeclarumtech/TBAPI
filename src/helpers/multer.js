@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { Message } from '../utils/constant/message.js';
+import logger from '../loggers/logger.js';
 
 const uploadDir = 'src/uploads/profile';
 if (!fs.existsSync(uploadDir)) {
@@ -29,3 +30,20 @@ export const upload = multer({
     }
   },
 }).single('profilePicture');
+
+export const uploadCv = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'text/csv',
+      'application/csv'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      logger.info('Invalid file type:', file.mimetype);
+      cb(new Error(Message.INVALID_FILE_TYPE));
+    }
+  },
+}).single('csvFile');

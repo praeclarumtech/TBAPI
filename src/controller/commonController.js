@@ -1,4 +1,4 @@
-import { getAllcountry, getAllstates, getAllCity} from '../services/commonService.js';
+import { getAllcountry, getAllstates, getAllCity } from '../services/commonService.js';
 import { StatusCodes } from 'http-status-codes';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';

@@ -1,8 +1,11 @@
 import {
   createApplicant,
+  getAllapplicant,
   getApplicantById,
   updateApplicantById,
-  removeManyApplicants
+  removeManyApplicants,
+  insertManyApplicants,
+  updateManyApplicants,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -12,6 +15,15 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import { uploadCv } from '../helpers/multer.js';
+import fs from 'fs';
+import csvParser from 'csv-parser';
+import {
+  generateApplicantCsv,
+  processCsvRow,
+} from '../helpers/commonFunction/applicantExport.js';
+import User from '../models/userModel.js';
+import { applicantEnum } from '../utils/enum.js';
 
 export const addApplicant = async (req, res) => {
   try {
@@ -30,6 +42,7 @@ export const addApplicant = async (req, res) => {
       applicationNo,
       name: { firstName, middleName, lastName },
       user_id: id,
+      addedBy: applicantEnum.MANUAL,
       ...body,
     };
     const applicant = await createApplicant(applicantData);
@@ -173,7 +186,10 @@ export const viewAllApplicant = async (req, res) => {
       query.status = status;
     }
 
-    if (currentCompanyDesignation && typeof currentCompanyDesignation === 'string') {
+    if (
+      currentCompanyDesignation &&
+      typeof currentCompanyDesignation === 'string'
+    ) {
       query.currentCompanyDesignation = currentCompanyDesignation;
     }
 
@@ -184,44 +200,39 @@ export const viewAllApplicant = async (req, res) => {
     if (workPreference && typeof workPreference === 'string') {
       query.workPreference = workPreference;
     }
-    
+
     if (anyHandOnOffers !== undefined) {
       query.anyHandOnOffers = anyHandOnOffers === 'true';
     }
 
     if (rating) {
       const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[2]);
-    
+
         query.rating = { $gte: min, $lte: max };
       } else {
         query.rating = parseFloat(rating);
       }
     }
-
     if (communicationSkill) {
       const rangeMatch = communicationSkill.toString().match(/^(\d+)-(\d+)$/);
-
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[2]);
-
         query.communicationSkill = { $gte: min, $lte: max };
       } else {
         query.communicationSkill = parseFloat(communicationSkill);
       }
     }
-
-    
     if (applicantName || searchSkills) {
       const searchFields = [
         'name.firstName',
         'name.middleName',
         'name.lastName',
-        'appliedSkills'
+        'appliedSkills',
       ];
 
       const searchQuery = applicantName || searchSkills;
@@ -249,12 +260,12 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     const findApplicants = await pagination({
-        Schema: Applicant,
-        page: pageNum,
-        limit: limitNum,
-        query,
-        sort: { createdAt: -1 },
-      });
+      Schema: Applicant,
+      page: pageNum,
+      limit: limitNum,
+      query,
+      sort: { createdAt: -1 },
+    });
 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -421,6 +432,209 @@ export const updateStatus = async (req, res) => {
   }
 };
 
+export const exportApplicantCsv = async (req, res) => {
+  try {
+    const applicants = await getAllapplicant();
+
+    if (!applicants.length) {
+      logger.warn(`Applicants is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicants is ${Message.NOT_FOUND}`
+      );
+    }
+
+    const csvData = generateApplicantCsv(applicants);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=applicants.csv');
+
+    res.status(200).send(csvData);
+    logger.info(Message.DONWLOADED);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} export file`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} export file`
+    );
+  }
+};
+export const importApplicantCsv = async (req, res) => {
+  try {
+    const updateFlag =
+      req.query.updateFlag === 'true' || req.body.updateFlag === true || false;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `User is ${Message.NOT_FOUND}`
+      );
+    }
+
+    uploadCv(req, res, async (err) => {
+      if (err) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `${Message.FAILED_TO} upload CSV`
+        );
+      }
+      if (!req.file) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `${Message.FAILED_TO} upload CSV - No file provided`
+        );
+      }
+
+      const results = [];
+      let headers = [];
+      let newHeaders = [];
+
+      fs.createReadStream(req.file.path)
+        .pipe(csvParser({ headers: false, skipEmptyLines: true }))
+        .on('data', (row) => {
+          if (Object.values(row).every((value) => !value.trim())) {
+            return;
+          }
+          if (headers.length === 0) {
+            headers = Object.values(row);
+            newHeaders = headers.map((item) => item.trim());
+          } else {
+            const formattedRow = {};
+            Object.values(row).forEach((value, i) => {
+              formattedRow[newHeaders[i]] = value ? value.trim() : '';
+            });
+
+            results.push(formattedRow);
+          }
+        })
+        .on('end', async () => {
+          try {
+            const processedApplicants = await Promise.all(
+              results.map(processCsvRow)
+            );
+            const validApplicants = processedApplicants
+              .filter((applicant) => applicant.valid)
+              .map((applicant) => applicant.data);
+
+            if (validApplicants.length === 0) {
+              return HandleResponse(
+                res,
+                false,
+                StatusCodes.BAD_REQUEST,
+                'No valid applicants found in CSV'
+              );
+            }
+
+            const emails = validApplicants
+              .map((applicant) => applicant.email?.trim().toLowerCase())
+              .filter((email) => email);
+
+            const uniqueEmails = [...new Set(emails)];
+
+            const existingApplicants = await Applicant.find({
+              email: { $in: uniqueEmails },
+            }).lean();
+            const existingEmails = new Set(
+              existingApplicants.map((app) => app.email.trim().toLowerCase())
+            );
+
+            const toInsert = validApplicants.filter(
+              (applicant) =>
+                applicant.email &&
+                !existingEmails.has(applicant.email.trim().toLowerCase())
+            );
+
+            const toUpdate = validApplicants.filter(
+              (applicant) =>
+                applicant.email &&
+                existingEmails.has(applicant.email.trim().toLowerCase())
+            );
+
+            // Insert new applicants
+            if (toInsert.length > 0) {
+              await insertManyApplicants(
+                toInsert.map((applicant) => ({
+                  ...applicant,
+                  email: applicant.email.trim().toLowerCase(),
+                  createdBy: user.role,
+                  updatedBy: user.role,
+                  addedBy: applicantEnum.CSV,
+                }))
+              );
+            }
+            // Update existing applicants
+            if (toUpdate.length > 0) {
+              if (updateFlag) {
+                await updateManyApplicants(
+                  toUpdate.map((applicant) => ({
+                    ...applicant,
+                    createdBy: user.role,
+                    updatedBy: user.role,
+                    addedBy: applicantEnum.CSV,
+                  }))
+                );
+              } else {
+                return HandleResponse(
+                  res,
+                  false,
+                  StatusCodes.CONFLICT,
+                  'Duplicate records found',
+                  { existingEmails: toUpdate.map((record) => record.email) }
+                );
+              }
+            }
+            fs.unlinkSync(req.file.path);
+
+            return HandleResponse(
+              res,
+              true,
+              StatusCodes.OK,
+              'CSV imported successfully',
+              {
+                insertedNewRecords: toInsert.map((record) => record.email),
+                updatedRecords: updateFlag
+                  ? toUpdate.map((record) => record.email)
+                  : [],
+              }
+            );
+          } catch (dbError) {
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              dbError.message
+            );
+          }
+        })
+        .on('error', (error) => {
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            'Error reading CSV file',
+            error
+          );
+        });
+    });
+  } catch (error) {
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} import CSV`
+    );
+  }
+};
+
 export const deleteManyApplicants = async (req, res) => {
   try {
     const { ids } = req.body;
@@ -434,7 +648,6 @@ export const deleteManyApplicants = async (req, res) => {
         Message.OBJ_ID_NOT_FOUND
       );
     }
-
     const removeApplicats = await removeManyApplicants(ids);
 
     if (removeApplicats.deletedCount === 0) {
