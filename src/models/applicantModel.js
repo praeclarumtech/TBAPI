@@ -1,14 +1,13 @@
 import mongoose from 'mongoose';
-import { applicantEnum, genderEnum } from '../utils/enum.js';
+import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: 'user',
       required: false,
     },
-    applicationNo: { type: Number, required: true },
     name: {
       firstName: { type: String, required: true },
       middleName: { type: String },
@@ -22,34 +21,33 @@ const ApplicantSchema = new mongoose.Schema(
     gender: {
       type: String,
       enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER],
-      required: true,
+      required: false,
     },
-    dateOfBirth: { type: Date, required: true },
-    qualification: { type: String, required: true },
-    specialization: { type: String, required: true },
-    passingYear: { type: Number, required: true },
-
-    currentAddress: { type: String, required: true },
-    state: { type: String, required: true },
-    country: { type: String, required: true },
+    dateOfBirth: { type: Date, required: false },
+    qualification: { type: String, required: false },
+    specialization: { type: String, required: false },
+    passingYear: { type: Number, required: false },
+    currentAddress: { type: String, required: false },
+    state: { type: String, required: false },
+    country: { type: String },
     currentPincode: { type: Number, required: false },
     currentCity: { type: String, required: false },
-    appliedSkills: { type: [String], required: true },
+    appliedSkills: { type: [String], required: false },
     anyHandOnOffers: { type: Boolean, default: false },
     resume: { type: String, required: false },
-    totalExperience: { type: Number},
+    totalExperience: { type: Number },
     relevantSkillExperience: { type: Number, required: false },
-    communicationSkill: { type: Number, required: true },
+    communicationSkill: { type: Number, required: false },
     otherSkills: { type: String },
-    rating: { type: Number, required: true },
+    rating: { type: Number, required: false },
     currentPkg: { type: Number },
     expectedPkg: { type: Number },
     noticePeriod: { type: Number },
-    negotiation: { type: String, required: true },
+    negotiation: { type: String, required: false },
     workPreference: {
       type: String,
       enum: [applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE],
-      required: true,
+      required: false,
     },
     comment: { type: String },
     feedback: { type: String },
@@ -70,18 +68,18 @@ const ApplicantSchema = new mongoose.Schema(
       enum: [
         applicantEnum.HR_ROUND,
         applicantEnum.TECHNICAL,
-        applicantEnum.FIRST_ROUND,
+        applicantEnum.FIRST_INTERVIEW_ROUND,
         applicantEnum.PRACTICAL,
         applicantEnum.CLIENT,
       ],
-      default: applicantEnum.FIRST_ROUND,
+      default: applicantEnum.FIRST_INTERVIEW_ROUND,
       required: false,
     },
     currentCompanyDesignation: {
       type: String,
       enum: [
         applicantEnum.FRONTED_DEVLOPER,
-        applicantEnum.SOFTWARE_ENGINNER,
+        applicantEnum.SOFTWARE_ENGINEER,
         applicantEnum.BACKEND_DEVLOPER,
         applicantEnum.FULL_STACK_DEVLOPER,
         applicantEnum.DATA_ANALYST,
@@ -98,10 +96,10 @@ const ApplicantSchema = new mongoose.Schema(
       required: false
     },
     appliedRole: {
-      type: String, required: true,
+      type: String, required: false,
       enum: [
         applicantEnum.FRONTED_DEVLOPER,
-        applicantEnum.SOFTWARE_ENGINNER,
+        applicantEnum.SOFTWARE_ENGINEER,
         applicantEnum.BACKEND_DEVLOPER,
         applicantEnum.FULL_STACK_DEVLOPER,
         applicantEnum.DATA_ANALYST,
@@ -120,7 +118,7 @@ const ApplicantSchema = new mongoose.Schema(
     practicalFeedback: { type: String },
     portfolioUrl: { type: String },
     referral: { type: String },
-    resumeUrl: { type: String },
+    resumeUrl: { type: String, required: false },
     preferredLocations: { type: String, },
     currentCompanyName: { type: String, },
     maritalStatus: {
@@ -133,13 +131,26 @@ const ApplicantSchema = new mongoose.Schema(
     },
     lastFollowUpDate: { type: Date },
     permanentAddress: { type: String, required: false },
-    collegeName: { type: String},
-    cgpa: { type: Number},
+    collegeName: { type: String },
+    cgpa: { type: Number },
     linkedinUrl: { type: String },
     clientCvUrl: { type: String },
     clientFeedback: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
+    createdBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+    },
+    updatedBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER]
+    },
+    addedBy: {
+      type: String,
+      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
+      required: true
+    }
   },
   { timestamps: true }
 );
