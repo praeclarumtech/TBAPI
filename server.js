@@ -25,7 +25,6 @@ app.use(errorHandlerMiddleware);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server is running fine on ${port}`);
   logger.info(`${Message.LISTENING_TO_PORT} :  ${port}`);
 });
 

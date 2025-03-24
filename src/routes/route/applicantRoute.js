@@ -8,12 +8,16 @@ import {
   updateStatus,
   uploadResumeAndCreateApplicant,
   deleteManyApplicants,
-  getResumeAndCsvApplicants
+  getResumeAndCsvApplicants,
+  exportApplicantCsv,
+  importApplicantCsv
 } from '../../controller/applicantController.js';
-import { applicantValidation, updateApplicantValidation } from '../../validations/applicantValidation.js';
+import {
+  applicantValidation,
+  updateApplicantValidation,
+} from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
-// import { authorization } from '../../helpers/userMiddleware.js';
- 
+import { authorization } from '../../helpers/userMiddleware.js'
 const router = express.Router();
  
 router.post('/addApplicant',validator.body(applicantValidation),addApplicant);
@@ -25,11 +29,11 @@ router.put('/updateApplicant/:id',validator.body(updateApplicantValidation), upd
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);
 
-router.post('/upload-resume',
-  validator.body(updateApplicantValidation),
-  uploadResumeAndCreateApplicant);
+router.post('/upload-resume',validator.body(updateApplicantValidation),uploadResumeAndCreateApplicant);
+
+// import export applicant
+router.get('/exportCsv', exportApplicantCsv);
+router.post('/importCsv', authorization, importApplicantCsv);
 router.delete('/deleteManyApplicants', deleteManyApplicants);
- 
+
 export default router;
- 
- 

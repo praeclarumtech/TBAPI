@@ -1,14 +1,13 @@
 import mongoose from 'mongoose';
-import { applicantEnum, genderEnum } from '../utils/enum.js';
+import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: 'user',
       required: false,
     },
-    applicationNo: { type: Number, required: false },
     name: {
       firstName: { type: String, required: true },
       middleName: { type: String },
@@ -28,16 +27,15 @@ const ApplicantSchema = new mongoose.Schema(
     qualification: { type: String, required: false },
     specialization: { type: String, required: false },
     passingYear: { type: Number, required: false },
-
     currentAddress: { type: String, required: false },
     state: { type: String, required: false },
-    country: { type: String, required: false },
+    country: { type: String },
     currentPincode: { type: Number, required: false },
     currentCity: { type: String, required: false },
-    appliedSkills: { type: [String], required: true },
+    appliedSkills: { type: [String], required: false },
     anyHandOnOffers: { type: Boolean, default: false },
     resume: { type: String, required: false },
-    totalExperience: { type: Number},
+    totalExperience: { type: Number },
     relevantSkillExperience: { type: Number, required: false },
     communicationSkill: { type: Number, required: false },
     otherSkills: { type: String },
@@ -70,18 +68,18 @@ const ApplicantSchema = new mongoose.Schema(
       enum: [
         applicantEnum.HR_ROUND,
         applicantEnum.TECHNICAL,
-        applicantEnum.FIRST_ROUND,
+        applicantEnum.FIRST_INTERVIEW_ROUND,
         applicantEnum.PRACTICAL,
         applicantEnum.CLIENT,
       ],
-      default: applicantEnum.FIRST_ROUND,
+      default: applicantEnum.FIRST_INTERVIEW_ROUND,
       required: false,
     },
     currentCompanyDesignation: {
       type: String,
       enum: [
         applicantEnum.FRONTED_DEVLOPER,
-        applicantEnum.SOFTWARE_ENGINNER,
+        applicantEnum.SOFTWARE_ENGINEER,
         applicantEnum.BACKEND_DEVLOPER,
         applicantEnum.FULL_STACK_DEVLOPER,
         applicantEnum.DATA_ANALYST,
@@ -101,7 +99,7 @@ const ApplicantSchema = new mongoose.Schema(
       type: String, required: false,
       enum: [
         applicantEnum.FRONTED_DEVLOPER,
-        applicantEnum.SOFTWARE_ENGINNER,
+        applicantEnum.SOFTWARE_ENGINEER,
         applicantEnum.BACKEND_DEVLOPER,
         applicantEnum.FULL_STACK_DEVLOPER,
         applicantEnum.DATA_ANALYST,
@@ -120,7 +118,7 @@ const ApplicantSchema = new mongoose.Schema(
     practicalFeedback: { type: String },
     portfolioUrl: { type: String },
     referral: { type: String },
-    resumeUrl: { type: String },
+    resumeUrl: { type: String, required: false },
     preferredLocations: { type: String, },
     currentCompanyName: { type: String, },
     maritalStatus: {
@@ -133,18 +131,26 @@ const ApplicantSchema = new mongoose.Schema(
     },
     lastFollowUpDate: { type: Date },
     permanentAddress: { type: String, required: false },
-    collegeName: { type: String},
-    cgpa: { type: Number},
+    collegeName: { type: String },
+    cgpa: { type: Number },
     linkedinUrl: { type: String },
     clientCvUrl: { type: String },
     clientFeedback: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
+    createdBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+    },
+    updatedBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER]
+    },
     addedBy: {
       type: String,
       enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
       required: true
-    },
+    }
   },
   { timestamps: true }
 );
