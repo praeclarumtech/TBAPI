@@ -109,7 +109,7 @@ export const addApplicant = async (req, res) => {
       applicationNo,
       name: { firstName, middleName, lastName },
       user_id: id,
-      addedBy: applicantEnum.Manual,
+      addedBy: applicantEnum.MANUAL,
       ...body,
     };
     const applicant = await createApplicant(applicantData);

@@ -142,7 +142,7 @@ const ApplicantSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     addedBy: {
       type: String,
-      enum: [applicantEnum.Manual, applicantEnum.CSV, applicantEnum.RESUME],
+      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
       required: true
     },
   },

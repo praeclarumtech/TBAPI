@@ -37,14 +37,12 @@ export const extractTextFromDocx = async (filePath) => {
 export const parseResumeText = (text) => {
   const emailRegex = /[a-zA-Z0-9._%+-]+ ?@ ?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
   const phoneRegex = /(\+91\s?)?[6-9]\d{4}\s?\d{5}/;
-  // const nameMatch = text.match(/Name:\s*(.+)/i);
   const nameTagRegex = /(?:Name|Full Name)\s*[:\-]\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?(?:\s[A-Z][a-z]+)?)/i;
-  // const genderMatch = text.match(/Gender:\s*(Male|Female|Other|gender)/i);
   const skillsMatch = text.match(/(Technical Skills|Skills)[:\s]*(.*)/i);
   const experienceRegex = /(\d+(?:\.\d+)?)\s*(?:\+?\s*years?|yrs?|year)/gi;
   const matches = [...text.matchAll(experienceRegex)].map(match => parseFloat(match[1]));
-  const qualificationMatch = text.match(/(Bachelor|Master|B\.Sc|M\.Sc|BTech|MTech|PhD|tech).*?\n/i);
-  // const appliedRoleMatch = text.match(/(Applied Role|Position Applied |Role)[:\s]*(.*)/i);
+  const qualificationMatch = text.match(/(BTech|Bachelor|Master|B\.Sc|M\.Sc|MTech|PhD|Diploma|B.Tech|M.Tech).*?(?:\d{4})?/i);
+
   const locationMatch = text.match(/(Address|Location|City|Current Address)[:\s]*(.*)/i);
   const preferredLocationsMatch = text.match(/(preferred location)[:\s]*(.*)/i);
   const linkedInMatch = text.match(/(https?:\/\/)?(www\.)?linkedin\.com\/[a-zA-Z0-9-_/]+/);
@@ -57,12 +55,8 @@ export const parseResumeText = (text) => {
   const email = emailMatch ? emailMatch[0].replace(/\s+/g, '') : '';
   const phoneMatch = text.match(phoneRegex);
   const phone = phoneMatch ? phoneMatch[0].replace(/\s+/g, '') : ''; 
-  // const name = nameMatch ? `${nameMatch[1]} ${nameMatch[2]} ${nameMatch[3]}` : '';
-  // const gender = genderMatch ? genderMatch[1] : '';
-  // const skills = skillsMatch ? skillsMatch[2].split(',').map(skill => skill.trim()) : [];
   const totalExperience = matches.length > 0 ? Math.max(...matches) : 0;
   const qualification = qualificationMatch ? qualificationMatch[1] : "Not Provided";
-  // const appliedRole = appliedRoleMatch ? appliedRoleMatch[2].trim() : "Na";
   const currentAddress = locationMatch ? locationMatch[0] : "Not Provided";
   const preferredLocations = preferredLocationsMatch ? preferredLocationsMatch[2] : "Not Provided";
   const linkedinUrl = linkedInMatch ? linkedInMatch[0] : "Not Found";
@@ -74,29 +68,69 @@ export const parseResumeText = (text) => {
     "JavaScript", "JS", "TypeScript", "Node.js", "Node", "React", "Angular", "Vue.js", "Vue",
     "HTML", "CSS", "Bootstrap", "Tailwind", "SASS", "LESS",
     "Python", "Django", "Flask", "Java", "Spring", "Spring Boot",
-    "C#", ".NET", "ASP.NET", "ADO.NET", "C+", "C",
+    "C#", ".NET", "ASP.NET", "ADO.NET", "C++", "C",
     "SQL", "MySQL", "PostgreSQL", "MongoDB", "Firebase", "Oracle",
     "GraphQL", "REST API", "SOAP", "Git", "GitHub", "GitLab",
     "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes",
     "Jenkins", "CI/CD", "Terraform", "Ansible", "Linux", "Bash","Php","Dot Net","ASP.Net", "MVC", "XML", "WPF", "MVVM",
     "jQuery", "ajax", "Linq", "Sqlite", "Ado.Net", "MSMQ", "IBM Cloud", "DAX", "Magento", "Nest", "laravel", "Agile Methodology",
-    "Codeigniter" 
+    "Codeigniter", "JMeter", "Selenium", "Web Application Testing", "Automation Testing ", "API Testing ", "Performance Testing ",
+    "TestNG", "Postman", "Manual Testing ", "Visual Studio", "Entity Framework", "oop", "RxJS", "NuGet", "VBA", "WinForms", "oops",
+    "Octopus", "RESTFul Api", "SSIS", "IIS", "C-Sharp", "XAML", "WCF", "Hack", 
   ];
 
-  const escapeRegex = (word) => word.replace(/[.*?^${}()|[\]\\]/g, '\\$&');
+  const roleWordList = [
+    "Software Engineer",
+    "Frontend Developer",
+    "Backend Developer",
+    "Full Stack Developer",
+    "Data Analyst",
+    "Data Scientist",
+    "Product Manager",
+    "UX/UI Designer",
+    "QA Engineer",
+    "DevOps Engineer",
+    "Business Analyst",
+    "Technical Support Engineer",
+    "Other",
+    "Na"
+  ];
 
-// Function to extract skills that match `skillWordList`
+
+  const escapeRegex = (word) => word.replace(/[.*?^${}()|[\]\\#+]/g, '\\$&');
+
 const extractMatchingWords = (text, skillWordList) => {
   return skillWordList.filter(word =>
-    new RegExp(`\\b${escapeRegex(word)}\\b`, "i").test(text)
+    {
+      if (word === "C#") {
+        return new RegExp(`C\\s?#`, "i").test(text);
+      }
+      if (word === "C++") {
+        return new RegExp(`C\\s?\\+\\+`, "i").test(text);
+      }
+      return new RegExp(`\\b${escapeRegex(word)}\\b`, "i").test(text);
+    }
+
   );
 };
+
+const extractMatchingRole = (text, roleWordList) => {
+  for (let role of roleWordList) {
+    let regex = new RegExp(`\\b${escapeRegex(role)}\\b`, "i");
+    if (regex.test(text)) {
+      return role;
+    }
+  }
+  return "Na";
+};
+
+const appliedRole = extractMatchingRole(text, roleWordList);
 
   let skills = [];
 
   if (skillsMatch) {
     skills = skillsMatch[2]
-      .replace(/[●►⇨]/g, '')
+      .replace(/[●►⇨❖]/g, '')
       .split(/,|\n|•/) 
       .map(skill => skill.trim())
       .filter(skill => skill.length > 1);
@@ -108,7 +142,6 @@ const extractMatchingWords = (text, skillWordList) => {
 
   const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
 
-  // SSearch for "Name:" tag in text
   const nameTagMatch = text.match(nameTagRegex);
   if (nameTagMatch) {
     potentialName = nameTagMatch[1];
@@ -122,7 +155,7 @@ if (potentialName === "Unknown" && email) {
   }
 
   if (emailPrefix) {
-    const wordRegex = new RegExp(`\\b${emailPrefix}\\w*\\b`, "i");
+    const wordRegex = new RegExp(`\\b${emailPrefix}[a-zA-Z]*\\b`, "i");
     const matchedWord = text.match(wordRegex);
 
     if (matchedWord) {
@@ -137,10 +170,14 @@ if (potentialName === "Unknown" && email) {
     }
   }
 } 
-  
-  console.log('textttttttttttttttt?>>>>>>>>',text)
-  console.log('textttttttttttttttt?>>>>>>>>',email)
-  console.log('textttttttttttttttt?>>>>>>>>',phone)
+
+if (potentialName === "Unknown") {
+  const firstWords = text.split("\n")[0].trim();
+  const nameParts = firstWords.match(/[A-Z][a-z]+(?:\s[A-Z][a-z]+)*/);
+  if (nameParts) {
+    potentialName = nameParts[0];
+  }
+}
 
   const nameParts = potentialName.split(" ");
   const firstName = nameParts[0] || "Unknown";
@@ -161,12 +198,11 @@ if (potentialName === "Unknown" && email) {
   appliedSkills: skills,
   totalExperience,
   qualification,
-  // appliedRole,
+  appliedRole,
   currentAddress,
   linkedinUrl,
   currentCompanyName,
   preferredLocations,
-  // gender,
   maritalStatus,
   dateOfBirth,
 };
