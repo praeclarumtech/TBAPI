@@ -31,6 +31,32 @@ export const upload = multer({
   },
 }).single('profilePicture');
 
+const resumeUploadDir = 'src/uploads/resumes';
+if (!fs.existsSync(resumeUploadDir)) {
+  fs.mkdirSync(resumeUploadDir, { recursive: true });
+}
+
+const resumeStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, resumeUploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+export const uploadResume = multer({
+  storage: resumeStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(Message.INVALID_FILE_TYPE));
+    }
+  },
+}).single('resume');
 export const uploadCv = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
