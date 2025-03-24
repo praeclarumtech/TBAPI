@@ -257,10 +257,6 @@ export const updateApplicantValidation = Joi.object({
     'array.base': 'Applied skills must be an array of strings.',
   }),
 
-  // resume: Joi.string().messages({
-  //   'string.empty': 'Resume cannot be empty.',
-  // }),
-
   totalExperience: Joi.number().allow(null, '').messages({
     'number.base': 'Total experience must be a number.',
   }),
