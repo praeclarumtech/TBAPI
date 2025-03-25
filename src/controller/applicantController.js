@@ -435,15 +435,19 @@ export const updateStatus = async (req, res) => {
 export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered } = req.query;
-
     let query = {};
 
-    if (filtered === 'true') {
-      query = { addedBy: { $in: [applicantEnum.CSV, applicantEnum.RESUME] } };
-    }
+    console.log("filtered===", filtered)
 
+    if (filtered) {
+      if (Object.values(applicantEnum).includes(filtered)) {
+        query = { addedBy: filtered };
+      } else {
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `invalid filter value`)
+      }
+    }
     const applicants = await Applicant.find(query);
-    console.log("req.query data=====", applicants)
+    console.log("filtered applicants", applicants)
 
     if (!applicants.length) {
       logger.warn(`Applicants are ${Message.NOT_FOUND}`);
@@ -459,7 +463,7 @@ export const exportApplicantCsv = async (req, res) => {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename=${filtered ? 'filtered_applicants' : 'applicants'}.csv`
+      `attachment; filename=${filtered ? `${filtered}_applicants` : 'all_applicants'}.csv`
     );
     res.status(200).send(csvData);
     logger.info(Message.DONWLOADED);
