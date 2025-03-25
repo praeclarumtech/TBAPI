@@ -436,9 +436,6 @@ export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered } = req.query;
     let query = {};
-
-    console.log("filtered===", filtered)
-
     if (filtered) {
       if (Object.values(applicantEnum).includes(filtered)) {
         query = { addedBy: filtered };
@@ -446,9 +443,8 @@ export const exportApplicantCsv = async (req, res) => {
         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `invalid filter value`)
       }
     }
-    const applicants = await Applicant.find(query);
+    const applicants = await getAllapplicant(query);
     console.log("filtered applicants", applicants)
-
     if (!applicants.length) {
       logger.warn(`Applicants are ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -650,11 +646,9 @@ export const importApplicantCsv = async (req, res) => {
     );
   }
 };
-
 export const deleteManyApplicants = async (req, res) => {
   try {
     const { ids } = req.body;
-
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
       return HandleResponse(
