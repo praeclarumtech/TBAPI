@@ -742,7 +742,6 @@ export const exportApplicantCsv = async (req, res) => {
       }
     }
     const applicants = await getAllapplicant(query);
-    console.log("filtered applicants", applicants)
     if (!applicants.length) {
       logger.warn(`Applicants are ${Message.NOT_FOUND}`);
       return HandleResponse(
