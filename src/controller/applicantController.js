@@ -184,7 +184,7 @@ export const viewAllApplicant = async (req, res) => {
         }))
       };
     }
-    
+
 
     if (totalExperience) {
       const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
@@ -513,7 +513,6 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     if (status && typeof status === 'string') {
       query.status = status;
     }
-
     if (
       currentCompanyDesignation &&
       typeof currentCompanyDesignation === 'string'
@@ -733,22 +732,32 @@ export const updateStatus = async (req, res) => {
 
 export const exportApplicantCsv = async (req, res) => {
   try {
-    const applicants = await getAllapplicant();
-
+    const { filtered } = req.query;
+    let query = {};
+    if (filtered) {
+      if (Object.values(applicantEnum).includes(filtered)) {
+        query = { addedBy: filtered };
+      } else {
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `invalid filter value`)
+      }
+    }
+    const applicants = await getAllapplicant(query);
     if (!applicants.length) {
-      logger.warn(`Applicants is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicants are ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicants is ${Message.NOT_FOUND}`
+        `Applicants are ${Message.NOT_FOUND}`
       );
     }
 
     const csvData = generateApplicantCsv(applicants);
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=applicants.csv');
-
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${filtered ? `${filtered}_applicants` : 'all_applicants'}.csv`
+    );
     res.status(200).send(csvData);
     logger.info(Message.DONWLOADED);
   } catch (error) {
@@ -761,6 +770,7 @@ export const exportApplicantCsv = async (req, res) => {
     );
   }
 };
+
 export const importApplicantCsv = async (req, res) => {
   try {
     const updateFlag =
@@ -933,11 +943,9 @@ export const importApplicantCsv = async (req, res) => {
     );
   }
 };
-
 export const deleteManyApplicants = async (req, res) => {
   try {
     const { ids } = req.body;
-
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
       return HandleResponse(

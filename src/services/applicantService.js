@@ -26,8 +26,8 @@ export const updateManyApplicants = async (applicantsArray) => {
   );
 };
 
-export const getAllapplicant = async () => {
-  return Applicant.find();
+export const getAllapplicant = async (query) => {
+  return Applicant.find(query);
 };
 
 export const getApplicantById = async (id) => {
