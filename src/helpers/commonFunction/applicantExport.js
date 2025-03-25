@@ -127,15 +127,15 @@ const validateAndFillFields = async (data, userRole) => {
     gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
     dateOfBirth: data['Date of Birth']
       ? new Date(
-          data['Date of Birth']
-            .replace(/[/]/g, '-')
-            .split('-')
-            .reverse()
-            .join('-')
-        )
-          .toISOString()
-          .split('T')[0]
-      : null,
+        data['Date of Birth']
+          .replace(/[/]/g, '-')
+          .split('-')
+          .reverse()
+          .join('-')
+      )
+        .toISOString()
+        .split('T')[0]
+      : Date.now(),
     currentAddress: data['Current Address'] || 'Not Provided',
     state: data['State'] || null,
     country: data['Country'] || 'Not Provided',
@@ -218,17 +218,17 @@ const validateAndFillFields = async (data, userRole) => {
       (data['Marital Status']?.trim() === 'Not Provided'
         ? null
         : data['Marital Status']?.trim()) ||
-      null,
+      '',
     lastFollowUpDate: data['Last Follow-Up Date']
       ? new Date(
-          data['Last Follow-Up Date']
-            .replace(/[/]/g, '-')
-            .split('-')
-            .reverse()
-            .join('-')
-        )
-          .toISOString()
-          .split('T')[0]
+        data['Last Follow-Up Date']
+          .replace(/[/]/g, '-')
+          .split('-')
+          .reverse()
+          .join('-')
+      )
+        .toISOString()
+        .split('T')[0]
       : null,
     anyHandOnOffers: data['Any Hands-On Offers']?.toLowerCase() === 'yes',
     comment: data['Comment'] || 'Not Provided',
@@ -250,10 +250,10 @@ export const processCsvRow = async (data, userRole) => {
     const appliedRoleValue = data['Applied Role']?.trim();
     const appliedRole = appliedRoleValue
       ? Object.values(applicantEnum).find(
-          (value) =>
-            value.replace(/\s+/g, '').toUpperCase() ===
-            appliedRoleValue.replace(/\s+/g, '').toUpperCase()
-        )
+        (value) =>
+          value.replace(/\s+/g, '').toUpperCase() ===
+          appliedRoleValue.replace(/\s+/g, '').toUpperCase()
+      )
       : undefined;
     //required fields
     const requiredFields = {

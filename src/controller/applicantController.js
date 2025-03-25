@@ -15,7 +15,7 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
-import { uploadCv } from '../helpers/multer.js';
+import { uploadCv, uploadResume } from '../helpers/multer.js';
 import fs from 'fs';
 import csvParser from 'csv-parser';
 import {
@@ -24,6 +24,81 @@ import {
 } from '../helpers/commonFunction/applicantExport.js';
 import User from '../models/userModel.js';
 import { applicantEnum } from '../utils/enum.js';
+import {
+  extractTextFromPDF,
+  extractTextFromDocx,
+  parseResumeText,
+} from '../helpers/importResume.js';
+
+export const uploadResumeAndCreateApplicant = async (req, res) => {
+  uploadResume(req, res, async (err) => {
+    if (err) {
+      logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, err.message);
+    }
+
+    try {
+      const { file } = req;
+
+      if (!file) {
+        logger.warn(`Resume file is ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `Resume file is ${Message.NOT_FOUND}`
+        );
+      }
+
+      let resumeText = '';
+      const filePath = file.path;
+
+      if (file.mimetype === 'application/pdf') {
+        resumeText = await extractTextFromPDF(filePath);
+      } else if (
+        file.mimetype ===
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ) {
+        resumeText = await extractTextFromDocx(filePath);
+      } else {
+        throw new Error('Unsupported file type');
+      }
+
+      const parsedData = parseResumeText(resumeText);
+      const applicationNo = await generateApplicantNo();
+
+      const applicantData = {
+        ...parsedData,
+        applicationNo,
+        addedBy: applicantEnum.RESUME,
+        resumeUrl: `/uploads/resumes/${file.filename}`,
+      };
+
+      const applicant = await createApplicant(applicantData);
+
+      logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.CREATED,
+        `Applicant ${Message.ADDED_SUCCESSFULLY}`,
+        applicant
+      );
+    } catch (error) {
+      logger.error(`${Message.FAILED_TO} add applicant: ${error.message}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `${Message.FAILED_TO} add applicant:${error.message}`
+      );
+    } finally {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+    }
+  });
+};
 
 export const addApplicant = async (req, res) => {
   try {
@@ -89,7 +164,7 @@ export const viewAllApplicant = async (req, res) => {
       anyHandOnOffers,
       rating,
       communicationSkill,
-      currentPkg
+      currentPkg,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -227,6 +302,7 @@ export const viewAllApplicant = async (req, res) => {
         query.communicationSkill = parseFloat(communicationSkill);
       }
     }
+
     if (applicantName || searchSkills) {
       const searchFields = [
         'name.firstName',
@@ -315,6 +391,228 @@ export const viewApplicant = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} view applicant by id.`
+    );
+  }
+};
+
+export const getResumeAndCsvApplicants = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      applicationNo,
+      applicantName,
+      appliedSkills,
+      searchSkills = '',
+      totalExperience,
+      startDate,
+      endDate,
+      currentCity,
+      interviewStage,
+      expectedPkg,
+      noticePeriod,
+      status,
+      gender,
+      currentCompanyDesignation,
+      state,
+      workPreference,
+      anyHandOnOffers,
+      rating,
+      communicationSkill,
+      currentPkg,
+    } = req.query;
+
+    const query = {
+      isDeleted: false,
+      addedBy: { $in: [applicantEnum.CSV, applicantEnum.RESUME] },
+    };
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+
+    if (applicationNo && !isNaN(applicationNo)) {
+      query.applicationNo = parseInt(applicationNo);
+    }
+
+    if (appliedSkills) {
+      const skillsArray = appliedSkills.split(',').map((skill) => skill.trim());
+      query.appliedSkills = { $all: skillsArray };
+    }
+
+    if (totalExperience) {
+      const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.totalExperience = { $gte: min, $lte: max };
+      } else {
+        query.totalExperience = parseFloat(totalExperience);
+      }
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate)
+        query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
+      if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+
+    if (currentCity && typeof currentCity === 'string') {
+      query.currentCity = { $regex: new RegExp(currentCity, 'i') };
+    }
+
+    if (interviewStage && typeof interviewStage === 'string') {
+      query.interviewStage = interviewStage;
+    }
+
+    if (expectedPkg) {
+      const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.expectedPkg = { $gte: min, $lte: max };
+      } else {
+        query.expectedPkg = parseFloat(expectedPkg);
+      }
+    }
+
+    if (currentPkg) {
+      const rangeMatch = currentPkg.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.currentPkg = { $gte: min, $lte: max };
+      } else {
+        query.currentPkg = parseFloat(currentPkg);
+      }
+    }
+
+    if (noticePeriod) {
+      const rangeMatch = noticePeriod.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseInt(rangeMatch[1]);
+        const max = parseInt(rangeMatch[2]);
+
+        query.noticePeriod = { $gte: min, $lte: max };
+      } else {
+        query.noticePeriod = parseInt(noticePeriod);
+      }
+    }
+
+    if (gender && typeof gender === 'string') {
+      query.gender = gender;
+    }
+
+    if (status && typeof status === 'string') {
+      query.status = status;
+    }
+    if (
+      currentCompanyDesignation &&
+      typeof currentCompanyDesignation === 'string'
+    ) {
+      query.currentCompanyDesignation = currentCompanyDesignation;
+    }
+
+    if (state && typeof state === 'string') {
+      query.state = { $regex: new RegExp(state, 'i') };
+    }
+
+    if (workPreference && typeof workPreference === 'string') {
+      query.workPreference = workPreference;
+    }
+
+    if (anyHandOnOffers !== undefined) {
+      query.anyHandOnOffers = anyHandOnOffers === 'true';
+    }
+
+    if (rating) {
+      const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.rating = { $gte: min, $lte: max };
+      } else {
+        query.rating = parseFloat(rating);
+      }
+    }
+
+    if (communicationSkill) {
+      const rangeMatch = communicationSkill.toString().match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+
+        query.communicationSkill = { $gte: min, $lte: max };
+      } else {
+        query.communicationSkill = parseFloat(communicationSkill);
+      }
+    }
+
+    if (applicantName || searchSkills) {
+      const searchFields = [
+        'name.firstName',
+        'name.middleName',
+        'name.lastName',
+        'appliedSkills',
+      ];
+
+      const searchQuery = applicantName || searchSkills;
+
+      if (searchQuery) {
+        const searchResults = await commonSearch(
+          Applicant,
+          searchFields,
+          searchQuery,
+          typeof searchSkills === 'string' ? searchSkills : '',
+          pageNum,
+          limitNum
+        );
+
+        if (searchResults.results.length > 0) {
+          return HandleResponse(
+            res,
+            true,
+            StatusCodes.OK,
+            `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+            searchResults
+          );
+        }
+      }
+    }
+
+    const applicants = await pagination({
+      Schema: Applicant,
+      page: pageNum,
+      limit: limitNum,
+      query,
+      sort: { createdAt: -1 },
+    });
+
+    logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+      applicants
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} view all applicant.${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} view all applicant.${error.message}`
     );
   }
 };

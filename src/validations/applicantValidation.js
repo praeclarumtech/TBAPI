@@ -172,7 +172,7 @@ export const applicantValidation = Joi.object({
       'any.required': 'Interview stage is required.',
     }),
 
-  preferredLocations: Joi.string(),
+  preferredLocations: Joi.string().allow(''),
   currentCompanyName: Joi.string().allow(''),
   maritalStatus: Joi.string()
     .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '').optional()
@@ -340,7 +340,7 @@ export const updateApplicantValidation = Joi.object({
 
   practicalUrl: Joi.string().allow(''),
   portfolioUrl: Joi.string().allow(''),
-  preferredLocations: Joi.string(),
+  preferredLocations: Joi.string().allow(''),
   currentCompanyName: Joi.string().allow(''),
 
   maritalStatus: Joi.string()
