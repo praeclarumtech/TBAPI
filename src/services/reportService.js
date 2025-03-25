@@ -1,6 +1,9 @@
 import Applicant from '../models/applicantModel.js';
 import { applicantEnum } from '../utils/enum.js';
 import { getDateRange } from '../helpers/commonFunction/moment.js';
+import Skills from '../models/skillsModel.js';
+import logger from '../loggers/logger.js';
+import { Message } from '../utils/constant/message.js';
 
 export const getApplicationCount = async (
   calendarType,
@@ -101,60 +104,6 @@ export const getReport = async (
     ...dateFilter,
   });
 
-  const nodeJsApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.NODE_JS,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const reactJsApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.REACT,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const dotNetApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.DOTNET,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const angularApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.ANGULAR,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const uiuxApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.UI_UX,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const pythonApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.PYTHON,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const javaScriptApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.JAVASCRIPT,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const javaApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.JAVA,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const cApplicants = await Applicant.countDocuments({
-    appliedSkills: applicantEnum.C,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
   return {
     hrRoundApplicants,
     firstroundApplicants,
@@ -168,14 +117,37 @@ export const getReport = async (
     rejectedApplicants,
     inProcessApplicants,
 
-    nodeJsApplicants,
-    reactJsApplicants,
-    dotNetApplicants,
-    angularApplicants,
-    uiuxApplicants,
-    pythonApplicants,
-    javaScriptApplicants,
-    javaApplicants,
-    cApplicants,
   };
+};
+
+export const getTechnologyStatistics = async (calendarType, customStartDate, customEndDate) => {
+  try {
+    const { startDate, endDate } = getDateRange(calendarType, customStartDate, customEndDate);
+
+  let dateFilter = {};
+  if (startDate && endDate) {
+    dateFilter.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
+  }
+
+  const skillsList = await Skills.find({ isDeleted: false });
+
+  const skillCountsArray = await Promise.all(
+    skillsList.map(async (skill) => {
+      const count = await Applicant.countDocuments({
+        appliedSkills: skill.skills,
+        isDeleted: false,
+        ...dateFilter,
+      });
+      return { [skill.skills]: count };
+    })
+  );
+
+  const skillCounts = Object.assign({}, ...skillCountsArray);
+
+  return { skillCounts };
+    
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} getTechnologyStatistics: ${error.message}`);
+  }
+  
 };
