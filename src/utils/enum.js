@@ -38,6 +38,7 @@ export const applicantEnum = {
   JAVASCRIPT: 'JavaScript',
   JAVA: 'Java',
   C: 'C++',
+  
   SOFTWARE_ENGINEER: 'Software Engineer',
   FRONTED_DEVLOPER: 'Frontend Developer',
   BACKEND_DEVLOPER: 'Backend Developer',
