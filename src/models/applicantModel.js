@@ -90,6 +90,12 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.DEVOPS,
         applicantEnum.BUSNESS_ANALYST,
         applicantEnum.TECHNICSL_SUPPORT,
+        applicantEnum.MERN_STACK_DEVELOPER,
+        applicantEnum.MEAN_STACK_DEVELOPER,
+        applicantEnum.DOTNET_DEVELOPER,
+        applicantEnum.JAVA_DEVELOPER,
+        applicantEnum.PYTHON_DEVELOPER,
+        applicantEnum.PHP_DEVELOPER,
         applicantEnum.OTHER,
         applicantEnum.NA,
       ],
@@ -110,6 +116,12 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.DEVOPS,
         applicantEnum.BUSNESS_ANALYST,
         applicantEnum.TECHNICSL_SUPPORT,
+        applicantEnum.MERN_STACK_DEVELOPER,
+        applicantEnum.MEAN_STACK_DEVELOPER,
+        applicantEnum.DOTNET_DEVELOPER,
+        applicantEnum.JAVA_DEVELOPER,
+        applicantEnum.PYTHON_DEVELOPER,
+        applicantEnum.PHP_DEVELOPER,
         applicantEnum.OTHER,
         applicantEnum.NA,
       ],
@@ -150,7 +162,11 @@ const ApplicantSchema = new mongoose.Schema(
       type: String,
       enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
       required: true
-    }
+    },
+    meta: {
+      type: Object,
+      default: {}
+    },
   },
   { timestamps: true }
 );
