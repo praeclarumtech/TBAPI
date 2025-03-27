@@ -10,7 +10,8 @@ import {
   deleteManyApplicants,
   getResumeAndCsvApplicants,
   exportApplicantCsv,
-  importApplicantCsv
+  importApplicantCsv,
+  checkApplicantExists
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
@@ -35,5 +36,7 @@ router.post('/upload-resume',validator.body(updateApplicantValidation),uploadRes
 router.get('/exportCsv', exportApplicantCsv);
 router.post('/importCsv', authorization, importApplicantCsv);
 router.delete('/deleteManyApplicants', deleteManyApplicants);
+
+router.get('/checkApplicant', checkApplicantExists);
 
 export default router;
