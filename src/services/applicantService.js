@@ -26,8 +26,8 @@ export const updateManyApplicants = async (applicantsArray) => {
   );
 };
 
-export const getAllapplicant = async () => {
-  return Applicant.find();
+export const getAllapplicant = async (query) => {
+  return Applicant.find(query);
 };
 
 export const getApplicantById = async (id) => {
@@ -40,4 +40,8 @@ export const updateApplicantById = async (id, updateData) => {
 
 export const removeManyApplicants = async (ids) => {
   return await Applicant.deleteMany({ _id: { $in: ids } });
+};
+
+export const findApplicantByField = async (field, value) => {
+  return await Applicant.findOne({ [field]: value });
 };
