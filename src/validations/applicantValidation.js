@@ -133,8 +133,14 @@ export const applicantValidation = Joi.object({
       applicantEnum.DEVOPS,
       applicantEnum.BUSNESS_ANALYST,
       applicantEnum.TECHNICSL_SUPPORT,
+      applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JAVA_DEVELOPER,
+      applicantEnum.PYTHON_DEVELOPER,
+      applicantEnum.PHP_DEVELOPER,
       applicantEnum.OTHER,
-      applicantEnum.NA,
+      applicantEnum.NA
     )
     .messages({
       'any.required': 'CurrentCompanyDesignation is required.',
@@ -175,7 +181,8 @@ export const applicantValidation = Joi.object({
   preferredLocations: Joi.string().allow(''),
   currentCompanyName: Joi.string().allow(''),
   maritalStatus: Joi.string()
-    .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '').optional()
+    .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '')
+    .optional()
     .messages({
       'any.only': 'Maritial status must be Single,or Married.',
     }),
@@ -188,6 +195,9 @@ export const applicantValidation = Joi.object({
   referral: Joi.string().allow(null, ''),
   collegeName: Joi.string().allow(null, ''),
   cgpa: Joi.number().allow(''),
+  meta: Joi.object().default({}).messages({
+    'object.base': 'Meta must be an object with key-value pairs.',
+  }),
 });
 
 export const updateApplicantValidation = Joi.object({
@@ -300,8 +310,14 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.DEVOPS,
       applicantEnum.BUSNESS_ANALYST,
       applicantEnum.TECHNICSL_SUPPORT,
+      applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JAVA_DEVELOPER,
+      applicantEnum.PYTHON_DEVELOPER,
+      applicantEnum.PHP_DEVELOPER,
       applicantEnum.OTHER,
-      applicantEnum.NA,
+      applicantEnum.NA
     )
     .messages({
       'any.required': 'CurrentCompanyDesignation is required.',
@@ -344,7 +360,8 @@ export const updateApplicantValidation = Joi.object({
   currentCompanyName: Joi.string().allow(''),
 
   maritalStatus: Joi.string()
-    .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '').optional()
+    .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '')
+    .optional()
     .messages({
       'any.only': 'Maritial status must be Single,or Married.',
     }),
@@ -360,4 +377,7 @@ export const updateApplicantValidation = Joi.object({
   linkedinUrl: Joi.string().allow(''),
   clientCvUrl: Joi.string().allow(''),
   clientFeedback: Joi.string().allow(''),
+  meta: Joi.object().optional().messages({
+    'object.base': 'Meta must be an object with key-value pairs.',
+  }),
 });

@@ -6,6 +6,7 @@ import {
   removeManyApplicants,
   insertManyApplicants,
   updateManyApplicants,
+  findApplicantByField,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -104,6 +105,8 @@ export const addApplicant = async (req, res) => {
   try {
     const {
       name: { firstName, middleName, lastName },
+      appliedRole,
+      meta,
       ...body
     } = req.body;
 
@@ -113,11 +116,14 @@ export const addApplicant = async (req, res) => {
       id = request.id;
     }
     const applicationNo = await generateApplicantNo();
+
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
       user_id: id,
       addedBy: applicantEnum.MANUAL,
+      appliedRole,
+      meta: meta || {},
       ...body,
     };
     const applicant = await createApplicant(applicantData);
@@ -628,25 +634,25 @@ export const updateApplicant = async (req, res) => {
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `Applicant is ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`User is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `User is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Applicant is ${Message.UPDATED_SUCCESSFULLY}`,
       updatedApplicant
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} update Applicant.`);
+    logger.error(`${Message.FAILED_TO} update Applicant.${error}`);
     return HandleResponse(
       res,
       false,
@@ -985,3 +991,63 @@ export const deleteManyApplicants = async (req, res) => {
     );
   }
 };
+
+export const checkApplicantExists = async (req, res) => {
+  try {
+    const { whatsappNumber, phoneNumber, email } = req.query;
+
+    if (!whatsappNumber && !phoneNumber && !email) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        "At least one field (phoneNumber, whatsappNumber, or email) is required."
+      );
+    }
+
+    let existingApplicant = null;
+    let duplicateField = "";
+
+    if (whatsappNumber) {
+      existingApplicant = await findApplicantByField("phone.whatsappNumber", whatsappNumber );
+      if (existingApplicant) duplicateField = "whatsappNumber";
+    }
+
+    if (!existingApplicant && phoneNumber) {
+      existingApplicant = await findApplicantByField( "phone.phoneNumber", phoneNumber );
+      if (existingApplicant) duplicateField = "phoneNumber";
+    }
+
+    if (!existingApplicant && email) {
+      existingApplicant = await findApplicantByField("email", email);
+      if (existingApplicant) duplicateField = "email";
+    }
+
+    if (existingApplicant) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        `This ${duplicateField} is already registered.`,
+        { exists: true, duplicateField }
+      );
+    }
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      "All fields are available.",
+      { exists: false }
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} check applicant.${error}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} check applicant.${error}`
+    );
+  }
+};
+
