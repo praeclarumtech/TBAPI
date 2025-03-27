@@ -41,3 +41,7 @@ export const updateApplicantById = async (id, updateData) => {
 export const removeManyApplicants = async (ids) => {
   return await Applicant.deleteMany({ _id: { $in: ids } });
 };
+
+export const findApplicantByField = async (field, value) => {
+  return await Applicant.findOne({ [field]: value });
+};
