@@ -57,6 +57,7 @@ export const uploadResume = multer({
     }
   },
 }).single('resume');
+
 export const uploadCv = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },

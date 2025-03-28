@@ -58,7 +58,8 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         resumeText = await extractTextFromPDF(filePath);
       } else if (
         file.mimetype ===
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.mimetype === 'application/msword'
       ) {
         resumeText = await extractTextFromDocx(filePath);
       } else {
@@ -66,6 +67,21 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       }
 
       const parsedData = parseResumeText(resumeText);
+       const { email, phone } = parsedData;
+
+      const existingApplicant = await Applicant.findOne({
+        $or: [{ email }, { phone }],
+      });
+
+      if (existingApplicant) {
+        logger.warn(`Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`
+        );
+      }
       const applicationNo = await generateApplicantNo();
 
       const applicantData = {
@@ -86,12 +102,12 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         applicant
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} add applicant: ${error.message}`);
+      logger.error(`${Message.FAILED_TO} ddddddddddd add applicant: ${error}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `${Message.FAILED_TO} add applicant:${error.message}`
+        `${Message.FAILED_TO} add applicant:${error}`
       );
     } finally {
       if (req.file) {
@@ -191,19 +207,19 @@ export const viewAllApplicant = async (req, res) => {
       };
     }
 
-
     if (totalExperience) {
-      const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.totalExperience = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
       }
     }
+    
 
     if (startDate || endDate) {
       query.createdAt = {};
@@ -221,17 +237,18 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (expectedPkg) {
-      const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = expectedPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.expectedPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(expectedPkg))) {
         query.expectedPkg = parseFloat(expectedPkg);
       }
     }
+    
 
     if (currentPkg) {
       const rangeMatch = currentPkg.toString().match(/^(\d+)-(\d+)$/);
