@@ -17,7 +17,6 @@ export const applicantValidation = Joi.object({
       'any.required': 'Last name is required.',
     }),
   }).required(),
-
   phone: Joi.object({
     whatsappNumber: Joi.string().required().messages({
       'string.base': 'WhatsApp number must be a string.',
@@ -30,13 +29,11 @@ export const applicantValidation = Joi.object({
       'any.required': 'Contact number is required.',
     }),
   }).required(),
-
   email: Joi.string().email().required().messages({
     'string.base': 'Email must be a string.',
     'string.email': 'Invalid email format.',
     'any.required': 'Email is required.',
   }),
-
   gender: Joi.string()
     .valid(genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER)
     .required()
@@ -171,7 +168,6 @@ export const applicantValidation = Joi.object({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
     }),
-
   preferredLocations: Joi.string().allow(''),
   currentCompanyName: Joi.string().allow(''),
   maritalStatus: Joi.string()
@@ -188,6 +184,9 @@ export const applicantValidation = Joi.object({
   referral: Joi.string().allow(null, ''),
   collegeName: Joi.string().allow(null, ''),
   cgpa: Joi.number().allow(''),
+  meta: Joi.object().default({}).messages({
+    'object.base': 'Meta must be an object with key-value pairs.'
+  })
 });
 
 export const updateApplicantValidation = Joi.object({
@@ -360,4 +359,7 @@ export const updateApplicantValidation = Joi.object({
   linkedinUrl: Joi.string().allow(''),
   clientCvUrl: Joi.string().allow(''),
   clientFeedback: Joi.string().allow(''),
+  meta: Joi.object().optional().messages({
+    'object.base': 'Meta must be an object with key-value pairs.'
+  })
 });

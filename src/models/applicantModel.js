@@ -150,7 +150,11 @@ const ApplicantSchema = new mongoose.Schema(
       type: String,
       enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
       required: true
-    }
+    },
+    meta: {
+      type: Object,
+      default: {}
+    },
   },
   { timestamps: true }
 );

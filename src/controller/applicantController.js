@@ -6,6 +6,7 @@ import {
   removeManyApplicants,
   insertManyApplicants,
   updateManyApplicants,
+  // insertApplication,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -131,12 +132,22 @@ export const addApplicant = async (req, res) => {
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} add aplicant.${error}`);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} add aplicant.${error}`
-    );
+    if (error.code === 11000) {
+      const duplicateValue = Object.values(error.keyValue)[0]; // Extract duplicate value
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `found duplicate key: ${duplicateValue}`
+      );
+    } else {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `${Message.FAILED_TO} add aplicant.${error}`
+      );
+    }
   }
 };
 
@@ -616,12 +627,10 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     );
   }
 };
-
 export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const { ...body } = req.body;
-
     let updateData = {
       ...body,
     };
@@ -791,7 +800,7 @@ export const importApplicantCsv = async (req, res) => {
           res,
           false,
           StatusCodes.BAD_REQUEST,
-          `${Message.FAILED_TO} upload CSV`
+          `Invalid file type please upload csv`
         );
       }
       if (!req.file) {
@@ -871,6 +880,7 @@ export const importApplicantCsv = async (req, res) => {
             // Insert new applicants
             if (toInsert.length > 0) {
               await insertManyApplicants(
+                // const data = toInsert.map((applicant) => ({
                 toInsert.map((applicant) => ({
                   ...applicant,
                   email: applicant.email.trim().toLowerCase(),
@@ -879,6 +889,7 @@ export const importApplicantCsv = async (req, res) => {
                   addedBy: applicantEnum.CSV,
                 }))
               );
+              // await insertApplication(data)
             }
             // Update existing applicants
             if (toUpdate.length > 0) {
@@ -916,15 +927,26 @@ export const importApplicantCsv = async (req, res) => {
               }
             );
           } catch (dbError) {
-            return HandleResponse(
-              res,
-              false,
-              StatusCodes.INTERNAL_SERVER_ERROR,
-              dbError.message
-            );
+            logger.warn('dbError', dbError);
+            if (dbError.code === 11000) {
+              let duplicateField = dbError.errmsg?.match(/index: (.+?) dup key/)?.[1]?.split("_")[0] || 'unknown';
+              duplicateField = duplicateField.split(".").pop();
+              let duplicateValue = dbError.errmsg?.match(/dup key: \{.*?: "(.*?)"/)?.[1] || 'unknown';
+              return HandleResponse(
+                res,
+                false,
+                StatusCodes.INTERNAL_SERVER_ERROR,
+                `${duplicateField} ${duplicateValue} is already in use please use a different number.`
+              );
+            } else {
+              return HandleResponse(
+                res, false, StatusCodes.INTERNAL_SERVER_ERROR, dbError.message
+              )
+            }
           }
         })
         .on('error', (error) => {
+          console.log(".on error block++++++++++++++", error)
           return HandleResponse(
             res,
             false,
@@ -935,6 +957,7 @@ export const importApplicantCsv = async (req, res) => {
         });
     });
   } catch (error) {
+    console.log("duplicate error from catch", error.message)
     return HandleResponse(
       res,
       false,
@@ -956,7 +979,6 @@ export const deleteManyApplicants = async (req, res) => {
       );
     }
     const removeApplicats = await removeManyApplicants(ids);
-
     if (removeApplicats.deletedCount === 0) {
       logger.warn(`Applicant is ${Message.NOT_FOUND}`);
       return HandleResponse(
