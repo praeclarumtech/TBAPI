@@ -11,6 +11,9 @@ import { StatusCodes } from 'http-status-codes';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import fs from 'fs';
+import csvParser from 'csv-parser';
+import { uploadCv } from '../helpers/multer.js';
 
 export const addSkills = async (req, res) => {
   const { skills } = req.body;
@@ -62,7 +65,7 @@ export const getSkills = async (req, res) => {
 
     let data;
     let totalRecords;
-    
+
     if (search) {
       const searchFields = ['skills'];
       const searchResult = await commonSearch(Skills, searchFields, search,);
@@ -200,3 +203,65 @@ export const deleteSkills = async (req, res) => {
     );
   }
 };
+
+export const importSkillsCsv = async (req, res) => {
+  try {
+    uploadCv(req, res, async (err) => {
+      if (err || !req.file) {
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV`);
+      }
+      const results = [];
+      fs.createReadStream(req.file.path)
+        .pipe(csvParser({ skipEmptyLines: true }))
+        .on('data', (row) => {
+          if (row.skills && row.skills.trim() !== '') {
+            results.push({ skills: row.skills.trim() });
+          }
+        })
+        .on('end', async () => {
+          try {
+            const existingSkills = await Skills.find({
+              skills: { $in: results.map(skill => skill.skills.toLowerCase()) }
+            }).lean();
+
+            const existingSkillNames = existingSkills.map(skill => skill.skills.toLowerCase());
+
+            const newSkills = results.filter(skill =>
+              !existingSkillNames.includes(skill.skills.toLowerCase())
+            );
+
+            const duplicateSkills = results.filter(skill =>
+              existingSkillNames.includes(skill.skills.toLowerCase())
+            );
+            if (newSkills.length) {
+              await Skills.insertMany(newSkills).catch(error => {
+                console.error("Insertion Error:", error);
+              });
+            }
+            fs.unlinkSync(req.file.path);
+            return HandleResponse(res, true, StatusCodes.OK, 'CSV imported successfully', {
+              insertedSkills: newSkills,
+              duplicateSkills
+            });
+          } catch (dbError) {
+            fs.unlinkSync(req.file.path);
+            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Failed to import skills");
+          }
+        })
+        .on('error', (error) => {
+          fs.unlinkSync(req.file.path);
+          return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, error.message);
+        });
+    });
+  } catch (error) {
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} import CSV`
+    );
+  }
+};
+
+
+
