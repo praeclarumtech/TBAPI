@@ -2,6 +2,7 @@ import mammoth from 'mammoth';
 import fs from 'fs';
 import * as pdfjsLib from 'pdfjs-dist';
 import logger from '../loggers/logger.js';
+import WordExtractor from 'word-extractor';
 import { Message } from '../utils/constant/message.js';
 
 export const extractTextFromPDF = async (filePath) => {
@@ -41,6 +42,22 @@ export const extractTextFromDocx = async (filePath) => {
     return null;
   }
 };
+
+const extractor = new WordExtractor();
+
+export const extractTextFromDoc = async (filePath) => {
+  try {
+    const doc = await extractor.extract(filePath);
+    const text = doc.getBody()?.trim();
+    if (!text) {
+      throw new Error('Extracted text is empty');
+    }
+    return text.replace(/\s+/g, ' ');
+  } catch (error) {
+    logger.error(`Failed to extract text from DOC: ${error.message}`);
+    return null;
+  }
+}
 
 export const parseResumeText = (text) => {
   const emailRegex = /[a-zA-Z0-9._%+-]+ ?@ ?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
@@ -309,10 +326,6 @@ export const parseResumeText = (text) => {
   const middleName = nameParts.length > 2 ? nameParts[1] : '';
   const lastName =
     nameParts.length > 2 ? nameParts[2] : nameParts[1] || 'Unknown';
-   console.log("texttt>>>>>>>",text)
-   console.log("emailllll>>>>>>>",email)
-   console.log("phoneeeee>>>>>>>",phone)
-   console.log("phoneeeee>>>>>>>",currentAddress)
 
   return {
     name: {

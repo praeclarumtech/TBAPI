@@ -29,6 +29,7 @@ import {
   extractTextFromPDF,
   extractTextFromDocx,
   parseResumeText,
+  extractTextFromDoc,
 } from '../helpers/importResume.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
@@ -54,14 +55,16 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       let resumeText = '';
       const filePath = file.path;
 
+
       if (file.mimetype === 'application/pdf') {
         resumeText = await extractTextFromPDF(filePath);
       } else if (
         file.mimetype ===
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        file.mimetype === 'application/msword'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ) {
         resumeText = await extractTextFromDocx(filePath);
+      } else if (file.mimetype === 'application/msword') {
+        resumeText = await extractTextFromDoc(filePath);
       } else {
         throw new Error('Unsupported file type');
       }
