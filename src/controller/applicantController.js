@@ -105,7 +105,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         applicant
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} ddddddddddd add applicant: ${error}`);
+      logger.error(`${Message.FAILED_TO} add applicant: ${error}`);
       return HandleResponse(
         res,
         false,
