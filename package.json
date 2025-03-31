@@ -35,7 +35,8 @@
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^5.0.375",
     "winston": "^3.17.0",
-    "winston-mongodb": "^6.0.0"
+    "winston-mongodb": "^6.0.0",
+    "word-extractor": "^1.0.4"
   },
   "devDependencies": {
     "eslint": "^9.20.1",
