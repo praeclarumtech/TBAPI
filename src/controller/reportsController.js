@@ -125,12 +125,12 @@ export const technologyStatistics = async (req, res) => {
 
     const { skillCounts } = await getTechnologyStatistics(calendarType, startDate, endDate);
 
-    logger.info(`Technology Statistics ${Message.FETCH_SUCCESSFULLY}.`);  
+    logger.info(`Technology Statistics ${Message.FETCH_SUCCESSFULLY}`);  
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Technology Statistics ${Message.FETCH_SUCCESSFULLY}.`,
+      `Technology Statistics ${Message.FETCH_SUCCESSFULLY}`,
       skillCounts
     );
   } catch (error) {

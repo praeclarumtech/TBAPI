@@ -124,30 +124,38 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
   try {
     const { startDate, endDate } = getDateRange(calendarType, customStartDate, customEndDate);
 
-  let dateFilter = {};
-  if (startDate && endDate) {
-    dateFilter.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
-  }
+    let dateFilter = {};
+    if (startDate && endDate) {
+      dateFilter.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
+    }
 
-  const skillsList = await Skills.find({ isDeleted: false });
+    const skillsList = await Skills.find({ isDeleted: false });
 
-  const skillCountsArray = await Promise.all(
-    skillsList.map(async (skill) => {
-      const count = await Applicant.countDocuments({
-        appliedSkills: skill.skills,
-        isDeleted: false,
-        ...dateFilter,
-      });
-      return { [skill.skills]: count };
-    })
-  );
+    const normalizeSkillName = (skill) => skill.trim().toLowerCase();
 
-  const skillCounts = Object.assign({}, ...skillCountsArray);
+    let skillCounts = {};
 
-  return { skillCounts };
-    
+    for (const skill of skillsList) {
+      const normalizedSkill = normalizeSkillName(skill.skills);
+
+      if (!skillCounts[normalizedSkill]) {
+        const escapedSkill = skill.skills.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        const count = await Applicant.countDocuments({
+          appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, "i") },
+          isDeleted: false,
+          ...dateFilter,
+        });
+
+        skillCounts[normalizedSkill] = count;
+      }
+    }
+
+    return { skillCounts };
+
   } catch (error) {
     logger.error(`${Message.FAILED_TO} getTechnologyStatistics: ${error.message}`);
+    return { skillCounts: {} };
   }
-  
 };
+
