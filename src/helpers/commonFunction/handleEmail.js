@@ -20,10 +20,13 @@ export const sendingEmail = async ({
 
   const emailText = newOtp ? `New OTP: ${newOtp}` : description;
 
+  const toRecipients = Array.isArray(email_to) ? email_to.join(',') : email;
+  const bccRecipients = Array.isArray(email_bcc) ? email_bcc.join(',') : '';
+
   const mailOptions = {
     from: process.env.FROM,
-    to: email_to.join(',') || email,
-    bcc: email_bcc ? email_bcc.join(',') : '',
+    to: toRecipients,
+    bcc: bccRecipients,
     subject,
     text: emailText,
   };
