@@ -60,7 +60,7 @@ export const extractTextFromDoc = async (filePath) => {
 }
 
 export const parseResumeText = (text) => {
-  const emailRegex = /[a-zA-Z0-9._%+-]+ ?@ ?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const emailRegex = /\b[a-zA-Z0-9._%+-]+(?:\s*@\s*|\s+at\s+)[a-zA-Z0-9.-]+\s*\.\s*[a-zA-Z]{2,}\b/g;
 
   const phoneRegex = /(\+91\s?)?[6-9]\d{4}[-\s]?\d{5}/;
   const nameTagRegex =
@@ -80,7 +80,7 @@ export const parseResumeText = (text) => {
     /(https?:\/\/)?(www\.)?linkedin\.com\/[a-zA-Z0-9-_/]+/
   );
   const currentCompanyMatch = text.match(
-    /(Current Employer|Current Company|Company Name)[:\s]*(.*)/i
+    /(Current Employer|Current Company|Company Name)[:\s]*(\S+(?:\s+\S+){0,5})/i
   );
   const maritalStatusMatch = text.match(/Marital Status:\s*(Single|Married)/i);
   const dobMatch = text.match(/Date of Birth:\s*(\d{2}[-/]\d{2}[-/]\d{4})/i);
@@ -207,6 +207,16 @@ export const parseResumeText = (text) => {
     'Hibernate',
     'Svelte',
     'Flutter',
+    'Figma',
+    'adobe XD',
+    'Sketch', 
+   'balsamiq',
+    'Photoshop',
+    'illustrator',
+    'InVision',
+    'Framer', 
+    'Axure', 
+    'Marvel',
 
   ];
 
@@ -338,7 +348,7 @@ export const parseResumeText = (text) => {
       phoneNumber: phone,
       whatsappNumber: phone,
     },
-    appliedSkills: skills,
+    otherSkills: skills.join(', '),
     totalExperience,
     qualification,
     appliedRole,
