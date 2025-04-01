@@ -6,7 +6,7 @@ import {
   removeManyApplicants,
   insertManyApplicants,
   updateManyApplicants,
-  // insertApplication,
+  findApplicantByField,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -29,6 +29,7 @@ import {
   extractTextFromPDF,
   extractTextFromDocx,
   parseResumeText,
+  extractTextFromDoc,
 } from '../helpers/importResume.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
@@ -54,6 +55,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       let resumeText = '';
       const filePath = file.path;
 
+
       if (file.mimetype === 'application/pdf') {
         resumeText = await extractTextFromPDF(filePath);
       } else if (
@@ -61,11 +63,28 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ) {
         resumeText = await extractTextFromDocx(filePath);
+      } else if (file.mimetype === 'application/msword') {
+        resumeText = await extractTextFromDoc(filePath);
       } else {
         throw new Error('Unsupported file type');
       }
 
       const parsedData = parseResumeText(resumeText);
+       const { email, phone } = parsedData;
+
+      const existingApplicant = await Applicant.findOne({
+        $or: [{ email }, { phone }],
+      });
+
+      if (existingApplicant) {
+        logger.warn(`Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`
+        );
+      }
       const applicationNo = await generateApplicantNo();
 
       const applicantData = {
@@ -86,12 +105,12 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         applicant
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} add applicant: ${error.message}`);
+      logger.error(`${Message.FAILED_TO} add applicant: ${error}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `${Message.FAILED_TO} add applicant:${error.message}`
+        `${Message.FAILED_TO} add applicant:${error}`
       );
     } finally {
       if (req.file) {
@@ -105,6 +124,8 @@ export const addApplicant = async (req, res) => {
   try {
     const {
       name: { firstName, middleName, lastName },
+      appliedRole,
+      meta,
       ...body
     } = req.body;
 
@@ -114,11 +135,14 @@ export const addApplicant = async (req, res) => {
       id = request.id;
     }
     const applicationNo = await generateApplicantNo();
+
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
       user_id: id,
       addedBy: applicantEnum.MANUAL,
+      appliedRole,
+      meta: meta || {},
       ...body,
     };
     const applicant = await createApplicant(applicantData);
@@ -196,16 +220,15 @@ export const viewAllApplicant = async (req, res) => {
       };
     }
 
-
     if (totalExperience) {
-      const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.totalExperience = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
       }
     }
@@ -226,27 +249,27 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (expectedPkg) {
-      const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = expectedPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.expectedPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(expectedPkg))) {
         query.expectedPkg = parseFloat(expectedPkg);
       }
     }
 
     if (currentPkg) {
-      const rangeMatch = currentPkg.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = currentPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.currentPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(currentPkg))) {
         query.currentPkg = parseFloat(currentPkg);
       }
     }
@@ -292,24 +315,27 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (rating) {
-      const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.rating = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(rating))) {
         query.rating = parseFloat(rating);
       }
     }
+
     if (communicationSkill) {
-      const rangeMatch = communicationSkill.toString().match(/^(\d+)-(\d+)$/);
+      const rangeMatch = communicationSkill.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
+        const max = parseFloat(rangeMatch[3]);
+    
         query.communicationSkill = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(communicationSkill))) {
         query.communicationSkill = parseFloat(communicationSkill);
       }
     }
@@ -451,14 +477,14 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     if (totalExperience) {
-      const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.totalExperience = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
       }
     }
@@ -479,27 +505,40 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     if (expectedPkg) {
-      const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = expectedPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.expectedPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(expectedPkg))) {
         query.expectedPkg = parseFloat(expectedPkg);
       }
     }
 
-    if (currentPkg) {
-      const rangeMatch = currentPkg.toString().match(/^(\d+)-(\d+)$/);
-
+    if (totalExperience) {
+      const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
+        const max = parseFloat(rangeMatch[3]);
+    
+        query.totalExperience = { $gte: min, $lte: max };
+      } else if (!isNaN(parseFloat(totalExperience))) {
+        query.totalExperience = parseFloat(totalExperience);
+      }
+    }
 
+    if (currentPkg) {
+      const rangeMatch = currentPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[3]);
+    
         query.currentPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(currentPkg))) {
         query.currentPkg = parseFloat(currentPkg);
       }
     }
@@ -544,27 +583,27 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     if (rating) {
-      const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.rating = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(rating))) {
         query.rating = parseFloat(rating);
       }
     }
 
     if (communicationSkill) {
-      const rangeMatch = communicationSkill.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = communicationSkill.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.communicationSkill = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(communicationSkill))) {
         query.communicationSkill = parseFloat(communicationSkill);
       }
     }
@@ -637,25 +676,25 @@ export const updateApplicant = async (req, res) => {
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `Applicant is ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`User is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `User is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Applicant is ${Message.UPDATED_SUCCESSFULLY}`,
       updatedApplicant
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} update Applicant.`);
+    logger.error(`${Message.FAILED_TO} update Applicant.${error}`);
     return HandleResponse(
       res,
       false,
@@ -1007,3 +1046,63 @@ export const deleteManyApplicants = async (req, res) => {
     );
   }
 };
+
+export const checkApplicantExists = async (req, res) => {
+  try {
+    const { whatsappNumber, phoneNumber, email } = req.query;
+
+    if (!whatsappNumber && !phoneNumber && !email) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        "At least one field (phoneNumber, whatsappNumber, or email) is required."
+      );
+    }
+
+    let existingApplicant = null;
+    let duplicateField = "";
+
+    if (whatsappNumber) {
+      existingApplicant = await findApplicantByField("phone.whatsappNumber", whatsappNumber );
+      if (existingApplicant) duplicateField = "whatsappNumber";
+    }
+
+    if (!existingApplicant && phoneNumber) {
+      existingApplicant = await findApplicantByField( "phone.phoneNumber", phoneNumber );
+      if (existingApplicant) duplicateField = "phoneNumber";
+    }
+
+    if (!existingApplicant && email) {
+      existingApplicant = await findApplicantByField("email", email);
+      if (existingApplicant) duplicateField = "email";
+    }
+
+    if (existingApplicant) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        `This ${duplicateField} is already registered.`,
+        { exists: true, duplicateField }
+      );
+    }
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      "All fields are available.",
+      { exists: false }
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} check applicant.${error}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} check applicant.${error}`
+    );
+  }
+};
+
