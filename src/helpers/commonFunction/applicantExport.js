@@ -140,12 +140,12 @@ const validateAndFillFields = async (data, userRole) => {
         .split('T')[0]
       : null,
     currentAddress: data['Current Address'] || 'Not Provided',
-    state: data['State'] || null,
+    state: data['State'] || 'Not Provided',
     country: data['Country'] || 'Not Provided',
     currentPincode: !isNaN(Number(data['Current Pincode']))
       ? Number(data['Current Pincode'])
       : null,
-    currentCity: data['Current City'] || null,
+    currentCity: data['Current City'] || 'Not Provided',
     permanentAddress: data['Permanent Address'] || 'Not Provided',
     qualification: data['Qualification']?.trim() || 'Not Provided',
     specialization: data['Specialization']?.trim() || 'Not Provided',
@@ -324,14 +324,14 @@ export const processCsvRow = async (data, userRole) => {
       gender: data['Gender']?.trim()?.toLowerCase(),
       passingYear: data['Passing Year']?.trim(),
       qualification: data['Qualification']?.trim(),
-      specialization: data['Specialization']?.trim(),
-      currentCity: data['Current City']?.trim(),
-      state: data['State']?.trim(),
+      // specialization: data['Specialization']?.trim(),
+      // currentCity: data['Current City']?.trim(),
+      // state: data['State']?.trim(),
       appliedSkills: data['Applied Skills']
         ? data['Applied Skills'].split(',').map((skill) => skill.trim())
         : [],
       totalExperience: data['Total Experience (years)']?.trim(),
-      relevantSkillExperience: data['Relevant Skill Experience (years)']?.trim(),
+      // relevantSkillExperience: data['Relevant Skill Experience (years)']?.trim(),
       appliedRole: data['Applied Role']?.trim(),
       currentCompanyDesignation: data['Current Company Designation']?.trim(),
       otherSkills: data['Other Skills']?.trim(),

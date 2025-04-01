@@ -38,9 +38,13 @@ export const applicantEnum = {
   JAVASCRIPT: 'JavaScript',
   JAVA: 'Java',
   C: 'C++',
+
+
   SOFTWARE_ENGINEER: 'Software Engineer',
+  WEB_DESIGNER: 'Web Designer',
   FRONTED_DEVLOPER: 'Frontend Developer',
   BACKEND_DEVLOPER: 'Backend Developer',
+  JUNIOR_SOFTWARE_DEVELOPER: 'Junior Software Developer',
   FULL_STACK_DEVLOPER: 'Full Stack Developer',
   DATA_ANALYST: 'Data Analyst',
   DATA_SCIENTIST: 'Data Scientist',
@@ -50,8 +54,10 @@ export const applicantEnum = {
   DEVOPS: 'DevOps Engineer',
   BUSNESS_ANALYST: 'Business Analyst',
   TECHNICSL_SUPPORT: 'Technical Support Engineer',
+  DOTNET_DEVELOPER: 'DotNet Developer',
   OTHER: 'Other',
   NA: 'Na',
+
 
   SINGLE: 'Single',
   MARRIED: 'Married',
