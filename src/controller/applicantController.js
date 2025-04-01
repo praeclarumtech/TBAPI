@@ -7,6 +7,7 @@ import {
   insertManyApplicants,
   updateManyApplicants,
   findApplicantByField,
+  updateManyApplicantsService,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -1085,3 +1086,46 @@ export const checkApplicantExists = async (req, res) => {
   }
 };
 
+export const updateManyApplicant = async (req, res) => {
+  try {
+    const { applicantIds, updateData } = req.body;
+
+    if (!applicantIds || !Array.isArray(applicantIds) || applicantIds.length === 0) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Applicant IDs must be provided as a non-empty array.'
+      );
+    }
+
+    const result = await updateManyApplicantsService(applicantIds, updateData);
+
+    if (result.matchedCount === 0) {
+      logger.warn('No applicants found to update.');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'No applicants found to update.'
+      );
+    }
+
+    logger.info(`Updated ${result.modifiedCount} applicants successfully.`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Updated ${result.modifiedCount} applicants successfully.`,
+      result
+    );
+  } catch (error) {
+    logger.error(`Failed to update multiple applicants: ${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to update multiple applicants.'
+    );
+  }
+};
