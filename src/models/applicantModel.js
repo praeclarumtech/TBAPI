@@ -79,7 +79,6 @@ const ApplicantSchema = new mongoose.Schema(
       type: String,
       enum: [
         applicantEnum.SOFTWARE_ENGINEER,
-        applicantEnum.SOFTWARE_DEVELOPER,
         applicantEnum.WEB_DESIGNER,
         applicantEnum.WEB_DEVELOPER,
         applicantEnum.FRONTED_DEVLOPER,
@@ -126,7 +125,6 @@ const ApplicantSchema = new mongoose.Schema(
       type: String, required: false,
       enum: [
         applicantEnum.SOFTWARE_ENGINEER,
-        applicantEnum.SOFTWARE_DEVELOPER,
         applicantEnum.WEB_DESIGNER,
         applicantEnum.WEB_DEVELOPER,
         applicantEnum.FRONTED_DEVLOPER,
