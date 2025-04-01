@@ -119,7 +119,7 @@ const validateAndFillFields = async (data, userRole) => {
     name: {
       firstName: data['First Name']?.trim() || null,
       middleName: data['Middle Name']?.trim() || null,
-      lastName: data['Last Name']?.trim() || null,
+      lastName: data['Last Name']?.trim() || '',
     },
     phone: {
       phoneNumber: data['Phone Number']?.trim() || null,
@@ -159,7 +159,7 @@ const validateAndFillFields = async (data, userRole) => {
       : [],
     totalExperience: !isNaN(Number(data['Total Experience (years)']))
       ? Number(data['Total Experience (years)'])
-      : null,
+      : 0,
     relevantSkillExperience: !isNaN(
       Number(data['Relevant Skill Experience (years)'])
     )
@@ -168,7 +168,7 @@ const validateAndFillFields = async (data, userRole) => {
     communicationSkill: !isNaN(Number(data['Communication Skill']))
       ? Number(data['Communication Skill'])
       : null,
-    otherSkills: data['Other Skills'] || null,
+    otherSkills: data['Other Skills'] || 'Not provided',
     rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : null,
     currentCompanyName: data['Current Company Name']?.trim() || 'Not Provided',
     currentCompanyDesignation:
@@ -318,23 +318,23 @@ export const processCsvRow = async (data, userRole) => {
     // Required fields
     const requiredFields = {
       firstName: data['First Name']?.trim(),
-      lastName: data['Last Name']?.trim(),
+      // lastName: data['Last Name']?.trim(),
       email: data['Email']?.trim(),
       phoneNumber: data['Phone Number']?.trim(),
       gender: data['Gender']?.trim()?.toLowerCase(),
-      passingYear: data['Passing Year']?.trim(),
+      // passingYear: data['Passing Year']?.trim(),
       qualification: data['Qualification']?.trim(),
       // specialization: data['Specialization']?.trim(),
       // currentCity: data['Current City']?.trim(),
       // state: data['State']?.trim(),
-      appliedSkills: data['Applied Skills']
-        ? data['Applied Skills'].split(',').map((skill) => skill.trim())
-        : [],
-      totalExperience: data['Total Experience (years)']?.trim(),
+      // appliedSkills: data['Applied Skills']
+      //   ? data['Applied Skills'].split(',').map((skill) => skill.trim())
+      //   : [],
+      // totalExperience: data['Total Experience (years)']?.trim(),
       // relevantSkillExperience: data['Relevant Skill Experience (years)']?.trim(),
       appliedRole: data['Applied Role']?.trim(),
       currentCompanyDesignation: data['Current Company Designation']?.trim(),
-      otherSkills: data['Other Skills']?.trim(),
+      // otherSkills: data['Other Skills']?.trim(),
       resumeUrl: data['Resume URL']?.trim(),
     };
 
@@ -371,7 +371,7 @@ export const processCsvRow = async (data, userRole) => {
       if (!enumValue) {
         // Find a similar match by checking the first 3 characters (can be adjusted as needed)
         const closestMatch = Object.values(enumObject).find((value) =>
-          value.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 3))
+          value.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 8))
         );
 
         const suggestion = closestMatch ? `${closestMatch}` : 'No suggestion available';
