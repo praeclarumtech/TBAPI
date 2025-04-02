@@ -95,7 +95,7 @@ export const findApplicantByField = async (field, value) => {
 export const updateManyApplicantsService = async (applicantIds, updateData) => 
   {
   try {
-    const result = await Applicant.updateMany(
+    const result = await ExportsApplicants.updateMany(
       { _id: { $in: applicantIds } },
       { $set: updateData },
     );
