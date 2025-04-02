@@ -243,79 +243,11 @@ const validateAndFillFields = async (data, userRole) => {
     addedBy: applicantEnum.CSV,
   };
 };
-
-// export const processCsvRow = async (data, userRole) => {
-//   try {
-//     if (!data || typeof data !== 'object') {
-//       throw new Error('Invalid data provided to processCsvRow');
-//     }
-
-//     const appliedRoleValue = data['Applied Role']?.trim();
-//     const appliedRole = appliedRoleValue
-//       ? Object.values(applicantEnum).find(
-//         (value) =>
-//           value.replace(/\s+/g, '').toUpperCase() ===
-//           appliedRoleValue.replace(/\s+/g, '').toUpperCase()
-//       )
-//       : undefined;
-//     //required fields
-//     const requiredFields = {
-//       firstName: data['First Name']?.trim(),
-//       lastName: data['Last Name']?.trim(),
-//       email: data['Email']?.trim(),
-//       phoneNumber: data['Phone Number']?.trim(),
-//       gender: data['Gender']?.trim()?.toLowerCase(),
-//       passingYear: data['Passing Year']?.trim(),
-//       qualification: data['Qualification']?.trim(),
-//       specialization: data['Specialization']?.trim(),
-//       currentCity: data['Current City']?.trim(),
-//       state: data['State']?.trim(),
-//       appliedSkills: data['Applied Skills']
-//         ? data['Applied Skills'].split(',').map((skill) => skill.trim())
-//         : [],
-//       totalExperience: data['Total Experience (years)']?.trim(),
-//       relevantSkillExperience:
-//         data['Relevant Skill Experience (years)']?.trim(),
-//       appliedRole: appliedRole,
-//       currentCompanyDesignation: data['Current Company Designation']?.trim(),
-//       otherSkills: data['Other Skills']?.trim(),
-//       resumeUrl: data['Resume URL']?.trim(),
-//     };
-//     const missingFields = Object.entries(requiredFields)
-//       .filter(
-//         ([_, value]) =>
-//           value === undefined ||
-//           value === '' ||
-//           (Array.isArray(value) && value.length === 0)
-//       )
-//       .map(([key]) => key);
-
-//     if (missingFields.length > 0) {
-//       console.warn(`Missing required fields:`, missingFields);
-//       throw {
-//         missingFields,
-//         message: `${missingFields.join(', ')}, Is required`,
-//       };
-//     }
-//     // Validate and process remaining fields
-//     const validatedData = await validateAndFillFields(data, userRole);
-//     // console.log("VALIDATED DATA-------------", validatedData)
-//     return { valid: true, data: validatedData };
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
-
 export const processCsvRow = async (data, userRole) => {
   try {
     if (!data || typeof data !== 'object') {
       throw new Error('Invalid data provided to processCsvRow');
     }
-
-    console.log("RAW CSV DATA:", data);
-
-    // Required fields
     const requiredFields = {
       firstName: data['First Name']?.trim(),
       // lastName: data['Last Name']?.trim(),
@@ -338,7 +270,6 @@ export const processCsvRow = async (data, userRole) => {
       resumeUrl: data['Resume URL']?.trim(),
     };
 
-    // Check for missing fields first
     const missingFields = Object.entries(requiredFields)
       .filter(
         ([_, value]) =>
@@ -355,11 +286,8 @@ export const processCsvRow = async (data, userRole) => {
         message: `${missingFields.join(', ')} are required.`,
       };
     }
-    // Enum validation function
     const findEnumValue = (fieldValue, fieldName) => {
       if (!fieldValue) return undefined;
-
-      // Use applicantEnum for all enum checks
       const enumObject = applicantEnum;
 
       const enumValue = Object.values(enumObject).find(
@@ -369,7 +297,6 @@ export const processCsvRow = async (data, userRole) => {
       );
 
       if (!enumValue) {
-        // Find a similar match by checking the first 3 characters (can be adjusted as needed)
         const closestMatch = Object.values(enumObject).find((value) =>
           value.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 8))
         );
@@ -383,18 +310,11 @@ export const processCsvRow = async (data, userRole) => {
       }
       return enumValue;
     };
-
-
     const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
     const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
-
-    // Assign validated values
     requiredFields.appliedRole = appliedRole;
     requiredFields.currentCompanyDesignation = currentCompanyDesignation;
-
-    // Validate and process remaining fields
     const validatedData = await validateAndFillFields(data, userRole);
-    console.log('validated data---------------', validatedData)
     return { valid: true, data: validatedData };
   } catch (error) {
     throw error;
