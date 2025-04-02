@@ -1102,30 +1102,30 @@ export const updateManyApplicant = async (req, res) => {
     const result = await updateManyApplicantsService(applicantIds, updateData);
 
     if (result.matchedCount === 0) {
-      logger.warn('No applicants found to update.');
+      logger.warn(`${Message.NOT_FOUND} Applicants to update.`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        'No applicants found to update.'
+        `${Message.NOT_FOUND} Applicants to update.`
       );
     }
 
-    logger.info(`Updated ${result.modifiedCount} applicants successfully.`);
+    logger.info(`${result.modifiedCount} Applicants ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Updated ${result.modifiedCount} applicants successfully.`,
+      `${result.modifiedCount} Applicants ${Message.UPDATED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {
-    logger.error(`Failed to update multiple applicants: ${error.message}`);
+    logger.error(`${Message.FAILED_TO} update multiple applicants: ${error.message}`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Failed to update multiple applicants.'
+      `${Message.FAILED_TO} update multiple applicants.`
     );
   }
 };
