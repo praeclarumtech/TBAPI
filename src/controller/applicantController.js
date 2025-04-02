@@ -7,7 +7,7 @@ import {
   insertManyApplicants,
   updateManyApplicants,
   findApplicantByField,
-  createApplicantByReume,
+  createApplicantByResume,
   insertManyApplicantsToMain,
   deleteExportedApplicants
 } from '../services/applicantService.js';
@@ -98,7 +98,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         resumeUrl: `/uploads/resumes/${file.filename}`,
       };
 
-      const applicant = await createApplicantByReume(applicantData);
+      const applicant = await createApplicantByResume(applicantData);
 
       logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
       return HandleResponse(
