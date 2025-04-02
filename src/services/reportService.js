@@ -143,10 +143,7 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
         "ASP.NET", "ADO.NET", "Ado.Net", "C++", "C", "PHP", "Laravel", "CodeIgniter", "Hibernate",
         "WPF", "MVVM", "WinForms", "WCF"
       ],
-      fullstack: [
-        "REST API", "GraphQL", "SOAP", "MVC", "Entity Framework", "Linq", "SQL", "MySQL", "PostgreSQL", 
-        "MongoDB", "Firebase", "Oracle", "SQLite"
-      ],
+      database: ["SQL", "MySQL", "PostgreSQL", "MongoDB", "Firebase", "Oracle", "Sqlite", "GraphQL"],
       testing: [
         "JMeter", "Selenium", "Web Application Testing", "Automation Testing", "API Testing", 
         "Performance Testing", "TestNG", "Postman", "Manual Testing", 
@@ -162,7 +159,7 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
       uiux: [
         "Figma", "Adobe XD", "Sketch", "Balsamiq", "Photoshop", "Illustrator", "InVision", "Framer", "Axure", "Marvel"
       ],
-      others: ["Agile Methodology", "OOP", "OOPS", "XML", "Bash", "DAX", "SSIS"]
+      others: ["Agile Methodology", "OOP", "OOPS", "XML", "Bash", "DAX", "SSIS", "REST API", , "SOAP", "MVC", "Entity Framework", "Linq"]
     };
 
     const categorySkills = skillCategories[category.toLowerCase()];
