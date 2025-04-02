@@ -1,6 +1,9 @@
 import mammoth from 'mammoth';
 import fs from 'fs';
 import * as pdfjsLib from 'pdfjs-dist';
+import logger from '../loggers/logger.js';
+import WordExtractor from 'word-extractor';
+import { Message } from '../utils/constant/message.js';
 
 export const extractTextFromPDF = async (filePath) => {
   try {
@@ -40,24 +43,39 @@ export const extractTextFromDocx = async (filePath) => {
   }
 };
 
+const extractor = new WordExtractor();
+
+export const extractTextFromDoc = async (filePath) => {
+  try {
+    const doc = await extractor.extract(filePath);
+    const text = doc.getBody()?.trim();
+    if (!text) {
+      throw new Error('Extracted text is empty');
+    }
+    return text.replace(/\s+/g, ' ');
+  } catch (error) {
+    logger.error(`Failed to extract text from DOC: ${error.message}`);
+    return null;
+  }
+}
+
 export const parseResumeText = (text) => {
   const emailRegex = /[a-zA-Z0-9._%+-]+ ?@ ?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  const phoneRegex = /(\+91\s?)?[6-9]\d{4}\s?\d{5}/;
+
+  const phoneRegex = /(\+91\s?)?[6-9]\d{4}[-\s]?\d{5}/;
   const nameTagRegex =
     /(?:Name|Full Name)\s*[:\-]\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?(?:\s[A-Z][a-z]+)?)/i;
   const skillsMatch = text.match(/(Technical Skills|Skills)[:\s]*(.*)/i);
   const experienceRegex = /(\d+(?:\.\d+)?)\s*(?:\+?\s*years?|yrs?|year)/gi;
+  const locationRegex = /(Address|Location|Current Address)[:\s]*(\S+(?:\s+\S+){0,5})/i;
+  const preferredLocationRegex = /(Preferred Location)[:\s]*(\S+(?:\s+\S+){0,5})/i;
   const matches = [...text.matchAll(experienceRegex)].map((match) =>
     parseFloat(match[1])
   );
   const qualificationMatch = text.match(
     /(BTech|Bachelor|Master|B\.Sc|M\.Sc|MTech|PhD|Diploma|B.Tech|M.Tech).*?(?:\d{4})?/i
   );
-
-  const locationMatch = text.match(
-    /(Address|Location|City|Current Address)[:\s]*(.*)/i
-  );
-  const preferredLocationsMatch = text.match(/(preferred location)[:\s]*(.*)/i);
+  const preferredLocationMatch = text.match(preferredLocationRegex);
   const linkedInMatch = text.match(
     /(https?:\/\/)?(www\.)?linkedin\.com\/[a-zA-Z0-9-_/]+/
   );
@@ -70,15 +88,14 @@ export const parseResumeText = (text) => {
   const emailMatch = text.match(emailRegex);
   const email = emailMatch ? emailMatch[0].replace(/\s+/g, '') : '';
   const phoneMatch = text.match(phoneRegex);
-  const phone = phoneMatch ? phoneMatch[0].replace(/\s+/g, '') : '';
+  const phone = phoneMatch ? phoneMatch[0].replace(/[-\s]/g, '').replace(/^\+91/, '') : '';
   const totalExperience = matches.length > 0 ? Math.max(...matches) : 0;
   const qualification = qualificationMatch
     ? qualificationMatch[1]
     : 'Not Provided';
-  const currentAddress = locationMatch ? locationMatch[2] : 'Not Provided';
-  const preferredLocations = preferredLocationsMatch
-    ? preferredLocationsMatch[2]
-    : 'Not Provided';
+  const locationMatch = text.match(locationRegex);
+  const currentAddress = locationMatch ? locationMatch[2].trim() : 'Not Provided';
+  const preferredLocations = preferredLocationMatch ? preferredLocationMatch[2].trim() : 'Not Provided';
   const linkedinUrl = linkedInMatch ? linkedInMatch[0] : 'Not Found';
   const currentCompanyName = currentCompanyMatch
     ? currentCompanyMatch[2].trim()
@@ -333,3 +350,5 @@ export const parseResumeText = (text) => {
     dateOfBirth,
   };
 };
+
+

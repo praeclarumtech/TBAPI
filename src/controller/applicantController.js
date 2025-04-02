@@ -29,6 +29,7 @@ import {
   extractTextFromPDF,
   extractTextFromDocx,
   parseResumeText,
+  extractTextFromDoc,
 } from '../helpers/importResume.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
@@ -54,6 +55,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       let resumeText = '';
       const filePath = file.path;
 
+
       if (file.mimetype === 'application/pdf') {
         resumeText = await extractTextFromPDF(filePath);
       } else if (
@@ -61,11 +63,28 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ) {
         resumeText = await extractTextFromDocx(filePath);
+      } else if (file.mimetype === 'application/msword') {
+        resumeText = await extractTextFromDoc(filePath);
       } else {
         throw new Error('Unsupported file type');
       }
 
       const parsedData = parseResumeText(resumeText);
+       const { email, phone } = parsedData;
+
+      const existingApplicant = await Applicant.findOne({
+        $or: [{ email }, { phone }],
+      });
+
+      if (existingApplicant) {
+        logger.warn(`Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`
+        );
+      }
       const applicationNo = await generateApplicantNo();
 
       const applicantData = {
@@ -86,12 +105,12 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         applicant
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} add applicant: ${error.message}`);
+      logger.error(`${Message.FAILED_TO} add applicant: ${error}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `${Message.FAILED_TO} add applicant:${error.message}`
+        `${Message.FAILED_TO} add applicant:${error}`
       );
     } finally {
       if (req.file) {
@@ -191,16 +210,15 @@ export const viewAllApplicant = async (req, res) => {
       };
     }
 
-
     if (totalExperience) {
-      const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.totalExperience = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
       }
     }
@@ -221,27 +239,27 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (expectedPkg) {
-      const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = expectedPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.expectedPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(expectedPkg))) {
         query.expectedPkg = parseFloat(expectedPkg);
       }
     }
 
     if (currentPkg) {
-      const rangeMatch = currentPkg.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = currentPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.currentPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(currentPkg))) {
         query.currentPkg = parseFloat(currentPkg);
       }
     }
@@ -287,24 +305,27 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (rating) {
-      const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.rating = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(rating))) {
         query.rating = parseFloat(rating);
       }
     }
+
     if (communicationSkill) {
-      const rangeMatch = communicationSkill.toString().match(/^(\d+)-(\d+)$/);
+      const rangeMatch = communicationSkill.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
+        const max = parseFloat(rangeMatch[3]);
+    
         query.communicationSkill = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(communicationSkill))) {
         query.communicationSkill = parseFloat(communicationSkill);
       }
     }
@@ -446,14 +467,14 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     if (totalExperience) {
-      const rangeMatch = totalExperience.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.totalExperience = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
       }
     }
@@ -474,27 +495,40 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     if (expectedPkg) {
-      const rangeMatch = expectedPkg.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = expectedPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.expectedPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(expectedPkg))) {
         query.expectedPkg = parseFloat(expectedPkg);
       }
     }
 
-    if (currentPkg) {
-      const rangeMatch = currentPkg.toString().match(/^(\d+)-(\d+)$/);
-
+    if (totalExperience) {
+      const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
+        const max = parseFloat(rangeMatch[3]);
+    
+        query.totalExperience = { $gte: min, $lte: max };
+      } else if (!isNaN(parseFloat(totalExperience))) {
+        query.totalExperience = parseFloat(totalExperience);
+      }
+    }
 
+    if (currentPkg) {
+      const rangeMatch = currentPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[3]);
+    
         query.currentPkg = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(currentPkg))) {
         query.currentPkg = parseFloat(currentPkg);
       }
     }
@@ -539,27 +573,27 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     if (rating) {
-      const rangeMatch = rating.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.rating = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(rating))) {
         query.rating = parseFloat(rating);
       }
     }
 
     if (communicationSkill) {
-      const rangeMatch = communicationSkill.toString().match(/^(\d+)-(\d+)$/);
-
+      const rangeMatch = communicationSkill.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[2]);
-
+        const max = parseFloat(rangeMatch[3]);
+    
         query.communicationSkill = { $gte: min, $lte: max };
-      } else {
+      } else if (!isNaN(parseFloat(communicationSkill))) {
         query.communicationSkill = parseFloat(communicationSkill);
       }
     }
