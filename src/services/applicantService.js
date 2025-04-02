@@ -1,4 +1,5 @@
 import Applicant from '../models/applicantModel.js';
+import ExportsApplicants from '../models/exportsApplicantsModel.js';
 
 export const createApplicant = async (body) => {
   const applicant = new Applicant({ ...body });
@@ -6,8 +7,14 @@ export const createApplicant = async (body) => {
   return applicant;
 };
 
+export const createApplicantByReume = async (body) => {
+  const applicant = new ExportsApplicants({ ...body });
+  await applicant.save();
+  return applicant;
+};
+
 export const insertManyApplicants = async (applicantsArray) => {
-  return await Applicant.bulkWrite(
+  return await ExportsApplicants.bulkWrite(
     applicantsArray.map((applicant) => ({
       insertOne: { document: applicant },
     }))
@@ -15,7 +22,7 @@ export const insertManyApplicants = async (applicantsArray) => {
 };
 
 export const updateManyApplicants = async (applicantsArray) => {
-  return await Applicant.bulkWrite(
+  return await ExportsApplicants.bulkWrite(
     applicantsArray.map((applicant) => ({
       updateOne: {
         filter: { email: applicant.email.trim().toLowerCase() },
@@ -26,8 +33,15 @@ export const updateManyApplicants = async (applicantsArray) => {
   );
 };
 
+export const deleteExportedApplicants = async (query) => {
+  return await ExportsApplicants.deleteMany(query);
+};
+
+export const insertManyApplicantsToMain = async (applicantsArray) => {
+  return await Applicant.insertMany(applicantsArray);
+}
 export const getAllapplicant = async (query) => {
-  return Applicant.find(query);
+  return ExportsApplicants.find(query)
 };
 
 export const getApplicantById = async (id) => {
