@@ -7,6 +7,9 @@ import {
   insertManyApplicants,
   updateManyApplicants,
   findApplicantByField,
+  createApplicantByResume,
+  insertManyApplicantsToMain,
+  deleteExportedApplicants
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -31,6 +34,7 @@ import {
   parseResumeText,
   extractTextFromDoc,
 } from '../helpers/importResume.js';
+import ExportsApplicants from '../models/exportsApplicantsModel.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
@@ -70,9 +74,9 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       }
 
       const parsedData = parseResumeText(resumeText);
-       const { email, phone } = parsedData;
+      const { email, phone } = parsedData;
 
-      const existingApplicant = await Applicant.findOne({
+      const existingApplicant = await ExportsApplicants.findOne({
         $or: [{ email }, { phone }],
       });
 
@@ -94,7 +98,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         resumeUrl: `/uploads/resumes/${file.filename}`,
       };
 
-      const applicant = await createApplicant(applicantData);
+      const applicant = await createApplicantByResume(applicantData);
 
       logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
       return HandleResponse(
@@ -212,11 +216,11 @@ export const viewAllApplicant = async (req, res) => {
 
     if (totalExperience) {
       const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.totalExperience = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
@@ -240,11 +244,11 @@ export const viewAllApplicant = async (req, res) => {
 
     if (expectedPkg) {
       const rangeMatch = expectedPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.expectedPkg = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(expectedPkg))) {
         query.expectedPkg = parseFloat(expectedPkg);
@@ -253,11 +257,11 @@ export const viewAllApplicant = async (req, res) => {
 
     if (currentPkg) {
       const rangeMatch = currentPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.currentPkg = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(currentPkg))) {
         query.currentPkg = parseFloat(currentPkg);
@@ -306,11 +310,11 @@ export const viewAllApplicant = async (req, res) => {
 
     if (rating) {
       const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.rating = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(rating))) {
         query.rating = parseFloat(rating);
@@ -319,11 +323,11 @@ export const viewAllApplicant = async (req, res) => {
 
     if (communicationSkill) {
       const rangeMatch = communicationSkill.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.communicationSkill = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(communicationSkill))) {
         query.communicationSkill = parseFloat(communicationSkill);
@@ -468,11 +472,11 @@ export const getResumeAndCsvApplicants = async (req, res) => {
 
     if (totalExperience) {
       const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.totalExperience = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
@@ -496,11 +500,11 @@ export const getResumeAndCsvApplicants = async (req, res) => {
 
     if (expectedPkg) {
       const rangeMatch = expectedPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.expectedPkg = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(expectedPkg))) {
         query.expectedPkg = parseFloat(expectedPkg);
@@ -509,11 +513,11 @@ export const getResumeAndCsvApplicants = async (req, res) => {
 
     if (totalExperience) {
       const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.totalExperience = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
@@ -522,11 +526,11 @@ export const getResumeAndCsvApplicants = async (req, res) => {
 
     if (currentPkg) {
       const rangeMatch = currentPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.currentPkg = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(currentPkg))) {
         query.currentPkg = parseFloat(currentPkg);
@@ -574,11 +578,11 @@ export const getResumeAndCsvApplicants = async (req, res) => {
 
     if (rating) {
       const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.rating = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(rating))) {
         query.rating = parseFloat(rating);
@@ -587,11 +591,11 @@ export const getResumeAndCsvApplicants = async (req, res) => {
 
     if (communicationSkill) {
       const rangeMatch = communicationSkill.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-    
+
       if (rangeMatch) {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
-    
+
         query.communicationSkill = { $gte: min, $lte: max };
       } else if (!isNaN(parseFloat(communicationSkill))) {
         query.communicationSkill = parseFloat(communicationSkill);
@@ -631,7 +635,7 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     const applicants = await pagination({
-      Schema: Applicant,
+      Schema: ExportsApplicants,
       page: pageNum,
       limit: limitNum,
       query,
@@ -774,22 +778,45 @@ export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered } = req.query;
     let query = {};
+    let applicants;
+    let filterArray;
     if (filtered) {
-      if (Object.values(applicantEnum).includes(filtered)) {
-        query = { addedBy: filtered };
+      filterArray = filtered.split(',');
+      if (filterArray.every(value => Object.values(applicantEnum).includes(value) || ['Resume', 'Csv'].includes(value))) {
+        query = { addedBy: { $in: filterArray } };
       } else {
-        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `invalid filter value`)
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `Invalid filter value`);
       }
     }
-    const applicants = await getAllapplicant(query);
-    if (!applicants.length) {
-      logger.warn(`Applicants are ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Applicants are ${Message.NOT_FOUND}`
-      );
+    if (filtered && filterArray.some(value => ['Resume', 'Csv'].includes(value))) {
+      applicants = await getAllapplicant(query);
+      if (!applicants.length) {
+        logger.warn(`Applicants are ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          `Applicants are ${Message.NOT_FOUND}`
+        );
+      }
+      applicants = applicants.map(applicant => ({
+        ...applicant.toObject(),
+        addedBy: "Manual",
+      }));
+
+      await insertManyApplicantsToMain(applicants);
+      await deleteExportedApplicants(query);
+    } else {
+      applicants = await Applicant.find();
+      if (!applicants.length) {
+        logger.warn(`Applicants are ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          `Applicants are ${Message.NOT_FOUND}`
+        );
+      }
     }
 
     const csvData = generateApplicantCsv(applicants);
@@ -1043,12 +1070,12 @@ export const checkApplicantExists = async (req, res) => {
     let duplicateField = "";
 
     if (whatsappNumber) {
-      existingApplicant = await findApplicantByField("phone.whatsappNumber", whatsappNumber );
+      existingApplicant = await findApplicantByField("phone.whatsappNumber", whatsappNumber);
       if (existingApplicant) duplicateField = "whatsappNumber";
     }
 
     if (!existingApplicant && phoneNumber) {
-      existingApplicant = await findApplicantByField( "phone.phoneNumber", phoneNumber );
+      existingApplicant = await findApplicantByField("phone.phoneNumber", phoneNumber);
       if (existingApplicant) duplicateField = "phoneNumber";
     }
 
