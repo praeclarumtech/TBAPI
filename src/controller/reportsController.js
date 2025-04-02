@@ -121,9 +121,19 @@ export const getApplicationsByDate = async (req, res) => {
 
 export const technologyStatistics = async (req, res) => {
   try {
-    const { calendarType, startDate, endDate } = req.query;
+    const { calendarType, startDate, endDate, category } = req.query;
 
-    const { skillCounts } = await getTechnologyStatistics(calendarType, startDate, endDate);
+    if (!category) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Category is required.`,
+        {}
+      );
+    }
+
+    const { skillCounts } = await getTechnologyStatistics(calendarType, startDate, endDate, category);
 
     logger.info(`Technology Statistics ${Message.FETCH_SUCCESSFULLY}`);  
     return HandleResponse(
@@ -131,14 +141,12 @@ export const technologyStatistics = async (req, res) => {
       true,
       StatusCodes.OK,
       `Technology Statistics ${Message.FETCH_SUCCESSFULLY}`,
-      skillCounts
+      { category, skillCounts }
     );
   } catch (error) {
     logger.error(
       `${Message.FAILED_TO} Fetching Technology Statistics: ${error.message}`,
-      {
-        stack: error.stack,
-      }
+      { stack: error.stack }
     );
 
     return HandleResponse(
@@ -150,3 +158,4 @@ export const technologyStatistics = async (req, res) => {
     );
   }
 };
+
