@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
 
-const ExportsApplicantsSchema = new mongoose.Schema({
+const TemporaryExportsApplicantsSchema = new mongoose.Schema({
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
@@ -170,5 +170,5 @@ const ExportsApplicantsSchema = new mongoose.Schema({
     { timestamps: true }
 )
 
-const ExportsApplicants = mongoose.model('ExportsApplicants', ExportsApplicantsSchema, 'exports_applicants')
+const ExportsApplicants = mongoose.model('ExportsApplicants', TemporaryExportsApplicantsSchema, 'exports_applicants')
 export default ExportsApplicants
