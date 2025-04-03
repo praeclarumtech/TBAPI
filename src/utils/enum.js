@@ -25,6 +25,7 @@ export const applicantEnum = {
   FIRST_INTERVIEW_ROUND: 'first interview round',
   PRACTICAL: 'practical',
   CLIENT: 'client',
+
   SOFTWARE_ENGINEER: 'Software Engineer',
   WEB_DESIGNER: 'Web Designer',
   WEB_DEVELOPER: 'web Developer',

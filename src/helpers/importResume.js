@@ -4,6 +4,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import logger from '../loggers/logger.js';
 import WordExtractor from 'word-extractor';
 import { Message } from '../utils/constant/message.js';
+import { applicantEnum } from '../utils/enum.js';
 
 export const extractTextFromPDF = async (filePath) => {
   try {
@@ -60,9 +61,9 @@ export const extractTextFromDoc = async (filePath) => {
 }
 
 export const parseResumeText = (text) => {
-  const emailRegex = /[a-zA-Z0-9._%+-]+ ?@ ?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-
-  const phoneRegex = /(\+91\s?)?[6-9]\d{4}[-\s]?\d{5}/;
+  const emailRegex = /\b[a-zA-Z0-9._%+-]+(?:\s*@\s*|\s+at\s+)[a-zA-Z0-9.-]+\s*\.\s*[a-zA-Z]{2,}\b/g;
+  const phoneRegex = /(\+?\s?91[-\s()]*)?\d{3,5}[-\s()]*\d{3,5}[-\s]*\d{3,5}/g;
+  
   const nameTagRegex =
     /(?:Name|Full Name)\s*[:\-]\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?(?:\s[A-Z][a-z]+)?)/i;
   const skillsMatch = text.match(/(Technical Skills|Skills)[:\s]*(.*)/i);
@@ -80,7 +81,7 @@ export const parseResumeText = (text) => {
     /(https?:\/\/)?(www\.)?linkedin\.com\/[a-zA-Z0-9-_/]+/
   );
   const currentCompanyMatch = text.match(
-    /(Current Employer|Current Company|Company Name)[:\s]*(.*)/i
+    /(Current Employer|Current Company|Company Name)[:\s]*(\S+(?:\s+\S+){0,5})/i
   );
   const maritalStatusMatch = text.match(/Marital Status:\s*(Single|Married)/i);
   const dobMatch = text.match(/Date of Birth:\s*(\d{2}[-/]\d{2}[-/]\d{4})/i);
@@ -88,7 +89,7 @@ export const parseResumeText = (text) => {
   const emailMatch = text.match(emailRegex);
   const email = emailMatch ? emailMatch[0].replace(/\s+/g, '') : '';
   const phoneMatch = text.match(phoneRegex);
-  const phone = phoneMatch ? phoneMatch[0].replace(/[-\s]/g, '').replace(/^\+91/, '') : '';
+  let phone = phoneMatch ? phoneMatch[0].replace(/[-()\s]/g, '').replace(/^\+91/, '') : '';
   const totalExperience = matches.length > 0 ? Math.max(...matches) : 0;
   const qualification = qualificationMatch
     ? qualificationMatch[1]
@@ -207,31 +208,51 @@ export const parseResumeText = (text) => {
     'Hibernate',
     'Svelte',
     'Flutter',
+    'Figma',
+    'adobe XD',
+    'Sketch', 
+   'balsamiq',
+    'Photoshop',
+    'illustrator',
+    'InVision',
+    'Framer', 
+    'Axure', 
+    'Marvel',
 
   ];
 
-  const roleWordList = [
-    'Software Engineer',
-    'Frontend Developer',
-    'Backend Developer',
-    'Full Stack Developer',
-    'Data Analyst',
-    'Data Scientist',
-    'Product Manager',
-    'UX/UI Designer',
-    'QA Engineer',
-    'DevOps Engineer',
-    'Business Analyst',
-    'Technical Support Engineer',
-    'MERN Stack Developer',
-    'MEAN Stack Developer',
-    'DotNet Developer',
-    'Java Developer',
-    'Python Developer',
-    'PHP Developer',
-    'Other',
-    'Na',
-  ];
+  const roleWordList = Object.values(applicantEnum).filter((role) => ![
+    applicantEnum.YES,
+    applicantEnum.NO,
+    applicantEnum.REMOTE,
+    applicantEnum.HYBRID,
+    applicantEnum.ONSITE,
+    applicantEnum.PENDING,
+    applicantEnum.SELECTED,
+    applicantEnum.REJECTED,
+    applicantEnum.HOLD,
+    applicantEnum.IN_PROCESS,
+    applicantEnum.HR_ROUND,
+    applicantEnum.TECHNICAL,
+    applicantEnum.FIRST_INTERVIEW_ROUND,
+    applicantEnum.PRACTICAL,
+    applicantEnum.CLIENT,
+    applicantEnum.NODE_JS,
+    applicantEnum.REACT,
+    applicantEnum.DOTNET,
+    applicantEnum.ANGULAR,
+    applicantEnum.UI_UX,
+    applicantEnum.PYTHON,
+    applicantEnum.JAVASCRIPT,
+    applicantEnum.JAVA,
+    applicantEnum.C,
+    applicantEnum.SINGLE,
+    applicantEnum.MARRIED,
+    applicantEnum.MANUAL,
+    applicantEnum.CSV,
+    applicantEnum.RESUME
+  ].includes(role));
+  
 
   const escapeRegex = (word) => word.replace(/[.*?^${}()|[\]\\#+]/g, '\\$&');
 
@@ -327,6 +348,7 @@ export const parseResumeText = (text) => {
   const lastName =
     nameParts.length > 2 ? nameParts[2] : nameParts[1] || 'Unknown';
 
+
   return {
     name: {
       firstName,
@@ -338,7 +360,7 @@ export const parseResumeText = (text) => {
       phoneNumber: phone,
       whatsappNumber: phone,
     },
-    appliedSkills: skills,
+    otherSkills: skills.join(', '),
     totalExperience,
     qualification,
     appliedRole,
