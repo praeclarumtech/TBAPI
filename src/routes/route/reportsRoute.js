@@ -2,8 +2,8 @@ import express from 'express';
 import {
     applicationOnProcessCount,
     statusByPercentage,
-    technologyStatistics,
-    getApplicationsByDate
+    getApplicationsByDate,
+    technologyStatistics
 } from '../../controller/reportsController.js';
 
 const router = express.Router();

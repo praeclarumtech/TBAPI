@@ -205,16 +205,15 @@ export const viewAllApplicant = async (req, res) => {
     if (applicationNo && !isNaN(applicationNo)) {
       query.applicationNo = parseInt(applicationNo);
     }
-
+    
     if (appliedSkills) {
-      const skillsArray = appliedSkills.split(',').map((skill) => skill.trim());
-      query.appliedSkills = {
-        $all: skillsArray.map((skill) => ({
-          $elemMatch: { $regex: new RegExp(`^${skill}$`, 'i') }
-        }))
-      };
+      const skillsArray = appliedSkills
+        .split(',')
+        .map((skill) => new RegExp(`^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'));
+    
+      query.appliedSkills = { $all: skillsArray };
     }
-
+    
     if (totalExperience) {
       const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
 
@@ -467,7 +466,10 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     if (appliedSkills) {
-      const skillsArray = appliedSkills.split(',').map((skill) => skill.trim());
+      const skillsArray = appliedSkills
+        .split(',')
+        .map((skill) => new RegExp(`^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'));
+    
       query.appliedSkills = { $all: skillsArray };
     }
 
