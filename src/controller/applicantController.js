@@ -45,7 +45,6 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
     try {
       const { file } = req;
-
       if (!file) {
         logger.warn(`Resume file is ${Message.NOT_FOUND}`);
         return HandleResponse(
@@ -799,11 +798,6 @@ export const exportApplicantCsv = async (req, res) => {
           `Applicants are ${Message.NOT_FOUND}`
         );
       }
-      applicants = applicants.map(applicant => ({
-        ...applicant.toObject(),
-        addedBy: "Manual",
-      }));
-
       await insertManyApplicantsToMain(applicants);
       await deleteExportedApplicants(query);
     } else {
@@ -916,13 +910,12 @@ export const importApplicantCsv = async (req, res) => {
 
             const uniqueEmails = [...new Set(emails)];
 
-            const existingApplicants = await Applicant.find({
+            const existingApplicants = await ExportsApplicants.find({
               email: { $in: uniqueEmails },
             }).lean();
             const existingEmails = new Set(
               existingApplicants.map((app) => app.email.trim().toLowerCase())
             );
-
             const toInsert = validApplicants.filter(
               (applicant) =>
                 applicant.email &&
