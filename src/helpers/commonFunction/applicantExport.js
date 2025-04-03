@@ -250,23 +250,11 @@ export const processCsvRow = async (data, userRole) => {
     }
     const requiredFields = {
       firstName: data['First Name']?.trim(),
-      // lastName: data['Last Name']?.trim(),
       email: data['Email']?.trim(),
       phoneNumber: data['Phone Number']?.trim(),
       gender: data['Gender']?.trim()?.toLowerCase(),
-      // passingYear: data['Passing Year']?.trim(),
-      qualification: data['Qualification']?.trim(),
-      // specialization: data['Specialization']?.trim(),
-      // currentCity: data['Current City']?.trim(),
-      // state: data['State']?.trim(),
-      // appliedSkills: data['Applied Skills']
-      //   ? data['Applied Skills'].split(',').map((skill) => skill.trim())
-      //   : [],
-      // totalExperience: data['Total Experience (years)']?.trim(),
-      // relevantSkillExperience: data['Relevant Skill Experience (years)']?.trim(),
       appliedRole: data['Applied Role']?.trim(),
       currentCompanyDesignation: data['Current Company Designation']?.trim(),
-      // otherSkills: data['Other Skills']?.trim(),
       resumeUrl: data['Resume URL']?.trim(),
     };
 
@@ -305,7 +293,6 @@ export const processCsvRow = async (data, userRole) => {
 
         throw {
           message: `Invalid ${fieldName}: "${fieldValue}". Did you mean: "${suggestion}"?`,
-          // message: `Did you mean: ${suggestion}?`,
         };
       }
       return enumValue;
