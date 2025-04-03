@@ -7,9 +7,10 @@ import {
   insertManyApplicants,
   updateManyApplicants,
   findApplicantByField,
+  updateManyApplicantsService,
   createApplicantByResume,
   insertManyApplicantsToMain,
-  deleteExportedApplicants
+  deleteExportedApplicants,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -1112,3 +1113,46 @@ export const checkApplicantExists = async (req, res) => {
   }
 };
 
+export const updateManyApplicant = async (req, res) => {
+  try {
+    const { applicantIds, updateData } = req.body;
+
+    if (!applicantIds || !Array.isArray(applicantIds) || applicantIds.length === 0) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Applicant IDs must be provided as a non-empty array.'
+      );
+    }
+
+    const result = await updateManyApplicantsService(applicantIds, updateData);
+
+    if (result.matchedCount === 0) {
+      logger.warn(`${Message.NOT_FOUND} Applicants to update.`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `${Message.NOT_FOUND} Applicants to update.`
+      );
+    }
+
+    logger.info(`${result.modifiedCount} Applicants ${Message.UPDATED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `${result.modifiedCount} Applicants ${Message.UPDATED_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} update multiple applicants: ${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update multiple applicants.`
+    );
+  }
+};
