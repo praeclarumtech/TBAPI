@@ -89,11 +89,9 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
           `Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`
         );
       }
-      const applicationNo = await generateApplicantNo();
 
       const applicantData = {
         ...parsedData,
-        applicationNo,
         addedBy: applicantEnum.RESUME,
         resumeUrl: `/uploads/resumes/${file.filename}`,
       };
