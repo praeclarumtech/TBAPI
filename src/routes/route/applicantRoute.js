@@ -29,7 +29,6 @@ router.get('/viewApplicant/:id', viewApplicant);
 router.get('/viewResumeAndCsvApplicant', getResumeAndCsvApplicants);
 router.put('/updateApplicant/:id',validator.body(updateApplicantValidation), updateApplicant);
 router.put('/updateManyApplicant',validator.body(updateManyApplicantsValidation),updateManyApplicant);
-// router.put('/updateManyApplicant', updateManyApplicant);
  
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);
