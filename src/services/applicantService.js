@@ -91,3 +91,16 @@ export const removeManyApplicants = async (ids) => {
 export const findApplicantByField = async (field, value) => {
   return await Applicant.findOne({ [field]: value });
 };
+
+export const updateManyApplicantsService = async (applicantIds, updateData) => 
+  {
+  try {
+    const result = await ExportsApplicants.updateMany(
+      { _id: { $in: applicantIds } },
+      { $set: updateData },
+    );
+    return result;
+  } catch (error) {
+    throw new Error('Failed to update multiple applicants: ' + error.message);
+  }
+};
