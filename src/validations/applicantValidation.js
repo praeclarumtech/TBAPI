@@ -439,6 +439,11 @@ export const updateManyApplicantsValidation = Joi.object({
       applicantEnum.OTHER,
       applicantEnum.NA
     ),
+    
+    lastFollowUpDate: Joi.date().iso().messages({
+      'date.base': 'lastFollowUpDate must be a valid date.',
+      'date.format': 'lastFollowUpDate must be in ISO 8601 format.',
+    }),
   })
     .required()
     .messages({
