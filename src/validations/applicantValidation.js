@@ -381,3 +381,70 @@ export const updateApplicantValidation = Joi.object({
     'object.base': 'Meta must be an object with key-value pairs.',
   }),
 });
+
+
+export const updateManyApplicantsValidation = Joi.object({
+  applicantIds: Joi.array()
+    .items(Joi.string().regex(/^[0-9a-fA-F]{24}$/).messages({
+      'string.pattern.base': 'Each applicant ID must be a valid MongoDB ObjectId.',
+    }))
+    .min(1)
+    .required()
+    .messages({
+      'array.base': 'applicantIds must be an array.',
+      'array.min': 'At least one applicant ID is required.',
+      'any.required': 'applicantIds is required.',
+    }),
+
+  updateData: Joi.object({
+    status: Joi.string()
+      .valid(
+        applicantEnum.PENDING,
+        applicantEnum.SELECTED,
+        applicantEnum.REJECTED,
+        applicantEnum.HOLD,
+        applicantEnum.IN_PROCESS
+      )
+      .messages({ 'any.only': 'Invalid status value.' }),
+
+    interviewStage: Joi.string()
+      .valid(
+        applicantEnum.HR_ROUND,
+        applicantEnum.TECHNICAL,
+        applicantEnum.FIRST_INTERVIEW_ROUND,
+        applicantEnum.CLIENT,
+        applicantEnum.PRACTICAL
+      )
+      .messages({ 'any.only': 'Invalid interview stage value.' }),
+
+    appliedRole: Joi.string().valid(
+      applicantEnum.FRONTED_DEVLOPER,
+      applicantEnum.SOFTWARE_ENGINEER,
+      applicantEnum.BACKEND_DEVLOPER,
+      applicantEnum.FULL_STACK_DEVLOPER,
+      applicantEnum.DATA_ANALYST,
+      applicantEnum.DATA_SCIENTIST,
+      applicantEnum.PRODUCT_MANAGER,
+      applicantEnum.UI_UX,
+      applicantEnum.QA,
+      applicantEnum.DEVOPS,
+      applicantEnum.BUSNESS_ANALYST,
+      applicantEnum.TECHNICSL_SUPPORT,
+      applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JAVA_DEVELOPER,
+      applicantEnum.PYTHON_DEVELOPER,
+      applicantEnum.PHP_DEVELOPER,
+      applicantEnum.OTHER,
+      applicantEnum.NA
+    ),
+  })
+    .required()
+    .messages({
+      'object.base': 'updateData must be an object.',
+      'any.required': 'updateData is required.',
+    }),
+});
+
+
