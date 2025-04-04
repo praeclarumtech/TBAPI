@@ -157,6 +157,9 @@ export const applicantValidation = Joi.object({
       applicantEnum.TEAM_LEADER,
       applicantEnum.TECHNICAL_ANALYST,
       applicantEnum.SENIOR_ANGULAR_DEVELOPER,
+      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
+      applicantEnum.SHAREPOINT_DEVELOPER,
+      applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.OTHER,
       applicantEnum.NA
     )

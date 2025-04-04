@@ -1,7 +1,15 @@
 import { Parser } from 'json2csv';
 import { applicantEnum, genderEnum } from '../../utils/enum.js';
 
+
 export const generateApplicantCsv = (applicants) => {
+  const metaKeys = new Set();
+  applicants.forEach((applicant) => {
+    if (applicant.meta) {
+      Object.keys(applicant.meta).forEach((key) => metaKeys.add(key));
+    }
+  });
+
   const fields = [
     { label: 'First Name', value: (row) => row.name?.firstName || '' },
     { label: 'Middle Name', value: (row) => row.name?.middleName || '' },
@@ -66,6 +74,10 @@ export const generateApplicantCsv = (applicants) => {
       value: (row) => row.currentCompanyDesignation || '',
     },
     { label: 'Applied Role', value: (row) => row.appliedRole || '' },
+    ...Array.from(metaKeys).map((key) => ({
+      label: key,
+      value: (row) => row.meta?.[key] || 'Not Provided'
+    })),
     { label: 'Practical URL', value: (row) => row.practicalUrl || '' },
     {
       label: 'Practical Feedback',
@@ -106,15 +118,36 @@ export const generateApplicantCsv = (applicants) => {
       label: 'Client Feedback',
       value: (row) => row.clientFeedback || 'Not Provided',
     },
-    {
-      label: 'Meta',
-      value: (row) => row.meta || 'Not Provided'
-    }
   ];
+
   const json2csvParser = new Parser({ fields });
   return json2csvParser.parse(applicants);
 };
 const validateAndFillFields = async (data, userRole) => {
+
+  const knownKeys = [
+    'First Name', 'Middle Name', 'Last Name', 'Phone Number', 'WhatsApp Number', 'Email',
+    'Gender', 'Date of Birth', 'Current Address', 'State', 'Country', 'Current Pincode',
+    'Current City', 'Permanent Address', 'Qualification', 'Specialization', 'Passing Year',
+    'College Name', 'CGPA', 'Applied Skills', 'Total Experience (years)',
+    'Relevant Skill Experience (years)', 'Communication Skill', 'Other Skills', 'Rating',
+    'Current Company Name', 'Current Company Designation', 'Applied Role',
+    'Current Package', 'Expected Package', 'Notice Period', 'Negotiation', 'Work Preference',
+    'Status', 'Interview Stage', 'Practical URL', 'Practical Feedback', 'Portfolio URL',
+    'Referral', 'Resume URL', 'Preferred Locations', 'Marital Status',
+    'Last Follow-Up Date', 'Any Hands-On Offers', 'Comment', 'Feedback',
+    'LinkedIn URL', 'Client CV URL', 'Client Feedback'
+  ];
+
+  const meta = {}
+  Object.keys(data).forEach((key) => {
+    if (!knownKeys.includes(key)) {
+      const value = data[key]?.trim();
+      if (value) {
+        meta[key] = value;
+      }
+    }
+  });
   return {
     name: {
       firstName: data['First Name']?.trim() || null,
@@ -241,6 +274,7 @@ const validateAndFillFields = async (data, userRole) => {
     createdBy: userRole,
     updatedBy: userRole,
     addedBy: applicantEnum.CSV,
+    meta: Object.keys(meta).length ? meta : { _empty: true },
   };
 };
 export const processCsvRow = async (data, userRole) => {

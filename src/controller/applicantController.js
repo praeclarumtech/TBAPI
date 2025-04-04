@@ -157,14 +157,15 @@ export const addApplicant = async (req, res) => {
       applicant
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} add aplicant.${error}`);
+    logger.error(`${Message.FAILED_TO} add aplicant.`);
     if (error.code === 11000) {
-      const duplicateValue = Object.values(error.keyValue)[0]; // Extract duplicate value
+      const duplicateField = Object.keys(error.keyValue)[0];
+      const duplicateValue = Object.values(error.keyValue)[0];
       return HandleResponse(
         res,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `found duplicate key: ${duplicateValue}`
+        `${duplicateField} ${duplicateValue} is already in use please use a different number.`
       );
     } else {
       return HandleResponse(
@@ -212,15 +213,15 @@ export const viewAllApplicant = async (req, res) => {
     if (applicationNo && !isNaN(applicationNo)) {
       query.applicationNo = parseInt(applicationNo);
     }
-    
+
     if (appliedSkills) {
       const skillsArray = appliedSkills
         .split(',')
         .map((skill) => new RegExp(`^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'));
-    
+
       query.appliedSkills = { $all: skillsArray };
     }
-    
+
     if (totalExperience) {
       const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
 
@@ -476,7 +477,7 @@ export const getResumeAndCsvApplicants = async (req, res) => {
       const skillsArray = appliedSkills
         .split(',')
         .map((skill) => new RegExp(`^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'));
-    
+
       query.appliedSkills = { $all: skillsArray };
     }
 
@@ -784,63 +785,51 @@ export const updateStatus = async (req, res) => {
 
 export const exportApplicantCsv = async (req, res) => {
   try {
-    const { filtered } = req.query;
+    const { filtered, source } = req.query;
     let query = {};
-    let applicants;
-    let filterArray;
-    if (filtered) {
-      filterArray = filtered.split(',');
-      if (filterArray.every(value => Object.values(applicantEnum).includes(value) || ['Resume', 'Csv'].includes(value))) {
-        query = { addedBy: { $in: filterArray } };
-      } else {
-        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `Invalid filter value`);
+    let applicants = [];
+
+    if (filtered === 'both') {
+      query = { addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] } };
+      applicants = await ExportsApplicants.find(query);
+      if (applicants.length) {
+        await insertManyApplicantsToMain(applicants);
+        await deleteExportedApplicants(query);
       }
-    }
-    if (filtered && filterArray.some(value => ['Resume', 'Csv'].includes(value))) {
-      applicants = await getAllapplicant(query);
-      if (!applicants.length) {
-        logger.warn(`Applicants are ${Message.NOT_FOUND}`);
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.NOT_FOUND,
-          `Applicants are ${Message.NOT_FOUND}`
-        );
+    } else if (filtered === 'Resume' || filtered === 'Csv') {
+      query = { addedBy: filtered === 'Resume' ? applicantEnum.RESUME : applicantEnum.CSV };
+      applicants = await ExportsApplicants.find(query);
+      if (applicants.length) {
+        await insertManyApplicantsToMain(applicants);
+        await deleteExportedApplicants(query);
       }
-      await insertManyApplicantsToMain(applicants);
-      await deleteExportedApplicants(query);
+    } else if (filtered === 'Manual') {
+      query = { addedBy: applicantEnum.MANUAL };
+      applicants = await Applicant.find(query);
     } else {
       applicants = await Applicant.find();
-      if (!applicants.length) {
-        logger.warn(`Applicants are ${Message.NOT_FOUND}`);
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.NOT_FOUND,
-          `Applicants are ${Message.NOT_FOUND}`
-        );
-      }
+    }
+
+    if (source === 'both') {
+      query = { addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] } };
+      applicants = await Applicant.find(query);
+    }
+
+    if (!applicants.length) {
+      logger.warn(`Applicants are ${Message.NOT_FOUND}`);
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Applicants are ${Message.NOT_FOUND}`);
     }
 
     const csvData = generateApplicantCsv(applicants);
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename=${filtered ? `${filtered}_applicants` : 'all_applicants'}.csv`
-    );
+    res.setHeader('Content-Disposition', `attachment; filename=${filtered ? `${filtered}_applicants` : 'all_applicants'}.csv`);
     res.status(200).send(csvData);
     logger.info(Message.DONWLOADED);
   } catch (error) {
     logger.error(`${Message.FAILED_TO} export file`);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} export file`
-    );
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} export file`);
   }
 };
-
 export const importApplicantCsv = async (req, res) => {
   try {
     const updateFlag =

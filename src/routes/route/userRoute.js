@@ -29,7 +29,7 @@ router.post('/login', validator.body(loginValidation), login);
 
 router.get('/viewProfile', authorization, viewProfile);
 router.get('/getProfileByToken', authorization, getProfileByToken);
-router.get('/viewProfile/viewProfileById/:id', authorization, viewProfileById);
+router.get('/viewProfileByID/:id', authorization, viewProfileById);
 router.put('/updateProfile/:id', authorization, upload, updateProfile);
 router.post('/sendEmail',validator.body(sendEmailValidation),sendEmail);
 router.post('/sendEmail/verifyOtp',verifyOtp);
