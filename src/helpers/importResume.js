@@ -1,10 +1,11 @@
 import mammoth from 'mammoth';
 import fs from 'fs';
-import * as pdfjsLib from 'pdfjs-dist';
 import logger from '../loggers/logger.js';
 import WordExtractor from 'word-extractor';
 import { Message } from '../utils/constant/message.js';
 import { applicantEnum } from '../utils/enum.js';
+
+import pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 
 export const extractTextFromPDF = async (filePath) => {
   try {
@@ -347,7 +348,6 @@ export const parseResumeText = (text) => {
   const middleName = nameParts.length > 2 ? nameParts[1] : '';
   const lastName =
     nameParts.length > 2 ? nameParts[2] : nameParts[1] || 'Unknown';
-
 
   return {
     name: {
