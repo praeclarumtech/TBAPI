@@ -135,11 +135,11 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
 
     const skillCategories = {
       frontend: [
-        "JavaScript", "JS", "TypeScript", "HTML", "CSS", "Bootstrap", "Tailwind", "SASS", "LESS",
+        "JavaScript", "TypeScript", "HTML", "CSS", "Bootstrap", "Tailwind", "SASS", "LESS",
         "React", "Angular", "Vue.js", "Vue", "jQuery", "RxJS", "Svelte", "Flutter"
       ],
       backend: [
-        "Node.js", "Node", "Django", "Flask", "Java", "Spring", "Spring Boot", "C#", "C-Sharp", ".NET", "DotNet",
+        "Node.js", "Django", "Flask", "Java", "Spring", "Spring Boot", "C#", "DotNet",
         "ASP.NET", "ADO.NET", "Ado.Net", "C++", "C", "PHP", "Laravel", "CodeIgniter", "Hibernate",
         "WPF", "MVVM", "WinForms", "WCF"
       ],
