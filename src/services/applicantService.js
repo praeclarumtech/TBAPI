@@ -104,3 +104,19 @@ export const updateManyApplicantsService = async (applicantIds, updateData) =>
     throw new Error('Failed to update multiple applicants: ' + error.message);
   }
 };
+
+export const getExportsApplicantById = async (id) => {
+  return ExportsApplicants.findById(id);
+};
+
+export const updateExportsApplicantById = async (id, updateData) => {
+  return ExportsApplicants.updateOne({ _id: id }, updateData);
+};
+
+export const hardDeleteExportsApplicantById = async (id) => {
+  return ExportsApplicants.deleteOne({ _id: id });
+};
+
+export const removeManyExportsApplicants = async (ids) => {
+  return await ExportsApplicants.deleteMany({ _id: { $in: ids } });
+};

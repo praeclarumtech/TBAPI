@@ -372,7 +372,32 @@ export const updateApplicantValidation = Joi.object({
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
   collegeName: Joi.string().allow(null, ''),
-  appliedRole: Joi.string(),
+  appliedRole: Joi.string()
+    .valid(
+      applicantEnum.FRONTED_DEVLOPER,
+      applicantEnum.SOFTWARE_ENGINEER,
+      applicantEnum.BACKEND_DEVLOPER,
+      applicantEnum.FULL_STACK_DEVLOPER,
+      applicantEnum.DATA_ANALYST,
+      applicantEnum.DATA_SCIENTIST,
+      applicantEnum.PRODUCT_MANAGER,
+      applicantEnum.UI_UX,
+      applicantEnum.QA,
+      applicantEnum.DEVOPS,
+      applicantEnum.BUSNESS_ANALYST,
+      applicantEnum.TECHNICSL_SUPPORT,
+      applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JAVA_DEVELOPER,
+      applicantEnum.PYTHON_DEVELOPER,
+      applicantEnum.PHP_DEVELOPER,
+      applicantEnum.OTHER,
+      applicantEnum.NA
+    )
+    .messages({
+      'any.required': 'CurrentCompanyDesignation is required.',
+    }),
   cgpa: Joi.number().allow(''),
   linkedinUrl: Joi.string().allow(''),
   clientCvUrl: Joi.string().allow(''),
