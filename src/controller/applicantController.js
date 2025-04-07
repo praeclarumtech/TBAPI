@@ -803,16 +803,19 @@ export const exportApplicantCsv = async (req, res) => {
         await insertManyApplicantsToMain(applicants);
         await deleteExportedApplicants(query);
       }
-    } else if (filtered === 'Manual') {
-      query = { addedBy: applicantEnum.MANUAL };
-      applicants = await Applicant.find(query);
-    } else {
-      applicants = await Applicant.find();
     }
 
-    if (source === 'both') {
+    if (source === 'Manual') {
+      query = { addedBy: applicantEnum.MANUAL };
+      applicants = await Applicant.find(query);
+    } else if (source === 'Resume' || source === 'Csv') {
+      query = { addedBy: source === 'Resume' ? applicantEnum.RESUME : applicantEnum.CSV };
+      applicants = await Applicant.find(query);
+    } else if (source === 'both') {
       query = { addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] } };
       applicants = await Applicant.find(query);
+    } else if (!filtered) {
+      applicants = await Applicant.find();
     }
 
     if (!applicants.length) {
@@ -821,8 +824,10 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     const csvData = generateApplicantCsv(applicants);
+    const filename = `${filtered || source || 'all'}_applicants.csv`;
+
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=${filtered ? `${filtered}_applicants` : 'all_applicants'}.csv`);
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
     res.status(200).send(csvData);
     logger.info(Message.DONWLOADED);
   } catch (error) {
@@ -830,6 +835,7 @@ export const exportApplicantCsv = async (req, res) => {
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} export file`);
   }
 };
+
 export const importApplicantCsv = async (req, res) => {
   try {
     const updateFlag =
