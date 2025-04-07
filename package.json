@@ -15,6 +15,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
+    "canvas": "^3.1.0",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "dotenv": "^16.4.7",
@@ -33,7 +34,7 @@
     "nodemon": "^3.1.9",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^5.0.375",
+    "pdfjs-dist": "^3.4.120",
     "winston": "^3.17.0",
     "winston-mongodb": "^6.0.0",
     "word-extractor": "^1.0.4"
