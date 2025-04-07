@@ -88,5 +88,5 @@ export const skillGroupEnum = {
   PROGRAMMING:'Programming',
   VERSION_CONTROL:'VersionControl',
   UI_UX:'UIUX',
-  OTHERS:'Othersab',
+  OTHERS:'Others',
 }

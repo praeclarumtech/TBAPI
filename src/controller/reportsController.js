@@ -2,8 +2,7 @@ import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-import { getReport,
-   getCategoryWiseSkillCount } from '../services/reportService.js';
+import { getReport,getCategoryWiseSkillCount } from '../services/reportService.js';
 import { getApplicationCount } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
