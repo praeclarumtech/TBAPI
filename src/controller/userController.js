@@ -12,6 +12,7 @@ import {
   getAllusers,
   getUserById,
   updateUserById,
+  updateProfileById,
   findUserEmail,
   findEmailForOtp,
   storeOtp,
@@ -230,7 +231,7 @@ export const updateProfile = async (req, res) => {
       updateData.profilePicture = req.file.filename;
     }
 
-    const updatedUser = await updateUserById(userId, updateData);
+    const updatedUser = await updateProfileById(userId, updateData);
 
     if (!updatedUser) {
       logger.warn(`Profile is ${Message.NOT_FOUND}`);

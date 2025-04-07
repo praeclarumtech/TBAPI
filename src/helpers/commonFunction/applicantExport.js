@@ -1,6 +1,7 @@
 import { Parser } from 'json2csv';
 import { applicantEnum, genderEnum } from '../../utils/enum.js';
 
+
 export const generateApplicantCsv = (applicants) => {
   const fields = [
     { label: 'First Name', value: (row) => row.name?.firstName || '' },
@@ -106,6 +107,10 @@ export const generateApplicantCsv = (applicants) => {
       label: 'Client Feedback',
       value: (row) => row.clientFeedback || 'Not Provided',
     },
+    {
+      label: 'Meta',
+      value: (row) => row.meta || 'Not Provided',
+    },
   ];
 
   const json2csvParser = new Parser({ fields });
@@ -116,7 +121,7 @@ const validateAndFillFields = async (data, userRole) => {
     name: {
       firstName: data['First Name']?.trim() || null,
       middleName: data['Middle Name']?.trim() || null,
-      lastName: data['Last Name']?.trim() || null,
+      lastName: data['Last Name']?.trim() || '',
     },
     phone: {
       phoneNumber: data['Phone Number']?.trim() || null,
@@ -135,14 +140,14 @@ const validateAndFillFields = async (data, userRole) => {
       )
         .toISOString()
         .split('T')[0]
-      : Date.now(),
+      : null,
     currentAddress: data['Current Address'] || 'Not Provided',
-    state: data['State'] || null,
+    state: data['State'] || 'Not Provided',
     country: data['Country'] || 'Not Provided',
     currentPincode: !isNaN(Number(data['Current Pincode']))
       ? Number(data['Current Pincode'])
       : null,
-    currentCity: data['Current City'] || null,
+    currentCity: data['Current City'] || 'Not Provided',
     permanentAddress: data['Permanent Address'] || 'Not Provided',
     qualification: data['Qualification']?.trim() || 'Not Provided',
     specialization: data['Specialization']?.trim() || 'Not Provided',
@@ -156,7 +161,7 @@ const validateAndFillFields = async (data, userRole) => {
       : [],
     totalExperience: !isNaN(Number(data['Total Experience (years)']))
       ? Number(data['Total Experience (years)'])
-      : null,
+      : 0,
     relevantSkillExperience: !isNaN(
       Number(data['Relevant Skill Experience (years)'])
     )
@@ -165,10 +170,9 @@ const validateAndFillFields = async (data, userRole) => {
     communicationSkill: !isNaN(Number(data['Communication Skill']))
       ? Number(data['Communication Skill'])
       : null,
-    otherSkills: data['Other Skills'] || null,
+    otherSkills: data['Other Skills'] || 'Not provided',
     rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : null,
     currentCompanyName: data['Current Company Name']?.trim() || 'Not Provided',
-
     currentCompanyDesignation:
       Object.values(applicantEnum).find(
         (value) =>
@@ -198,10 +202,10 @@ const validateAndFillFields = async (data, userRole) => {
     noticePeriod: !isNaN(Number(data['Notice Period']))
       ? Number(data['Notice Period'])
       : null,
-    negotiation: data['Negotiation'] || 'Not Provided',
+    negotiation: data['Negotiation'] || 0,
     workPreference:
       applicantEnum[data['Work Preference']?.toUpperCase()] ||
-      applicantEnum.REMOTE,
+      null,
     status:
       applicantEnum[data['Status']?.toUpperCase()] || applicantEnum.PENDING,
     interviewStage:
@@ -246,38 +250,16 @@ export const processCsvRow = async (data, userRole) => {
     if (!data || typeof data !== 'object') {
       throw new Error('Invalid data provided to processCsvRow');
     }
-
-    const appliedRoleValue = data['Applied Role']?.trim();
-    const appliedRole = appliedRoleValue
-      ? Object.values(applicantEnum).find(
-        (value) =>
-          value.replace(/\s+/g, '').toUpperCase() ===
-          appliedRoleValue.replace(/\s+/g, '').toUpperCase()
-      )
-      : undefined;
-    //required fields
     const requiredFields = {
       firstName: data['First Name']?.trim(),
-      lastName: data['Last Name']?.trim(),
       email: data['Email']?.trim(),
       phoneNumber: data['Phone Number']?.trim(),
       gender: data['Gender']?.trim()?.toLowerCase(),
-      passingYear: data['Passing Year']?.trim(),
-      qualification: data['Qualification']?.trim(),
-      specialization: data['Specialization']?.trim(),
-      currentCity: data['Current City']?.trim(),
-      state: data['State']?.trim(),
-      appliedSkills: data['Applied Skills']
-        ? data['Applied Skills'].split(',').map((skill) => skill.trim())
-        : [],
-      totalExperience: data['Total Experience (years)']?.trim(),
-      relevantSkillExperience:
-        data['Relevant Skill Experience (years)']?.trim(),
-      appliedRole: appliedRole,
+      appliedRole: data['Applied Role']?.trim(),
       currentCompanyDesignation: data['Current Company Designation']?.trim(),
-      otherSkills: data['Other Skills']?.trim(),
       resumeUrl: data['Resume URL']?.trim(),
     };
+
     const missingFields = Object.entries(requiredFields)
       .filter(
         ([_, value]) =>
@@ -288,16 +270,52 @@ export const processCsvRow = async (data, userRole) => {
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
-      console.warn(`Missing required fields:`, missingFields);
+      console.warn("Missing required fields:", missingFields);
       throw {
         missingFields,
-        message: `${missingFields.join(', ')}, Is required`,
+        message: `${missingFields.join(', ')} are required.`,
       };
     }
-    // Validate and process remaining fields
+    const findEnumValue = (fieldValue, fieldName) => {
+      if (!fieldValue) return undefined;
+      const enumObject = applicantEnum;
+
+      const enumValue = Object.values(enumObject).find(
+        (value) =>
+          value.replace(/\s+/g, '').toUpperCase() ===
+          fieldValue.replace(/\s+/g, '').toUpperCase()
+      );
+
+      if (!enumValue) {
+        const closestMatch = Object.values(enumObject).find((value) =>
+          value.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 8))
+        );
+
+        const suggestion = closestMatch ? `${closestMatch}` : 'No suggestion available';
+
+        throw {
+          message: `Invalid ${fieldName}: "${fieldValue}". Did you mean: "${suggestion}"?`,
+        };
+      }
+      return enumValue;
+    };
+    const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
+    const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
+    requiredFields.appliedRole = appliedRole;
+    requiredFields.currentCompanyDesignation = currentCompanyDesignation;
     const validatedData = await validateAndFillFields(data, userRole);
     return { valid: true, data: validatedData };
   } catch (error) {
     throw error;
   }
 };
+
+
+
+
+
+
+
+
+
+

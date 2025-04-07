@@ -17,7 +17,6 @@ export const applicantValidation = Joi.object({
       'any.required': 'Last name is required.',
     }),
   }).required(),
-
   phone: Joi.object({
     whatsappNumber: Joi.string().required().messages({
       'string.base': 'WhatsApp number must be a string.',
@@ -30,13 +29,11 @@ export const applicantValidation = Joi.object({
       'any.required': 'Contact number is required.',
     }),
   }).required(),
-
   email: Joi.string().email().required().messages({
     'string.base': 'Email must be a string.',
     'string.email': 'Invalid email format.',
     'any.required': 'Email is required.',
   }),
-
   gender: Joi.string()
     .valid(genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER)
     .required()
@@ -121,13 +118,21 @@ export const applicantValidation = Joi.object({
 
   currentCompanyDesignation: Joi.string()
     .valid(
-      applicantEnum.FRONTED_DEVLOPER,
       applicantEnum.SOFTWARE_ENGINEER,
+      applicantEnum.WEB_DESIGNER,
+      applicantEnum.WEB_DEVELOPER,
+      applicantEnum.FRONTED_DEVLOPER,
+      applicantEnum.SENIOR_FRONTED_DEVLOPER,
+      applicantEnum.SENIOR_SOFTWARE_ENGINEER,
+      applicantEnum.APPLICATION_DEVELOPMENT_MODERNIZATION,
       applicantEnum.BACKEND_DEVLOPER,
+      applicantEnum.JUNIOR_SOFTWARE_ENGINEER,
       applicantEnum.FULL_STACK_DEVLOPER,
+      applicantEnum.BLOCKCHAIN_DEVELOPER,
       applicantEnum.DATA_ANALYST,
       applicantEnum.DATA_SCIENTIST,
       applicantEnum.PRODUCT_MANAGER,
+      applicantEnum.PROJECT_ENGINEER,
       applicantEnum.UI_UX,
       applicantEnum.QA,
       applicantEnum.DEVOPS,
@@ -139,6 +144,23 @@ export const applicantValidation = Joi.object({
       applicantEnum.JAVA_DEVELOPER,
       applicantEnum.PYTHON_DEVELOPER,
       applicantEnum.PHP_DEVELOPER,
+      applicantEnum.FRESHER,
+      applicantEnum.SPECIALIST_PROGRAMMER,
+      applicantEnum.REACT_DEVELOPER,
+      applicantEnum.REACT_NATIVE_DEVELOPER,
+      applicantEnum.NODEJS_DEVELOPER,
+      applicantEnum.SENIOR_JAVSCRIPT_DEVELOPER,
+      applicantEnum.ASSOCIATE_SOFTWARE_ENGINEER,
+      applicantEnum.ASSOCIATE_PROCESS_MANAGER,
+      applicantEnum.QUALITY_ANALYST,
+      applicantEnum.FREELANCER,
+      applicantEnum.TEAM_LEADER,
+      applicantEnum.TECHNICAL_ANALYST,
+      applicantEnum.SENIOR_ANGULAR_DEVELOPER,
+      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
+      applicantEnum.SHAREPOINT_DEVELOPER,
+      applicantEnum.SENIOR_DOTNET_DEVELOPER,
+      applicantEnum.PLACEMENT_EXECUTIVE,
       applicantEnum.OTHER,
       applicantEnum.NA
     )
@@ -177,7 +199,6 @@ export const applicantValidation = Joi.object({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
     }),
-
   preferredLocations: Joi.string().allow(''),
   currentCompanyName: Joi.string().allow(''),
   maritalStatus: Joi.string()
@@ -298,24 +319,47 @@ export const updateApplicantValidation = Joi.object({
 
   currentCompanyDesignation: Joi.string()
     .valid(
-      applicantEnum.FRONTED_DEVLOPER,
       applicantEnum.SOFTWARE_ENGINEER,
+      applicantEnum.WEB_DESIGNER,
+      applicantEnum.WEB_DEVELOPER,
+      applicantEnum.FRONTED_DEVLOPER,
+      applicantEnum.SENIOR_FRONTED_DEVLOPER,
+      applicantEnum.SENIOR_SOFTWARE_ENGINEER,
+      applicantEnum.APPLICATION_DEVELOPMENT_MODERNIZATION,
       applicantEnum.BACKEND_DEVLOPER,
+      applicantEnum.JUNIOR_SOFTWARE_ENGINEER,
       applicantEnum.FULL_STACK_DEVLOPER,
+      applicantEnum.BLOCKCHAIN_DEVELOPER,
       applicantEnum.DATA_ANALYST,
       applicantEnum.DATA_SCIENTIST,
       applicantEnum.PRODUCT_MANAGER,
+      applicantEnum.PROJECT_ENGINEER,
       applicantEnum.UI_UX,
       applicantEnum.QA,
       applicantEnum.DEVOPS,
       applicantEnum.BUSNESS_ANALYST,
       applicantEnum.TECHNICSL_SUPPORT,
       applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.APPLICATION_DEVELOPER,
+      applicantEnum.JUNIOR_MERN_STACK_DEVELOPER,
       applicantEnum.MEAN_STACK_DEVELOPER,
       applicantEnum.DOTNET_DEVELOPER,
       applicantEnum.JAVA_DEVELOPER,
       applicantEnum.PYTHON_DEVELOPER,
       applicantEnum.PHP_DEVELOPER,
+      applicantEnum.FRESHER,
+      applicantEnum.SPECIALIST_PROGRAMMER,
+      applicantEnum.REACT_DEVELOPER,
+      applicantEnum.REACT_NATIVE_DEVELOPER,
+      applicantEnum.NODEJS_DEVELOPER,
+      applicantEnum.SENIOR_JAVSCRIPT_DEVELOPER,
+      applicantEnum.ASSOCIATE_SOFTWARE_ENGINEER,
+      applicantEnum.ASSOCIATE_PROCESS_MANAGER,
+      applicantEnum.QUALITY_ANALYST,
+      applicantEnum.FREELANCER,
+      applicantEnum.TEAM_LEADER,
+      applicantEnum.TECHNICAL_ANALYST,
+      applicantEnum.SENIOR_ANGULAR_DEVELOPER,
       applicantEnum.OTHER,
       applicantEnum.NA
     )
@@ -372,7 +416,57 @@ export const updateApplicantValidation = Joi.object({
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
   collegeName: Joi.string().allow(null, ''),
-  appliedRole: Joi.string(),
+  appliedRole: Joi.string()
+    .valid(
+      applicantEnum.SOFTWARE_ENGINEER,
+      applicantEnum.WEB_DESIGNER,
+      applicantEnum.WEB_DEVELOPER,
+      applicantEnum.FRONTED_DEVLOPER,
+      applicantEnum.SENIOR_FRONTED_DEVLOPER,
+      applicantEnum.SENIOR_SOFTWARE_ENGINEER,
+      applicantEnum.APPLICATION_DEVELOPMENT_MODERNIZATION,
+      applicantEnum.BACKEND_DEVLOPER,
+      applicantEnum.JUNIOR_SOFTWARE_ENGINEER,
+      applicantEnum.FULL_STACK_DEVLOPER,
+      applicantEnum.BLOCKCHAIN_DEVELOPER,
+      applicantEnum.DATA_ANALYST,
+      applicantEnum.DATA_SCIENTIST,
+      applicantEnum.PRODUCT_MANAGER,
+      applicantEnum.PROJECT_ENGINEER,
+      applicantEnum.UI_UX,
+      applicantEnum.QA,
+      applicantEnum.DEVOPS,
+      applicantEnum.BUSNESS_ANALYST,
+      applicantEnum.TECHNICSL_SUPPORT,
+      applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JAVA_DEVELOPER,
+      applicantEnum.PYTHON_DEVELOPER,
+      applicantEnum.PHP_DEVELOPER,
+      applicantEnum.FRESHER,
+      applicantEnum.SPECIALIST_PROGRAMMER,
+      applicantEnum.REACT_DEVELOPER,
+      applicantEnum.REACT_NATIVE_DEVELOPER,
+      applicantEnum.NODEJS_DEVELOPER,
+      applicantEnum.SENIOR_JAVSCRIPT_DEVELOPER,
+      applicantEnum.ASSOCIATE_SOFTWARE_ENGINEER,
+      applicantEnum.ASSOCIATE_PROCESS_MANAGER,
+      applicantEnum.QUALITY_ANALYST,
+      applicantEnum.FREELANCER,
+      applicantEnum.TEAM_LEADER,
+      applicantEnum.TECHNICAL_ANALYST,
+      applicantEnum.SENIOR_ANGULAR_DEVELOPER,
+      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
+      applicantEnum.SHAREPOINT_DEVELOPER,
+      applicantEnum.SENIOR_DOTNET_DEVELOPER,
+      applicantEnum.PLACEMENT_EXECUTIVE,
+      applicantEnum.OTHER,
+      applicantEnum.NA
+    )
+    .messages({
+      'any.required': 'CurrentCompanyDesignation is required.',
+    }),
   cgpa: Joi.number().allow(''),
   linkedinUrl: Joi.string().allow(''),
   clientCvUrl: Joi.string().allow(''),
@@ -381,3 +475,100 @@ export const updateApplicantValidation = Joi.object({
     'object.base': 'Meta must be an object with key-value pairs.',
   }),
 });
+
+
+export const updateManyApplicantsValidation = Joi.object({
+  applicantIds: Joi.array()
+    .items(Joi.string().regex(/^[0-9a-fA-F]{24}$/).messages({
+      'string.pattern.base': 'Each applicant ID must be a valid MongoDB ObjectId.',
+    }))
+    .min(1)
+    .required()
+    .messages({
+      'array.base': 'applicantIds must be an array.',
+      'array.min': 'At least one applicant ID is required.',
+      'any.required': 'applicantIds is required.',
+    }),
+
+  updateData: Joi.object({
+    status: Joi.string()
+      .valid(
+        applicantEnum.PENDING,
+        applicantEnum.SELECTED,
+        applicantEnum.REJECTED,
+        applicantEnum.HOLD,
+        applicantEnum.IN_PROCESS
+      )
+      .messages({ 'any.only': 'Invalid status value.' }),
+
+    interviewStage: Joi.string()
+      .valid(
+        applicantEnum.HR_ROUND,
+        applicantEnum.TECHNICAL,
+        applicantEnum.FIRST_INTERVIEW_ROUND,
+        applicantEnum.CLIENT,
+        applicantEnum.PRACTICAL
+      )
+      .messages({ 'any.only': 'Invalid interview stage value.' }),
+
+    appliedRole: Joi.string().valid(
+      applicantEnum.SOFTWARE_ENGINEER,
+      applicantEnum.WEB_DESIGNER,
+      applicantEnum.WEB_DEVELOPER,
+      applicantEnum.FRONTED_DEVLOPER,
+      applicantEnum.SENIOR_FRONTED_DEVLOPER,
+      applicantEnum.SENIOR_SOFTWARE_ENGINEER,
+      applicantEnum.APPLICATION_DEVELOPMENT_MODERNIZATION,
+      applicantEnum.BACKEND_DEVLOPER,
+      applicantEnum.JUNIOR_SOFTWARE_ENGINEER,
+      applicantEnum.FULL_STACK_DEVLOPER,
+      applicantEnum.BLOCKCHAIN_DEVELOPER,
+      applicantEnum.DATA_ANALYST,
+      applicantEnum.DATA_SCIENTIST,
+      applicantEnum.PRODUCT_MANAGER,
+      applicantEnum.PROJECT_ENGINEER,
+      applicantEnum.UI_UX,
+      applicantEnum.QA,
+      applicantEnum.DEVOPS,
+      applicantEnum.BUSNESS_ANALYST,
+      applicantEnum.TECHNICSL_SUPPORT,
+      applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JAVA_DEVELOPER,
+      applicantEnum.PYTHON_DEVELOPER,
+      applicantEnum.PHP_DEVELOPER,
+      applicantEnum.FRESHER,
+      applicantEnum.SPECIALIST_PROGRAMMER,
+      applicantEnum.REACT_DEVELOPER,
+      applicantEnum.REACT_NATIVE_DEVELOPER,
+      applicantEnum.NODEJS_DEVELOPER,
+      applicantEnum.SENIOR_JAVSCRIPT_DEVELOPER,
+      applicantEnum.ASSOCIATE_SOFTWARE_ENGINEER,
+      applicantEnum.ASSOCIATE_PROCESS_MANAGER,
+      applicantEnum.QUALITY_ANALYST,
+      applicantEnum.FREELANCER,
+      applicantEnum.TEAM_LEADER,
+      applicantEnum.TECHNICAL_ANALYST,
+      applicantEnum.SENIOR_ANGULAR_DEVELOPER,
+      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
+      applicantEnum.SHAREPOINT_DEVELOPER,
+      applicantEnum.SENIOR_DOTNET_DEVELOPER,
+      applicantEnum.PLACEMENT_EXECUTIVE,
+      applicantEnum.OTHER,
+      applicantEnum.NA
+    ),
+
+    lastFollowUpDate: Joi.date().iso().messages({
+      'date.base': 'lastFollowUpDate must be a valid date.',
+      'date.format': 'lastFollowUpDate must be in ISO 8601 format.',
+    }),
+  })
+    .required()
+    .messages({
+      'object.base': 'updateData must be an object.',
+      'any.required': 'updateData is required.',
+    }),
+});
+
+
