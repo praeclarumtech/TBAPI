@@ -1016,7 +1016,7 @@ export const deleteManyApplicants = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        Message.OBJ_ID_NOT_FOUND
+        `ObjectId is ${Message.NOT_FOUND}`
       );
     }
     const removeApplicats = await removeManyApplicants(ids);
@@ -1305,7 +1305,7 @@ export const deleteManyExportsApplicants = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        Message.OBJ_ID_NOT_FOUND
+        `ObjectId is ${Message.NOT_FOUND}`
       );
     }
     const removeApplicats = await removeManyExportsApplicants(ids);
