@@ -12,7 +12,12 @@ import {
   exportApplicantCsv,
   importApplicantCsv,
   checkApplicantExists,
-  updateManyApplicant
+  updateManyApplicant,
+  viewImportedApplicantById,
+  updateImportedApplicant,
+  deleteImportedApplicant,
+  deleteManyImportedApplicants,
+  hardDeleteImportedApplicant,
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
@@ -28,7 +33,13 @@ router.get('/viewAllApplicant', viewAllApplicant);
 router.get('/viewApplicant/:id', viewApplicant);
 router.get('/viewResumeAndCsvApplicant', getResumeAndCsvApplicants);
 router.put('/updateApplicant/:id',validator.body(updateApplicantValidation), updateApplicant);
+
 router.put('/updateManyApplicant',validator.body(updateManyApplicantsValidation),updateManyApplicant);
+router.get('/viewImportedApplicantById/:id', viewImportedApplicantById);
+router.put('/updateImportedApplicant/:id',validator.body(updateApplicantValidation), updateImportedApplicant);
+router.delete('/deleteImportedApplicant/:id', deleteImportedApplicant);
+router.delete('/deleteManyImportedApplicants', deleteManyImportedApplicants);
+router.delete('/hardDeleteImportedApplicant/:id', hardDeleteImportedApplicant);
  
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);

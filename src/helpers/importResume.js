@@ -109,10 +109,8 @@ export const parseResumeText = (text) => {
 
   const skillWordList = [
     'JavaScript',
-    'JS',
     'TypeScript',
     'Node.js',
-    'Node',
     'React',
     'Angular',
     'Vue.js',
@@ -199,7 +197,6 @@ export const parseResumeText = (text) => {
     'RESTFul Api',
     'SSIS',
     'IIS',
-    'C-Sharp',
     'XAML',
     'WCF',
     'Hack',

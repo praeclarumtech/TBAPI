@@ -11,6 +11,10 @@ import {
   createApplicantByResume,
   insertManyApplicantsToMain,
   deleteExportedApplicants,
+  getExportsApplicantById,
+  updateExportsApplicantById,
+  removeManyExportsApplicants,
+  hardDeleteExportsApplicantById,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -462,8 +466,7 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     } = req.query;
 
     const query = {
-      isDeleted: false,
-      addedBy: { $in: [applicantEnum.CSV, applicantEnum.RESUME] },
+      isDeleted: false
     };
 
     const pageNum = parseInt(page) || 1;
@@ -625,7 +628,7 @@ export const getResumeAndCsvApplicants = async (req, res) => {
 
       if (searchQuery) {
         const searchResults = await commonSearch(
-          Applicant,
+          ExportsApplicants,
           searchFields,
           searchQuery,
           typeof searchSkills === 'string' ? searchSkills : '',
@@ -1026,7 +1029,7 @@ export const deleteManyApplicants = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        Message.OBJ_ID_NOT_FOUND
+        `ObjectId is ${Message.NOT_FOUND}`
       );
     }
     const removeApplicats = await removeManyApplicants(ids);
@@ -1158,6 +1161,192 @@ export const updateManyApplicant = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} update multiple applicants.`
+    );
+  }
+};
+
+export const viewImportedApplicantById = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const applicant = await getExportsApplicantById(applicantId);
+
+    if (!applicant) {
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant ${Message.NOT_FOUND}`
+      );
+    }
+    logger.info(`Applicant is ${Message.FETCH_BY_ID}: ${applicantId}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is  ${Message.FETCH_BY_ID}`,
+      applicant
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} view applicant by id.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} view applicant by id.`
+    );
+  }
+};
+
+export const updateImportedApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { ...body } = req.body;
+
+    let updateData = {
+      ...body,
+    };
+    const updatedApplicant = await updateExportsApplicantById(applicantId, updateData);
+
+    if (!updatedApplicant) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.UPDATED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.UPDATED_SUCCESSFULLY}`,
+      updatedApplicant
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} update Applicant.${error}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update applicant.`
+    );
+  }
+};
+
+export const deleteImportedApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+
+    const applicant = await updateExportsApplicantById(applicantId, {
+      isDeleted: true,
+    });
+
+    if (!applicant) {
+      logger.warn(`User is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `User is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.DELETED_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} delete applicant.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} delete applicant.`
+    );
+  }
+};
+
+export const hardDeleteImportedApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+
+    const result = await hardDeleteExportsApplicantById(applicantId);
+
+    if (result.deletedCount === 0) {
+      logger.warn(`User is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `User is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.DELETED_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} delete applicant.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} delete applicant.`
+    );
+  }
+};
+
+
+export const deleteManyImportedApplicants = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `ObjectId is ${Message.NOT_FOUND}`
+      );
+    }
+    const removeApplicats = await removeManyExportsApplicants(ids);
+
+    if (removeApplicats.deletedCount === 0) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.DELETED_SUCCESSFULLY}`,
+      removeApplicats
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} deleteMany Applicants.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} deleteMany Applicants.`
     );
   }
 };
