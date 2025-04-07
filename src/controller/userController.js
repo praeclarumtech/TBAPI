@@ -14,7 +14,6 @@ import {
   updateUserById,
   findUserEmail,
   findEmailForOtp,
-  deleteOtp,
   storeOtp,
 } from '../services/userService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
@@ -280,7 +279,7 @@ export const sendEmail = async (req, res) => {
 
     logger.info(`${Message.OTP_SEND} OTP IS:- ${newOtp}`);
 
-    const data = await sendingEmail({ email, otp: newOtp });
+    const data = await sendingEmail({ email, newOtp });
     if (!data) {
       logger.warn(`User is ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -299,6 +298,7 @@ export const sendEmail = async (req, res) => {
       `OTP:-${newOtp}, will be expire in:${expireOtp}`
     );
   } catch (error) {
+    console.log("error===========", error)
     logger.error(`${Message.FAILED_TO} send mail.`);
     return HandleResponse(
       res,
@@ -322,7 +322,15 @@ export const verifyOtp = async (req, res) => {
         `User is ${Message.NOT_FOUND}`
       );
     }
-
+    if (new Date() > user.resetOtp) {
+      logger.warn(Message.OTP_EXPIRED);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        Message.OTP_EXPIRED
+      );
+    }
     if (user.otp !== otp) {
       logger.warn(Message.OTP_NOT_MATCHED);
       return HandleResponse(
@@ -334,7 +342,6 @@ export const verifyOtp = async (req, res) => {
     }
 
     logger.info(Message.OTP_MATCHED);
-    await deleteOtp({ otp });
 
     return HandleResponse(res, true, StatusCodes.OK, Message.OTP_MATCHED);
   } catch (error) {

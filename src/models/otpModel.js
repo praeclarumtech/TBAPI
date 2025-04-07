@@ -2,20 +2,19 @@ import mongoose from 'mongoose';
 
 const sendingOtpSchema = new mongoose.Schema(
   {
-    email:{
-      type:String,
-      required:true
+    email: {
+      type: String,
+      required: true
     },
     otp: {
       type: String,
-      required:true
+      required: true
     },
     resetOtp: {
       type: Date,
-      default:Date.now,
-      expires:120
     }
   },
+  { timestamps: true }
 );
 
 const sendingOtp = mongoose.model('sendingOtp', sendingOtpSchema);
