@@ -13,11 +13,11 @@ import {
   importApplicantCsv,
   checkApplicantExists,
   updateManyApplicant,
-  viewExportsApplicant,
-  updateExportsApplicant,
-  deleteExportsApplicant,
-  deleteManyExportsApplicants,
-  hardDeleteExportsApplicant,
+  viewImportedApplicantById,
+  updateImportedApplicant,
+  deleteImportedApplicant,
+  deleteManyImportedApplicants,
+  hardDeleteImportedApplicant,
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
@@ -35,11 +35,11 @@ router.get('/viewResumeAndCsvApplicant', getResumeAndCsvApplicants);
 router.put('/updateApplicant/:id',validator.body(updateApplicantValidation), updateApplicant);
 
 router.put('/updateManyApplicant',validator.body(updateManyApplicantsValidation),updateManyApplicant);
-router.get('/viewExportsApplicantById/:id', viewExportsApplicant);
-router.put('/updateExportsApplicant/:id',validator.body(updateApplicantValidation), updateExportsApplicant);
-router.delete('/deleteExportsApplicant/:id', deleteExportsApplicant);
-router.delete('/deleteManyExportsApplicants', deleteManyExportsApplicants);
-router.delete('/hardDeleteExportsApplicant/:id', hardDeleteExportsApplicant);
+router.get('/viewImportedApplicantById/:id', viewImportedApplicantById);
+router.put('/updateImportedApplicant/:id',validator.body(updateApplicantValidation), updateImportedApplicant);
+router.delete('/deleteImportedApplicant/:id', deleteImportedApplicant);
+router.delete('/deleteManyImportedApplicants', deleteManyImportedApplicants);
+router.delete('/hardDeleteImportedApplicant/:id', hardDeleteImportedApplicant);
  
 router.put('/update/status/:id', updateStatus);
 router.delete('/deleteApplicant/:id', deleteApplicant);

@@ -1153,7 +1153,7 @@ export const updateManyApplicant = async (req, res) => {
   }
 };
 
-export const viewExportsApplicant = async (req, res) => {
+export const viewImportedApplicantById = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const applicant = await getExportsApplicantById(applicantId);
@@ -1186,7 +1186,7 @@ export const viewExportsApplicant = async (req, res) => {
   }
 };
 
-export const updateExportsApplicant = async (req, res) => {
+export const updateImportedApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const { ...body } = req.body;
@@ -1225,7 +1225,7 @@ export const updateExportsApplicant = async (req, res) => {
   }
 };
 
-export const deleteExportsApplicant = async (req, res) => {
+export const deleteImportedApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
 
@@ -1261,7 +1261,7 @@ export const deleteExportsApplicant = async (req, res) => {
   }
 };
 
-export const hardDeleteExportsApplicant = async (req, res) => {
+export const hardDeleteImportedApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
 
@@ -1296,7 +1296,7 @@ export const hardDeleteExportsApplicant = async (req, res) => {
 };
 
 
-export const deleteManyExportsApplicants = async (req, res) => {
+export const deleteManyImportedApplicants = async (req, res) => {
   try {
     const { ids } = req.body;
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
