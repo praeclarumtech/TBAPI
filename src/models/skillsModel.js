@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { skillGroupEnum } from '../utils/enum.js';
 
 const skillsSchema = new mongoose.Schema(
   {
@@ -6,6 +7,11 @@ const skillsSchema = new mongoose.Schema(
       type: String,
       unique: true,
       required: true,
+    },
+    category: {
+      type: String,
+      required: true,
+      enum: Object.values(skillGroupEnum),
     },
     isDeleted: {
       type: Boolean,

@@ -5,6 +5,7 @@ import {
   getSkillById,
   updateSkill,
   deleteSkillById,
+  deleteSkillPermanently,
 } from '../services/skillsService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
@@ -16,9 +17,9 @@ import csvParser from 'csv-parser';
 import { uploadCv } from '../helpers/multer.js';
 
 export const addSkills = async (req, res) => {
-  const { skills } = req.body;
-  if (!skills || typeof skills !== "string") {
-    logger.warn(`skills is ${Message.NOT_FOUND}`);
+  const { skills, category  } = req.body;
+  if (!skills || typeof skills !== "string" || !category ) {
+    logger.warn(`skills or category is ${Message.NOT_FOUND}`);
     return HandleResponse(
       res,
       false,
@@ -27,7 +28,13 @@ export const addSkills = async (req, res) => {
     );
   }
   try {
-    const existingSkill = await Skills.findOne({ skills });
+    const normalizedSkill = skills.trim().toLowerCase();
+    const existingSkill = await Skills.findOne({
+      skills: { 
+        $regex: `^${normalizedSkill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 
+        $options: "i" 
+      }
+    });
     if (existingSkill) {
       return HandleResponse(
         res,
@@ -37,7 +44,7 @@ export const addSkills = async (req, res) => {
       );
     }
 
-    const result = await create({ skills });
+    const result = await create({ skills, category  });
     logger.info(`Skills is ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,
@@ -47,7 +54,7 @@ export const addSkills = async (req, res) => {
       result
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} add skills.`);
+    logger.error(`${Message.FAILED_TO} add skills.${error}`);
     return HandleResponse(
       res,
       false,
@@ -185,12 +192,12 @@ export const deleteSkills = async (req, res) => {
         `Skill is ${Message.NOT_FOUND}`
       );
     }
-    logger.info(`year ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Skill ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `year is ${Message.DELETED_SUCCESSFULLY}`,
+      `Skill is ${Message.DELETED_SUCCESSFULLY}`,
       deletedSkill
     );
   } catch (error) {
@@ -263,5 +270,39 @@ export const importSkillsCsv = async (req, res) => {
   }
 };
 
+export const hardDeleteSkill = async (req, res) => {
+  try {
+    const { skillId } = req.params;
+    
+    const skillExists = await Skills.findOne({ _id: skillId });
+    if (!skillExists) {
+      logger.warn(`Skill is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Skill is ${Message.NOT_FOUND}`
+      );
+    }
+
+    await deleteSkillPermanently(skillId);
+
+    logger.info(`Skill ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Skill is ${Message.DELETED_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} delete skill.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} delete skill.`
+    );
+  }
+};
 
 

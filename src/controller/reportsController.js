@@ -1,9 +1,9 @@
 import logger from '../loggers/logger.js';
-// import Applicant from '../models/applicantModel.js';
 import { Message } from '../utils/constant/message.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-import { getReport, getTechnologyStatistics } from '../services/reportService.js';
+import { getReport,
+   getCategoryWiseSkillCount } from '../services/reportService.js';
 import { getApplicationCount } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
@@ -119,43 +119,36 @@ export const getApplicationsByDate = async (req, res) => {
   }
 };
 
-export const technologyStatistics = async (req, res) => {
+export const categoryWiseSkillCount = async (req, res) => {
   try {
-    const { calendarType, startDate, endDate, category } = req.query;
+    const { category } = req.query;
 
     if (!category) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        `Category is required.`,
-        {}
-      );
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, "Category is required.");
     }
 
-    const { skillCounts } = await getTechnologyStatistics(calendarType, startDate, endDate, category);
+    const { skillCounts } = await getCategoryWiseSkillCount(category);
 
-    logger.info(`Technology Statistics ${Message.FETCH_SUCCESSFULLY}`);  
+    logger.info(`Category-wise skill count fetched successfully`);
+
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Technology Statistics ${Message.FETCH_SUCCESSFULLY}`,
+      "Category-wise skill count fetched successfully",
       { category, skillCounts }
     );
   } catch (error) {
-    logger.error(
-      `${Message.FAILED_TO} Fetching Technology Statistics: ${error.message}`,
-      { stack: error.stack }
-    );
+    logger.error(`Failed to fetch category-wise skill count: ${error.message}`);
 
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} Fetching Technology Statistics.`,
+      "Failed to fetch category-wise skill count.",
       error
     );
   }
 };
+
 

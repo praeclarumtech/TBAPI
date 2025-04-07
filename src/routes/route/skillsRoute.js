@@ -1,5 +1,5 @@
 import express from 'express';
-import { addSkills, getSkills, updateSkills, deleteSkills, getSkillsById, importSkillsCsv } from '../../controller/skillsController.js';
+import { addSkills, getSkills, updateSkills, deleteSkills, getSkillsById, importSkillsCsv, hardDeleteSkill} from '../../controller/skillsController.js';
 import { skillsValidation } from '../../validations/skillsValidation.js';
 import { validator } from '../../helpers/validator.js';
 
@@ -10,6 +10,7 @@ router.get('/viewSkills', getSkills);
 router.get('/viewById/:skillId', getSkillsById);
 router.put('/update/:skillId', validator.body(skillsValidation), updateSkills);
 router.delete('/delete/:skillId', deleteSkills);
+router.delete('/hardDelete/:skillId', hardDeleteSkill);
 
 // import csv
 router.post('/importCsv', importSkillsCsv);

@@ -3,14 +3,14 @@ import {
     applicationOnProcessCount,
     statusByPercentage,
     getApplicationsByDate,
-    technologyStatistics
+    categoryWiseSkillCount
 } from '../../controller/reportsController.js';
 
 const router = express.Router();
 
 router.get('/applicationOnProcessCount', applicationOnProcessCount);
 router.get('/statusByPercentage', statusByPercentage);
-router.get('/technologyStatistics', technologyStatistics);
+router.get('/categoryWiseSkillCount', categoryWiseSkillCount);
 
 router.get("/getApplicationsByDate", getApplicationsByDate);
 

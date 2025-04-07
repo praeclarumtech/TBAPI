@@ -58,3 +58,14 @@ export const applicantEnum = {
   RESUME: 'Resume'
 };
 
+export const skillGroupEnum = {
+  FRONTEND:'Frontend',
+  BACKEND:'Backend',
+  DATABASE:'Database',
+  TESTING:'Testing',
+  DEVOPS:'devops',
+  PROGRAMMING:'Programming',
+  VERSION_CONTROL:'VersionControl',
+  UI_UX:'UIUX',
+  OTHERS:'Othersab',
+}

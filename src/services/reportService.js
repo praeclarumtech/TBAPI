@@ -120,61 +120,27 @@ export const getReport = async (
   };
 };
 
-export const getTechnologyStatistics = async (calendarType, customStartDate, customEndDate, category) => {
+export const getCategoryWiseSkillCount = async (category) => {
   try {
     if (!category) {
-      return { skillCounts: {} };
+      return { message: "Category is required", skillCounts: {} };
     }
 
-    const { startDate, endDate } = getDateRange(calendarType, customStartDate, customEndDate);
+    const skills = await Skills.find({ category, isDeleted: false }).select("skills");
 
-    let dateFilter = {};
-    if (startDate && endDate) {
-      dateFilter.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
+    if (!skills.length) {
+      return { message: "No skills found for this category", skillCounts: {} };
     }
 
-    const skillCategories = {
-      frontend: [
-        "JavaScript", "JS", "TypeScript", "HTML", "CSS", "Bootstrap", "Tailwind", "SASS", "LESS",
-        "React", "Angular", "Vue.js", "Vue", "jQuery", "RxJS", "Svelte", "Flutter"
-      ],
-      backend: [
-        "Node.js", "Node", "Django", "Flask", "Java", "Spring", "Spring Boot", "C#", "C-Sharp", ".NET", "DotNet",
-        "ASP.NET", "ADO.NET", "Ado.Net", "C++", "C", "PHP", "Laravel", "CodeIgniter", "Hibernate",
-        "WPF", "MVVM", "WinForms", "WCF"
-      ],
-      database: ["SQL", "MySQL", "PostgreSQL", "MongoDB", "Firebase", "Oracle", "Sqlite", "GraphQL"],
-      testing: [
-        "JMeter", "Selenium", "Web Application Testing", "Automation Testing", "API Testing", 
-        "Performance Testing", "TestNG", "Postman", "Manual Testing", 
-      ],
-      devops: [
-        "AWS", "Azure", "Google Cloud", "GCP", "IBM Cloud", "Docker", "Kubernetes", "Jenkins", "CI/CD", 
-        "Terraform", "Ansible", "IIS", "MSMQ", "Octopus"
-      ],
-      programming: [
-        "JavaScript", "TypeScript", "Python", "Java", "C#", "C++", "C", "PHP", "Ruby", "Rust", "VBA", "Hack"
-      ],
-      versioncontrol: ["Git", "GitHub", "GitLab"],
-      uiux: [
-        "Figma", "Adobe XD", "Sketch", "Balsamiq", "Photoshop", "Illustrator", "InVision", "Framer", "Axure", "Marvel"
-      ],
-      others: ["Agile Methodology", "OOP", "OOPS", "XML", "Bash", "DAX", "SSIS", "REST API", , "SOAP", "MVC", "Entity Framework", "Linq"]
-    };
-
-    const categorySkills = skillCategories[category.toLowerCase()];
-    if (!categorySkills) {
-      return { skillCounts: {} } 
-    }
+    const skillNames = skills.map(skill => skill.skills);
 
     const skillCounts = await Promise.all(
-      categorySkills.map(async (skill) => {
+      skillNames.map(async (skill) => {
         const escapedSkill = skill.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
         
         const count = await Applicant.countDocuments({
           appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, "i") },
           isDeleted: false,
-          ...dateFilter,
         });
 
         return { skill, count };
@@ -188,8 +154,9 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
       }, {}),
     };
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} getTechnologyStatistics: ${error.message}`);
+    logger.error(`Failed to fetch category-wise skill count: ${error.message}`);
     return { skillCounts: {} };
   }
 };
+
 
