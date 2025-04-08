@@ -32,7 +32,7 @@ export const Message = {
   FETCH_BY_ID: 'Successfull Fetched by id.',
   OTP_NOT_MATCHED: 'Otp not matched.',
   OTP_MATCHED: 'Otp matched.',
-  OTP_EXPIRED: 'Otp expired',
+  OTP_EXPIRED: 'Your OTP has expired.',
   FORGOT_SUCCESSFULLY: 'forgot successfully.',
   ENTER_CALENDAR_TYPE: 'Provide a calendarType (week, month, year) or both startDate and endDate.',
   DONWLOADED: 'File downloaded successfully.',
