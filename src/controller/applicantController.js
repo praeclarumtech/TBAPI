@@ -789,18 +789,25 @@ export const updateStatus = async (req, res) => {
 export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered, source } = req.query;
-    let query = {};
+    let query = { isDeleted: false }; 
+
     let applicants = [];
 
     if (filtered === 'both') {
-      query = { addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] } };
+      query = {
+        addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] },
+        isDeleted: false
+      };
       applicants = await ExportsApplicants.find(query);
       if (applicants.length) {
         await insertManyApplicantsToMain(applicants);
         await deleteExportedApplicants(query);
       }
     } else if (filtered === 'Resume' || filtered === 'Csv') {
-      query = { addedBy: filtered === 'Resume' ? applicantEnum.RESUME : applicantEnum.CSV };
+      query = {
+        addedBy: filtered === 'Resume' ? applicantEnum.RESUME : applicantEnum.CSV,
+        isDeleted: false
+      };
       applicants = await ExportsApplicants.find(query);
       if (applicants.length) {
         await insertManyApplicantsToMain(applicants);
@@ -809,16 +816,26 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     if (source === 'Manual') {
-      query = { addedBy: applicantEnum.MANUAL };
+      query = {
+        addedBy: applicantEnum.MANUAL,
+        isDeleted: false
+      };
       applicants = await Applicant.find(query);
     } else if (source === 'Resume' || source === 'Csv') {
-      query = { addedBy: source === 'Resume' ? applicantEnum.RESUME : applicantEnum.CSV };
+      query = {
+        addedBy: source === 'Resume' ? applicantEnum.RESUME : applicantEnum.CSV,
+        isDeleted: false
+      };
       applicants = await Applicant.find(query);
     } else if (source === 'both') {
-      query = { addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] } };
+      query = {
+        addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] },
+        isDeleted: false
+      };
       applicants = await Applicant.find(query);
     } else if (!filtered) {
-      applicants = await Applicant.find();
+      query = { isDeleted: false };
+      applicants = await Applicant.find(query);
     }
 
     if (!applicants.length) {
@@ -838,6 +855,7 @@ export const exportApplicantCsv = async (req, res) => {
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} export file`);
   }
 };
+
 
 export const importApplicantCsv = async (req, res) => {
   try {
