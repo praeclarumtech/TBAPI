@@ -235,7 +235,6 @@ export const importSkillsCsv = async (req, res) => {
             );
             if (newSkills.length) {
               await Skills.insertMany(newSkills).catch(error => {
-                console.error("Insertion Error:", error);
               });
             }
             fs.unlinkSync(req.file.path);

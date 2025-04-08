@@ -159,7 +159,7 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
       uiux: [
         "Figma", "Adobe XD", "Sketch", "Balsamiq", "Photoshop", "Illustrator", "InVision", "Framer", "Axure", "Marvel"
       ],
-      others: ["Agile Methodology", "OOP", "OOPS", "XML", "Bash", "DAX", "SSIS", "REST API", , "SOAP", "MVC", "Entity Framework", "Linq"]
+      others: ["Agile Methodology", "OOP", "OOPS", "XML", "Bash", "DAX", "SSIS", "REST API", "SOAP", "MVC", "Entity Framework", "Linq"]
     };
 
     const categorySkills = skillCategories[category.toLowerCase()];
