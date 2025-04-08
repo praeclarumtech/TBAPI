@@ -270,7 +270,6 @@ export const processCsvRow = async (data, userRole) => {
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
-      console.warn("Missing required fields:", missingFields);
       throw {
         missingFields,
         message: `${missingFields.join(', ')} are required.`,
