@@ -21,7 +21,7 @@ export const sendingEmail = async ({
   const emailText = newOtp ? `Your Otp is: ${newOtp}` : description;
   subject = 'Otp for new Password';
   const emailHtml =
-    '<h1>Your otp is:</h1>' +
+    '<p>Your OTP is:</p>' +
     '<h3 style="font-weight:bold;">' +
     newOtp +
     '</h3>';
