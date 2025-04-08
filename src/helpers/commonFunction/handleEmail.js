@@ -18,7 +18,13 @@ export const sendingEmail = async ({
     },
   });
 
-  const emailText = newOtp ? `New OTP: ${newOtp}` : description;
+  const emailText = newOtp ? `Your Otp is: ${newOtp}` : description;
+  subject = 'Otp for new Password';
+  const emailHtml =
+    '<p>Your OTP is:</p>' +
+    '<h3 style="font-weight:bold;">' +
+    newOtp +
+    '</h3>';
 
   const toRecipients = Array.isArray(email_to) ? email_to.join(',') : email;
   const bccRecipients = Array.isArray(email_bcc) ? email_bcc.join(',') : '';
@@ -29,6 +35,7 @@ export const sendingEmail = async ({
     bcc: bccRecipients,
     subject,
     text: emailText,
+    html: emailHtml
   };
 
   const data = await transporter.sendMail(mailOptions);
