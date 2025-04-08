@@ -207,12 +207,22 @@ export const viewAllApplicant = async (req, res) => {
       rating,
       communicationSkill,
       currentPkg,
+      addedBy
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
 
     let query = { isDeleted: false };
+
+    if (addedBy && typeof addedBy === 'string') {
+      const validAddedBy = addedBy
+        .split(',')
+        .map(val => applicantEnum[val.trim().toUpperCase()])
+        .filter(Boolean);
+
+      query.addedBy = validAddedBy.length === 1 ? validAddedBy[0] : validAddedBy.length > 1 ? { $in: validAddedBy } : undefined;
+    }
 
     if (applicationNo && !isNaN(applicationNo)) {
       query.applicationNo = parseInt(applicationNo);
@@ -789,7 +799,7 @@ export const updateStatus = async (req, res) => {
 export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered, source } = req.query;
-    let query = { isDeleted: false }; 
+    let query = { isDeleted: false };
 
     let applicants = [];
 
