@@ -42,6 +42,7 @@ export const applicantEnum = {
   PRODUCT_MANAGER: 'Product Manager',
   PROJECT_ENGINEER: 'Project Engineer',
   UI_UX: 'UI_UX Designer',
+  SENIOR_UI_ENGINEER: 'Senior UI Engineer',
   APPLICATION_DEVELOPER: 'Application developer',
   QA: 'QA Engineer',
   TECHNICAL_ANALYST: 'Technical Analyst',

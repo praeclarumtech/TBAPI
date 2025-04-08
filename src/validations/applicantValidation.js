@@ -161,6 +161,7 @@ export const applicantValidation = Joi.object({
       applicantEnum.SHAREPOINT_DEVELOPER,
       applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.PLACEMENT_EXECUTIVE,
+      applicantEnum.SENIOR_UI_ENGINEER,
       applicantEnum.OTHER,
       applicantEnum.NA
     )
@@ -461,6 +462,7 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.SHAREPOINT_DEVELOPER,
       applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.PLACEMENT_EXECUTIVE,
+      applicantEnum.SENIOR_UI_ENGINEER,
       applicantEnum.OTHER,
       applicantEnum.NA
     )
@@ -555,6 +557,7 @@ export const updateManyApplicantsValidation = Joi.object({
       applicantEnum.SHAREPOINT_DEVELOPER,
       applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.PLACEMENT_EXECUTIVE,
+      applicantEnum.SENIOR_UI_ENGINEER,
       applicantEnum.OTHER,
       applicantEnum.NA
     ),

@@ -10,7 +10,7 @@ const sendingOtpSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    resetOtp: {
+    expirationIn: {
       type: Date,
     }
   },

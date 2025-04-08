@@ -299,7 +299,6 @@ export const sendEmail = async (req, res) => {
       `OTP:-${newOtp}, will be expire in:${expireOtp}`
     );
   } catch (error) {
-    console.log("error===========", error)
     logger.error(`${Message.FAILED_TO} send mail.`);
     return HandleResponse(
       res,
@@ -323,7 +322,7 @@ export const verifyOtp = async (req, res) => {
         `User is ${Message.NOT_FOUND}`
       );
     }
-    if (new Date() > user.resetOtp) {
+    if (new Date() > user.expirationIn) {
       logger.warn(Message.OTP_EXPIRED);
       return HandleResponse(
         res,

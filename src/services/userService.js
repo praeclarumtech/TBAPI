@@ -36,7 +36,7 @@ export const findEmailForOtp = async ({ email }) => {
 export const storeOtp = async (email, newOtp, expireOtp) => {
   return await otpModel.findOneAndUpdate(
     { email: email },
-    { otp: newOtp, resetOtp: expireOtp },
+    { otp: newOtp, expirationIn: expireOtp },
     { upsert: true, }
   )
 }

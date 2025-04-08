@@ -4,7 +4,7 @@ export const Message = {
   MONGODB_CONNECTION_ERROR: 'MongoDB Connection Error.',
 
   // error
-  ALREADY_EXIST: 'already exit.',
+  ALREADY_EXIST: 'already exist.',
   NOT_FOUND: 'not found.',
   INVALID_CREDENTIALS: 'Invalid credentials.',
   ERROR: 'Error',
