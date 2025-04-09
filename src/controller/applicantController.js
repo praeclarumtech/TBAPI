@@ -27,6 +27,8 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 import { uploadCv, uploadResume } from '../helpers/multer.js';
 import fs from 'fs';
 import csvParser from 'csv-parser';
+import path from 'path';
+import xlsx from 'xlsx';
 import {
   generateApplicantCsv,
   processCsvRow,
@@ -867,187 +869,118 @@ export const exportApplicantCsv = async (req, res) => {
 };
 
 
+
 export const importApplicantCsv = async (req, res) => {
   try {
     const updateFlag =
-      req.query.updateFlag === 'true' || req.body.updateFlag === true || false;
+      req.query.updateFlag === 'true' || req.body.updateFlag === true;
+
     const user = await User.findById(req.user.id);
     if (!user) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
-      );
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `User is ${Message.NOT_FOUND}`);
     }
 
     uploadCv(req, res, async (err) => {
-      if (err) {
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          `Invalid file type please upload csv`
-        );
-      }
-      if (!req.file) {
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          `${Message.FAILED_TO} upload CSV - No file provided`
-        );
+      if (err || !req.file) {
+        const msg = err ? 'Invalid file type, please upload CSV or XLSX' : `${Message.FAILED_TO} upload file - No file provided`;
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, msg);
       }
 
-      const results = [];
-      let headers = [];
-      let newHeaders = [];
+      const fileExt = path.extname(req.file.originalname).toLowerCase();
+      let results = [];
 
-      fs.createReadStream(req.file.path)
-        .pipe(csvParser({ headers: false, skipEmptyLines: true }))
-        .on('data', (row) => {
-          if (Object.values(row).every((value) => !value.trim())) {
-            return;
+      const processAndRespond = async () => {
+        try {
+          const processed = await Promise.all(results.map(processCsvRow));
+          const validApplicants = processed.filter(p => p.valid).map(p => p.data);
+
+          if (!validApplicants.length) {
+            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'No valid applicants found in the file');
           }
-          if (headers.length === 0) {
-            headers = Object.values(row);
-            newHeaders = headers.map((item) => item.trim());
-          } else {
-            const formattedRow = {};
-            Object.values(row).forEach((value, i) => {
-              formattedRow[newHeaders[i]] = value ? value.trim() : '';
+
+          const emails = [...new Set(validApplicants.map(a => a.email?.trim().toLowerCase()).filter(Boolean))];
+          const existing = await ExportsApplicants.find({ email: { $in: emails } }).lean();
+          const existingEmails = new Set(existing.map(a => a.email.trim().toLowerCase()));
+
+          const toInsert = validApplicants.filter(a => !existingEmails.has(a.email.trim().toLowerCase()));
+          const toUpdate = validApplicants.filter(a => existingEmails.has(a.email.trim().toLowerCase()));
+
+          if (toInsert.length) {
+            await insertManyApplicants(toInsert.map(a => ({
+              ...a,
+              email: a.email.trim().toLowerCase(),
+              createdBy: user.role,
+              updatedBy: user.role,
+              addedBy: applicantEnum.CSV,
+            })));
+          }
+
+          if (toUpdate.length && updateFlag) {
+            await updateManyApplicants(toUpdate.map(a => ({
+              ...a,
+              createdBy: user.role,
+              updatedBy: user.role,
+              addedBy: applicantEnum.CSV,
+            })));
+          } else if (toUpdate.length) {
+            return HandleResponse(res, false, StatusCodes.CONFLICT, 'Duplicate records found', {
+              existingEmails: toUpdate.map(r => r.email),
             });
-
-            results.push(formattedRow);
           }
-        })
-        .on('end', async () => {
-          try {
-            const processedApplicants = await Promise.all(
-              results.map(processCsvRow)
-            );
-            const validApplicants = processedApplicants
-              .filter((applicant) => applicant.valid)
-              .map((applicant) => applicant.data);
 
-            if (validApplicants.length === 0) {
-              return HandleResponse(
-                res,
-                false,
-                StatusCodes.BAD_REQUEST,
-                'No valid applicants found in CSV'
-              );
-            }
+          fs.unlinkSync(req.file.path);
 
-            const emails = validApplicants
-              .map((applicant) => applicant.email?.trim().toLowerCase())
-              .filter((email) => email);
+          return HandleResponse(res, true, StatusCodes.OK, `${fileExt === '.csv' ? 'CSV' : fileExt === '.xls' ? 'XLS' : fileExt === '.xlsb' ? 'XLSB' : fileExt === '.xltx' ? 'XLTX' : 'XLSX'} imported successfully`, {
+            insertedNewRecords: toInsert.map(r => r.email),
+            updatedRecords: updateFlag ? toUpdate.map(r => r.email) : [],
+          });
+        } catch (dbError) {
+          logger.warn('dbError', dbError);
+          if (dbError.code === 11000) {
+            const duplicateField = dbError.errmsg?.match(/index: (.+?) dup key/)?.[1]?.split("_")[0]?.split(".").pop() || 'unknown';
+            const duplicateValue = dbError.errmsg?.match(/dup key: \{.*?: "(.*?)"/)?.[1] || 'unknown';
+            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${duplicateField} ${duplicateValue} is already in use, please use a different value.`);
+          }
+          return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, dbError.message);
+        }
+      };
 
-            const uniqueEmails = [...new Set(emails)];
+      if (fileExt === '.csv') {
+        let headers = [];
+        fs.createReadStream(req.file.path)
+          .pipe(csvParser({ headers: false, skipEmptyLines: true }))
+          .on('data', (row) => {
+            if (Object.values(row).every(val => !val.trim())) return;
 
-            const existingApplicants = await ExportsApplicants.find({
-              email: { $in: uniqueEmails },
-            }).lean();
-            const existingEmails = new Set(
-              existingApplicants.map((app) => app.email.trim().toLowerCase())
-            );
-            const toInsert = validApplicants.filter(
-              (applicant) =>
-                applicant.email &&
-                !existingEmails.has(applicant.email.trim().toLowerCase())
-            );
-
-            const toUpdate = validApplicants.filter(
-              (applicant) =>
-                applicant.email &&
-                existingEmails.has(applicant.email.trim().toLowerCase())
-            );
-
-            // Insert new applicants
-            if (toInsert.length > 0) {
-              await insertManyApplicants(
-                toInsert.map((applicant) => ({
-                  ...applicant,
-                  email: applicant.email.trim().toLowerCase(),
-                  createdBy: user.role,
-                  updatedBy: user.role,
-                  addedBy: applicantEnum.CSV,
-                }))
-              );
-            }
-            // Update existing applicants
-            if (toUpdate.length > 0) {
-              if (updateFlag) {
-                await updateManyApplicants(
-                  toUpdate.map((applicant) => ({
-                    ...applicant,
-                    createdBy: user.role,
-                    updatedBy: user.role,
-                    addedBy: applicantEnum.CSV,
-                  }))
-                );
-              } else {
-                return HandleResponse(
-                  res,
-                  false,
-                  StatusCodes.CONFLICT,
-                  'Duplicate records found',
-                  { existingEmails: toUpdate.map((record) => record.email) }
-                );
-              }
-            }
-            fs.unlinkSync(req.file.path);
-
-            return HandleResponse(
-              res,
-              true,
-              StatusCodes.OK,
-              'CSV imported successfully',
-              {
-                insertedNewRecords: toInsert.map((record) => record.email),
-                updatedRecords: updateFlag
-                  ? toUpdate.map((record) => record.email)
-                  : [],
-              }
-            );
-          } catch (dbError) {
-            logger.warn('dbError', dbError);
-            if (dbError.code === 11000) {
-              let duplicateField = dbError.errmsg?.match(/index: (.+?) dup key/)?.[1]?.split("_")[0] || 'unknown';
-              duplicateField = duplicateField.split(".").pop();
-              let duplicateValue = dbError.errmsg?.match(/dup key: \{.*?: "(.*?)"/)?.[1] || 'unknown';
-              return HandleResponse(
-                res,
-                false,
-                StatusCodes.INTERNAL_SERVER_ERROR,
-                `${duplicateField} ${duplicateValue} is already in use please use a different number.`
-              );
+            if (!headers.length) {
+              headers = Object.values(row).map(h => h.trim());
             } else {
-              return HandleResponse(
-                res, false, StatusCodes.INTERNAL_SERVER_ERROR, dbError.message
-              )
+              const formatted = {};
+              Object.values(row).forEach((val, i) => {
+                formatted[headers[i]] = val?.trim() || '';
+              });
+              results.push(formatted);
             }
-          }
-        })
-        .on('error', (error) => {
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            'Error reading CSV file',
-            error
+          })
+          .on('end', processAndRespond)
+          .on('error', error =>
+            HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'Error reading CSV file', error)
           );
-        });
+      } else if (['.xlsx', '.xlsm', '.xltx', '.xls', '.xlsb'].includes(fileExt)) {
+        const workbook = xlsx.readFile(req.file.path);
+        const sheet = workbook.SheetNames[0];
+        results = xlsx.utils.sheet_to_json(workbook.Sheets[sheet], { defval: '', raw: false });
+        await processAndRespond();
+      } else {
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'Unsupported file type. Please upload CSV or XLSX only.');
+      }
     });
   } catch (error) {
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} import CSV`
-    );
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} import file`);
   }
 };
+
+
 export const deleteManyApplicants = async (req, res) => {
   try {
     const { ids } = req.body;
