@@ -75,6 +75,7 @@ export const applicantEnum = {
   SYSTEM_ENGINEER: 'System Engineer',
   SENIOR_SYSTEM_ENGINEER: 'Senior System Engineer',
   PROGRAMER_ANALYST: 'Programmer Analyst',
+  CUSTOMER_SUPPORT_SPECIALIST: 'Customer Support Specialist',
   OTHER: 'Other',
   NA: 'Na',
   SINGLE: 'Single',
