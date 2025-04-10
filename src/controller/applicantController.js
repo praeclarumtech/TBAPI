@@ -1053,7 +1053,6 @@ export const importApplicantCsv = async (req, res) => {
             }
           );
         } catch (dbError) {
-          console.log('dbError===========', dbError);
           logger.warn('dbError', dbError);
           if (dbError.code === 11000) {
             const duplicateField =
