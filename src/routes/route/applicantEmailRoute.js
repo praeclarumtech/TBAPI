@@ -6,8 +6,8 @@ import { authorization } from '../../helpers/userMiddleware.js';
 const router = express.Router();
 
 router.post('/sendEmail', authorization, validator.body(sendEmailValidation), sendEmail);
-router.post('/editEmail', validator.body(sendEmailValidation), sendEmail);
-router.get('/getAllEmails', getAllEmails);
-router.get('/viewEmailById/:id', viewEmailById);
-router.delete('/deleteManyEmails', deleteManyEmails);
+router.post('/editEmail', authorization, validator.body(sendEmailValidation), sendEmail);
+router.get('/getAllEmails', authorization, getAllEmails);
+router.get('/viewEmailById/:id', authorization, viewEmailById);
+router.delete('/deleteManyEmails', authorization, deleteManyEmails);
 export default router;

@@ -5,13 +5,14 @@ import {
     getApplicationsByDate,
     technologyStatistics
 } from '../../controller/reportsController.js';
+import { authorization } from '../../helpers/userMiddleware.js';
 
 const router = express.Router();
 
-router.get('/applicationOnProcessCount', applicationOnProcessCount);
-router.get('/statusByPercentage', statusByPercentage);
-router.get('/technologyStatistics', technologyStatistics);
+router.get('/applicationOnProcessCount', authorization, applicationOnProcessCount);
+router.get('/statusByPercentage', authorization, statusByPercentage);
+router.get('/technologyStatistics', authorization, technologyStatistics);
 
-router.get("/getApplicationsByDate", getApplicationsByDate);
+router.get("/getApplicationsByDate", authorization, getApplicationsByDate);
 
 export default router;
