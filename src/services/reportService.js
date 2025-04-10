@@ -136,20 +136,20 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
     const skillCategories = {
       frontend: [
         "JavaScript", "TypeScript", "HTML", "CSS", "Bootstrap", "Tailwind", "SASS", "LESS",
-        "React", "Angular", "Vue.js", "Vue", "jQuery", "RxJS", "Svelte", "Flutter"
+        "ReactJs", "Angular", "Vue.js", "Vue", "jQuery", "RxJS", "Svelte", "Flutter"
       ],
       backend: [
-        "Node.js", "Django", "Flask", "Java", "Spring", "Spring Boot", "C#", "DotNet",
+        "NodeJS", "Django", "Flask", "Java", "Spring", "Spring Boot", "C#", "DotNet",
         "ASP.NET", "ADO.NET", "Ado.Net", "C++", "C", "PHP", "Laravel", "CodeIgniter", "Hibernate",
         "WPF", "MVVM", "WinForms", "WCF"
       ],
       database: ["SQL", "MySQL", "PostgreSQL", "MongoDB", "Firebase", "Oracle", "Sqlite", "GraphQL"],
       testing: [
-        "JMeter", "Selenium", "Web Application Testing", "Automation Testing", "API Testing", 
-        "Performance Testing", "TestNG", "Postman", "Manual Testing", 
+        "JMeter", "Selenium", "Web Application Testing", "Automation Testing", "API Testing",
+        "Performance Testing", "TestNG", "Postman", "Manual Testing",
       ],
       devops: [
-        "AWS", "Azure", "Google Cloud", "GCP", "IBM Cloud", "Docker", "Kubernetes", "Jenkins", "CI/CD", 
+        "AWS", "Azure", "Google Cloud", "GCP", "IBM Cloud", "Docker", "Kubernetes", "Jenkins", "CI/CD",
         "Terraform", "Ansible", "IIS", "MSMQ", "Octopus"
       ],
       programming: [
@@ -161,7 +161,7 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
       ],
       others: ["Agile Methodology", "OOP", "OOPS", "XML", "Bash", "DAX", "SSIS", "REST API", "SOAP", "MVC", "Entity Framework", "Linq"]
     };
-
+    
     const categorySkills = skillCategories[category.toLowerCase()];
     if (!categorySkills) {
       return { skillCounts: {} } 
