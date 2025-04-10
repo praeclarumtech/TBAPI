@@ -30,10 +30,10 @@ router.post('/login', validator.body(loginValidation), login);
 router.get('/viewProfile', authorization, viewProfile);
 router.get('/getProfileByToken', authorization, getProfileByToken);
 router.get('/viewProfileByID/:id', authorization, viewProfileById);
-router.put('/updateProfile/:id', authorization, upload, updateProfile);
-router.post('/sendEmail',validator.body(sendEmailValidation),sendEmail);
-router.post('/sendEmail/verifyOtp',verifyOtp);
-router.put('/forgotPassword',validator.body(forgotPasswordValidation),forgotPassword);
-router.post('/changePassword/:id',validator.body(changePasswordValidation), changePassword);
+router.put('/updateProfile/:id', authorization, updateProfile);
+router.post('/sendEmail', validator.body(sendEmailValidation), sendEmail);
+router.post('/sendEmail/verifyOtp', verifyOtp);
+router.put('/forgotPassword', validator.body(forgotPasswordValidation), forgotPassword);
+router.post('/changePassword/:id', validator.body(changePasswordValidation), changePassword);
 
 export default router;

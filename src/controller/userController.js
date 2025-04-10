@@ -18,6 +18,7 @@ import {
   storeOtp,
 } from '../services/userService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
+import { upload } from '../helpers/multer.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -202,64 +203,71 @@ export const viewProfileById = async (req, res) => {
   }
 };
 
-export const updateProfile = async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const {
-      firstName,
-      lastName,
-      userName,
-      email,
-      phoneNumber,
-      dateOfBirth,
-      gender,
-      designation,
-    } = req.body;
-
-    let updateData = {
-      firstName,
-      lastName,
-      userName,
-      email,
-      phoneNumber,
-      dateOfBirth,
-      gender,
-      designation,
-    };
-
-    if (req.file) {
-      updateData.profilePicture = req.file.filename;
+export const updateProfile = (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      logger.info(Message.INVALID_FILE_TYPE)
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, Message.INVALID_FILE_TYPE);
     }
 
-    const updatedUser = await updateProfileById(userId, updateData);
+    try {
+      const userId = req.params.id;
+      const {
+        firstName,
+        lastName,
+        userName,
+        email,
+        phoneNumber,
+        dateOfBirth,
+        gender,
+        designation,
+      } = req.body;
 
-    if (!updatedUser) {
-      logger.warn(`Profile is ${Message.NOT_FOUND}`);
+      let updateData = {
+        firstName,
+        lastName,
+        userName,
+        email,
+        phoneNumber,
+        dateOfBirth,
+        gender,
+        designation,
+      };
+
+      if (req.file) {
+        updateData.profilePicture = req.file.filename;
+      }
+
+      const updatedUser = await updateProfileById(userId, updateData);
+
+      if (!updatedUser) {
+        logger.warn(`Profile is ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          `Profile is ${Message.NOT_FOUND}`
+        );
+      }
+
+      logger.info(`Profile is ${Message.UPDATED_SUCCESSFULLY}`);
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        `Profile is ${Message.UPDATED_SUCCESSFULLY}`,
+        updatedUser
+      );
+    } catch (error) {
+      logger.error(`${Message.FAILED_TO} update profile.`);
       return HandleResponse(
         res,
         false,
-        StatusCodes.NOT_FOUND,
-        `Profile is ${Message.NOT_FOUND}`
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `${Message.FAILED_TO} update profile.`
       );
     }
-
-    logger.info(`Profile is ${Message.UPDATED_SUCCESSFULLY}`);
-    return HandleResponse(
-      res,
-      true,
-      StatusCodes.OK,
-      `Profile is ${Message.UPDATED_SUCCESSFULLY}`,
-      updatedUser
-    );
-  } catch (error) {
-    logger.error(`${Message.FAILED_TO} update profile.`);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} update profile.`
-    );
-  }
+  });
 };
 
 export const sendEmail = async (req, res) => {
