@@ -287,3 +287,125 @@ export const deleteAppliedRoleAndSkill = async (req, res) => {
     );
   }
 };
+
+export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
+  const { field, find, replaceWith } = req.body;
+
+  if (!['skill', 'appliedRole'].includes(field)) {
+    logger.warn(`Invalid field provided for find and replace`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.BAD_REQUEST,
+      `Invalid field. Must be 'skill' or 'appliedRole'.`
+    );
+  }
+
+  if (!find || !replaceWith) {
+    logger.warn(`Find or replaceWith value is missing`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.BAD_REQUEST,
+      `Both 'find' and 'replaceWith' values are required.`
+    );
+  }
+
+  try {
+    const regex = new RegExp(`^${find.trim()}$`, 'i');
+
+    const result = await appliedRoleModel.updateMany(
+      { [field]: regex, isDeleted: false },
+      { $set: { [field]: replaceWith } }
+    );
+
+    if (result.modifiedCount === 0) {
+      logger.info(`No matching records found to update`);
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        `No matching records found to update.`,
+        result
+      );
+    }
+
+    logger.info(`${field} values replaced successfully`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `${field} values replaced successfully.`,
+      result
+    );
+  } catch (error) {
+    logger.error(`Failed to perform find and replace. ${error}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} perform find and replace.`
+    );
+  }
+};
+
+export const previewFindSkillOrAppliedRole = async (req, res) => {
+  const { field, find } = req.body;
+
+  if (!['skill', 'appliedRole'].includes(field)) {
+    logger.warn(`Invalid field provided for preview`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.BAD_REQUEST,
+      `Invalid field. Must be 'skill' or 'appliedRole'.`
+    );
+  }
+
+  if (!find) {
+    logger.warn(`Find value is missing`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.BAD_REQUEST,
+      `The 'find' value is required.`
+    );
+  }
+
+  try {
+    const regex = new RegExp(`^${find.trim()}$`, 'i');
+
+    const results = await appliedRoleModel.find({
+      [field]: regex,
+      isDeleted: false,
+    });
+
+    if (!results.length) {
+      logger.info(`No matching records found`);
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        `No matching records found.`,
+        []
+      );
+    }
+
+    logger.info(`Preview: Found ${results.length} matching record(s)`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Found ${results.length} matching record(s).`,
+      results
+    );
+  } catch (error) {
+    logger.error(`Failed to perform preview find. ${error}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} preview find.`
+    );
+  }
+};
