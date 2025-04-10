@@ -136,7 +136,7 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
     const skillCategories = {
       frontend: [
         "JavaScript", "TypeScript", "HTML", "CSS", "Bootstrap", "Tailwind", "SASS", "LESS",
-        "ReactJs", "Angular", "Vue.js", "Vue", "jQuery", "RxJS", "Svelte", "Flutter"
+        "ReactJs", "Angular", "Vuejs", "jQuery", "RxJS", "Svelte", "Flutter"
       ],
       backend: [
         "NodeJS", "Django", "Flask", "Java", "Spring", "Spring Boot", "C#", "DotNet",
@@ -161,7 +161,7 @@ export const getTechnologyStatistics = async (calendarType, customStartDate, cus
       ],
       others: ["Agile Methodology", "OOP", "OOPS", "XML", "Bash", "DAX", "SSIS", "REST API", "SOAP", "MVC", "Entity Framework", "Linq"]
     };
-    
+
     const categorySkills = skillCategories[category.toLowerCase()];
     if (!categorySkills) {
       return { skillCounts: {} } 
