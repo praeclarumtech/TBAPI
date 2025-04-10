@@ -126,6 +126,7 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.SYSTEM_ENGINEER,
         applicantEnum.SENIOR_SYSTEM_ENGINEER,
         applicantEnum.PROGRAMER_ANALYST,
+        applicantEnum.CUSTOMER_SUPPORT_SPECIALIST,
         applicantEnum.OTHER,
         applicantEnum.NA,
       ],
@@ -182,6 +183,7 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.SYSTEM_ENGINEER,
         applicantEnum.SENIOR_SYSTEM_ENGINEER,
         applicantEnum.PROGRAMER_ANALYST,
+        applicantEnum.CUSTOMER_SUPPORT_SPECIALIST
         applicantEnum.OTHER,
         applicantEnum.NA,
       ],

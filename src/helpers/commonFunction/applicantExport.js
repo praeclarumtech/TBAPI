@@ -116,6 +116,33 @@ export const generateApplicantCsv = (applicants) => {
   const json2csvParser = new Parser({ fields });
   return json2csvParser.parse(applicants);
 };
+
+const parseDate = (dateString) => {
+  if (!dateString) return null;
+
+  try {
+    if (!isNaN(dateString)) {
+      const excelEpoch = new Date(1899, 11, 30);
+      const parsedDate = new Date(excelEpoch.getTime() + dateString * 86400000);
+      return parsedDate.toISOString().split('T')[0];
+    }
+
+    const normalized = dateString.replace(/\//g, '-').split('-');
+    if (normalized.length === 3) {
+      const reversed = normalized.reverse().join('-');
+      const date = new Date(reversed);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+
+    const fallbackDate = new Date(dateString);
+    return isNaN(fallbackDate.getTime()) ? null : fallbackDate.toISOString().split('T')[0];
+  } catch (e) {
+    return null;
+  }
+};
+
 const validateAndFillFields = async (data, userRole) => {
   return {
     name: {
@@ -130,17 +157,8 @@ const validateAndFillFields = async (data, userRole) => {
     },
     email: data['Email']?.trim() || null,
     gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
-    dateOfBirth: data['Date of Birth']
-      ? new Date(
-        data['Date of Birth']
-          .replace(/[/]/g, '-')
-          .split('-')
-          .reverse()
-          .join('-')
-      )
-        .toISOString()
-        .split('T')[0]
-      : null,
+    dateOfBirth: parseDate(data['Date of Birth']),
+
     currentAddress: data['Current Address'] || 'Not Provided',
     state: data['State'] || 'Not Provided',
     country: data['Country'] || 'Not Provided',
@@ -173,6 +191,7 @@ const validateAndFillFields = async (data, userRole) => {
     otherSkills: data['Other Skills'] || 'Not provided',
     rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : null,
     currentCompanyName: data['Current Company Name']?.trim() || 'Not Provided',
+
     currentCompanyDesignation:
       Object.values(applicantEnum).find(
         (value) =>
@@ -223,17 +242,7 @@ const validateAndFillFields = async (data, userRole) => {
         ? null
         : data['Marital Status']?.trim()) ||
       '',
-    lastFollowUpDate: data['Last Follow-Up Date']
-      ? new Date(
-        data['Last Follow-Up Date']
-          .replace(/[/]/g, '-')
-          .split('-')
-          .reverse()
-          .join('-')
-      )
-        .toISOString()
-        .split('T')[0]
-      : null,
+    lastFollowUpDate: parseDate(data['Last Follow-Up Date']),
     anyHandOnOffers: data['Any Hands-On Offers']?.toLowerCase() === 'yes',
     comment: data['Comment'] || 'Not Provided',
     feedback: data['Feedback'] || 'Not Provided',
@@ -253,7 +262,7 @@ export const processCsvRow = async (data, userRole) => {
     const requiredFields = {
       firstName: data['First Name']?.trim(),
       email: data['Email']?.trim(),
-      phoneNumber: data['Phone Number']?.trim(),
+      phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
       gender: data['Gender']?.trim()?.toLowerCase(),
       appliedRole: data['Applied Role']?.trim(),
       currentCompanyDesignation: data['Current Company Designation']?.trim(),
