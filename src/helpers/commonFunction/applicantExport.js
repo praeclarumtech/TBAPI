@@ -157,17 +157,6 @@ const validateAndFillFields = async (data, userRole) => {
     },
     email: data['Email']?.trim() || null,
     gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
-    // dateOfBirth: data['Date of Birth']
-    //   ? new Date(
-    //     data['Date of Birth']
-    //       .replace(/[/]/g, '-')
-    //       .split('-')
-    //       .reverse()
-    //       .join('-')
-    //   )
-    //     .toISOString()
-    //     .split('T')[0]
-    //   : null,
     dateOfBirth: parseDate(data['Date of Birth']),
 
     currentAddress: data['Current Address'] || 'Not Provided',
@@ -202,6 +191,7 @@ const validateAndFillFields = async (data, userRole) => {
     otherSkills: data['Other Skills'] || 'Not provided',
     rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : null,
     currentCompanyName: data['Current Company Name']?.trim() || 'Not Provided',
+
     currentCompanyDesignation:
       Object.values(applicantEnum).find(
         (value) =>
@@ -252,17 +242,6 @@ const validateAndFillFields = async (data, userRole) => {
         ? null
         : data['Marital Status']?.trim()) ||
       '',
-    // lastFollowUpDate: data['Last Follow-Up Date']
-    //   ? new Date(
-    //     data['Last Follow-Up Date']
-    //       .replace(/[/]/g, '-')
-    //       .split('-')
-    //       .reverse()
-    //       .join('-')
-    //   )
-    //     .toISOString()
-    //     .split('T')[0]
-    //   : null,
     lastFollowUpDate: parseDate(data['Last Follow-Up Date']),
     anyHandOnOffers: data['Any Hands-On Offers']?.toLowerCase() === 'yes',
     comment: data['Comment'] || 'Not Provided',
@@ -283,7 +262,7 @@ export const processCsvRow = async (data, userRole) => {
     const requiredFields = {
       firstName: data['First Name']?.trim(),
       email: data['Email']?.trim(),
-      phoneNumber: data['Phone Number']?.trim(),
+      phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
       gender: data['Gender']?.trim()?.toLowerCase(),
       appliedRole: data['Applied Role']?.trim(),
       currentCompanyDesignation: data['Current Company Designation']?.trim(),
