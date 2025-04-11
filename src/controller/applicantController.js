@@ -841,82 +841,106 @@ export const updateStatus = async (req, res) => {
 export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered, source } = req.query;
-    let query = { isDeleted: false };
-
+    const { ids, fields } = req.body;
     let applicants = [];
 
+    // 1. Export based on provided `ids` (from temp collection)
+    if (ids && Array.isArray(ids) && ids.length > 0) {
+      const query = {
+        _id: { $in: ids },
+        isDeleted: false,
+      };
+
+      // Apply filter for temp collection
+      if (filtered === 'both') {
+        query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+      } else if (filtered === 'Resume') {
+        query.addedBy = applicantEnum.RESUME;
+      } else if (filtered === 'Csv') {
+        query.addedBy = applicantEnum.CSV;
+      }
+
+      // make projection if take specific fields 
+      const projection = fields?.length
+        ? fields.reduce((acc, field) => ({ ...acc, [field]: 1 }), { _id: 1 })
+        : undefined;
+
+      applicants = await ExportsApplicants.find(query, projection);
+
+      if (!applicants.length) {
+        return HandleResponse(res, false, 404, 'No applicants found for provided ids.');
+      }
+
+      // Generate and send CSV
+      const csvData = generateApplicantCsv(applicants);
+      const filename = fields?.length
+        ? 'selected_fields_applicants.csv'
+        : 'selected_ids_applicants.csv';
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      res.status(200).send(csvData);
+
+      // Move to main collection and delete from temp if full export (no fields)
+      if (!fields?.length) {
+        await insertManyApplicantsToMain(applicants);
+        await deleteExportedApplicants({ _id: { $in: ids } });
+      }
+
+      return;
+    }
+    // 2. Export based on query params (`filtered` or `source`)
+    let query = { isDeleted: false };
+
+    // Filter logic for `filtered`
     if (filtered === 'both') {
-      query = {
-        addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] },
-        isDeleted: false,
-      };
-      applicants = await ExportsApplicants.find(query);
-      if (applicants.length) {
-        await insertManyApplicantsToMain(applicants);
-        await deleteExportedApplicants(query);
-      }
-    } else if (filtered === 'Resume' || filtered === 'Csv') {
-      query = {
-        addedBy:
-          filtered === 'Resume' ? applicantEnum.RESUME : applicantEnum.CSV,
-        isDeleted: false,
-      };
-      applicants = await ExportsApplicants.find(query);
-      if (applicants.length) {
-        await insertManyApplicantsToMain(applicants);
-        await deleteExportedApplicants(query);
-      }
+      query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+    } else if (filtered === 'Resume') {
+      query.addedBy = applicantEnum.RESUME;
+    } else if (filtered === 'Csv') {
+      query.addedBy = applicantEnum.CSV;
     }
 
-    if (source === 'Manual') {
-      query = {
-        addedBy: applicantEnum.MANUAL,
-        isDeleted: false,
-      };
-      applicants = await Applicant.find(query);
-    } else if (source === 'Resume' || source === 'Csv') {
-      query = {
-        addedBy: source === 'Resume' ? applicantEnum.RESUME : applicantEnum.CSV,
-        isDeleted: false,
-      };
-      applicants = await Applicant.find(query);
-    } else if (source === 'both') {
-      query = {
-        addedBy: { $in: [applicantEnum.RESUME, applicantEnum.CSV] },
-        isDeleted: false,
-      };
-      applicants = await Applicant.find(query);
-    } else if (!filtered) {
-      query = { isDeleted: false };
-      applicants = await Applicant.find(query);
-    }
-
-    if (!applicants.length) {
-      logger.warn(`Applicants are ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Applicants are ${Message.NOT_FOUND}`
+    //get from main
+    if (source === 'both' || source === 'Csv' || source === 'Resume' || source === 'Manual') {
+      query.addedBy = (
+        source === 'both'
+          ? { $in: [applicantEnum.RESUME, applicantEnum.CSV] }
+          : source === 'Resume'
+            ? applicantEnum.RESUME
+            : source === 'Csv'
+              ? applicantEnum.CSV
+              : applicantEnum.MANUAL
       );
+
+      applicants = await Applicant.find(query);
+    } else {
+      applicants = await ExportsApplicants.find(query);
+      if (applicants.length) {
+        await insertManyApplicantsToMain(applicants);
+        await deleteExportedApplicants({ _id: { $in: applicants.map((a) => a._id) } });
+      }
     }
 
+    if (!ids && !filtered && !source) {
+      applicants = await Applicant.find({ isDeleted: false });
+    }
+    if (!applicants.length) {
+      return HandleResponse(res, false, 404, 'No applicants found for the given filter.');
+    }
+
+    // Generate and send CSV
     const csvData = generateApplicantCsv(applicants);
-    const filename = `${filtered || source || 'all'}_applicants.csv`;
+    const filename = `${filtered || source || 'all'}_filtered_applicants.csv`;
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-    res.status(200).send(csvData);
-    logger.info(Message.DONWLOADED);
+    return res.status(200).send(csvData);
   } catch (error) {
     logger.error(`${Message.FAILED_TO} export file`);
     if (error.code === 11000) {
       const duplicateField =
-        error.errmsg
-          ?.match(/index: (.+?) dup key/)?.[1]
-          ?.split('_')[0]
-          ?.split('.')
-          .pop() || 'unknown';
+        error.errmsg?.match(/index: (.+?) dup key/)?.[1]?.split('_')[0]?.split('.').pop() || 'unknown';
       const duplicateValue =
         error.errmsg?.match(/dup key: \{.*?: "(.*?)"/)?.[1] || 'unknown';
       return HandleResponse(
@@ -926,15 +950,9 @@ export const exportApplicantCsv = async (req, res) => {
         `${duplicateField} ${duplicateValue} is already in use, please use a different value.`
       );
     }
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} export file`
-    );
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} export file`);
   }
 };
-
 export const importApplicantCsv = async (req, res) => {
   try {
     const updateFlag =
