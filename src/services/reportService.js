@@ -116,80 +116,41 @@ export const getReport = async (
     selectedApplicants,
     rejectedApplicants,
     inProcessApplicants,
-
   };
 };
 
-export const getTechnologyStatistics = async (calendarType, customStartDate, customEndDate, category) => {
+export const getApplicantSkillCounts = async (skillIds = []) => {
   try {
-    if (!category) {
-      return { skillCounts: {} };
-    }
+    if (!skillIds.length) return {};
 
-    const { startDate, endDate } = getDateRange(calendarType, customStartDate, customEndDate);
-
-    let dateFilter = {};
-    if (startDate && endDate) {
-      dateFilter.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
-    }
-
-    const skillCategories = {
-      frontend: [
-        "JavaScript", "TypeScript", "HTML", "CSS", "Bootstrap", "Tailwind", "SASS", "LESS",
-        "ReactJs", "Angular", "Vuejs", "jQuery", "RxJS", "Svelte", "Flutter"
-      ],
-      backend: [
-        "NodeJS", "Django", "Flask", "Java", "Spring", "Spring Boot", "C#", "DotNet",
-        "ASP.NET", "ADO.NET", "Ado.Net", "C++", "C", "PHP", "Laravel", "CodeIgniter", "Hibernate",
-        "WPF", "MVVM", "WinForms", "WCF"
-      ],
-      database: ["SQL", "MySQL", "PostgreSQL", "MongoDB", "Firebase", "Oracle", "Sqlite", "GraphQL"],
-      testing: [
-        "JMeter", "Selenium", "Web Application Testing", "Automation Testing", "API Testing",
-        "Performance Testing", "TestNG", "Postman", "Manual Testing",
-      ],
-      devops: [
-        "AWS", "Azure", "Google Cloud", "GCP", "IBM Cloud", "Docker", "Kubernetes", "Jenkins", "CI/CD",
-        "Terraform", "Ansible", "IIS", "MSMQ", "Octopus"
-      ],
-      programming: [
-        "JavaScript", "TypeScript", "Python", "Java", "C#", "C++", "C", "PHP", "Ruby", "Rust", "VBA", "Hack"
-      ],
-      versioncontrol: ["Git", "GitHub", "GitLab"],
-      uiux: [
-        "Figma", "Adobe XD", "Sketch", "Balsamiq", "Photoshop", "Illustrator", "InVision", "Framer", "Axure", "Marvel"
-      ],
-      others: ["Agile Methodology", "OOP", "OOPS", "XML", "Bash", "DAX", "SSIS", "REST API", "SOAP", "MVC", "Entity Framework", "Linq"]
-    };
-
-    const categorySkills = skillCategories[category.toLowerCase()];
-    if (!categorySkills) {
-      return { skillCounts: {} } 
-    }
+    const skills = await Skills.find({
+      _id: { $in: skillIds },
+      isDeleted: false,
+    });
 
     const skillCounts = await Promise.all(
-      categorySkills.map(async (skill) => {
-        const escapedSkill = skill.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-        
+      skills.map(async (skillDoc) => {
+        const skillName = skillDoc.skills;
+        const escapedSkill = skillName.replace(
+          /[-\/\\^$*+?.()|[\]{}]/g,
+          '\\$&'
+        );
         const count = await Applicant.countDocuments({
-          appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, "i") },
+          appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
           isDeleted: false,
-          ...dateFilter,
         });
-
-        return { skill, count };
+        return { skill: skillName, count };
       })
     );
 
-    return {
-      skillCounts: skillCounts.reduce((acc, { skill, count }) => {
-        acc[skill] = count;
-        return acc;
-      }, {}),
-    };
+    return skillCounts.reduce((acc, { skill, count }) => {
+      acc[skill] = count;
+      return acc;
+    }, {});
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} getTechnologyStatistics: ${error.message}`);
-    return { skillCounts: {} };
+    logger.error(
+      `${Message.FAILED_TO} count applicants by skills: ${error.message}`
+    );
+    return {};
   }
 };
-

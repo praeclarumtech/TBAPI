@@ -3,8 +3,10 @@ import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-import { getReport, getTechnologyStatistics } from '../services/reportService.js';
-import { getApplicationCount } from '../services/reportService.js';
+import {
+  getReport,
+  getApplicantSkillCounts,
+} from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
   const { calendarType, startDate, endDate } = req.query;
@@ -119,43 +121,39 @@ export const getApplicationsByDate = async (req, res) => {
   }
 };
 
-export const technologyStatistics = async (req, res) => {
+export const applicantSkillStatistics = async (req, res) => {
   try {
-    const { calendarType, startDate, endDate, category } = req.query;
+    const { skillIds } = req.body;
 
-    if (!category) {
+    if (!skillIds || !Array.isArray(skillIds) || skillIds.length === 0) {
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `Category is required.`,
-        {}
+        `Skill IDs array is required`
       );
     }
 
-    const { skillCounts } = await getTechnologyStatistics(calendarType, startDate, endDate, category);
+    const skillCounts = await getApplicantSkillCounts(skillIds);
 
-    logger.info(`Technology Statistics ${Message.FETCH_SUCCESSFULLY}`);  
+    logger.info(`Applicant Skill Statistics ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Technology Statistics ${Message.FETCH_SUCCESSFULLY}`,
-      { category, skillCounts }
+      `Applicant Skill Statistics ${Message.FETCH_SUCCESSFULLY}`,
+      skillCounts
     );
   } catch (error) {
     logger.error(
-      `${Message.FAILED_TO} Fetching Technology Statistics: ${error.message}`,
-      { stack: error.stack }
+      `${Message.FAILED_TO} fetch applicant skill statistics: ${error.message}`
     );
-
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} Fetching Technology Statistics.`,
+      `Failed to fetch skill statistics`,
       error
     );
   }
 };
-
