@@ -156,7 +156,7 @@ export const parseResumeText = (text) => {
     'Linux',
     'Bash',
     'Php',
-    'Dot Net',
+    'DotNet',
     'ASP.Net',
     'MVC',
     'XML',

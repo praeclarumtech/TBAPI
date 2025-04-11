@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const appliedRoleSchema = new mongoose.Schema(
   {
     skill: {
-      type: String,
+      type: [String],
       required: true,
     },
     appliedRole: {
