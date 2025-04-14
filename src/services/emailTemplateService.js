@@ -1,5 +1,5 @@
 import EmailTemplate from '../models/emailTemplateModel.js';
- 
+import logger from '../loggers/logger.js';
  
 export const createEmailTemplate = async (templateData) => {
  try{
@@ -34,8 +34,19 @@ export const updateEmailTemplate = async (id, updateData) => {
 };
 
 export const deleteEmailTemplate = async (id) => {
-    return EmailTemplate.deleteOne({ id });
+    try {
+      const result = await EmailTemplate.deleteOne({ _id: id });
+      if (result.deletedCount === 0) {
+        return null;
+      }
+      return result;
+    } catch (error) {
+      logger.error('Error deleting email template:', error);
+      throw error;
+    }
   };
+  
+
  
 export const getEmailTemplateById = async (id) => {
     try {

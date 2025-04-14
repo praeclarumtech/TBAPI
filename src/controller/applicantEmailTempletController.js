@@ -102,15 +102,13 @@ import {
     }
   };
 
-  
-   
   export const deleteEmailTemplateController = async (req, res) => {
     try {
       const { id } = req.params;
-   
-      const template = await deleteEmailTemplate({id});
-   
-      if (!template) {
+  
+      const result = await deleteEmailTemplate(id);
+  
+      if (!result) {
         return HandleResponse(
           res,
           false,
@@ -118,13 +116,13 @@ import {
           'Email template not found.'
         );
       }
-   
+  
       return HandleResponse(
         res,
         true,
         StatusCodes.OK,
         'Email template deleted successfully.',
-        template
+        result
       );
     } catch (error) {
       logger.error(`Failed to delete email template: ${error.message}`);
