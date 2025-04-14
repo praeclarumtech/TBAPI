@@ -10,6 +10,8 @@ import {
   deleteSkill,
   getSkillById,
   getAllSkillAndAppliedRole,
+  findAndReplaceFieldValue,
+  previewFindFieldValue,
 } from '../services/appliedRoleservice.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
 import logger from '../loggers/logger.js';
@@ -370,7 +372,15 @@ export const deleteAppliedRoleAndSkill = async (req, res) => {
 export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
   const { field, find, replaceWith } = req.body;
 
-  if (!['skill', 'appliedRole'].includes(field)) {
+  if (
+    ![
+      'skill',
+      'appliedRole',
+      'appliedSkills',
+      'currentCompanyDesignation',
+      'qualification',
+    ].includes(field)
+  ) {
     logger.warn(`Invalid field provided for find and replace`);
     return HandleResponse(
       res,
@@ -391,12 +401,7 @@ export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
   }
 
   try {
-    const regex = new RegExp(`^${find.trim()}$`, 'i');
-
-    const result = await appliedRoleModel.updateMany(
-      { [field]: regex, isDeleted: false },
-      { $set: { [field]: replaceWith } }
-    );
+    const result = await findAndReplaceFieldValue(field, find, replaceWith);
 
     if (result.modifiedCount === 0) {
       logger.info(`No matching records found to update`);
@@ -423,7 +428,7 @@ export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} perform find and replace.`
+      `Failed to perform find and replace.`
     );
   }
 };
@@ -431,13 +436,21 @@ export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
 export const previewFindSkillOrAppliedRole = async (req, res) => {
   const { field, find } = req.body;
 
-  if (!['skill', 'appliedRole'].includes(field)) {
+  if (
+    ![
+      'skill',
+      'appliedRole',
+      'appliedSkills',
+      'currentCompanyDesignation',
+      'qualification',
+    ].includes(field)
+  ) {
     logger.warn(`Invalid field provided for preview`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Invalid field. Must be 'skill' or 'appliedRole'.`
+      `Invalid field. Must be 'skill', 'appliedRole','appliedSkills','currentCompanyDesignation' or 'qualification'.`
     );
   }
 
@@ -452,12 +465,7 @@ export const previewFindSkillOrAppliedRole = async (req, res) => {
   }
 
   try {
-    const regex = new RegExp(`^${find.trim()}$`, 'i');
-
-    const results = await appliedRoleModel.find({
-      [field]: regex,
-      isDeleted: false,
-    });
+    const results = await previewFindFieldValue(field, find);
 
     if (!results.length) {
       logger.info(`No matching records found`);
@@ -470,16 +478,16 @@ export const previewFindSkillOrAppliedRole = async (req, res) => {
       );
     }
 
-    logger.info(`Preview: Found ${results.length} matching record(s)`);
+    logger.info(`Preview: Found ${results.length} matching records`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Found ${results.length} matching record(s).`,
+      `Found ${results.length} matching records.`,
       results
     );
   } catch (error) {
-    logger.error(`Failed to perform preview find. ${error}`);
+    logger.error(`${Message.FAILED_TO} perform preview find. ${error}`);
     return HandleResponse(
       res,
       false,
