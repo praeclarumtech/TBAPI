@@ -32,15 +32,10 @@ export const updateEmailTemplate = async (id, updateData) => {
         throw error;
     }
 };
- 
+
 export const deleteEmailTemplate = async (id) => {
-    try{
-        return await EmailTemplate.findOneAndDelete({ id });
-    } catch (error) {
-        logger.error('Error deleting email template:', error);
-        throw error;
-    }
-};
+    return EmailTemplate.deleteOne({ id });
+  };
  
 export const getEmailTemplateById = async (id) => {
     try {

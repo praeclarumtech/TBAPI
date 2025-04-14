@@ -12,9 +12,9 @@ import {
   export const createEmailTemplateController = async (req, res) => {
     try {
    
-      const { type, subject, body } = req.body;
+      const { type, subject, description } = req.body;
    
-      const template = await createEmailTemplate({ type, subject, body });
+      const template = await createEmailTemplate({ type, subject, description });
    
       return HandleResponse(
         res,
@@ -71,9 +71,9 @@ import {
     try {
    
       const { id } = req.params;
-      const { type, subject, body } = req.body;
+      const { type, subject, description } = req.body;
    
-      const template = await updateEmailTemplate(id, { type, subject, body });
+      const template = await updateEmailTemplate(id, { type, subject, description });
    
       if (!template) {
         return HandleResponse(
@@ -101,12 +101,14 @@ import {
       );
     }
   };
+
+  
    
   export const deleteEmailTemplateController = async (req, res) => {
     try {
       const { id } = req.params;
    
-      const template = await deleteEmailTemplate(id);
+      const template = await deleteEmailTemplate({id});
    
       if (!template) {
         return HandleResponse(
