@@ -69,15 +69,6 @@ import {
    
   export const updateEmailTemplateController = async (req, res) => {
     try {
-      const { error } = emailTemplateValidation.validate(req.body);
-      if (error) {
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          error.details[0].message
-        );
-      }
    
       const { id } = req.params;
       const { type, subject, body } = req.body;
