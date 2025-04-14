@@ -1,11 +1,9 @@
 import mongoose from 'mongoose';
-import { candidateTemplateType } from '../utils/enum.js';
  
 const emailTemplateSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: Object.values(candidateTemplateType),
       unique: true,
       required: true
     },
