@@ -17,7 +17,7 @@ import {
   loginValidation,
   sendEmailValidation,
   forgotPasswordValidation,
-  changePasswordValidation
+  changePasswordValidation,
 } from '../../validations/userValidation.js';
 import { upload } from '../../helpers/multer.js';
 import { authorization } from '../../helpers/userMiddleware.js';

@@ -219,7 +219,6 @@ export const updateProfile = (req, res) => {
         email,
         phoneNumber,
         dateOfBirth,
-        gender,
         designation,
       } = req.body;
 
@@ -230,7 +229,6 @@ export const updateProfile = (req, res) => {
         email,
         phoneNumber,
         dateOfBirth,
-        gender,
         designation,
       };
 
