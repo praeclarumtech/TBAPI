@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { Enum } from '../utils/enum.js';
-import { genderEnum } from '../utils/enum.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -41,10 +40,6 @@ const userSchema = new mongoose.Schema(
     },
     dateOfBirth: {
       type: Date,
-    },
-    gender: {
-      type: String,
-      enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER],
     },
     designation: {
       type: String,
