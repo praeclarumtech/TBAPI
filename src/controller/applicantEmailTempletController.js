@@ -3,7 +3,8 @@ import {
     getEmailTemplateById,
     updateEmailTemplate,
     deleteEmailTemplate,
-    getAllEmailTemplates
+    getAllEmailTemplates,
+    getEmailTemplateByStatus
   } from '../services/emailTemplateService.js';
   import { HandleResponse } from '../helpers/handleResponse.js';
   import { StatusCodes } from 'http-status-codes';
@@ -150,6 +151,39 @@ import {
       );
     } catch (error) {
       logger.error(`Failed to get all email templates: ${error.message}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        error.message
+      );
+    }
+  };
+
+  export const getEmailTemplateByStatusController = async (req, res) => {
+    try {
+      const { type } = req.params;
+  
+      const template = await getEmailTemplateByStatus(type);
+  
+      if (!template) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          'Email template not found for the provided type.'
+        );
+      }
+  
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        'Email template fetched successfully.',
+        template
+      );
+    } catch (error) {
+      logger.error(`Failed to get email template by type: ${error.message}`);
       return HandleResponse(
         res,
         false,
