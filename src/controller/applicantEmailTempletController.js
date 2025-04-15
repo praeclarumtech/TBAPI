@@ -9,6 +9,7 @@ import {
   import { HandleResponse } from '../helpers/handleResponse.js';
   import { StatusCodes } from 'http-status-codes';
   import logger from '../loggers/logger.js';
+  import EmailTemplate from '../models/emailTemplateModel.js';
    
   export const createEmailTemplateController = async (req, res) => {
     try {
@@ -135,19 +136,30 @@ import {
       );
     }
   };
-   
+
   export const getAllEmailTemplatesController = async (req, res) => {
     try {
-      const { page = 1, limit = 10 } = req.query;
-   
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+  
+      const totalRecords = await EmailTemplate.countDocuments({ isDeleted: false });
       const templates = await getAllEmailTemplates(page, limit);
-   
+      const totalPages = Math.ceil(totalRecords / limit);
+  
       return HandleResponse(
         res,
         true,
         StatusCodes.OK,
         'Email templates fetched successfully.',
-        templates
+        {
+          templates,
+          pagination: {
+            totalRecords,
+            currentPage: page,
+            totalPages,
+            limit
+          }
+        }
       );
     } catch (error) {
       logger.error(`Failed to get all email templates: ${error.message}`);
@@ -158,7 +170,7 @@ import {
         error.message
       );
     }
-  };
+  };  
 
   export const getEmailTemplateByStatusController = async (req, res) => {
     try {
