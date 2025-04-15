@@ -9,6 +9,7 @@ import dashboardRouter from './route/dashboardRoute.js';
 import countryRouter from './route/commonRoute.js';
 import reportsRouter from './route/reportsRoute.js';
 import appliedRoleRouter from './route/appliedRoleRoute.js'
+import applicantEmailTempletRouter from './route/emailTemplateRoute.js'
 const router = express.Router();
 
 router.use('/year', yearRoute);
@@ -21,5 +22,6 @@ router.use('/dashboard/applicant', dashboardRouter);
 router.use('/reports/applicants', reportsRouter);
 router.use('/appliedRole', appliedRoleRouter);
 router.use('/', countryRouter);
+router.use('/email/template', applicantEmailTempletRouter);
 
 export default router;
