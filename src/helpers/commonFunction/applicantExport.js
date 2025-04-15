@@ -2,120 +2,107 @@ import { Parser } from 'json2csv';
 import { applicantEnum, genderEnum } from '../../utils/enum.js';
 
 
-export const generateApplicantCsv = (applicants) => {
-  const fields = [
-    { label: 'First Name', value: (row) => row.name?.firstName || '' },
-    { label: 'Middle Name', value: (row) => row.name?.middleName || '' },
-    { label: 'Last Name', value: (row) => row.name?.lastName || '' },
-    { label: 'Phone Number', value: (row) => row.phone?.phoneNumber || '' },
-    {
-      label: 'WhatsApp Number',
-      value: (row) => row.phone?.whatsappNumber || '',
-    },
-    { label: 'Email', value: (row) => row.email || '' },
-    { label: 'Gender', value: (row) => row.gender || '' },
-    {
-      label: 'Date of Birth',
-      value: (row) =>
-        row.dateOfBirth
-          ? new Date(row.dateOfBirth).toISOString().split('T')[0]
-          : '',
-    },
-    { label: 'Qualification', value: (row) => row.qualification || '' },
-    {
-      label: 'Specialization',
-      value: (row) => row.specialization || 'Not Provided',
-    },
-    { label: 'Passing Year', value: (row) => row.passingYear || '' },
-    { label: 'Current Pincode', value: (row) => row.currentPincode || '' },
-    { label: 'Current City', value: (row) => row.currentCity || '' },
-    { label: 'Current Address', value: (row) => row.currentAddress || '' },
-    { label: 'State', value: (row) => row.state || '' },
-    { label: 'Country', value: (row) => row.country || '' },
-    {
-      label: 'Applied Skills',
-      value: (row) => row.appliedSkills?.join(', ') || '',
-    },
-    {
-      label: 'Total Experience (years)',
-      value: (row) => row.totalExperience || '',
-    },
-    {
-      label: 'Relevant Skill Experience (years)',
-      value: (row) => row.relevantSkillExperience || '',
-    },
-    { label: 'College Name', value: (row) => row.collegeName || '' },
-    { label: 'CGPA', value: (row) => row.cgpa || '' },
-    { label: 'Permanent Address', value: (row) => row.permanentAddress || '' },
-    {
-      label: 'Communication Skill',
-      value: (row) => row.communicationSkill || '',
-    },
-    { label: 'Other Skills', value: (row) => row.otherSkills || '' },
-    { label: 'Rating', value: (row) => row.rating || '' },
-    { label: 'Current Package', value: (row) => row.currentPkg || '' },
-    { label: 'Expected Package', value: (row) => row.expectedPkg || '' },
-    { label: 'Notice Period', value: (row) => row.noticePeriod || '' },
-    { label: 'Negotiation', value: (row) => row.negotiation || '' },
-    { label: 'Work Preference', value: (row) => row.workPreference || '' },
-    { label: 'Feedback', value: (row) => row.feedback || '' },
-    { label: 'Comment', value: (row) => row.comment || '' },
-    { label: 'Status', value: (row) => row.status || '' },
-    { label: 'Interview Stage', value: (row) => row.interviewStage || '' },
-    {
-      label: 'Current Company Designation',
-      value: (row) => row.currentCompanyDesignation || '',
-    },
-    { label: 'Applied Role', value: (row) => row.appliedRole || '' },
-    { label: 'Practical URL', value: (row) => row.practicalUrl || '' },
-    {
-      label: 'Practical Feedback',
-      value: (row) => row.practicalFeedback || '',
-    },
-    { label: 'Portfolio URL', value: (row) => row.portfolioUrl || '' },
-    { label: 'Referral', value: (row) => row.referral || '' },
-    { label: 'Resume URL', value: (row) => row.resumeUrl || '' },
-    {
-      label: 'Preferred Locations',
-      value: (row) => row.preferredLocations || '',
-    },
-    {
-      label: 'Current Company Name',
-      value: (row) => row.currentCompanyName || '',
-    },
-    { label: 'Marital Status', value: (row) => row.maritalStatus || ' ' },
-    {
-      label: 'Last Follow-Up Date',
-      value: (row) =>
-        row.lastFollowUpDate
-          ? new Date(row.lastFollowUpDate).toISOString().split('T')[0]
-          : '',
-    },
-    {
-      label: 'Any Hands-On Offers',
-      value: (row) => (row.anyHandOnOffers ? 'Yes' : 'No'),
-    },
-    {
-      label: 'LinkedIn URL',
-      value: (row) => row.linkedinUrl || 'Not Provided',
-    },
-    {
-      label: 'Client CV URL',
-      value: (row) => row.clientCvUrl || 'Not Provided',
-    },
-    {
-      label: 'Client Feedback',
-      value: (row) => row.clientFeedback || 'Not Provided',
-    },
-    {
-      label: 'Meta',
-      value: (row) => row.meta || 'Not Provided',
-    },
+// import { Parser } from 'json2csv';
+
+export const generateApplicantCsv = (applicants, selectedFields = null, ids) => {
+  let json2csvParser;
+  // const defaultFields = [
+  //   'name.firstName',
+  //   'email',
+  //   'phone.phoneNumber',
+  //   'gender',
+  //   'appliedRole',
+  //   'currentCompanyDesignation',
+  //   'resumeUrl',
+  // ];
+
+  const allFields = [
+    { key: 'name.firstName', label: 'First Name', value: row => row.name?.firstName || '' },
+    { key: 'name.middleName', label: 'Middle Name', value: row => row.name?.middleName || '' },
+    { key: 'name.lastName', label: 'Last Name', value: row => row.name?.lastName || '' },
+    { key: 'phone.phoneNumber', label: 'Phone Number', value: row => row.phone?.phoneNumber || '' },
+    { key: 'phone.whatsappNumber', label: 'WhatsApp Number', value: row => row.phone?.whatsappNumber || '' },
+    { key: 'email', label: 'Email', value: row => row.email || '' },
+    { key: 'gender', label: 'Gender', value: row => row.gender || '' },
+    { key: 'dateOfBirth', label: 'Date of Birth', value: row => row.dateOfBirth ? new Date(row.dateOfBirth).toISOString().split('T')[0] : '' },
+    { key: 'qualification', label: 'Qualification', value: row => row.qualification || '' },
+    { key: 'specialization', label: 'Specialization', value: row => row.specialization || 'Not Provided' },
+    { key: 'passingYear', label: 'Passing Year', value: row => row.passingYear || '' },
+    { key: 'currentPincode', label: 'Current Pincode', value: row => row.currentPincode || '' },
+    { key: 'currentCity', label: 'Current City', value: row => row.currentCity || '' },
+    { key: 'currentAddress', label: 'Current Address', value: row => row.currentAddress || '' },
+    { key: 'state', label: 'State', value: row => row.state || '' },
+    { key: 'country', label: 'Country', value: row => row.country || '' },
+    { key: 'appliedSkills', label: 'Applied Skills', value: row => row.appliedSkills?.join(', ') || '' },
+    { key: 'totalExperience', label: 'Total Experience (years)', value: row => row.totalExperience || '' },
+    { key: 'relevantSkillExperience', label: 'Relevant Skill Experience (years)', value: row => row.relevantSkillExperience || '' },
+    { key: 'collegeName', label: 'College Name', value: row => row.collegeName || '' },
+    { key: 'cgpa', label: 'CGPA', value: row => row.cgpa || '' },
+    { key: 'permanentAddress', label: 'Permanent Address', value: row => row.permanentAddress || '' },
+    { key: 'communicationSkill', label: 'Communication Skill', value: row => row.communicationSkill || '' },
+    { key: 'otherSkills', label: 'Other Skills', value: row => row.otherSkills || '' },
+    { key: 'rating', label: 'Rating', value: row => row.rating || '' },
+    { key: 'currentPkg', label: 'Current Package', value: row => row.currentPkg || '' },
+    { key: 'expectedPkg', label: 'Expected Package', value: row => row.expectedPkg || '' },
+    { key: 'noticePeriod', label: 'Notice Period', value: row => row.noticePeriod || '' },
+    { key: 'negotiation', label: 'Negotiation', value: row => row.negotiation || '' },
+    { key: 'workPreference', label: 'Work Preference', value: row => row.workPreference || '' },
+    { key: 'feedback', label: 'Feedback', value: row => row.feedback || '' },
+    { key: 'comment', label: 'Comment', value: row => row.comment || '' },
+    { key: 'status', label: 'Status', value: row => row.status || '' },
+    { key: 'interviewStage', label: 'Interview Stage', value: row => row.interviewStage || '' },
+    { key: 'currentCompanyDesignation', label: 'Current Company Designation', value: row => row.currentCompanyDesignation || '' },
+    { key: 'appliedRole', label: 'Applied Role', value: row => row.appliedRole || '' },
+    { key: 'practicalUrl', label: 'Practical URL', value: row => row.practicalUrl || '' },
+    { key: 'practicalFeedback', label: 'Practical Feedback', value: row => row.practicalFeedback || '' },
+    { key: 'portfolioUrl', label: 'Portfolio URL', value: row => row.portfolioUrl || '' },
+    { key: 'referral', label: 'Referral', value: row => row.referral || '' },
+    { key: 'resumeUrl', label: 'Resume URL', value: row => row.resumeUrl || '' },
+    { key: 'preferredLocations', label: 'Preferred Locations', value: row => row.preferredLocations || '' },
+    { key: 'currentCompanyName', label: 'Current Company Name', value: row => row.currentCompanyName || '' },
+    { key: 'maritalStatus', label: 'Marital Status', value: row => row.maritalStatus || ' ' },
+    { key: 'lastFollowUpDate', label: 'Last Follow-Up Date', value: row => row.lastFollowUpDate ? new Date(row.lastFollowUpDate).toISOString().split('T')[0] : '' },
+    { key: 'anyHandOnOffers', label: 'Any Hands-On Offers', value: row => (row.anyHandOnOffers ? 'Yes' : 'No') },
+    { key: 'linkedinUrl', label: 'LinkedIn URL', value: row => row.linkedinUrl || 'Not Provided' },
+    { key: 'clientCvUrl', label: 'Client CV URL', value: row => row.clientCvUrl || 'Not Provided' },
+    { key: 'clientFeedback', label: 'Client Feedback', value: row => row.clientFeedback || 'Not Provided' },
+    { key: 'meta', label: 'Meta', value: row => row.meta || 'Not Provided' },
   ];
 
-  const json2csvParser = new Parser({ fields });
+
+
+  // const exportKeys = selectedFields?.length
+  //   ? Array.from(new Set([...defaultFields, ...selectedFields]))
+  //   : defaultFields;
+
+  const exportKeys = (ids && ids.length)
+    ? selectedFields?.length
+      ? Array.from(new Set([...selectedFields]))
+      : selectedFields
+    : Array.from(new Set([...defaultFields, ...(selectedFields || [])]));
+
+
+  const filteredFields = exportKeys && exportKeys.length
+    ? allFields.filter(field => exportKeys.includes(field.key))
+    : allFields; // Export all fields if no exportKeys are determined
+
+  // if (!exportKeys || !filteredFields.length) {
+  //   // Check if allFields is empty
+  //   if (!allFields.length) {
+  //     console.log("No fields available to export");
+  //   } else {
+  //     console.log("Exporting all fields");
+  //   }
+  // }
+  if (!exportKeys && !filteredFields.length) {
+    json2csvParser = new Parser({ allFields });
+  }
+
+
+  json2csvParser = new Parser({ fields: filteredFields });
   return json2csvParser.parse(applicants);
 };
+
 
 const parseDate = (dateString) => {
   if (!dateString) return null;
@@ -249,16 +236,87 @@ const validateAndFillFields = async (data, userRole) => {
     linkedinUrl: data['LinkedIn URL'] || 'Not Provided',
     clientCvUrl: data['Client CV URL'] || 'Not Provided',
     clientFeedback: data['Client Feedback'] || 'Not Provided',
-    createdBy: userRole,
-    updatedBy: userRole,
+    // createdBy: userRole,
+    // updatedBy: userRole,
     addedBy: applicantEnum.CSV,
   };
 };
-export const processCsvRow = async (data, userRole) => {
+// export const processCsvRow = async (data, userRole) => {
+//   try {
+//     if (!data || typeof data !== 'object') {
+//       throw new Error('Invalid data provided to processCsvRow');
+//     }
+//     const requiredFields = {
+//       firstName: data['First Name']?.trim(),
+//       email: data['Email']?.trim(),
+//       phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
+//       gender: data['Gender']?.trim()?.toLowerCase(),
+//       appliedRole: data['Applied Role']?.trim(),
+//       currentCompanyDesignation: data['Current Company Designation']?.trim(),
+//       resumeUrl: data['Resume URL']?.trim(),
+//     };
+
+//     const missingFields = Object.entries(requiredFields)
+//       .filter(
+//         ([_, value]) =>
+//           value === undefined ||
+//           value === '' ||
+//           (Array.isArray(value) && value.length === 0)
+//       )
+//       .map(([key]) => key);
+
+//     if (missingFields.length > 0) {
+//       throw {
+//         missingFields,
+//         message: `${missingFields.join(', ')} are required.`,
+//       };
+//     }
+//     const findEnumValue = (fieldValue, fieldName) => {
+//       if (!fieldValue) return undefined;
+//       const enumObject = applicantEnum;
+
+//       const enumValue = Object.values(enumObject).find(
+//         (value) =>
+//           value.replace(/\s+/g, '').toUpperCase() ===
+//           fieldValue.replace(/\s+/g, '').toUpperCase()
+//       );
+
+//       if (!enumValue) {
+//         const closestMatch = Object.values(enumObject).find((value) =>
+//           value.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 8))
+//         );
+
+//         const suggestion = closestMatch ? `${closestMatch}` : 'No suggestion available';
+
+//         throw {
+//           message: `Invalid ${fieldName}: "${fieldValue}". Did you mean: "${suggestion}"?`,
+//         };
+//       }
+//       return enumValue;
+//     };
+//     const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
+//     const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
+//     requiredFields.appliedRole = appliedRole;
+//     requiredFields.currentCompanyDesignation = currentCompanyDesignation;
+//     const validatedData = await validateAndFillFields(data, userRole);
+//     return { valid: true, data: validatedData };
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+
+
+
+export const processCsvRow = async (data, lineNumber, userRole) => {
+  // lineNumber = lineNumber || 1;
+  lineNumber += 1
+  console.log("line number", lineNumber)
   try {
     if (!data || typeof data !== 'object') {
       throw new Error('Invalid data provided to processCsvRow');
     }
+
     const requiredFields = {
       firstName: data['First Name']?.trim(),
       email: data['Email']?.trim(),
@@ -270,56 +328,57 @@ export const processCsvRow = async (data, userRole) => {
     };
 
     const missingFields = Object.entries(requiredFields)
-      .filter(
-        ([_, value]) =>
-          value === undefined ||
-          value === '' ||
-          (Array.isArray(value) && value.length === 0)
-      )
+      .filter(([, value]) => !value || (Array.isArray(value) && value.length === 0))
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
       throw {
+        lineNumber,
         missingFields,
-        message: `${missingFields.join(', ')} are required.`,
+        message: `${missingFields.join(', ')} are required at line ${lineNumber}.`,
       };
     }
+
     const findEnumValue = (fieldValue, fieldName) => {
       if (!fieldValue) return undefined;
-      const enumObject = applicantEnum;
 
-      const enumValue = Object.values(enumObject).find(
-        (value) =>
-          value.replace(/\s+/g, '').toUpperCase() ===
+      const enumValue = Object.values(applicantEnum).find(
+        (val) =>
+          val.replace(/\s+/g, '').toUpperCase() ===
           fieldValue.replace(/\s+/g, '').toUpperCase()
       );
 
       if (!enumValue) {
-        const closestMatch = Object.values(enumObject).find((value) =>
-          value.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 8))
+        const closestMatch = Object.values(applicantEnum).find((val) =>
+          val.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 8))
         );
 
-        const suggestion = closestMatch ? `${closestMatch}` : 'No suggestion available';
-
         throw {
-          message: `Invalid ${fieldName}: "${fieldValue}". Did you mean: "${suggestion}"?`,
+          lineNumber,
+          message: `Invalid ${fieldName} "${fieldValue}" at line ${lineNumber}. Did you mean: "${closestMatch || 'N/A'}"?`,
         };
       }
+
       return enumValue;
     };
+
     const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
     const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
-    requiredFields.appliedRole = appliedRole;
-    requiredFields.currentCompanyDesignation = currentCompanyDesignation;
+
     const validatedData = await validateAndFillFields(data, userRole);
-    return { valid: true, data: validatedData };
+    return {
+      valid: true,
+      data: {
+        ...validatedData,
+        appliedRole,
+        currentCompanyDesignation,
+      },
+      number: lineNumber
+    };
   } catch (error) {
-    throw error;
+    throw { ...error, lineNumber };
   }
 };
-
-
-
 
 
 

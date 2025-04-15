@@ -119,3 +119,34 @@ export const hardDeleteExportsApplicantById = async (id) => {
 export const removeManyExportsApplicants = async (ids) => {
   return await ExportsApplicants.deleteMany({ _id: { $in: ids } });
 };
+
+
+export const updateManyApplicantsService123 = async (body) => {
+  try {
+    const IsExist = await getExportsApplicantDwtails({ 'phone.phoneNumber': body.phone.phoneNumber, 'phone.whatsappNumber': body.phone.whatsappNumber, email: body.email })
+
+    // console.log("IsExist---------", IsExist);
+    // console.log('body+++++++++++++', body)
+
+    if (IsExist) {
+      return false
+    } else {
+      body.createdBy = 'user';
+      body.updatedBy = 'user';
+
+      const applicant = new ExportsApplicants({ ...body });
+      return await applicant.save();
+    }
+    // const result = await ExportsApplicants.updateMany(
+    //   { _id: { $in: applicantIds } },
+    //   { $set: updateData }
+    // );
+    // return result;
+  } catch (error) {
+    throw new Error('Failed to update multiple applicants: ' + error);
+  }
+};
+
+export const getExportsApplicantDwtails = async (body) => {
+  return ExportsApplicants.findOne(body);
+};
