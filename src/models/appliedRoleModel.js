@@ -2,10 +2,7 @@ import mongoose from 'mongoose';
 
 const appliedRoleSchema = new mongoose.Schema(
   {
-    skill: {
-      type: [String],
-      required: true,
-    },
+    skill: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Skills' }],
     appliedRole: {
       type: String,
       required: true,

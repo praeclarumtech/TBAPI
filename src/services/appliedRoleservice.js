@@ -1,5 +1,6 @@
 import appliedRoleModel from '../models/appliedRoleModel.js';
-import Applicant from '../models/applicantModel.js';
+import Skills from '../models/skillsModel.js';
+import Degree from '../models/degreeModel.js';
 
 export const create = async (body) => {
   const { skill, appliedRole } = body;
@@ -38,94 +39,83 @@ export const findAndReplaceFieldValue = async (field, find, replaceWith) => {
   const escapeRegex = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
-  const regex = new RegExp(`^${escapeRegex(find.trim())}$`, 'i');
 
-  if (field === 'skill') {
-    return appliedRoleModel.updateMany(
-      {
-        skill: regex,
-        isDeleted: false,
-      },
-      {
-        $set: {
-          'skill.$[elem]': replaceWith,
-        },
-      },
-      {
-        arrayFilters: [{ elem: regex }],
-      }
-    );
-  } else if (field === 'appliedRole') {
-    return appliedRoleModel.updateMany(
-      {
-        appliedRole: regex,
-        isDeleted: false,
-      },
-      {
-        $set: { appliedRole: replaceWith },
-      }
-    );
-  } else if (field === 'appliedSkills') {
-    return Applicant.updateMany(
-      {
-        appliedSkills: regex,
-        isDeleted: false,
-      },
-      {
-        $set: {
-          'appliedSkills.$[elem]': replaceWith,
-        },
-      },
-      {
-        arrayFilters: [{ elem: regex }],
-      }
-    );
-  } else if (field === 'currentCompanyDesignation') {
-    return Applicant.updateMany(
-      {
-        currentCompanyDesignation: regex,
-        isDeleted: false,
-      },
-      {
-        $set: { currentCompanyDesignation: replaceWith },
-      }
-    );
-  } else if (field === 'qualification') {
-    return Applicant.updateMany(
-      {
-        qualification: regex,
-        isDeleted: false,
-      },
-      {
-        $set: { qualification: replaceWith },
-      }
-    );
-  } else {
-    throw new Error('Unsupported field for find and replace');
+  const findArray = Array.isArray(find) ? find : [find];
+  const replaceArray = Array.isArray(replaceWith) ? replaceWith : [replaceWith];
+
+  if (findArray.length !== replaceArray.length) {
+    throw new Error('Length of find and replaceWith arrays must be equal.');
   }
+
+  const results = [];
+  let totalModified = 0;
+
+  for (let i = 0; i < findArray.length; i++) {
+    const findValue = findArray[i].trim();
+    const replaceValue = replaceArray[i].trim();
+    const regex = new RegExp(`^${escapeRegex(findValue)}$`, 'i');
+
+    let result;
+
+    if (field === 'skills') {
+      result = await Skills.updateMany(
+        { skills: regex, isDeleted: false },
+        { $set: { skills: replaceValue } }
+      );
+    } else if (field === 'appliedRole') {
+      result = await appliedRoleModel.updateMany(
+        { appliedRole: regex, isDeleted: false },
+        { $set: { appliedRole: replaceValue } }
+      );
+    } else if (field === 'degree') {
+      result = await Degree.updateMany(
+        { degree: regex, isDeleted: false },
+        { $set: { degree: replaceValue } }
+      );
+    } else {
+      throw new Error('Unsupported field for find and replace');
+    }
+
+    const modifiedCount = result.modifiedCount ?? result.nModified ?? 0;
+    totalModified += modifiedCount;
+    results.push(`Replaced ${findValue} in ${modifiedCount} records with ${replaceValue}`);
+  }
+
+  return {results,totalModified };
 };
 
 export const previewFindFieldValue = async (field, find) => {
   const escapeRegex = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
-  const regex = new RegExp(`^${escapeRegex(find.trim())}$`, 'i');
 
-  if (field === 'skill' || field === 'appliedRole') {
-    return appliedRoleModel.find({
-      [field]: regex,
-      isDeleted: false,
-    });
-  } else if (
-    field === 'appliedSkills' ||
-    field === 'currentCompanyDesignation' ||
-    field === 'qualification'
-  ) {
-    return Applicant.find({
-      [field]: regex,
-      isDeleted: false,
-    });
-  } else {
-    throw new Error('Unsupported field for find');
-  }
+  const findTerms = Array.isArray(find)
+    ? find
+    : find.split(',').map((item) => item.trim()).filter(Boolean);
+
+    const results = [];
+    let totalMatched = 0;
+
+    for (const term of findTerms) {
+      const regex = new RegExp(`^${escapeRegex(term)}$`, 'i');
+      const query = {
+        [field]: { $in: [regex] },
+        isDeleted: false,
+      };
+  
+      let count = 0;
+
+      if (field === 'appliedRole') {
+        count = await appliedRoleModel.countDocuments(query);
+      } else if (field === 'skills') {
+        count = await Skills.countDocuments(query);
+      } else if (field === 'degree') {
+        count = await Degree.countDocuments(query);
+      } else {
+        throw new Error('Unsupported field for find');
+      }
+      results.push(`${term} matched count: ${count}`);
+      totalMatched += count;
+}
+return {results, totalMatched};
 };
