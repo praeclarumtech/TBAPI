@@ -16,6 +16,12 @@ const applicantEmailSchema = new mongoose.Schema(
     description: {
       type: String,
     },
+    attachments: [
+      {
+        filename: { type: String },
+        path: { type: String },
+      }
+    ],
     createdAt: { type: Date, default: Date.now },
   },
   {

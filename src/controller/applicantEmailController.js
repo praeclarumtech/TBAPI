@@ -13,6 +13,7 @@ import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 
 export const sendEmail = async (req, res) => {
+  
   try {
     const { email_to, email_bcc, subject, description } = req.body;
 
@@ -27,11 +28,17 @@ export const sendEmail = async (req, res) => {
 
     const recipients = Array.isArray(email_to) ? email_to : [email_to];
 
+    const attachments = req.files?.map((file) => ({
+              filename: file.originalname,
+              path: file.path,
+            })) || [];
+
     await sendingEmail({
       email_to: recipients,
       email_bcc,
       subject,
       description,
+      attachments
     });
 
     const storedEmails = recipients.map((email) => ({
@@ -39,6 +46,7 @@ export const sendEmail = async (req, res) => {
       email_bcc: email_bcc || [],
       subject,
       description,
+      attachments
     }));
 
     const insertedEmails = await createEmail(storedEmails);
@@ -51,7 +59,7 @@ export const sendEmail = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} send mail.`
+      `${Message.FAILED_TO} send mail.${error}`
     );
   }
 };
