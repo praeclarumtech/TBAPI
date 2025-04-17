@@ -32,7 +32,7 @@ export const insertManyApplicants = async (applicantsArray) => {
   }
 };
 
-export const updateManyApplicants = async (applicantsArray) => {
+export const UpdateManyApplicantsByImport = async (applicantsArray) => {
   try {
     return await ExportsApplicants.bulkWrite(
       applicantsArray.map((applicant) => ({
@@ -121,32 +121,12 @@ export const removeManyExportsApplicants = async (ids) => {
 };
 
 
-export const updateManyApplicantsService123 = async (body) => {
+export const AddManyApplicantsByImport = async (body) => {
   try {
-    const IsExist = await getExportsApplicantDwtails({ 'phone.phoneNumber': body.phone.phoneNumber, 'phone.whatsappNumber': body.phone.whatsappNumber, email: body.email })
+    const applicant = new ExportsApplicants({ ...body });
+    return await applicant.save();
 
-    // console.log("IsExist---------", IsExist);
-    // console.log('body+++++++++++++', body)
-
-    if (IsExist) {
-      return false
-    } else {
-      body.createdBy = 'user';
-      body.updatedBy = 'user';
-
-      const applicant = new ExportsApplicants({ ...body });
-      return await applicant.save();
-    }
-    // const result = await ExportsApplicants.updateMany(
-    //   { _id: { $in: applicantIds } },
-    //   { $set: updateData }
-    // );
-    // return result;
   } catch (error) {
     throw new Error('Failed to update multiple applicants: ' + error);
   }
-};
-
-export const getExportsApplicantDwtails = async (body) => {
-  return ExportsApplicants.findOne(body);
 };

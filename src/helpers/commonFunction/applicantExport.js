@@ -2,10 +2,8 @@ import { Parser } from 'json2csv';
 import { applicantEnum, genderEnum } from '../../utils/enum.js';
 
 
-// import { Parser } from 'json2csv';
 
 export const generateApplicantCsv = (applicants, selectedFields = null, ids) => {
-  let json2csvParser;
   // const defaultFields = [
   //   'name.firstName',
   //   'email',
@@ -71,35 +69,18 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
 
 
 
-  // const exportKeys = selectedFields?.length
-  //   ? Array.from(new Set([...defaultFields, ...selectedFields]))
-  //   : defaultFields;
-
-  const exportKeys = (ids && ids.length)
+  const exportKeys = (ids || selectedFields)
     ? selectedFields?.length
       ? Array.from(new Set([...selectedFields]))
       : selectedFields
-    : Array.from(new Set([...defaultFields, ...(selectedFields || [])]));
-
+    : Array.from(new Set(allFields.map(field => field.key)));
 
   const filteredFields = exportKeys && exportKeys.length
     ? allFields.filter(field => exportKeys.includes(field.key))
-    : allFields; // Export all fields if no exportKeys are determined
-
-  // if (!exportKeys || !filteredFields.length) {
-  //   // Check if allFields is empty
-  //   if (!allFields.length) {
-  //     console.log("No fields available to export");
-  //   } else {
-  //     console.log("Exporting all fields");
-  //   }
-  // }
-  if (!exportKeys && !filteredFields.length) {
-    json2csvParser = new Parser({ allFields });
-  }
+    : allFields;
 
 
-  json2csvParser = new Parser({ fields: filteredFields });
+  const json2csvParser = new Parser({ fields: filteredFields });
   return json2csvParser.parse(applicants);
 };
 
@@ -134,7 +115,7 @@ const validateAndFillFields = async (data, userRole) => {
   return {
     name: {
       firstName: data['First Name']?.trim() || null,
-      middleName: data['Middle Name']?.trim() || null,
+      middleName: data['Middle Name']?.trim() || '',
       lastName: data['Last Name']?.trim() || '',
     },
     phone: {
@@ -146,20 +127,20 @@ const validateAndFillFields = async (data, userRole) => {
     gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
     dateOfBirth: parseDate(data['Date of Birth']),
 
-    currentAddress: data['Current Address'] || 'Not Provided',
-    state: data['State'] || 'Not Provided',
-    country: data['Country'] || 'Not Provided',
+    currentAddress: data['Current Address'] || '',
+    state: data['State'] || '',
+    country: data['Country'] || '',
     currentPincode: !isNaN(Number(data['Current Pincode']))
       ? Number(data['Current Pincode'])
       : null,
-    currentCity: data['Current City'] || 'Not Provided',
-    permanentAddress: data['Permanent Address'] || 'Not Provided',
-    qualification: data['Qualification']?.trim() || 'Not Provided',
-    specialization: data['Specialization']?.trim() || 'Not Provided',
+    currentCity: data['Current City'] || '',
+    permanentAddress: data['Permanent Address'] || '',
+    qualification: data['Qualification']?.trim() || '',
+    specialization: data['Specialization']?.trim() || '',
     passingYear: !isNaN(Number(data['Passing Year']))
       ? Number(data['Passing Year'])
       : null,
-    collegeName: data['College Name'] || 'Not Provided',
+    collegeName: data['College Name'] || '',
     cgpa: !isNaN(Number(data['CGPA'])) ? Number(data['CGPA']) : null,
     appliedSkills: data['Applied Skills']
       ? data['Applied Skills'].split(',').map((skill) => skill.trim())
@@ -175,9 +156,9 @@ const validateAndFillFields = async (data, userRole) => {
     communicationSkill: !isNaN(Number(data['Communication Skill']))
       ? Number(data['Communication Skill'])
       : null,
-    otherSkills: data['Other Skills'] || 'Not provided',
+    otherSkills: data['Other Skills'] || '',
     rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : null,
-    currentCompanyName: data['Current Company Name']?.trim() || 'Not Provided',
+    currentCompanyName: data['Current Company Name']?.trim() || '',
 
     currentCompanyDesignation:
       Object.values(applicantEnum).find(
@@ -217,12 +198,12 @@ const validateAndFillFields = async (data, userRole) => {
     interviewStage:
       applicantEnum[data['Interview Stage']?.trim().toUpperCase()] ||
       applicantEnum.FIRST_INTERVIEW_ROUND,
-    practicalUrl: data['Practical URL'] || 'Not Provided',
-    practicalFeedback: data['Practical Feedback'] || 'Not Provided',
-    portfolioUrl: data['Portfolio URL'] || 'Not Provided',
-    referral: data['Referral'] || 'Not Provided',
+    practicalUrl: data['Practical URL'] || '',
+    practicalFeedback: data['Practical Feedback'] || '',
+    portfolioUrl: data['Portfolio URL'] || '',
+    referral: data['Referral'] || '',
     resumeUrl: data['Resume URL'] || null,
-    preferredLocations: data['Preferred Locations']?.trim() || 'Not Provided',
+    preferredLocations: data['Preferred Locations']?.trim() || '',
     maritalStatus:
       applicantEnum[data['Marital Status']?.toUpperCase()?.trim()] ||
       (data['Marital Status']?.trim() === 'Not Provided'
@@ -231,11 +212,11 @@ const validateAndFillFields = async (data, userRole) => {
       '',
     lastFollowUpDate: parseDate(data['Last Follow-Up Date']),
     anyHandOnOffers: data['Any Hands-On Offers']?.toLowerCase() === 'yes',
-    comment: data['Comment'] || 'Not Provided',
-    feedback: data['Feedback'] || 'Not Provided',
-    linkedinUrl: data['LinkedIn URL'] || 'Not Provided',
-    clientCvUrl: data['Client CV URL'] || 'Not Provided',
-    clientFeedback: data['Client Feedback'] || 'Not Provided',
+    comment: data['Comment'] || '',
+    feedback: data['Feedback'] || '',
+    linkedinUrl: data['LinkedIn URL'] || '',
+    clientCvUrl: data['Client CV URL'] || '',
+    clientFeedback: data['Client Feedback'] || '',
     // createdBy: userRole,
     // updatedBy: userRole,
     addedBy: applicantEnum.CSV,
@@ -309,76 +290,93 @@ const validateAndFillFields = async (data, userRole) => {
 
 
 export const processCsvRow = async (data, lineNumber, userRole) => {
-  // lineNumber = lineNumber || 1;
-  lineNumber += 1
-  console.log("line number", lineNumber)
-  try {
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid data provided to processCsvRow');
-    }
+  lineNumber += 1;
+  const errorMessages = [];
 
-    const requiredFields = {
-      firstName: data['First Name']?.trim(),
-      email: data['Email']?.trim(),
-      phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
-      gender: data['Gender']?.trim()?.toLowerCase(),
-      appliedRole: data['Applied Role']?.trim(),
-      currentCompanyDesignation: data['Current Company Designation']?.trim(),
-      resumeUrl: data['Resume URL']?.trim(),
-    };
+  if (!data || typeof data !== 'object') {
+    errorMessages.push('Invalid data provided to processCsvRow');
+  }
 
-    const missingFields = Object.entries(requiredFields)
-      .filter(([, value]) => !value || (Array.isArray(value) && value.length === 0))
-      .map(([key]) => key);
+  const requiredFields = {
+    firstName: data['First Name']?.trim(),
+    email: data['Email']?.trim(),
+    phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
+    gender: data['Gender']?.trim()?.toLowerCase(),
+    appliedRole: data['Applied Role']?.trim(),
+    currentCompanyDesignation: data['Current Company Designation']?.trim(),
+    resumeUrl: data['Resume URL']?.trim(),
+  };
+  const missingFields = Object.entries(requiredFields)
+    .filter(([key, value]) => {
+      if (key === 'currentCompanyDesignation' || key === 'appliedRole') {
+        if (!value || (Array.isArray(value) && value.length === 0)) {
+          requiredFields.currentCompanyDesignation = applicantEnum.SOFTWARE_ENGINEER;
+          requiredFields.appliedRole = requiredFields.currentCompanyDesignation;
+          return false;
+        }
+        return false; // Don't check it for missing fields
+      }
+      return !value || (Array.isArray(value) && value.length === 0);
+    })
+    .map(([key]) => key);
 
-    if (missingFields.length > 0) {
-      throw {
-        lineNumber,
-        missingFields,
-        message: `${missingFields.join(', ')} are required at line ${lineNumber}.`,
-      };
-    }
+  if (missingFields.length > 0) {
+    errorMessages.push(`${missingFields.join(', ')} field(s) are required at line ${lineNumber}.`);
+  }
 
-    const findEnumValue = (fieldValue, fieldName) => {
-      if (!fieldValue) return undefined;
+  const findEnumValue = (fieldValue, fieldName) => {
+    if (!fieldValue) return undefined;
 
-      const enumValue = Object.values(applicantEnum).find(
-        (val) =>
-          val.replace(/\s+/g, '').toUpperCase() ===
-          fieldValue.replace(/\s+/g, '').toUpperCase()
+
+    const enumValue = Object.values(applicantEnum).find(
+      (val) =>
+        val.replace(/\s+/g, '').toUpperCase() ===
+        fieldValue.replace(/\s+/g, '').toUpperCase()
+    );
+
+
+
+    if (!enumValue) {
+      const closestMatch = Object.values(applicantEnum).find((val) =>
+        val.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 5))
       );
 
-      if (!enumValue) {
-        const closestMatch = Object.values(applicantEnum).find((val) =>
-          val.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 8))
-        );
+      errorMessages.push(
+        `Invalid ${fieldName} "${fieldValue}" at line ${lineNumber}. Did you mean: "${closestMatch || "N/A"}"?`
+      );
+    }
 
-        throw {
-          lineNumber,
-          message: `Invalid ${fieldName} "${fieldValue}" at line ${lineNumber}. Did you mean: "${closestMatch || 'N/A'}"?`,
-        };
-      }
+    return enumValue;
+  };
 
-      return enumValue;
+  const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
+  const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
+
+
+  if (errorMessages.length > 0) {
+    throw {
+      lineNumber,
+      message: errorMessages,
     };
-
-    const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
-    const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
-
-    const validatedData = await validateAndFillFields(data, userRole);
-    return {
-      valid: true,
-      data: {
-        ...validatedData,
-        appliedRole,
-        currentCompanyDesignation,
-      },
-      number: lineNumber
-    };
-  } catch (error) {
-    throw { ...error, lineNumber };
   }
+
+  const validatedData = await validateAndFillFields(data, userRole);
+  validatedData.currentCompanyDesignation = validatedData.currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER;
+  validatedData.appliedRole = validatedData.appliedRole || validatedData.currentCompanyDesignation
+
+  return {
+    valid: true,
+    data: {
+      ...validatedData,
+      appliedRole: validatedData.appliedRole || validatedData.currentCompanyDesignation,
+      currentCompanyDesignation: validatedData.currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER,
+    },
+    number: lineNumber,
+  };
 };
+
+
+
 
 
 
