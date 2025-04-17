@@ -850,6 +850,44 @@ export const updateStatus = async (req, res) => {
   }
 };
 
+export const updateStatusImportApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { interviewStage, status } = req.body;
+
+    const updateStatus = await updateExportsApplicantById(applicantId, {
+      interviewStage,
+      status,
+    });
+
+    if (!updateStatus) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant status is ${Message.UPDATED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.ACCEPTED,
+      `Applicant status is ${Message.UPDATED_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} update applicant.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update applicant.`
+    );
+  }
+};
+
 export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered, source } = req.query;
