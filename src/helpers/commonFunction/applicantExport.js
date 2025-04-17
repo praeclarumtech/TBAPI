@@ -1,19 +1,7 @@
 import { Parser } from 'json2csv';
 import { applicantEnum, genderEnum } from '../../utils/enum.js';
 
-
-
 export const generateApplicantCsv = (applicants, selectedFields = null, ids) => {
-  // const defaultFields = [
-  //   'name.firstName',
-  //   'email',
-  //   'phone.phoneNumber',
-  //   'gender',
-  //   'appliedRole',
-  //   'currentCompanyDesignation',
-  //   'resumeUrl',
-  // ];
-
   const allFields = [
     { key: 'name.firstName', label: 'First Name', value: row => row.name?.firstName || '' },
     { key: 'name.middleName', label: 'Middle Name', value: row => row.name?.middleName || '' },
@@ -222,73 +210,6 @@ const validateAndFillFields = async (data, userRole) => {
     addedBy: applicantEnum.CSV,
   };
 };
-// export const processCsvRow = async (data, userRole) => {
-//   try {
-//     if (!data || typeof data !== 'object') {
-//       throw new Error('Invalid data provided to processCsvRow');
-//     }
-//     const requiredFields = {
-//       firstName: data['First Name']?.trim(),
-//       email: data['Email']?.trim(),
-//       phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
-//       gender: data['Gender']?.trim()?.toLowerCase(),
-//       appliedRole: data['Applied Role']?.trim(),
-//       currentCompanyDesignation: data['Current Company Designation']?.trim(),
-//       resumeUrl: data['Resume URL']?.trim(),
-//     };
-
-//     const missingFields = Object.entries(requiredFields)
-//       .filter(
-//         ([_, value]) =>
-//           value === undefined ||
-//           value === '' ||
-//           (Array.isArray(value) && value.length === 0)
-//       )
-//       .map(([key]) => key);
-
-//     if (missingFields.length > 0) {
-//       throw {
-//         missingFields,
-//         message: `${missingFields.join(', ')} are required.`,
-//       };
-//     }
-//     const findEnumValue = (fieldValue, fieldName) => {
-//       if (!fieldValue) return undefined;
-//       const enumObject = applicantEnum;
-
-//       const enumValue = Object.values(enumObject).find(
-//         (value) =>
-//           value.replace(/\s+/g, '').toUpperCase() ===
-//           fieldValue.replace(/\s+/g, '').toUpperCase()
-//       );
-
-//       if (!enumValue) {
-//         const closestMatch = Object.values(enumObject).find((value) =>
-//           value.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 8))
-//         );
-
-//         const suggestion = closestMatch ? `${closestMatch}` : 'No suggestion available';
-
-//         throw {
-//           message: `Invalid ${fieldName}: "${fieldValue}". Did you mean: "${suggestion}"?`,
-//         };
-//       }
-//       return enumValue;
-//     };
-//     const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
-//     const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
-//     requiredFields.appliedRole = appliedRole;
-//     requiredFields.currentCompanyDesignation = currentCompanyDesignation;
-//     const validatedData = await validateAndFillFields(data, userRole);
-//     return { valid: true, data: validatedData };
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
-
-
-
 export const processCsvRow = async (data, lineNumber, userRole) => {
   lineNumber += 1;
   const errorMessages = [];
