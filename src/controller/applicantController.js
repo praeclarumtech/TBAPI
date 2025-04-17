@@ -93,7 +93,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         return HandleResponse(
           res,
           false,
-          StatusCodes.BAD_REQUEST,
+          StatusCodes.CONFLICT,
           `Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`
         );
       }
@@ -116,6 +116,18 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       );
     } catch (error) {
       logger.error(`${Message.FAILED_TO} add applicant: ${error}`);
+      if (error.name === 'ValidationError') {
+        const validationMessages = Object.values(error.errors).map(
+          (err) => err.message.split('Path `')[1]?.split('`')[0] + ' is required'
+        );
+        logger.error(`Validation Error: ${validationMessages.join(', ')}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          validationMessages.join(', ')
+        );
+      }
       return HandleResponse(
         res,
         false,
@@ -838,6 +850,45 @@ export const updateStatus = async (req, res) => {
     );
   }
 };
+
+export const updateStatusImportApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { interviewStage, status } = req.body;
+
+    const updateStatus = await updateExportsApplicantById(applicantId, {
+      interviewStage,
+      status,
+    });
+
+    if (!updateStatus) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant status is ${Message.UPDATED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.ACCEPTED,
+      `Applicant status is ${Message.UPDATED_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} update applicant.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update applicant.`
+    );
+  }
+};
+
 export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered, source } = req.query;
@@ -1168,50 +1219,6 @@ export const importApplicantCsv = async (req, res) => {
             duplicatePhoneErrors
           );
         }
-
-        // if (updateFlag === false) {
-        //   return HandleResponse(
-        //     res,
-        //     false,
-        //     StatusCodes.CONFLICT,
-        //     'Duplicate records found. Do you want to update?',
-        //     { existingEmails: updatedRecords }
-        //   );
-        // }
-
-        // if (updateFlag === true) {
-        //   return HandleResponse(
-        //     res,
-        //     true,
-        //     StatusCodes.OK,
-        //     'updated successfully.',
-        //     { existingEmails: updatedRecords }
-        //   );
-        // }
-
-        // if (updateFlag === false || updatedRecords.length > 0) {
-        //   return HandleResponse(
-        //     res,
-        //     false,
-        //     StatusCodes.CONFLICT,
-        //     'Duplicate records found. Do you want to update?',
-        //     { existingEmails: updatedRecords }
-        //   );
-        // }
-        // return HandleResponse(
-        //   res,
-        //   true,
-        //   StatusCodes.OK,
-        //   `${fileExt.toUpperCase()} imported successfully`,
-        //   {
-        //     insertedNewRecords,
-        //     updatedRecords,
-        //   }
-        // );
-
-
-
-
         if (updateFlag === false) {
           const hasDuplicates = skippedRecords.length > 0;
           if (hasDuplicates) {

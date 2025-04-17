@@ -139,12 +139,14 @@ export const applicantValidation = Joi.object({
       applicantEnum.BUSNESS_ANALYST,
       applicantEnum.TECHNICSL_SUPPORT,
       applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.JUNIOR_MERN_STACK_DEVELOPER,
       applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.APPLICATION_DEVELOPER,
       applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
       applicantEnum.JAVA_DEVELOPER,
       applicantEnum.PYTHON_DEVELOPER,
       applicantEnum.PHP_DEVELOPER,
-      applicantEnum.FRESHER,
       applicantEnum.SPECIALIST_PROGRAMMER,
       applicantEnum.REACT_DEVELOPER,
       applicantEnum.REACT_NATIVE_DEVELOPER,
@@ -156,16 +158,18 @@ export const applicantValidation = Joi.object({
       applicantEnum.FREELANCER,
       applicantEnum.TEAM_LEADER,
       applicantEnum.TECHNICAL_ANALYST,
+      applicantEnum.FRESHER,
       applicantEnum.SENIOR_ANGULAR_DEVELOPER,
-      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
       applicantEnum.SHAREPOINT_DEVELOPER,
-      applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.PLACEMENT_EXECUTIVE,
       applicantEnum.SENIOR_UI_ENGINEER,
+      applicantEnum.SYSTEM_ENGINEER,
+      applicantEnum.SENIOR_SYSTEM_ENGINEER,
       applicantEnum.PROGRAMER_ANALYST,
       applicantEnum.CUSTOMER_SUPPORT_SPECIALIST,
+      applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.OTHER,
-      applicantEnum.NA
+      applicantEnum.NA,
     )
     .messages({
       'any.required': 'CurrentCompanyDesignation is required.',
@@ -256,24 +260,25 @@ export const updateApplicantValidation = Joi.object({
   }),
   gender: Joi.string()
     .valid(genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER)
+    .allow(null, '')
     .messages({
       'any.only': 'Gender must be male, female, or other.',
     }),
 
-  dateOfBirth: Joi.date().messages({
+  dateOfBirth: Joi.date().allow(null, '').messages({
     'date.base': 'Date of birth must be a valid date.',
     'any.required': 'Date of birth is required.',
   }),
 
-  qualification: Joi.string().messages({
+  qualification: Joi.string().allow(null, '').messages({
     'string.base': 'Qualification must be a string.',
   }),
 
-  specialization: Joi.string().messages({
+  specialization: Joi.string().allow(null, '').messages({
     'string.empty': 'specialization cannot be empty.',
   }),
 
-  passingYear: Joi.number().integer().messages({
+  passingYear: Joi.number().allow(null, '').integer().messages({
     'number.base': 'Passing Year must be a number.',
   }),
 
@@ -284,8 +289,8 @@ export const updateApplicantValidation = Joi.object({
   country: Joi.string(),
   currentPincode: Joi.number().integer().allow(null, ''),
   currentCity: Joi.string(),
-  url: Joi.string(),
-  resumeUrl: Joi.string(),
+  url: Joi.string().allow(null, ''),
+  resumeUrl: Joi.string().allow(null, ''),
 
   appliedSkills: Joi.array().items(Joi.string()).messages({
     'array.base': 'Applied skills must be an array of strings.',
@@ -295,17 +300,17 @@ export const updateApplicantValidation = Joi.object({
     'number.base': 'Total experience must be a number.',
   }),
 
-  communicationSkill: Joi.number().messages({
+  communicationSkill: Joi.number().allow(null, '').messages({
     'number.base': 'Communication Skill must be a number.',
   }),
 
-  relevantSkillExperience: Joi.number().messages({
+  relevantSkillExperience: Joi.number().allow(null, '').messages({
     'number.base': 'Relevant experience must be a number.',
   }),
 
   otherSkills: Joi.string().allow(null, ''),
 
-  rating: Joi.number().messages({
+  rating: Joi.number().allow(null, '').messages({
     'number.base': 'JavaScript rate must be a number.',
   }),
 
@@ -316,6 +321,7 @@ export const updateApplicantValidation = Joi.object({
 
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
+    .allow(null, '')
     .messages({
       'any.only': 'Work Preference must be remote, hybrid, or onsite.',
     }),
@@ -343,14 +349,14 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.BUSNESS_ANALYST,
       applicantEnum.TECHNICSL_SUPPORT,
       applicantEnum.MERN_STACK_DEVELOPER,
-      applicantEnum.APPLICATION_DEVELOPER,
       applicantEnum.JUNIOR_MERN_STACK_DEVELOPER,
       applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.APPLICATION_DEVELOPER,
       applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
       applicantEnum.JAVA_DEVELOPER,
       applicantEnum.PYTHON_DEVELOPER,
       applicantEnum.PHP_DEVELOPER,
-      applicantEnum.FRESHER,
       applicantEnum.SPECIALIST_PROGRAMMER,
       applicantEnum.REACT_DEVELOPER,
       applicantEnum.REACT_NATIVE_DEVELOPER,
@@ -362,10 +368,19 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.FREELANCER,
       applicantEnum.TEAM_LEADER,
       applicantEnum.TECHNICAL_ANALYST,
+      applicantEnum.FRESHER,
       applicantEnum.SENIOR_ANGULAR_DEVELOPER,
+      applicantEnum.SHAREPOINT_DEVELOPER,
+      applicantEnum.PLACEMENT_EXECUTIVE,
+      applicantEnum.SENIOR_UI_ENGINEER,
+      applicantEnum.SYSTEM_ENGINEER,
+      applicantEnum.SENIOR_SYSTEM_ENGINEER,
+      applicantEnum.PROGRAMER_ANALYST,
+      applicantEnum.CUSTOMER_SUPPORT_SPECIALIST,
+      applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.OTHER,
-      applicantEnum.NA
-    )
+      applicantEnum.NA,
+    ).allow(null, '')
     .messages({
       'any.required': 'CurrentCompanyDesignation is required.',
     }),
@@ -382,7 +397,6 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.HOLD,
       applicantEnum.IN_PROCESS
     )
-    .default(applicantEnum.PENDING)
     .messages({
       'any.only': 'Invalid status value.',
     }),
@@ -395,7 +409,6 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.CLIENT,
       applicantEnum.PRACTICAL
     )
-    .default(applicantEnum.FIRST_INTERVIEW_ROUND)
     .messages({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
@@ -442,12 +455,14 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.BUSNESS_ANALYST,
       applicantEnum.TECHNICSL_SUPPORT,
       applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.JUNIOR_MERN_STACK_DEVELOPER,
       applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.APPLICATION_DEVELOPER,
       applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
       applicantEnum.JAVA_DEVELOPER,
       applicantEnum.PYTHON_DEVELOPER,
       applicantEnum.PHP_DEVELOPER,
-      applicantEnum.FRESHER,
       applicantEnum.SPECIALIST_PROGRAMMER,
       applicantEnum.REACT_DEVELOPER,
       applicantEnum.REACT_NATIVE_DEVELOPER,
@@ -459,18 +474,18 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.FREELANCER,
       applicantEnum.TEAM_LEADER,
       applicantEnum.TECHNICAL_ANALYST,
+      applicantEnum.FRESHER,
       applicantEnum.SENIOR_ANGULAR_DEVELOPER,
-      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
       applicantEnum.SHAREPOINT_DEVELOPER,
-      applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.PLACEMENT_EXECUTIVE,
       applicantEnum.SENIOR_UI_ENGINEER,
       applicantEnum.SYSTEM_ENGINEER,
       applicantEnum.SENIOR_SYSTEM_ENGINEER,
       applicantEnum.PROGRAMER_ANALYST,
       applicantEnum.CUSTOMER_SUPPORT_SPECIALIST,
+      applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.OTHER,
-      applicantEnum.NA
+      applicantEnum.NA,
     )
     .messages({
       'any.required': 'CurrentCompanyDesignation is required.',
@@ -541,12 +556,14 @@ export const updateManyApplicantsValidation = Joi.object({
       applicantEnum.BUSNESS_ANALYST,
       applicantEnum.TECHNICSL_SUPPORT,
       applicantEnum.MERN_STACK_DEVELOPER,
+      applicantEnum.JUNIOR_MERN_STACK_DEVELOPER,
       applicantEnum.MEAN_STACK_DEVELOPER,
+      applicantEnum.APPLICATION_DEVELOPER,
       applicantEnum.DOTNET_DEVELOPER,
+      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
       applicantEnum.JAVA_DEVELOPER,
       applicantEnum.PYTHON_DEVELOPER,
       applicantEnum.PHP_DEVELOPER,
-      applicantEnum.FRESHER,
       applicantEnum.SPECIALIST_PROGRAMMER,
       applicantEnum.REACT_DEVELOPER,
       applicantEnum.REACT_NATIVE_DEVELOPER,
@@ -558,20 +575,18 @@ export const updateManyApplicantsValidation = Joi.object({
       applicantEnum.FREELANCER,
       applicantEnum.TEAM_LEADER,
       applicantEnum.TECHNICAL_ANALYST,
+      applicantEnum.FRESHER,
       applicantEnum.SENIOR_ANGULAR_DEVELOPER,
-      applicantEnum.JUNIOR_DOTNET_DEVELOPER,
       applicantEnum.SHAREPOINT_DEVELOPER,
-      applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.PLACEMENT_EXECUTIVE,
       applicantEnum.SENIOR_UI_ENGINEER,
       applicantEnum.SYSTEM_ENGINEER,
       applicantEnum.SENIOR_SYSTEM_ENGINEER,
-      applicantEnum.SYSTEM_ENGINEER,
-      applicantEnum.SENIOR_SYSTEM_ENGINEER,
       applicantEnum.PROGRAMER_ANALYST,
       applicantEnum.CUSTOMER_SUPPORT_SPECIALIST,
+      applicantEnum.SENIOR_DOTNET_DEVELOPER,
       applicantEnum.OTHER,
-      applicantEnum.NA
+      applicantEnum.NA,
     ),
 
     lastFollowUpDate: Joi.date().iso().messages({

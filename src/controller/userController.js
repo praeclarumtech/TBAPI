@@ -58,7 +58,10 @@ export const register = async (req, res, next) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await getUser({ email });
+
+    const isEmail = /\S+@\S+\.\S+/.test(email);
+    const user = await getUser(isEmail ? { email } : { userName: email });
+
     if (!user) {
       logger.info(`User is ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -219,7 +222,6 @@ export const updateProfile = (req, res) => {
         email,
         phoneNumber,
         dateOfBirth,
-        gender,
         designation,
       } = req.body;
 
@@ -230,7 +232,6 @@ export const updateProfile = (req, res) => {
         email,
         phoneNumber,
         dateOfBirth,
-        gender,
         designation,
       };
 

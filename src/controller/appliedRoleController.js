@@ -10,6 +10,8 @@ import {
   deleteSkill,
   getSkillById,
   getAllSkillAndAppliedRole,
+  findAndReplaceFieldValue,
+  previewFindFieldValue,
 } from '../services/appliedRoleservice.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
 import logger from '../loggers/logger.js';
@@ -40,9 +42,9 @@ export const addAppliedRoleAndSkills = async (req, res) => {
       isDeleted: false,
     });
 
-    const skillNames = skills.map((skill) => skill.skills);
+    const validSkillIds = skills.map((skill) => skill._id.toString());
 
-    if (!skillNames.length) {
+    if (!validSkillIds.length) {
       logger.warn('No valid skill names found for provided IDs');
       return HandleResponse(
         res,
@@ -54,9 +56,7 @@ export const addAppliedRoleAndSkills = async (req, res) => {
 
     const existing = await appliedRoleModel.findOne({
       appliedRole: { $regex: `^${trimmedAppliedRole}$`, $options: 'i' },
-      skill: {
-        $in: skillNames.map((s) => new RegExp(`^${(s || '').trim()}$`, 'i')),
-      },
+      skill: { $in: validSkillIds },
       isDeleted: false,
     });
 
@@ -71,7 +71,7 @@ export const addAppliedRoleAndSkills = async (req, res) => {
     }
 
     const result = await create({
-      skill: skillNames,
+      skill: validSkillIds,
       appliedRole: trimmedAppliedRole,
     });
 
@@ -175,14 +175,16 @@ export const updateAppliedRoleAndSkill = async (req, res) => {
       updateData.appliedRole = appliedRole.trim();
     }
 
+    let validSkillIds = [];
+
     if (Array.isArray(skillIds) && skillIds.length > 0) {
       const skills = await Skills.find({
         _id: { $in: skillIds },
         isDeleted: false,
       });
-      const skillNames = skills.map((skill) => skill.skills);
+      validSkillIds = skills.map((skill) => skill._id.toString());
 
-      if (!skillNames.length) {
+      if (!validSkillIds.length) {
         logger.warn('Invalid skill IDs provided.');
         return HandleResponse(
           res,
@@ -192,16 +194,14 @@ export const updateAppliedRoleAndSkill = async (req, res) => {
         );
       }
 
-      updateData.skill = skillNames;
+      updateData.skill = validSkillIds;
     }
 
     if (updateData.appliedRole && updateData.skill) {
       const duplicate = await appliedRoleModel.findOne({
         _id: { $ne: id },
         appliedRole: { $regex: `^${updateData.appliedRole}$`, $options: 'i' },
-        skill: {
-          $in: updateData.skill.map((s) => new RegExp(`^${s.trim()}$`, 'i')),
-        },
+        skill: { $in: validSkillIds },
         isDeleted: false,
       });
 
@@ -296,7 +296,11 @@ export const ViewAllSkillAndAppliedRole = async (req, res) => {
         searchFields,
         search
       );
-      data = searchResult.results;
+
+      data = await appliedRoleModel
+        .find({ _id: { $in: searchResult.results.map((r) => r._id) } })
+        .populate('skill')
+        .sort({ createdAt: -1 });
       totalRecords = searchResult.totalRecords;
     } else {
       totalRecords = await appliedRoleModel.countDocuments({
@@ -368,76 +372,101 @@ export const deleteAppliedRoleAndSkill = async (req, res) => {
 };
 
 export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
-  const { field, find, replaceWith } = req.body;
+  let { field, find, replaceWith } = req.body;
 
-  if (!['skill', 'appliedRole'].includes(field)) {
+  const isValidArrayInput =
+    Array.isArray(find) &&
+    Array.isArray(replaceWith) &&
+    find.length === replaceWith.length &&
+    find.length > 0;
+
+  const isValidSingleInput =
+    typeof find === 'string' && typeof replaceWith === 'string';
+
+  if (!['skills', 'appliedRole', 'degree'].includes(field)) {
     logger.warn(`Invalid field provided for find and replace`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Invalid field. Must be 'skill' or 'appliedRole'.`
+      `Invalid field. Must be 'skills', 'appliedRole' or 'degree'.`
     );
   }
 
-  if (!find || !replaceWith) {
-    logger.warn(`Find or replaceWith value is missing`);
+  if (!isValidArrayInput && !isValidSingleInput) {
+    logger.warn(`Invalid or mismatched input for find/replace`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Both 'find' and 'replaceWith' values are required.`
+      `Both 'find' and 'replaceWith' must be strings or equal-length arrays.`
     );
   }
 
   try {
-    const regex = new RegExp(`^${find.trim()}$`, 'i');
+    const {results, totalModified} = await findAndReplaceFieldValue(field, find, replaceWith);
 
-    const result = await appliedRoleModel.updateMany(
-      { [field]: regex, isDeleted: false },
-      { $set: { [field]: replaceWith } }
-    );
-
-    if (result.modifiedCount === 0) {
-      logger.info(`No matching records found to update`);
+    if (totalModified === 0) {
+      logger.info(`No records updated during find and replace`);
       return HandleResponse(
         res,
         true,
-        StatusCodes.OK,
+        StatusCodes.NOT_FOUND,
         `No matching records found to update.`,
-        result
+        results
       );
     }
 
-    logger.info(`${field} values replaced successfully`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `${field} values replaced successfully.`,
-      result
+      `${results}`,
+      results
     );
   } catch (error) {
     logger.error(`Failed to perform find and replace. ${error}`);
+    if (error.name === 'MongoServerError' && error.code === 11000) {
+      const match = error.message.match(/index: (\w+)_1 dup key: { (\w+): "(.*?)" }/);
+      if (match) {
+        const [, indexField, keyField, keyValue] = match;
+        const msg = `Duplicate key error: ${keyField} : ${keyValue}`;
+        
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.CONFLICT,
+          msg
+        );
+      }
+    }
+
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} perform find and replace.`
+      `Failed to perform find and replace.${error}`
     );
   }
 };
 
+
 export const previewFindSkillOrAppliedRole = async (req, res) => {
   const { field, find } = req.body;
 
-  if (!['skill', 'appliedRole'].includes(field)) {
+  if (
+    ![
+      'skills',
+      'appliedRole',
+      'degree',
+    ].includes(field)
+  ) {
     logger.warn(`Invalid field provided for preview`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Invalid field. Must be 'skill' or 'appliedRole'.`
+      `Invalid field. Must be 'skills', 'appliedRole' or 'degree'.`
     );
   }
 
@@ -452,34 +481,30 @@ export const previewFindSkillOrAppliedRole = async (req, res) => {
   }
 
   try {
-    const regex = new RegExp(`^${find.trim()}$`, 'i');
+    const { results, totalMatched } = await previewFindFieldValue(field, find);
 
-    const results = await appliedRoleModel.find({
-      [field]: regex,
-      isDeleted: false,
-    });
-
-    if (!results.length) {
+    if (totalMatched === 0) {
       logger.info(`No matching records found`);
       return HandleResponse(
         res,
         true,
-        StatusCodes.OK,
+        StatusCodes.NOT_FOUND,
         `No matching records found.`,
-        []
+        results
       );
     }
 
-    logger.info(`Preview: Found ${results.length} matching record(s)`);
+
+    logger.info(`Preview: Found ${results} matching records`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Found ${results.length} matching record(s).`,
+      `${results} matching records.`,
       results
     );
   } catch (error) {
-    logger.error(`Failed to perform preview find. ${error}`);
+    logger.error(`${Message.FAILED_TO} perform preview find. ${error}`);
     return HandleResponse(
       res,
       false,
