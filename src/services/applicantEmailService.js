@@ -28,6 +28,7 @@ export const findAllEmails = async (query, applicantQuery, page, limit) => {
         email_bcc: 1,
         subject: 1,
         description: 1,
+        attachments: 1,
         createdAt: 1,
         'applicantDetails.name': { $ifNull: ['$applicantDetails.name', ''] },
         'applicantDetails.appliedSkills': {
@@ -72,6 +73,7 @@ export const findEmailById = async (id) => {
         email_bcc: 1,
         subject: 1,
         description: 1,
+        attachments: 1,
         createdAt: 1,
         "applicantDetails.name": { $ifNull: ["$applicantDetails.name", " "] },
         "applicantDetails.appliedSkills": { $ifNull: ["$applicantDetails.appliedSkills", []] },

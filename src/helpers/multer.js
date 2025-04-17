@@ -79,3 +79,33 @@ export const uploadCv = multer({
     }
   },
 }).single('csvFile');
+
+const uploadAttachmentsDir = 'src/uploads/Attachments';
+if (!fs.existsSync(uploadAttachmentsDir)) {
+  fs.mkdirSync(uploadAttachmentsDir, { recursive: true });
+}
+
+const attachmentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadAttachmentsDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+export const uploadAttachments = multer({
+  storage:attachmentStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // up to 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'application/pdf',
+      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(Message.INVALID_FILE_TYPE));
+    }
+  },
+}).array('attachments', 5);

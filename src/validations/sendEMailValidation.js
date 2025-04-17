@@ -32,4 +32,10 @@ export const sendEmailValidation = Joi.object().keys({
     }),
     subject: Joi.string().required(),
   description: Joi.string().allow('').optional(),
+  attachments: Joi.array().items(
+    Joi.object({
+      filename: Joi.string().required(),
+      path: Joi.string().required(),
+    })
+  )
 });

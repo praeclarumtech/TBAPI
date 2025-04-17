@@ -2,11 +2,19 @@ import Joi from 'joi';
 import { Enum } from '../utils/enum.js';
 
 export const registerValidation = Joi.object().keys({
-  userName: Joi.string().required().messages({
-    'string.base': `username should be a type of 'text'`,
-    'string.empty': `username cannot be an empty field`,
-    'any.required': `username is a required field`,
-  }),
+  userName: Joi.string()
+    .alphanum()
+    .min(3)
+    .max(30)
+    .required()
+    .messages({
+      'string.base': `Username should be a type of 'text'`,
+      'string.empty': `Username cannot be an empty field`,
+      'string.alphanum': `Username must only contain letters and numbers`,
+      'string.min': `Username must be at least 3 characters`,
+      'string.max': `Username must be at most 30 characters`,
+      'any.required': `Username is a required field`,
+    }),
   email: Joi.string().required().email().messages({
     'string.base': `Email id should be a type of 'text'`,
     'string.empty': `Email id cannot be an empty field`,
@@ -48,18 +56,30 @@ export const registerValidation = Joi.object().keys({
 });
 
 export const loginValidation = Joi.object().keys({
-  email: Joi.string().required().email().messages({
-    'string.base': `Email id should be a type of 'text'`,
-    'string.email': `Email id should be in correct format`,
-    'string.empty': `Email id cannot be an empty field`,
-    'any.required': `Email id is required`,
-  }),
+  email: Joi.alternatives()
+    .try(
+      Joi.string().email().messages({
+        'string.email': `Login ID must be a valid email format`,
+      }),
+      Joi.string().alphanum().min(3).max(30).messages({
+        'string.alphanum': `Username must only contain letters and numbers`,
+        'string.min': `Username must be at least 3 characters`,
+        'string.max': `Username must be at most 30 characters`,
+      })
+    )
+    .required()
+    .messages({
+      'alternatives.match': `Login ID must be a valid email or username`,
+      'any.required': `Login ID is required`,
+    }),
+
   password: Joi.string().required().messages({
     'string.base': `Password should be a type of 'text'`,
     'string.empty': `Password cannot be an empty field`,
     'any.required': `Password is a required field`,
   }),
 });
+
 
 export const sendEmailValidation = Joi.object({
   email: Joi.string().required().email().messages({
