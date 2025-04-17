@@ -92,7 +92,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         return HandleResponse(
           res,
           false,
-          StatusCodes.BAD_REQUEST,
+          StatusCodes.CONFLICT,
           `Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`
         );
       }
@@ -115,6 +115,18 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       );
     } catch (error) {
       logger.error(`${Message.FAILED_TO} add applicant: ${error}`);
+      if (error.name === 'ValidationError') {
+        const validationMessages = Object.values(error.errors).map(
+          (err) => err.message.split('Path `')[1]?.split('`')[0] + ' is required'
+        );
+        logger.error(`Validation Error: ${validationMessages.join(', ')}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          validationMessages.join(', ')
+        );
+      }
       return HandleResponse(
         res,
         false,
