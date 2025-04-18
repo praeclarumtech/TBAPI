@@ -22,7 +22,7 @@ const pagePromises = Array.from({ length: pdf.numPages }, (_, i) => pdf.getPage(
     const textPromises = pages.map(async (page) => {
       const textContent = await page.getTextContent();
       return textContent.items
-        .map((item) => item.str.replace(/[●►⇨❖]/g, '').trim())
+        .map((item) => item.str.replace(/[●►⇨❖✓]/g, '').trim())
         .join(' ');
     });
 
@@ -86,6 +86,7 @@ export const parseResumeText = (text) => {
   );
   const maritalStatusMatch = text.match(/Marital Status:\s*(Single|Married)/i);
   const dobMatch = text.match(/Date of Birth:\s*(\d{2}[-/]\d{2}[-/]\d{4})/i);
+  const genderRegex = /\b(male|female|famale|femail)\b/i;
 
   const emailMatch = text.match(emailRegex);
   const email = emailMatch ? emailMatch[0].replace(/\s+/g, '') : '';
@@ -101,8 +102,9 @@ export const parseResumeText = (text) => {
   const linkedinUrl = linkedInMatch ? linkedInMatch[0] : 'Not Found';
   const currentCompanyName = currentCompanyMatch
     ? currentCompanyMatch[2].trim()
-    : 'Not Provided';
+    : '';
   const maritalStatus = maritalStatusMatch ? maritalStatusMatch[1] : '';
+  const genderMatch = text.match(genderRegex);
   const dateOfBirth = dobMatch
     ? new Date(dobMatch[1].split('/').reverse().join('-'))
     : null;
@@ -234,20 +236,12 @@ export const parseResumeText = (text) => {
     applicantEnum.FIRST_INTERVIEW_ROUND,
     applicantEnum.PRACTICAL,
     applicantEnum.CLIENT,
-    applicantEnum.NODE_JS,
-    applicantEnum.REACT,
-    applicantEnum.DOTNET,
-    applicantEnum.ANGULAR,
-    applicantEnum.UI_UX,
-    applicantEnum.PYTHON,
-    applicantEnum.JAVASCRIPT,
-    applicantEnum.JAVA,
-    applicantEnum.C,
     applicantEnum.SINGLE,
     applicantEnum.MARRIED,
     applicantEnum.MANUAL,
     applicantEnum.CSV,
-    applicantEnum.RESUME
+    applicantEnum.RESUME,
+    applicantEnum.OTHER
   ].includes(role));
   
 
@@ -272,7 +266,7 @@ export const parseResumeText = (text) => {
         return role;
       }
     }
-    return 'Na';
+    return 'Software Engineer';
   };
 
   const appliedRole = extractMatchingRole(text, roleWordList);
@@ -345,28 +339,44 @@ export const parseResumeText = (text) => {
   const lastName =
     nameParts.length > 2 ? nameParts[2] : nameParts[1] || 'Unknown';
 
-  return {
-    name: {
-      firstName,
-      middleName,
-      lastName,
-    },
-    email,
-    phone: {
-      phoneNumber: phone,
-      whatsappNumber: phone,
-    },
-    otherSkills: skills.join(', '),
-    totalExperience,
-    qualification,
-    appliedRole,
-    currentAddress,
-    linkedinUrl,
-    currentCompanyName,
-    preferredLocations,
-    maritalStatus,
-    dateOfBirth,
-  };
+    let finalGender = null;
+ 
+    if (genderMatch && genderMatch[0]) {
+      const found = genderMatch[0].toLowerCase();
+     
+      if (['male'].includes(found)) {
+        finalGender = 'male';
+      }
+     
+      if (['female', 'famale', 'femail'].includes(found)) {
+        finalGender = 'female';
+      }
+    }
+
+    let obj = {
+      name: {
+        firstName,
+        middleName,
+        lastName,
+      },
+      email,
+      phone: {
+        phoneNumber: phone,
+        whatsappNumber: phone,
+      },
+      otherSkills: skills.join(', '),
+      totalExperience,
+      qualification,
+      appliedRole,
+      currentAddress,
+      linkedinUrl,
+      currentCompanyName,
+      preferredLocations,
+      maritalStatus,
+      dateOfBirth,
+    }
+    if (finalGender !== null)  obj.gender = finalGender
+    return obj
 };
 
 

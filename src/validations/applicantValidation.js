@@ -285,10 +285,10 @@ export const updateApplicantValidation = Joi.object({
   currentAddress: Joi.string().messages({
     'string.empty': 'Current Address cannot be empty.',
   }),
-  state: Joi.string(),
-  country: Joi.string(),
+  state: Joi.string().allow(null, ''),
+  country: Joi.string().allow(null, ''),
   currentPincode: Joi.number().integer().allow(null, ''),
-  currentCity: Joi.string(),
+  currentCity: Joi.string().allow(null, ''),
   url: Joi.string().allow(null, ''),
   resumeUrl: Joi.string().allow(null, ''),
 

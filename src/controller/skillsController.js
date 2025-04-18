@@ -33,7 +33,7 @@ export const addSkills = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        `Skill ${Message.ALREADY_EXIST}: ${skills}`
+        `Skill ${Message.ALREADY_EXIST}!`
       );
     }
 
