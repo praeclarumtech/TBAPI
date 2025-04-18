@@ -102,7 +102,6 @@ export const getSkills = async (req, res) => {
     );
   }
 };
-
 export const getSkillsById = async (req, res) => {
   const { skillId } = req.params;
   try {

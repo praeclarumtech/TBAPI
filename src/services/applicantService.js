@@ -32,7 +32,7 @@ export const insertManyApplicants = async (applicantsArray) => {
   }
 };
 
-export const updateManyApplicants = async (applicantsArray) => {
+export const UpdateManyApplicantsByImport = async (applicantsArray) => {
   try {
     return await ExportsApplicants.bulkWrite(
       applicantsArray.map((applicant) => ({
@@ -118,4 +118,15 @@ export const hardDeleteExportsApplicantById = async (id) => {
 
 export const removeManyExportsApplicants = async (ids) => {
   return await ExportsApplicants.deleteMany({ _id: { $in: ids } });
+};
+
+
+export const AddManyApplicantsByImport = async (body) => {
+  try {
+    const applicant = new ExportsApplicants({ ...body });
+    return await applicant.save();
+
+  } catch (error) {
+    throw new Error('Failed to update multiple applicants: ' + error);
+  }
 };
