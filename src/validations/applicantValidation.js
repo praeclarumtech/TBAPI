@@ -36,40 +36,40 @@ export const applicantValidation = Joi.object({
   }),
   gender: Joi.string()
     .valid(genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER)
-    .required()
+    .allow(null, '')
     .messages({
       'any.only': 'Gender must be male, female, or other.',
       'any.required': 'Gender is required.',
     }),
-  dateOfBirth: Joi.date().required().messages({
+  dateOfBirth: Joi.date().allow(null, '').messages({
     'date.base': 'Date of birth must be a valid date.',
     'any.required': 'Date of birth is required.',
   }),
 
-  qualification: Joi.string().required().messages({
+  qualification: Joi.string().allow(null, '').messages({
     'string.empty': 'Qualification cannot be empty.',
     'any.required': 'Qualification are required.',
   }),
 
-  specialization: Joi.string().required().messages({
+  specialization: Joi.string().allow(null, '').messages({
     'string.empty': 'specialization cannot be empty.',
     'any.required': 'specialization is required.',
   }),
 
-  passingYear: Joi.number().integer().required().messages({
+  passingYear: Joi.number().integer().allow(null, '').messages({
     'number.base': 'Passing Year must be a number.',
     'any.required': 'Passing Year is required.',
   }),
 
-  currentAddress: Joi.string().required().messages({
+  currentAddress: Joi.string().allow(null, '').messages({
     'string.empty': 'Current Address cannot be empty.',
     'any.required': 'Current Address is required.',
   }),
-  state: Joi.string().required(),
-  country: Joi.string().required(),
+  state: Joi.string().allow(null, ''),
+  country: Joi.string().allow(null, ''),
   currentPincode: Joi.number().integer().allow(null, ''),
-  currentCity: Joi.string().required(),
-  resumeUrl: Joi.string(),
+  currentCity: Joi.string().allow(null, ''),
+  resumeUrl: Joi.string().allow(null, ''),
   practicalUrl: Joi.string().allow(''),
   portfolioUrl: Joi.string().allow(''),
   linkedinUrl: Joi.string().allow(''),
@@ -86,19 +86,19 @@ export const applicantValidation = Joi.object({
     'any.required': 'Total experience is required.',
   }),
 
-  communicationSkill: Joi.number().required().messages({
+  communicationSkill: Joi.number().allow(null, '').messages({
     'number.base': 'Communication Skill must be a number.',
     'any.required': 'Communication Skill is required.',
   }),
 
-  relevantSkillExperience: Joi.number().required().messages({
+  relevantSkillExperience: Joi.number().allow(null, '').messages({
     'number.base': 'Relevant experience must be a number.',
     'any.required': 'Relevant experience is required.',
   }),
 
   otherSkills: Joi.string().allow(null, ''),
 
-  rating: Joi.number().required().messages({
+  rating: Joi.number().allow(null, '').messages({
     'number.base': 'JavaScript rate must be a number.',
     'any.required': 'JavaScript rate is required.',
   }),
@@ -106,11 +106,11 @@ export const applicantValidation = Joi.object({
   currentPkg: Joi.number().allow(null, ''),
   expectedPkg: Joi.number().allow(null, ''),
   noticePeriod: Joi.number().allow(''),
-  negotiation: Joi.string().required(),
+  negotiation: Joi.string().allow(null, ''),
 
   workPreference: Joi.string()
     .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE)
-    .required()
+    .allow(null, '')
     .messages({
       'any.only': 'Work Preference must be remote, hybrid, or onsite.',
       'any.required': 'Work Preference is required.',
@@ -282,7 +282,7 @@ export const updateApplicantValidation = Joi.object({
     'number.base': 'Passing Year must be a number.',
   }),
 
-  currentAddress: Joi.string().messages({
+  currentAddress: Joi.string().allow(null, '').messages({
     'string.empty': 'Current Address cannot be empty.',
   }),
   state: Joi.string().allow(null, ''),
