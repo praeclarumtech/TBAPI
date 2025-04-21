@@ -924,9 +924,10 @@ export const exportApplicantCsv = async (req, res) => {
         : null;
 
       const projection = selectedFields
-        ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-          _id: 1,
-        })
+        ? selectedFields.reduce(
+          (acc, field) => ({ ...acc, [field]: 1 }),
+          { _id: 1 }
+        )
         : undefined;
 
       applicants = await ExportsApplicants.find(query, projection);
@@ -977,6 +978,7 @@ export const exportApplicantCsv = async (req, res) => {
           conflictDetails
         );
       }
+
       const csvData = generateApplicantCsv(applicants, selectedFields, ids);
       const filename = fields?.length
         ? 'selected_fields_applicants.csv'
@@ -1050,10 +1052,17 @@ export const exportApplicantCsv = async (req, res) => {
           existingPhoneSet.has(a.phone?.phoneNumber)
       );
 
+      if (nonExistingApplicants.length > 0) {
+        await insertManyApplicantsToMain(nonExistingApplicants);
+        await deleteExportedApplicants({
+          _id: { $in: nonExistingApplicants.map((a) => a._id) },
+        });
+      }
+
       if (existingConflicts.length > 0) {
         const conflictDetails = existingConflicts.map(
           (a) =>
-            `Duplicte records found with Email:-${a.email} and  Phone:- ${a.phone?.phoneNumber}`
+            `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
         );
         return HandleResponse(
           res,
@@ -1064,15 +1073,9 @@ export const exportApplicantCsv = async (req, res) => {
       }
 
       applicants = nonExistingApplicants;
-      if (nonExistingApplicants.length > 0) {
-        await insertManyApplicantsToMain(nonExistingApplicants);
-        await deleteExportedApplicants({
-          _id: { $in: nonExistingApplicants.map((a) => a._id) },
-        });
-      }
     }
 
-    // 3 Export all if no filters
+    // Export all if no filters
     if (!ids && !filtered && !source) {
       applicants = await Applicant.find({ isDeleted: false });
     }
@@ -1117,6 +1120,7 @@ export const exportApplicantCsv = async (req, res) => {
     );
   }
 };
+
 
 
 export const importApplicantCsv = async (req, res) => {
