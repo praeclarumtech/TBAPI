@@ -220,29 +220,18 @@ export const parseResumeText = (text) => {
 
   ];
 
-  const roleWordList = Object.values(applicantEnum).filter((role) => ![
-    applicantEnum.YES,
-    applicantEnum.NO,
-    applicantEnum.REMOTE,
-    applicantEnum.HYBRID,
-    applicantEnum.ONSITE,
-    applicantEnum.PENDING,
-    applicantEnum.SELECTED,
-    applicantEnum.REJECTED,
-    applicantEnum.HOLD,
-    applicantEnum.IN_PROCESS,
-    applicantEnum.HR_ROUND,
-    applicantEnum.TECHNICAL,
-    applicantEnum.FIRST_INTERVIEW_ROUND,
-    applicantEnum.PRACTICAL,
-    applicantEnum.CLIENT,
-    applicantEnum.SINGLE,
-    applicantEnum.MARRIED,
-    applicantEnum.MANUAL,
-    applicantEnum.CSV,
-    applicantEnum.RESUME,
-    applicantEnum.OTHER
-  ].includes(role));
+  const roleWordList = [
+    "Software Engineer", "Web Designer", "web Developer", "Frontend Developer", "Senior Frontend Developer",
+    "Senior Software Engineer", "Application Development Modernization", "Backend Developer", "Junior Software Engineer",
+    "Full Stack Developer", "Blockchain Developer", "Data Analyst", "Data Scientist", "Product Manager", "Project Engineer",
+    "UI_UX Designer", "Senior UI Engineer", "Application developer", "QA Engineer", "Technical Analyst", "Quality Analyst",
+    "DevOps Engineer", "Business Analyst", "Technical Support Engineer", "Junior MERN Stack Developer", "MERN Stack Developer",
+    "MEAN Stack Developer", "DotNet Developer", "Junior DotNet developer", "Senior DotNet developer", "Java Developer",
+    "Python Developer", "PHP Developer", "Fresher", "Specialist Programmer", "Reactjs Developer", "React Native Developer",
+    "Nodejs Developer", "Senior JavaScript Developer", "Associate Software Engineer", "Associate Process Manager", "Freelancer",
+    "Team Leader", "Senior Angular Developer", "SharePoint Developer", "Placement executive", "System Engineer",
+    "Senior System Engineer", "Programmer Analyst", "Customer Support Specialist", "Other", "Na"
+  ];
   
 
   const escapeRegex = (word) => word.replace(/[.*?^${}()|[\]\\#+]/g, '\\$&');
