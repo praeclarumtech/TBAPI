@@ -15,12 +15,12 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 export const addDegree = async (req, res) => {
     const { degree } = req.body;
     if (!degree || typeof degree !== "string") {
-        logger.warn(`degree is ${Message.NOT_FOUND}`);
+        logger.warn(`qualification is ${Message.NOT_FOUND}`);
         return HandleResponse(
             res,
             false,
             StatusCodes.BAD_REQUEST,
-            `Degree ${Message.FIELD_REQUIRED}`
+            `qualification ${Message.FIELD_REQUIRED}`
         );
     }
     try {
@@ -30,26 +30,26 @@ export const addDegree = async (req, res) => {
                 res,
                 false,
                 StatusCodes.CONFLICT,
-                `Degree ${Message.ALREADY_EXIST}: ${degree}`
+                `qualification ${Message.ALREADY_EXIST}: ${degree}`
             );
         }
 
         const result = await create({ degree });
-        logger.info(`Degree is ${Message.ADDED_SUCCESSFULLY}`);
+        logger.info(`qualification is ${Message.ADDED_SUCCESSFULLY}`);
         HandleResponse(
             res,
             true,
             StatusCodes.CREATED,
-            `Degree is ${Message.ADDED_SUCCESSFULLY}`,
+            `qualification is ${Message.ADDED_SUCCESSFULLY}`,
             result
         );
     } catch (error) {
-        logger.error(`${Message.FAILED_TO} add degree.`);
+        logger.error(`${Message.FAILED_TO} add qualification.`);
         return HandleResponse(
             res,
             false,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            `${Message.FAILED_TO} add degree.`
+            `${Message.FAILED_TO} add qualification.`
         );
     }
 };
@@ -73,12 +73,12 @@ export const getDegrees = async (req, res) => {
             data = await getAllDegree(page, limit);
         }
 
-        logger.info(`All degrees are ${Message.FETCH_SUCCESSFULLY}`);
+        logger.info(`All qualification are ${Message.FETCH_SUCCESSFULLY}`);
         HandleResponse(
             res,
             true,
             StatusCodes.OK,
-            `All degrees are ${Message.FETCH_SUCCESSFULLY}`,
+            `All qualification are ${Message.FETCH_SUCCESSFULLY}`,
             {
                 data,
                 pagination: {
@@ -90,12 +90,12 @@ export const getDegrees = async (req, res) => {
             }
         );
     } catch (error) {
-        logger.error(`${Message.FAILED_TO} fetch degrees.`);
+        logger.error(`${Message.FAILED_TO} fetch qualification.`);
         return HandleResponse(
             res,
             false,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            `${Message.FAILED_TO} fetch degrees.`
+            `${Message.FAILED_TO} fetch qualification.`
         );
     }
 };
@@ -109,24 +109,24 @@ export const getSingleDegree = async (req, res) => {
                 res,
                 false,
                 StatusCodes.NOT_FOUND,
-                `Degree is ${Message.NOT_FOUND}`
+                `qualification is ${Message.NOT_FOUND}`
             );
         }
-        logger.info(`Degree is ${Message.FETCH_BY_ID}`);
+        logger.info(`qualification is ${Message.FETCH_BY_ID}`);
         return HandleResponse(
             res,
             true,
             StatusCodes.OK,
-            `Degree is ${Message.FETCH_BY_ID}`,
+            `qualification is ${Message.FETCH_BY_ID}`,
             result
         );
     } catch (error) {
-        logger.error(`${Message.FAILED_TO} fetch degree by id.`);
+        logger.error(`${Message.FAILED_TO} fetch qualification by id.`);
         return HandleResponse(
             res,
             false,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            `${Message.FAILED_TO} fetch degree by id.`
+            `${Message.FAILED_TO} fetch qualification by id.`
         );
     }
 };
@@ -139,15 +139,15 @@ export const updateDegreebyId = async (req, res) => {
         const updateddegree = await updateDegree(degreeId, updateData);
 
         if (!updateddegree) {
-            logger.warn(`Degree is ${Message.NOT_FOUND}`);
+            logger.warn(`qualification is ${Message.NOT_FOUND}`);
             return HandleResponse(
                 res,
                 false,
                 StatusCodes.NOT_FOUND,
-                `Degree is ${Message.NOT_FOUND}`
+                `qualification is ${Message.NOT_FOUND}`
             );
         }
-        logger.info(`Degree is ${Message.UPDATED_SUCCESSFULLY}`);
+        logger.info(`qualification is ${Message.UPDATED_SUCCESSFULLY}`);
         return HandleResponse(
             res,
             true,
@@ -156,12 +156,12 @@ export const updateDegreebyId = async (req, res) => {
             updateddegree
         );
     } catch (error) {
-        logger.error(`${Message.FAILED_TO} update degree.`);
+        logger.error(`${Message.FAILED_TO} update qualification.`);
         return HandleResponse(
             res,
             false,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            `${Message.FAILED_TO} update degree.`
+            `${Message.FAILED_TO} update qualification.`
         );
     }
 };
@@ -174,29 +174,29 @@ export const deleteDegree = async (req, res) => {
         });
 
         if (!deletedDegree) {
-            logger.warn(`Degree is ${Message.NOT_FOUND}`)
+            logger.warn(`qualification is ${Message.NOT_FOUND}`)
             return HandleResponse(
                 res,
                 false,
                 StatusCodes.NOT_FOUND,
-                `Degree is ${Message.NOT_FOUND}`
+                `qualification is ${Message.NOT_FOUND}`
             );
         }
-        logger.info(`Degree is ${Message.DELETED_SUCCESSFULLY}`);
+        logger.info(`qualification is ${Message.DELETED_SUCCESSFULLY}`);
         return HandleResponse(
             res,
             true,
             StatusCodes.OK,
-            `Degree is ${Message.DELETED_SUCCESSFULLY}`,
+            `qualification is ${Message.DELETED_SUCCESSFULLY}`,
             deletedDegree
         );
     } catch (error) {
-        logger.error(`${Message.FAILED_TO} delete degree.`);
+        logger.error(`${Message.FAILED_TO} delete qualification.`);
         return HandleResponse(
             res,
             false,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            `${Message.FAILED_TO} delete degree.`
+            `${Message.FAILED_TO} delete qualification.`
         );
     }
 };
