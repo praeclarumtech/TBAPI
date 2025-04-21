@@ -889,181 +889,6 @@ export const updateStatusImportApplicant = async (req, res) => {
     );
   }
 };
-
-// export const exportApplicantCsv = async (req, res) => {
-//   try {
-//     const { filtered, source } = req.query;
-//     const { ids, fields } = req.body;
-//     let applicants = [];
-
-//     if (ids && Array.isArray(ids) && ids.length > 0) {
-//       const query = {
-//         _id: { $in: ids },
-//         isDeleted: false,
-//       };
-//       if (filtered === 'Resume') {
-//         query.addedBy = applicantEnum.RESUME;
-//       } else if (filtered === 'Csv') {
-//         query.addedBy = applicantEnum.CSV;
-//       } else {
-//         query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
-//       }
-//       let selectedFields = fields?.length
-//         ? Array.from(
-//             new Set([
-//               ...fields,
-//               'name.firstName',
-//               'email',
-//               'phone.phoneNumber',
-//               'gender',
-//               'appliedRole',
-//               'currentCompanyDesignation',
-//               'resumeUrl',
-//             ])
-//           )
-//         : null;
-//       const projection = selectedFields
-//         ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-//             _id: 1,
-//           })
-//         : undefined;
-//       applicants = await ExportsApplicants.find(query, projection);
-//       if (!applicants.length) {
-//         return HandleResponse(
-//           res,
-//           false,
-//           404,
-//           'No applicants found for provided ids.'
-//         );
-//       }
-//       const csvData = generateApplicantCsv(applicants, selectedFields, ids);
-//       const filename = fields?.length
-//         ? 'selected_fields_applicants.csv'
-//         : 'selected_ids_applicants.csv';
-//       res.setHeader('Content-Type', 'text/csv');
-//       res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-//       res.status(200).send(csvData);
-//       if (!fields?.length) {
-//         await insertManyApplicantsToMain(applicants);
-//         await deleteExportedApplicants({ _id: { $in: ids } });
-//       }
-//       return;
-//     }
-//     // 2. Export based on query params (filtered or source)
-//     let query = { isDeleted: false };
-//     if (filtered === 'both') {
-//       query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
-//     } else if (filtered === 'Resume') {
-//       query.addedBy = applicantEnum.RESUME;
-//     } else if (filtered === 'Csv') {
-//       query.addedBy = applicantEnum.CSV;
-//     }
-//     if (
-//       source === 'both' ||
-//       source === 'Csv' ||
-//       source === 'Resume' ||
-//       source === 'Manual'
-//     ) {
-//       query.addedBy =
-//         source === 'both'
-//           ? { $in: [applicantEnum.RESUME, applicantEnum.CSV] }
-//           : source === 'Resume'
-//           ? applicantEnum.RESUME
-//           : source === 'Csv'
-//           ? applicantEnum.CSV
-//           : applicantEnum.MANUAL;
-//       applicants = await Applicant.find(query);
-//     } else {
-//       const tempApplicants = await ExportsApplicants.find(query);
-//       const tempEmails = tempApplicants.map((a) => a.email);
-//       const tempPhones = tempApplicants
-//         .map((a) => a.phone?.phoneNumber)
-//         .filter(Boolean);
-//       const existingApplicants = await Applicant.find({
-//         isDeleted: false,
-//         $or: [
-//           { email: { $in: tempEmails } },
-//           { 'phone.phoneNumber': { $in: tempPhones } },
-//         ],
-//       });
-//       const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
-//       const existingPhoneSet = new Set(
-//         existingApplicants.map((a) => a.phone?.phoneNumber)
-//       );
-//       const nonExistingApplicants = tempApplicants.filter(
-//         (a) =>
-//           !existingEmailSet.has(a.email) &&
-//           !existingPhoneSet.has(a.phone?.phoneNumber)
-//       );
-
-//       const existingConflicts = tempApplicants.filter(
-//         (a) =>
-//           existingEmailSet.has(a.email) ||
-//           existingPhoneSet.has(a.phone?.phoneNumber)
-//       );
-
-//       if (existingConflicts.length > 0) {
-//         const conflictDetails = existingConflicts.map((a) => `${a.email} (${a.phone?.phoneNumber})is a duplicate applicant.`);
-//         return HandleResponse(
-//           res, 
-//           false, 
-//           StatusCodes.CONFLICT,
-//           conflictDetails
-//         );
-//       }
-//       applicants = nonExistingApplicants;
-//       if (nonExistingApplicants.length > 0) {
-//         await insertManyApplicantsToMain(nonExistingApplicants);
-//         await deleteExportedApplicants({
-//           _id: { $in: nonExistingApplicants.map((a) => a._id) },
-//         });
-//       }
-//     }
-//     if (!ids && !filtered && !source) {
-//       applicants = await Applicant.find({ isDeleted: false });
-//     }
-//     if (!applicants.length) {
-//       return HandleResponse(
-//         res,
-//         false,
-//         StatusCodes.NOT_FOUND,
-//         'No applicants found for the given filter.'
-//       );
-//     }
-//     const csvData = generateApplicantCsv(applicants);
-//     const filename = `${filtered || source || 'all'}_filtered_applicants.csv`;
-//     res.setHeader('Content-Type', 'text/csv');
-//     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-//     return res.status(200).send(csvData);
-//   } catch (error) {
-//     logger.error(`${Message.FAILED_TO} export file`);
-//     if (error.code === 11000) {
-//       const duplicateField =
-//         error.errmsg
-//           ?.match(/index: (.+?) dup key/)?.[1]
-//           ?.split('_')[0]
-//           ?.split('.')
-//           .pop() || 'unknown';
-//       const duplicateValue =
-//         error.errmsg?.match(/dup key: {.*?: "(.*?)"/)?.[1] || 'unknown';
-//       return HandleResponse(
-//         res,
-//         false,
-//         StatusCodes.INTERNAL_SERVER_ERROR,
-//         `${duplicateField} ${duplicateValue} is already in use, please use a different value.`
-//       );
-//     }
-//     return HandleResponse(
-//       res,
-//       false,
-//       StatusCodes.INTERNAL_SERVER_ERROR,
-//       `${Message.FAILED_TO} export file`
-//     );
-//   }
-// };
-
-
-
 export const exportApplicantCsv = async (req, res) => {
   try {
     const { filtered, source } = req.query;
@@ -1142,7 +967,7 @@ export const exportApplicantCsv = async (req, res) => {
           )
           .map(
             (a) =>
-              `${a.email} (${a.phone?.phoneNumber}) is a duplicate applicant.`
+              `Duplicte records found with Email:-${a.email} and  Phone:- ${a.phone?.phoneNumber}`
           );
 
         return HandleResponse(
@@ -1228,7 +1053,7 @@ export const exportApplicantCsv = async (req, res) => {
       if (existingConflicts.length > 0) {
         const conflictDetails = existingConflicts.map(
           (a) =>
-            `${a.email} (${a.phone?.phoneNumber}) is a duplicate applicant.`
+            `Duplicte records found with Email:-${a.email} and  Phone:- ${a.phone?.phoneNumber}`
         );
         return HandleResponse(
           res,
