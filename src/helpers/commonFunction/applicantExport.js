@@ -1,5 +1,6 @@
 import { Parser } from 'json2csv';
 import { applicantEnum, genderEnum } from '../../utils/enum.js';
+import states from '../../models/stateModel.js';
 
 export const generateApplicantCsv = (applicants, selectedFields = null, ids) => {
   const allFields = [
@@ -98,8 +99,16 @@ const parseDate = (dateString) => {
     return null;
   }
 };
-
 const validateAndFillFields = async (data, userRole) => {
+  let storeState = await states.find({}, { state_name: 1, _id: 0 });
+  storeState = storeState.map(state => state.state_name);
+  const normalizedStateMap = storeState.reduce((acc, state) => {
+    const key = state.replace(/\s+/g, '').toLowerCase();
+    acc[key] = state;
+    return acc;
+  }, {});
+  const inputState = (data['State'] || '').replace(/\s+/g, '').toLowerCase();
+  const finalState = normalizedStateMap[inputState] || (data['State']?.trim() || '');
   return {
     name: {
       firstName: data['First Name']?.trim() || null,
@@ -114,14 +123,15 @@ const validateAndFillFields = async (data, userRole) => {
     email: data['Email']?.trim() || null,
     gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
     dateOfBirth: parseDate(data['Date of Birth']),
-
     currentAddress: data['Current Address'] || '',
-    state: data['State'] || '',
+    state: finalState,
     country: data['Country'] || '',
     currentPincode: !isNaN(Number(data['Current Pincode']))
       ? Number(data['Current Pincode'])
       : null,
-    currentCity: data['Current City'] || '',
+    currentCity: data['Current City']
+      ? data['Current City'].charAt(0).toUpperCase() + data['Current City'].slice(1).toLowerCase()
+      : '',
     permanentAddress: data['Permanent Address'] || '',
     qualification: data['Qualification']?.trim() || '',
     specialization: data['Specialization']?.trim() || '',
