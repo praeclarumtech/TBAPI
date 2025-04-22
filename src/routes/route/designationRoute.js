@@ -5,6 +5,7 @@ import {
   getDesignationsById,
   updateDesignations,
   deleteDesignation,
+  deleteManyDesignation
 } from '../../controller/designationController.js';
 import { authorization } from '../../helpers/userMiddleware.js';
 
@@ -19,5 +20,6 @@ router.get(
 );
 router.put('/update/:designationId', authorization, updateDesignations);
 router.delete('/deleteDesignation/:id', authorization, deleteDesignation);
+router.delete('/deleteManyDesignation', authorization, deleteManyDesignation);
 
 export default router;
