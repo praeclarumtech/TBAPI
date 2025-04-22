@@ -121,27 +121,53 @@ export const getReport = async (
 
 export const getApplicantSkillCounts = async (skillIds = []) => {
   try {
-    if (!skillIds.length) return {};
+    let skillCounts = [];
 
-    const skills = await Skills.find({
-      _id: { $in: skillIds },
-      isDeleted: false,
-    });
+    if (!skillIds.length) {
+      skillCounts = await Applicant.aggregate([
+        { $match: { isDeleted: false } },
+        { $unwind: '$appliedSkills' },
+        { $group: { _id: '$appliedSkills', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 15 },
+        {
+          $lookup: {
+            from: 'skills',
+            localField: '_id',
+            foreignField: 'skills',
+            as: 'skillDetails',
+          },
+        },
+        { $unwind: '$skillDetails' },
+        { $match: { 'skillDetails.isDeleted': false } },
+        {
+          $project: {
+            skill: '$_id',
+            count: 1,
+          },
+        },
+      ]);
+    } else {
+      const skills = await Skills.find({
+        _id: { $in: skillIds },
+        isDeleted: false,
+      });
 
-    const skillCounts = await Promise.all(
-      skills.map(async (skillDoc) => {
-        const skillName = skillDoc.skills;
-        const escapedSkill = skillName.replace(
-          /[-\/\\^$*+?.()|[\]{}]/g,
-          '\\$&'
-        );
-        const count = await Applicant.countDocuments({
-          appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
-          isDeleted: false,
-        });
-        return { skill: skillName, count };
-      })
-    );
+      skillCounts = await Promise.all(
+        skills.map(async (skillDoc) => {
+          const skillName = skillDoc.skills;
+          const escapedSkill = skillName.replace(
+            /[-\/\\^$*+?.()|[\]{}]/g,
+            '\\$&'
+          );
+          const count = await Applicant.countDocuments({
+            appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
+            isDeleted: false,
+          });
+          return { skill: skillName, count };
+        })
+      );
+    }
 
     return skillCounts.reduce((acc, { skill, count }) => {
       acc[skill] = count;
@@ -154,3 +180,4 @@ export const getApplicantSkillCounts = async (skillIds = []) => {
     return {};
   }
 };
+

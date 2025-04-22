@@ -24,3 +24,7 @@ export const updateDesignation = async (id, updateData) => {
 export const deleteDesignationById = async (id) => {
   return designations.deleteOne({ _id: id });
 };
+
+export const removeManyDesignation = async (ids) => {
+  return await designations.deleteMany({ _id: { $in: ids } });
+};
