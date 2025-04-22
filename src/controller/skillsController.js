@@ -26,8 +26,14 @@ export const addSkills = async (req, res) => {
       `Skills ${Message.FIELD_REQUIRED}`
     );
   }
+
+  const normalizeSkill = (str) => str.toLowerCase().replace(/\s+/g, '');
+  const normalizedInput = normalizeSkill(skills);
   try {
-    const existingSkill = await Skills.findOne({ skills });
+
+    const allSkills = await Skills.find({ isDeleted: false });
+    const existingSkill = allSkills.find(s => normalizeSkill(s.skills) === normalizedInput);
+
     if (existingSkill) {
       return HandleResponse(
         res,
@@ -37,7 +43,7 @@ export const addSkills = async (req, res) => {
       );
     }
 
-    const result = await create({ skills });
+    const result = await create({ skills: skills.trim() });
     logger.info(`Skills is ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,

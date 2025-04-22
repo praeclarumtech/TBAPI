@@ -141,9 +141,19 @@ import {
     try {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
+      const { search } = req.query;
+
+      const filter = { isDeleted: false };
+
+      if (search) {
+        filter.$or = [
+          { type: { $regex: search, $options: 'i' } },
+          { subject: { $regex: search, $options: 'i' } }
+        ];
+      }
   
-      const totalRecords = await EmailTemplate.countDocuments({ isDeleted: false });
-      const templates = await getAllEmailTemplates(page, limit);
+      const totalRecords = await EmailTemplate.countDocuments(filter);
+      const templates = await getAllEmailTemplates(page, limit, filter);
       const totalPages = Math.ceil(totalRecords / limit);
   
       return HandleResponse(
