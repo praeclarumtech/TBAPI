@@ -125,15 +125,6 @@ export const applicantSkillStatistics = async (req, res) => {
   try {
     const { skillIds } = req.body;
 
-    if (!skillIds || !Array.isArray(skillIds) || skillIds.length === 0) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        `Skill IDs array is required`
-      );
-    }
-
     const skillCounts = await getApplicantSkillCounts(skillIds);
 
     logger.info(`Applicant Skill Statistics ${Message.FETCH_SUCCESSFULLY}`);
