@@ -283,7 +283,7 @@ export const getSkillsById = async (req, res) => {
 export const ViewAllSkillAndAppliedRole = async (req, res) => {
   try {
     let page = Math.max(1, parseInt(req.query.page)) || 1;
-    let limit = Math.min(100, Math.max(1, parseInt(req.query.limit))) || 10;
+    let limit = Math.min(800, Math.max(1, parseInt(req.query.limit))) || 10;
     let search = req.query.search || '';
 
     let data;

@@ -69,12 +69,9 @@ export const getAllEmails = async (req, res) => {
     const {
       page = 1,
       limit = 10,
-      email_to,
-      subject,
       startDate,
       endDate,
-      name,
-      appliedSkills,
+      search,
     } = req.query;
 
     const numOfpage = parseInt(page) || 1;
@@ -83,11 +80,11 @@ export const getAllEmails = async (req, res) => {
     let query = {};
     let applicantQuery = {};
 
-    if (email_to) {
-      query.email_to = { $regex: email_to, $options: 'i' };
-    }
-    if (subject) {
-      query.subject = { $regex: subject, $options: 'i' };
+    if (search) {
+      query.$or = [
+        { email_to: { $regex: search, $options: 'i' } },
+        { subject: { $regex: search, $options: 'i' } },
+      ];
     }
 
     if (startDate || endDate) {
@@ -98,18 +95,6 @@ export const getAllEmails = async (req, res) => {
       if (endDate) {
         query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
       }
-    }
-
-    if (name) {
-      applicantQuery['$or'] = [
-        { 'applicantDetails.name.firstName': { $regex: name, $options: 'i' } },
-        { 'applicantDetails.name.middleName': { $regex: name, $options: 'i' } },
-        { 'applicantDetails.name.lastName': { $regex: name, $options: 'i' } }
-      ];
-    }
-
-    if (appliedSkills) {
-      applicantQuery['applicantDetails.appliedSkills'] = { $regex: appliedSkills, $options: 'i' };
     }
 
     const { emails, totalRecords, totalPages } = await findAllEmails(
