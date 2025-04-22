@@ -1,6 +1,8 @@
 import { Parser } from 'json2csv';
 import { applicantEnum, genderEnum } from '../../utils/enum.js';
 import states from '../../models/stateModel.js';
+import city from '../../models/citymodel.js';
+import Skills from '../../models/skillsModel.js';
 
 export const generateApplicantCsv = (applicants, selectedFields = null, ids) => {
   const allFields = [
@@ -55,9 +57,6 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'clientFeedback', label: 'Client Feedback', value: row => row.clientFeedback || 'Not Provided' },
     { key: 'meta', label: 'Meta', value: row => row.meta || 'Not Provided' },
   ];
-
-
-
   const exportKeys = (ids || selectedFields)
     ? selectedFields?.length
       ? Array.from(new Set([...selectedFields]))
@@ -99,16 +98,36 @@ const parseDate = (dateString) => {
     return null;
   }
 };
-const validateAndFillFields = async (data, userRole) => {
-  let storeState = await states.find({}, { state_name: 1, _id: 0 });
-  storeState = storeState.map(state => state.state_name);
-  const normalizedStateMap = storeState.reduce((acc, state) => {
-    const key = state.replace(/\s+/g, '').toLowerCase();
-    acc[key] = state;
+
+const normalizeLocationField = async (collection, fieldName, inputValue) => {
+  if (!inputValue) return '';
+
+  let values = await collection.find({}, { [fieldName]: 1, _id: 0 });
+  values = values.map(item => item[fieldName]);
+
+  const normalizedMap = values.reduce((acc, val) => {
+    const key = val.replace(/\s+/g, '').toLowerCase();
+    acc[key] = val;
     return acc;
   }, {});
-  const inputState = (data['State'] || '').replace(/\s+/g, '').toLowerCase();
-  const finalState = normalizedStateMap[inputState] || (data['State']?.trim() || '');
+
+  const cleanedInput = inputValue.replace(/\s+/g, '').toLowerCase();
+  let finalValue = normalizedMap[cleanedInput];
+
+  if (!finalValue) {
+    const fuzzyRegex = new RegExp(cleanedInput.split('').join('.*'), 'i');
+    const matched = values.find(val =>
+      fuzzyRegex.test(val.replace(/\s+/g, '').toLowerCase())
+    );
+    finalValue = matched || inputValue.trim();
+  }
+  return finalValue;
+};
+
+const validateAndFillFields = async (data, userRole) => {
+  const finalState = await normalizeLocationField(states, 'state_name', data['State']);
+  const finalCity = await normalizeLocationField(city, 'city_name', data['Current City']);
+  const finalSkills = await normalizeLocationField(Skills, 'skills', data['Applied Skills']);
   return {
     name: {
       firstName: data['First Name']?.trim() || null,
@@ -129,9 +148,7 @@ const validateAndFillFields = async (data, userRole) => {
     currentPincode: !isNaN(Number(data['Current Pincode']))
       ? Number(data['Current Pincode'])
       : null,
-    currentCity: data['Current City']
-      ? data['Current City'].charAt(0).toUpperCase() + data['Current City'].slice(1).toLowerCase()
-      : '',
+    currentCity: finalCity,
     permanentAddress: data['Permanent Address'] || '',
     qualification: data['Qualification']?.trim() || '',
     specialization: data['Specialization']?.trim() || '',
@@ -140,9 +157,7 @@ const validateAndFillFields = async (data, userRole) => {
       : null,
     collegeName: data['College Name'] || '',
     cgpa: !isNaN(Number(data['CGPA'])) ? Number(data['CGPA']) : null,
-    appliedSkills: data['Applied Skills']
-      ? data['Applied Skills'].split(',').map((skill) => skill.trim())
-      : [],
+    appliedSkills: finalSkills,
     totalExperience: !isNaN(Number(data['Total Experience (years)']))
       ? Number(data['Total Experience (years)'])
       : 0,
