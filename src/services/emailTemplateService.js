@@ -57,9 +57,9 @@ export const getEmailTemplateById = async (id) => {
     }
 };
  
-export const getAllEmailTemplates = async (page, limit) => {
+export const getAllEmailTemplates = async (page, limit, filter) => {
     try {
-        return await EmailTemplate.find({isDeleted: false})
+        return await EmailTemplate.find(filter)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit);

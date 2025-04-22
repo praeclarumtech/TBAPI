@@ -225,6 +225,7 @@ export const viewAllApplicant = async (req, res) => {
       communicationSkill,
       currentPkg,
       addedBy,
+      search,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -394,7 +395,7 @@ export const viewAllApplicant = async (req, res) => {
       }
     }
 
-    if (applicantName || searchSkills) {
+    if (search && typeof search === 'string') {
       const searchFields = [
         'name.firstName',
         'name.middleName',
@@ -402,18 +403,14 @@ export const viewAllApplicant = async (req, res) => {
         'appliedSkills',
       ];
 
-      const searchQuery = applicantName || searchSkills;
-
-      if (searchQuery) {
-        const searchResults = await commonSearch(
-          Applicant,
-          searchFields,
-          searchQuery,
-          typeof searchSkills === 'string' ? searchSkills : '',
-          pageNum,
-          limitNum
-        );
-
+      const searchResults = await commonSearch(
+        Applicant,
+        searchFields,
+        search,
+        search,
+        pageNum,
+        limitNum
+      );
         if (searchResults.results.length > 0) {
           return HandleResponse(
             res,
@@ -424,8 +421,7 @@ export const viewAllApplicant = async (req, res) => {
           );
         }
       }
-    }
-
+    
     const findApplicants = await pagination({
       Schema: Applicant,
       page: pageNum,
@@ -451,7 +447,8 @@ export const viewAllApplicant = async (req, res) => {
       `${Message.FAILED_TO} view all applicant.`
     );
   }
-};
+}
+
 
 export const viewApplicant = async (req, res) => {
   try {
