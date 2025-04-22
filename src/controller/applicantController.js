@@ -888,7 +888,7 @@ export const updateStatusImportApplicant = async (req, res) => {
 };
 export const exportApplicantCsv = async (req, res) => {
   try {
-    const { filtered, source, skills } = req.query;
+    const { filtered, source, appliedSkills } = req.query;
     const { ids, fields, main } = req.body;
     let applicants = [];
 
@@ -985,15 +985,47 @@ export const exportApplicantCsv = async (req, res) => {
       return;
     }
 
-    if (skills?.length) {
-      applicants = await Applicant.find({
+    // if (skills?.length) {
+    //   applicants = await Applicant.find({
+    //     isDeleted: false,
+    //     appliedSkills: {
+    //       $elemMatch: {
+    //         $regex: new RegExp(skills, 'i'),
+    //       },
+    //     },
+    //   });
+
+    //   if (!applicants.length) {
+    //     return HandleResponse(res, false, 404, 'No applicants found with given skills.');
+    //   }
+
+    //   const csvData = generateApplicantCsv(applicants);
+    //   const filename = `skills_filtered_applicants.csv`;
+
+    //   res.setHeader('Content-Type', 'text/csv');
+    //   res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    //   return res.status(200).send(csvData);
+    // }
+
+
+
+    if (appliedSkills) {
+      const skillsArray = appliedSkills
+        .split(',')
+        .map(
+          (skill) =>
+            new RegExp(
+              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            )
+        );
+
+      const query = {
         isDeleted: false,
-        appliedSkills: {
-          $elemMatch: {
-            $regex: new RegExp(skills, 'i'),
-          },
-        },
-      });
+        appliedSkills: { $all: skillsArray },
+      };
+
+      const applicants = await Applicant.find(query);
 
       if (!applicants.length) {
         return HandleResponse(res, false, 404, 'No applicants found with given skills.');
@@ -1006,6 +1038,7 @@ export const exportApplicantCsv = async (req, res) => {
       res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
       return res.status(200).send(csvData);
     }
+
 
     let query = { isDeleted: false };
 
@@ -1302,7 +1335,7 @@ export const importApplicantCsv = async (req, res) => {
               res,
               true,
               StatusCodes.OK,
-              `${fileExt.toUpperCase()} imported successfully`,
+              `${fileExt.replace(/[.,\/\s]/g, '').toUpperCase()} imported successfully.`,
               {
                 insertedNewRecords,
                 updatedRecords,
