@@ -283,25 +283,34 @@ export const getSkillsById = async (req, res) => {
 export const ViewAllSkillAndAppliedRole = async (req, res) => {
   try {
     let page = Math.max(1, parseInt(req.query.page)) || 1;
-    let limit = Math.min(100, Math.max(1, parseInt(req.query.limit))) || 10;
+    let limit = Math.min(800, Math.max(1, parseInt(req.query.limit))) || 10;
     let search = req.query.search || '';
 
     let data;
     let totalRecords;
 
     if (search) {
-      const searchFields = ['skill'];
-      const searchResult = await commonSearch(
-        appliedRoleModel,
-        searchFields,
-        search
-      );
+      const matchingSkills = await Skills.find({
+        skills: { $regex: search, $options: 'i' },
+        isDeleted: false,
+      }).select('_id');
+
+      const skillIds = matchingSkills.map((skill) => skill._id);
+
+      const filter = {
+        isDeleted: false,
+        $or: [
+          { appliedRole: { $regex: search, $options: 'i' } },
+          { skill: { $in: skillIds } },
+        ],
+      };
+
+      totalRecords = await appliedRoleModel.countDocuments(filter);
 
       data = await appliedRoleModel
-        .find({ _id: { $in: searchResult.results.map((r) => r._id) } })
+        .find(filter)
         .populate('skill')
         .sort({ createdAt: -1 });
-      totalRecords = searchResult.totalRecords;
     } else {
       totalRecords = await appliedRoleModel.countDocuments({
         isDeleted: false,
@@ -335,6 +344,8 @@ export const ViewAllSkillAndAppliedRole = async (req, res) => {
     );
   }
 };
+
+
 
 export const deleteAppliedRoleAndSkill = async (req, res) => {
   const { id } = req.params;
