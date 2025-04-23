@@ -15,7 +15,7 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'gender', label: 'Gender', value: row => row.gender || '' },
     { key: 'dateOfBirth', label: 'Date of Birth', value: row => row.dateOfBirth ? new Date(row.dateOfBirth).toISOString().split('T')[0] : '' },
     { key: 'qualification', label: 'Qualification', value: row => row.qualification || '' },
-    { key: 'specialization', label: 'Specialization', value: row => row.specialization || 'Not Provided' },
+    { key: 'specialization', label: 'Specialization', value: row => row.specialization || '' },
     { key: 'passingYear', label: 'Passing Year', value: row => row.passingYear || '' },
     { key: 'currentPincode', label: 'Current Pincode', value: row => row.currentPincode || '' },
     { key: 'currentCity', label: 'Current City', value: row => row.currentCity || '' },
@@ -52,10 +52,10 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'maritalStatus', label: 'Marital Status', value: row => row.maritalStatus || ' ' },
     { key: 'lastFollowUpDate', label: 'Last Follow-Up Date', value: row => row.lastFollowUpDate ? new Date(row.lastFollowUpDate).toISOString().split('T')[0] : '' },
     { key: 'anyHandOnOffers', label: 'Any Hands-On Offers', value: row => (row.anyHandOnOffers ? 'Yes' : 'No') },
-    { key: 'linkedinUrl', label: 'LinkedIn URL', value: row => row.linkedinUrl || 'Not Provided' },
-    { key: 'clientCvUrl', label: 'Client CV URL', value: row => row.clientCvUrl || 'Not Provided' },
-    { key: 'clientFeedback', label: 'Client Feedback', value: row => row.clientFeedback || 'Not Provided' },
-    { key: 'meta', label: 'Meta', value: row => row.meta || 'Not Provided' },
+    { key: 'linkedinUrl', label: 'LinkedIn URL', value: row => row.linkedinUrl || '' },
+    { key: 'clientCvUrl', label: 'Client CV URL', value: row => row.clientCvUrl || '' },
+    { key: 'clientFeedback', label: 'Client Feedback', value: row => row.clientFeedback || '' },
+    { key: 'meta', label: 'Meta', value: row => row.meta || '' },
   ];
   const exportKeys = (ids || selectedFields)
     ? selectedFields?.length
@@ -215,7 +215,7 @@ const validateAndFillFields = async (data, userRole) => {
     practicalFeedback: data['Practical Feedback'] || '',
     portfolioUrl: data['Portfolio URL'] || '',
     referral: data['Referral'] || '',
-    resumeUrl: data['Resume URL'] || null,
+    resumeUrl: data['Resume URL'] || '',
     preferredLocations: data['Preferred Locations']?.trim() || '',
     maritalStatus:
       applicantEnum[data['Marital Status']?.toUpperCase()?.trim()] ||
@@ -247,21 +247,14 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     firstName: data['First Name']?.trim(),
     email: data['Email']?.trim(),
     phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
-    gender: data['Gender']?.trim()?.toLowerCase(),
     appliedRole: data['Applied Role']?.trim(),
     currentCompanyDesignation: data['Current Company Designation']?.trim(),
     resumeUrl: data['Resume URL']?.trim(),
   };
+
   const missingFields = Object.entries(requiredFields)
     .filter(([key, value]) => {
-      if (key === 'currentCompanyDesignation' || key === 'appliedRole') {
-        if (!value || (Array.isArray(value) && value.length === 0)) {
-          requiredFields.currentCompanyDesignation = applicantEnum.SOFTWARE_ENGINEER;
-          requiredFields.appliedRole = requiredFields.currentCompanyDesignation;
-          return false;
-        }
-        return false; // Don't check it for missing fields
-      }
+      if (key === 'currentCompanyDesignation' || key === 'appliedRole') return false;
       return !value || (Array.isArray(value) && value.length === 0);
     })
     .map(([key]) => key);
@@ -270,34 +263,33 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     errorMessages.push(`${missingFields.join(', ')} field(s) are required at line ${lineNumber}.`);
   }
 
-  const findEnumValue = (fieldValue, fieldName) => {
-    if (!fieldValue) return undefined;
+  const fuzzyMatchEnum = (inputValue, fieldName) => {
+    if (!inputValue) return '';
 
+    const cleanedInput = inputValue.replace(/\s+/g, '').toLowerCase();
+    const enumValues = Object.values(applicantEnum);
 
-    const enumValue = Object.values(applicantEnum).find(
-      (val) =>
-        val.replace(/\s+/g, '').toUpperCase() ===
-        fieldValue.replace(/\s+/g, '').toUpperCase()
+    const normalizedMap = enumValues.reduce((acc, val) => {
+      const key = val.replace(/\s+/g, '').toLowerCase();
+      acc[key] = val;
+      return acc;
+    }, {});
+
+    if (normalizedMap[cleanedInput]) return normalizedMap[cleanedInput];
+
+    const fuzzyRegex = new RegExp(cleanedInput.split('').join('.*'), 'i');
+    const matched = enumValues.find(val =>
+      fuzzyRegex.test(val.replace(/\s+/g, '').toLowerCase())
     );
 
+    if (matched) return matched;
 
-
-    if (!enumValue) {
-      const closestMatch = Object.values(applicantEnum).find((val) =>
-        val.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 5))
-      );
-
-      errorMessages.push(
-        `Invalid ${fieldName} "${fieldValue}" at line ${lineNumber}. Did you mean: "${closestMatch || "N/A"}"?`
-      );
-    }
-
-    return enumValue;
+    errorMessages.push(`Invalid ${fieldName} "${inputValue}" please check.`);
+    return inputValue.trim();
   };
 
-  const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
-  const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
-
+  const appliedRole = fuzzyMatchEnum(data['Applied Role'], 'appliedRole');
+  const currentCompanyDesignation = fuzzyMatchEnum(data['Current Company Designation'], 'currentCompanyDesignation');
 
   if (errorMessages.length > 0) {
     throw {
@@ -307,19 +299,21 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
   }
 
   const validatedData = await validateAndFillFields(data, userRole);
-  validatedData.currentCompanyDesignation = validatedData.currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER;
-  validatedData.appliedRole = validatedData.appliedRole || validatedData.currentCompanyDesignation
+
+  validatedData.currentCompanyDesignation = currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER;
+  validatedData.appliedRole = appliedRole || validatedData.currentCompanyDesignation;
 
   return {
     valid: true,
     data: {
       ...validatedData,
-      appliedRole: validatedData.appliedRole || validatedData.currentCompanyDesignation,
-      currentCompanyDesignation: validatedData.currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER,
+      appliedRole: validatedData.appliedRole,
+      currentCompanyDesignation: validatedData.currentCompanyDesignation,
     },
     number: lineNumber,
   };
 };
+
 
 
 

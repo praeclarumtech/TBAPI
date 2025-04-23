@@ -411,17 +411,17 @@ export const viewAllApplicant = async (req, res) => {
         pageNum,
         limitNum
       );
-        if (searchResults.results.length > 0) {
-          return HandleResponse(
-            res,
-            true,
-            StatusCodes.OK,
-            `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
-            searchResults
-          );
-        }
+      if (searchResults.results.length > 0) {
+        return HandleResponse(
+          res,
+          true,
+          StatusCodes.OK,
+          `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+          searchResults
+        );
       }
-    
+    }
+
     const findApplicants = await pagination({
       Schema: Applicant,
       page: pageNum,
@@ -984,31 +984,6 @@ export const exportApplicantCsv = async (req, res) => {
 
       return;
     }
-
-    // if (skills?.length) {
-    //   applicants = await Applicant.find({
-    //     isDeleted: false,
-    //     appliedSkills: {
-    //       $elemMatch: {
-    //         $regex: new RegExp(skills, 'i'),
-    //       },
-    //     },
-    //   });
-
-    //   if (!applicants.length) {
-    //     return HandleResponse(res, false, 404, 'No applicants found with given skills.');
-    //   }
-
-    //   const csvData = generateApplicantCsv(applicants);
-    //   const filename = `skills_filtered_applicants.csv`;
-
-    //   res.setHeader('Content-Type', 'text/csv');
-    //   res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-    //   return res.status(200).send(csvData);
-    // }
-
-
-
     if (appliedSkills) {
       const skillsArray = appliedSkills
         .split(',')
