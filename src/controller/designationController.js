@@ -5,6 +5,7 @@ import {
   getDesignationById,
   updateDesignation,
   deleteDesignationById,
+  removeManyDesignation
 } from '../services/designationsService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
@@ -15,12 +16,12 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 export const adddesignations = async (req, res) => {
   const { designation } = req.body;
   if (!designation || typeof designation !== 'string') {
-    logger.warn(`designation is ${Message.NOT_FOUND}`);
+    logger.warn(`Designation is ${Message.NOT_FOUND}`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `designation ${Message.FIELD_REQUIRED}`
+      `Designation ${Message.FIELD_REQUIRED}`
     );
   }
   try {
@@ -32,26 +33,26 @@ export const adddesignations = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        `designation ${Message.ALREADY_EXIST}!`
+        `Designation ${Message.ALREADY_EXIST}!`
       );
     }
 
     const result = await create({ designation });
-    logger.info(`designation is ${Message.ADDED_SUCCESSFULLY}`);
+    logger.info(`Designation is ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `designation is ${Message.ADDED_SUCCESSFULLY}`,
+      `Designation is ${Message.ADDED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} add designation.`);
+    logger.error(`${Message.FAILED_TO} add Designation.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} add designation.`
+      `${Message.FAILED_TO} add Designation.`
     );
   }
 };
@@ -152,7 +153,7 @@ export const updateDesignations = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        `designation ${Message.ALREADY_EXIST}!`
+        `Designation ${Message.ALREADY_EXIST}!`
       );
     }
 
@@ -220,6 +221,51 @@ export const deleteDesignation = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} delete Designation.`
+    );
+  }
+};
+
+export const deleteManyDesignation = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        Message.OBJ_ID_NOT_FOUND
+      );
+    }
+
+    const removeEmails = await removeManyDesignation(ids);
+
+    if (removeEmails.deletedCount === 0) {
+      logger.warn(`Designation is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Designation is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Designation is ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Designation is ${Message.DELETED_SUCCESSFULLY}`,
+      removeEmails
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} deleteMany designations.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} deleteMany designations.`
     );
   }
 };

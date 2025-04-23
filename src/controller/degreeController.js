@@ -15,12 +15,12 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 export const addDegree = async (req, res) => {
     const { degree } = req.body;
     if (!degree || typeof degree !== "string") {
-        logger.warn(`qualification is ${Message.NOT_FOUND}`);
+        logger.warn(`Qualification is ${Message.NOT_FOUND}`);
         return HandleResponse(
             res,
             false,
             StatusCodes.BAD_REQUEST,
-            `qualification ${Message.FIELD_REQUIRED}`
+            `Qualification ${Message.FIELD_REQUIRED}`
         );
     }
     try {
@@ -30,17 +30,17 @@ export const addDegree = async (req, res) => {
                 res,
                 false,
                 StatusCodes.CONFLICT,
-                `qualification ${Message.ALREADY_EXIST}: ${degree}`
+                `Qualification ${Message.ALREADY_EXIST}: ${degree}`
             );
         }
 
         const result = await create({ degree });
-        logger.info(`qualification is ${Message.ADDED_SUCCESSFULLY}`);
+        logger.info(`Qualification is ${Message.ADDED_SUCCESSFULLY}`);
         HandleResponse(
             res,
             true,
             StatusCodes.CREATED,
-            `qualification is ${Message.ADDED_SUCCESSFULLY}`,
+            `Qualification is ${Message.ADDED_SUCCESSFULLY}`,
             result
         );
     } catch (error) {
@@ -109,15 +109,15 @@ export const getSingleDegree = async (req, res) => {
                 res,
                 false,
                 StatusCodes.NOT_FOUND,
-                `qualification is ${Message.NOT_FOUND}`
+                `Qualification is ${Message.NOT_FOUND}`
             );
         }
-        logger.info(`qualification is ${Message.FETCH_BY_ID}`);
+        logger.info(`Qualification is ${Message.FETCH_BY_ID}`);
         return HandleResponse(
             res,
             true,
             StatusCodes.OK,
-            `qualification is ${Message.FETCH_BY_ID}`,
+            `Qualification is ${Message.FETCH_BY_ID}`,
             result
         );
     } catch (error) {
@@ -139,20 +139,20 @@ export const updateDegreebyId = async (req, res) => {
         const updateddegree = await updateDegree(degreeId, updateData);
 
         if (!updateddegree) {
-            logger.warn(`qualification is ${Message.NOT_FOUND}`);
+            logger.warn(`Qualification is ${Message.NOT_FOUND}`);
             return HandleResponse(
                 res,
                 false,
                 StatusCodes.NOT_FOUND,
-                `qualification is ${Message.NOT_FOUND}`
+                `Qualification is ${Message.NOT_FOUND}`
             );
         }
-        logger.info(`qualification is ${Message.UPDATED_SUCCESSFULLY}`);
+        logger.info(`Qualification is ${Message.UPDATED_SUCCESSFULLY}`);
         return HandleResponse(
             res,
             true,
             StatusCodes.ACCEPTED,
-            `Degree is ${Message.UPDATED_SUCCESSFULLY}`,
+            `Qualification is ${Message.UPDATED_SUCCESSFULLY}`,
             updateddegree
         );
     } catch (error) {
@@ -181,7 +181,7 @@ export const deleteDegree = async (req, res) => {
         }
         const deletedDegree = await deleteManyDegrees(ids);
         if (deletedDegree.deletedCount === 0) {
-            logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+            logger.warn(`Qualification is ${Message.NOT_FOUND}`);
             return HandleResponse(
                 res,
                 false,
@@ -189,13 +189,12 @@ export const deleteDegree = async (req, res) => {
                 `Qualification is found from given id's`
             );
         }
-
-        logger.info(`qualification is ${Message.DELETED_SUCCESSFULLY}`);
+        logger.info(`Qualification is ${Message.DELETED_SUCCESSFULLY}`);
         return HandleResponse(
             res,
             true,
             StatusCodes.OK,
-            `qualification is ${Message.DELETED_SUCCESSFULLY}`,
+            `Qualification is ${Message.DELETED_SUCCESSFULLY}`,
             deletedDegree
         );
     } catch (error) {
