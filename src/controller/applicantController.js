@@ -1112,6 +1112,7 @@ export const exportApplicantCsv = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
     return res.status(200).send(csvData);
   } catch (error) {
+    console.log("error>>", error)
     logger.error(`${Message.FAILED_TO} export file`);
 
     if (error.code === 11000) {
