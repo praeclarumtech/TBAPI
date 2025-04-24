@@ -2,6 +2,8 @@ import Applicant from '../models/applicantModel.js';
 import { applicantEnum } from '../utils/enum.js';
 import { getDateRange } from '../helpers/commonFunction/moment.js';
 import Skills from '../models/skillsModel.js';
+import city from '../models/citymodel.js';
+import states from '../models/stateModel.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 
@@ -181,3 +183,51 @@ export const getApplicantSkillCounts = async (skillIds = []) => {
   }
 };
 
+export const getApplicantCountCityAndState = async (type = 'city') => {
+  try {
+    const result = {};
+
+    if (type === 'city') {
+      const cities = await city.find({ isDeleted: { $ne: true } }).lean();
+
+      await Promise.all(
+        cities.map(async (cityDoc) => {
+          const cityName = cityDoc.city_name;
+          const escapedCity = cityName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+          const count = await Applicant.countDocuments({
+            currentCity: { $regex: new RegExp(`^${escapedCity}$`, 'i') },
+            isDeleted: false,
+          });
+
+          if (count > 0) {
+            result[cityName] = count;
+          }
+        })
+      );
+    } else if (type === 'state') {
+      const state = await states.find({ isDeleted: { $ne: true } }).lean();
+
+      await Promise.all(
+        state.map(async (stateDoc) => {
+          const stateName = stateDoc.state_name;
+          const escapedState = stateName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+          const count = await Applicant.countDocuments({
+            state: { $regex: new RegExp(`^${escapedState}$`, 'i') },
+            isDeleted: false,
+          });
+
+          if (count > 0) {
+            result[stateName] = count;
+          }
+        })
+      );
+    }
+
+    return result;
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} count applicants by ${type}: ${error.message}`);
+    throw error;
+  }
+};

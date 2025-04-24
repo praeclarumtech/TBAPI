@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import {
   getReport,
   getApplicantSkillCounts,
+  getApplicantCountCityAndState
 } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
@@ -144,6 +145,48 @@ export const applicantSkillStatistics = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `Failed to fetch skill statistics`,
+      error
+    );
+  }
+};
+
+export const applicantCountByCityAndState = async (req, res) => {
+  try {
+    let { type } = req.query;
+
+    if (!type) {
+      type = 'city';
+    }
+
+    if (!['city', 'state'].includes(type)) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Invalid type. Only 'city' or 'state' allowed.`,
+        null
+      );
+    }
+
+    const result = await getApplicantCountCityAndState(type);
+
+    logger.info(`Applicant count by ${type} ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by ${type} ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by ${req.query.type || 'city'}: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by ${req.query.type || 'city'}.`,
       error
     );
   }
