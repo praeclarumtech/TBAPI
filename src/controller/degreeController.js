@@ -4,7 +4,7 @@ import {
     getAllDegree,
     getDegreeById,
     updateDegree,
-    deleteDegreeById,
+    deleteManyDegrees,
 } from '../services/degreeService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
@@ -168,18 +168,25 @@ export const updateDegreebyId = async (req, res) => {
 
 export const deleteDegree = async (req, res) => {
     try {
-        const { degreeId } = req.params;
-        const deletedDegree = await deleteDegreeById(degreeId, {
-            isDeleted: true,
-        });
+        const { ids } = req.body;
 
-        if (!deletedDegree) {
-            logger.warn(`Qualification is ${Message.NOT_FOUND}`)
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
+            return HandleResponse(
+                res,
+                false,
+                StatusCodes.BAD_REQUEST,
+                `ObjectId is ${Message.NOT_FOUND}`
+            );
+        }
+        const deletedDegree = await deleteManyDegrees(ids);
+        if (deletedDegree.deletedCount === 0) {
+            logger.warn(`Qualification is ${Message.NOT_FOUND}`);
             return HandleResponse(
                 res,
                 false,
                 StatusCodes.NOT_FOUND,
-                `Qualification is ${Message.NOT_FOUND}`
+                `Qualification is found from given id's`
             );
         }
         logger.info(`Qualification is ${Message.DELETED_SUCCESSFULLY}`);

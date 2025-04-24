@@ -225,31 +225,39 @@ export const importSkillsCsv = async (req, res) => {
         })
         .on('end', async () => {
           try {
-            const existingSkills = await Skills.find({
-              skills: { $in: results.map(skill => skill.skills.toLowerCase()) }
-            }).lean();
+            const skillRegexes = results.map(skill => ({
+              skills: { $regex: `^${skill.skills.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' }
+            }));
+            const existingSkills = await Skills.find({ $or: skillRegexes }).lean();
 
             const existingSkillNames = existingSkills.map(skill => skill.skills.toLowerCase());
 
             const newSkills = results.filter(skill =>
               !existingSkillNames.includes(skill.skills.toLowerCase())
             );
-
             const duplicateSkills = results.filter(skill =>
               existingSkillNames.includes(skill.skills.toLowerCase())
             );
+            if (duplicateSkills.length) {
+              const duplicatesList = duplicateSkills.map(s => s.skills).join(', ');
+              fs.unlinkSync(req.file.path);
+              if (duplicateSkills.length > 1) {
+                return HandleResponse(res, false, StatusCodes.CONFLICT, `${duplicatesList} Are already exist.`)
+              } else {
+                return HandleResponse(res, false, StatusCodes.CONFLICT, `${duplicatesList} is already exist.`)
+              }
+            }
             if (newSkills.length) {
               await Skills.insertMany(newSkills).catch(error => {
               });
             }
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, true, StatusCodes.OK, 'CSV imported successfully', {
+            return HandleResponse(res, true, StatusCodes.OK, 'CSV imported successfully.', {
               insertedSkills: newSkills,
-              duplicateSkills
             });
           } catch (dbError) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Failed to import skills");
+            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Failed to import skills.");
           }
         })
         .on('error', (error) => {

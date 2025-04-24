@@ -10,6 +10,6 @@ router.post('/addDegree', authorization, validator.body(degreeValidation), addDe
 router.get('/viewDegrees', authorization, getDegrees);
 router.get('/viewById/:degreeId', authorization, getSingleDegree);
 router.put('/update/:degreeId', authorization, validator.body(degreeValidation), updateDegreebyId);
-router.delete('/delete/:degreeId', authorization, deleteDegree);
+router.delete('/delete/deleteManyDegree', authorization, deleteDegree);
 
 export default router;
