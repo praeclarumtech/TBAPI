@@ -21,6 +21,6 @@ export const updateDegree = async (id, updateData) => {
     return Degree.updateOne({ _id: id }, updateData);
 };
 
-export const deleteDegreeById = async (id) => {
-    return Degree.updateOne({ _id: id }, { isDeleted: true });
+export const deleteManyDegrees = async (ids) => {
+    return await Degree.deleteMany({ _id: { $in: ids } });
 };
