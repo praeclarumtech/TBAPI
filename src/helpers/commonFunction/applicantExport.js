@@ -15,7 +15,7 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'gender', label: 'Gender', value: row => row.gender || '' },
     { key: 'dateOfBirth', label: 'Date of Birth', value: row => row.dateOfBirth ? new Date(row.dateOfBirth).toISOString().split('T')[0] : '' },
     { key: 'qualification', label: 'Qualification', value: row => row.qualification || '' },
-    { key: 'specialization', label: 'Specialization', value: row => row.specialization || 'Not Provided' },
+    { key: 'specialization', label: 'Specialization', value: row => row.specialization || '' },
     { key: 'passingYear', label: 'Passing Year', value: row => row.passingYear || '' },
     { key: 'currentPincode', label: 'Current Pincode', value: row => row.currentPincode || '' },
     { key: 'currentCity', label: 'Current City', value: row => row.currentCity || '' },
@@ -52,10 +52,10 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'maritalStatus', label: 'Marital Status', value: row => row.maritalStatus || ' ' },
     { key: 'lastFollowUpDate', label: 'Last Follow-Up Date', value: row => row.lastFollowUpDate ? new Date(row.lastFollowUpDate).toISOString().split('T')[0] : '' },
     { key: 'anyHandOnOffers', label: 'Any Hands-On Offers', value: row => (row.anyHandOnOffers ? 'Yes' : 'No') },
-    { key: 'linkedinUrl', label: 'LinkedIn URL', value: row => row.linkedinUrl || 'Not Provided' },
-    { key: 'clientCvUrl', label: 'Client CV URL', value: row => row.clientCvUrl || 'Not Provided' },
-    { key: 'clientFeedback', label: 'Client Feedback', value: row => row.clientFeedback || 'Not Provided' },
-    { key: 'meta', label: 'Meta', value: row => row.meta || 'Not Provided' },
+    { key: 'linkedinUrl', label: 'LinkedIn URL', value: row => row.linkedinUrl || '' },
+    { key: 'clientCvUrl', label: 'Client CV URL', value: row => row.clientCvUrl || '' },
+    { key: 'clientFeedback', label: 'Client Feedback', value: row => row.clientFeedback || '' },
+    { key: 'meta', label: 'Meta', value: row => row.meta || '' },
   ];
   const exportKeys = (ids || selectedFields)
     ? selectedFields?.length
@@ -140,7 +140,7 @@ const validateAndFillFields = async (data, userRole) => {
         data['WhatsApp Number']?.trim() || data['Phone Number']?.trim() || null,
     },
     email: data['Email']?.trim() || null,
-    gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
+    gender: genderEnum[data['Gender']?.toUpperCase()] || null,
     dateOfBirth: parseDate(data['Date of Birth']),
     currentAddress: data['Current Address'] || '',
     state: finalState,
@@ -215,7 +215,7 @@ const validateAndFillFields = async (data, userRole) => {
     practicalFeedback: data['Practical Feedback'] || '',
     portfolioUrl: data['Portfolio URL'] || '',
     referral: data['Referral'] || '',
-    resumeUrl: data['Resume URL'] || null,
+    resumeUrl: data['Resume URL'] || '',
     preferredLocations: data['Preferred Locations']?.trim() || '',
     maritalStatus:
       applicantEnum[data['Marital Status']?.toUpperCase()?.trim()] ||
@@ -247,21 +247,14 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     firstName: data['First Name']?.trim(),
     email: data['Email']?.trim(),
     phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
-    gender: data['Gender']?.trim()?.toLowerCase(),
     appliedRole: data['Applied Role']?.trim(),
     currentCompanyDesignation: data['Current Company Designation']?.trim(),
     resumeUrl: data['Resume URL']?.trim(),
   };
+
   const missingFields = Object.entries(requiredFields)
     .filter(([key, value]) => {
-      if (key === 'currentCompanyDesignation' || key === 'appliedRole') {
-        if (!value || (Array.isArray(value) && value.length === 0)) {
-          requiredFields.currentCompanyDesignation = applicantEnum.SOFTWARE_ENGINEER;
-          requiredFields.appliedRole = requiredFields.currentCompanyDesignation;
-          return false;
-        }
-        return false; // Don't check it for missing fields
-      }
+      if (key === 'currentCompanyDesignation' || key === 'appliedRole') return false;
       return !value || (Array.isArray(value) && value.length === 0);
     })
     .map(([key]) => key);
@@ -270,34 +263,67 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     errorMessages.push(`${missingFields.join(', ')} field(s) are required at line ${lineNumber}.`);
   }
 
-  const findEnumValue = (fieldValue, fieldName) => {
-    if (!fieldValue) return undefined;
+  const fuzzyMatchEnum = (inputValue, fieldName) => {
+    if (!inputValue) return '';
 
+    console.log("inputValue:", inputValue);
+    console.log("fieldName:", fieldName);
 
-    const enumValue = Object.values(applicantEnum).find(
-      (val) =>
-        val.replace(/\s+/g, '').toUpperCase() ===
-        fieldValue.replace(/\s+/g, '').toUpperCase()
-    );
+    //Clean the input
+    const cleanedInput = inputValue.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    const enumValues = Object.values(applicantEnum);
+    console.log("cleanedInput:", cleanedInput);
 
+    const normalizedMap = enumValues.reduce((acc, val) => {
+      const key = val.replace(/[^a-zA-Z]/g, '').toLowerCase();
+      acc[key] = val; // Store original
+      return acc;
+    }, {});
+    console.log("normalizedMap:", normalizedMap);
 
+    //Exact match after cleaning:-frontenddeveloper" matches "Frontend Developer")
+    if (normalizedMap[cleanedInput]) {
+      return normalizedMap[cleanedInput];
+    }
+    const fuzzyPattern = cleanedInput
+      .split('')
+      .map((char, i) => {
+        if ('aeiou'.includes(char)) {
+          return `${char}?`;
+        }
+        return char;
+      })
+      .join('[a-z]*');
 
-    if (!enumValue) {
-      const closestMatch = Object.values(applicantEnum).find((val) =>
-        val.toLowerCase().startsWith(fieldValue.toLowerCase().slice(0, 5))
-      );
+    const fuzzyRegex = new RegExp(`^${fuzzyPattern}[a-z]*$`, 'i');
+    console.log("fuzzyPattern:", fuzzyPattern);
 
-      errorMessages.push(
-        `Invalid ${fieldName} "${fieldValue}" at line ${lineNumber}. Did you mean: "${closestMatch || "N/A"}"?`
-      );
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const [normalized, original] of Object.entries(normalizedMap)) {
+      if (fuzzyRegex.test(normalized)) {
+        let score = 0;
+        for (let i = 0; i < Math.min(cleanedInput.length, normalized.length); i++) {
+          if (cleanedInput[i] === normalized[i]) score++;
+          else break;
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = original;
+        }
+      }
     }
 
-    return enumValue;
+    if (bestMatch) {
+      console.log("matched:", bestMatch);
+      return bestMatch;
+    }
+    errorMessages.push(`Invalid ${fieldName} "${inputValue}" please check.`);
+    return '';
   };
-
-  const appliedRole = findEnumValue(data['Applied Role'], 'appliedRole');
-  const currentCompanyDesignation = findEnumValue(data['Current Company Designation'], 'currentCompanyDesignation');
-
+  const appliedRole = fuzzyMatchEnum(data['Applied Role'], 'appliedRole');
+  const currentCompanyDesignation = fuzzyMatchEnum(data['Current Company Designation'], 'currentCompanyDesignation');
 
   if (errorMessages.length > 0) {
     throw {
@@ -307,19 +333,21 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
   }
 
   const validatedData = await validateAndFillFields(data, userRole);
-  validatedData.currentCompanyDesignation = validatedData.currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER;
-  validatedData.appliedRole = validatedData.appliedRole || validatedData.currentCompanyDesignation
+
+  validatedData.currentCompanyDesignation = currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER;
+  validatedData.appliedRole = appliedRole || validatedData.currentCompanyDesignation;
 
   return {
     valid: true,
     data: {
       ...validatedData,
-      appliedRole: validatedData.appliedRole || validatedData.currentCompanyDesignation,
-      currentCompanyDesignation: validatedData.currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER,
+      appliedRole: validatedData.appliedRole,
+      currentCompanyDesignation: validatedData.currentCompanyDesignation,
     },
     number: lineNumber,
   };
 };
+
 
 
 
