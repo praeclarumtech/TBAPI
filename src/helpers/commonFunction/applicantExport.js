@@ -99,6 +99,7 @@ const parseDate = (dateString) => {
   }
 };
 
+
 const normalizeLocationField = async (collection, fieldName, inputValue) => {
   if (!inputValue) return '';
 
@@ -123,11 +124,37 @@ const normalizeLocationField = async (collection, fieldName, inputValue) => {
   }
   return finalValue;
 };
+const normalizeAppliedSkills = async (collection, fieldName, appliedSkills) => {
+  // Ensure appliedSkills is an array, if it's a string, split and trim it
+  const skillArray = Array.isArray(appliedSkills)
+    ? appliedSkills
+    : appliedSkills.split(',').map(s => s.trim());
+
+  if (!skillArray.length) return [];
+
+  const values = (await collection.find({}, { [fieldName]: 1, _id: 0 }))
+    .map(item => item[fieldName]);
+
+  const normalizedMap = Object.fromEntries(
+    values.map(val => [val.replace(/\s+/g, '').toLowerCase(), val])
+  );
+
+  return skillArray.map(skill => {
+    const cleaned = skill.replace(/\s+/g, '').toLowerCase();
+    return normalizedMap[cleaned] || values.find(val =>
+      new RegExp(cleaned.split('').join('.*'), 'i').test(val.replace(/\s+/g, '').toLowerCase())
+    ) || skill.trim();
+  });
+};
+
+
+
 
 const validateAndFillFields = async (data, userRole) => {
   const finalState = await normalizeLocationField(states, 'state_name', data['State']);
   const finalCity = await normalizeLocationField(city, 'city_name', data['Current City']);
-  const finalSkills = await normalizeLocationField(Skills, 'skills', data['Applied Skills']);
+  const finalSkills = await normalizeAppliedSkills(Skills, 'skills', data['Applied Skills']);
+  console.log("validateAndFillFields>>>>>>>>>>>>>>>>>>>>>", data)
   return {
     name: {
       firstName: data['First Name']?.trim() || null,
@@ -158,6 +185,7 @@ const validateAndFillFields = async (data, userRole) => {
     collegeName: data['College Name'] || '',
     cgpa: !isNaN(Number(data['CGPA'])) ? Number(data['CGPA']) : null,
     appliedSkills: finalSkills,
+    // appliedSkills: data['Applied Skills']?.split(',').map(skill => skill.trim()).filter(Boolean) || [],
     totalExperience: !isNaN(Number(data['Total Experience (years)']))
       ? Number(data['Total Experience (years)'])
       : 0,
@@ -238,7 +266,7 @@ const validateAndFillFields = async (data, userRole) => {
 export const processCsvRow = async (data, lineNumber, userRole) => {
   lineNumber += 1;
   const errorMessages = [];
-
+  console.log('data>>>>>>>>>>>>>>>', data)
   if (!data || typeof data !== 'object') {
     errorMessages.push('Invalid data provided to processCsvRow');
   }
@@ -336,7 +364,7 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
 
   validatedData.currentCompanyDesignation = currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER;
   validatedData.appliedRole = appliedRole || validatedData.currentCompanyDesignation;
-
+  console.log('validatedData>>>>>>>>', data)
   return {
     valid: true,
     data: {
