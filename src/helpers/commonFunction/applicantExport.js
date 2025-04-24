@@ -140,7 +140,7 @@ const validateAndFillFields = async (data, userRole) => {
         data['WhatsApp Number']?.trim() || data['Phone Number']?.trim() || null,
     },
     email: data['Email']?.trim() || null,
-    gender: genderEnum[data['Gender']?.toUpperCase()] || genderEnum.OTHER,
+    gender: genderEnum[data['Gender']?.toUpperCase()] || null,
     dateOfBirth: parseDate(data['Date of Birth']),
     currentAddress: data['Current Address'] || '',
     state: finalState,
@@ -266,28 +266,62 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
   const fuzzyMatchEnum = (inputValue, fieldName) => {
     if (!inputValue) return '';
 
-    const cleanedInput = inputValue.replace(/\s+/g, '').toLowerCase();
+    console.log("inputValue:", inputValue);
+    console.log("fieldName:", fieldName);
+
+    //Clean the input
+    const cleanedInput = inputValue.replace(/[^a-zA-Z]/g, '').toLowerCase();
     const enumValues = Object.values(applicantEnum);
+    console.log("cleanedInput:", cleanedInput);
 
     const normalizedMap = enumValues.reduce((acc, val) => {
-      const key = val.replace(/\s+/g, '').toLowerCase();
-      acc[key] = val;
+      const key = val.replace(/[^a-zA-Z]/g, '').toLowerCase();
+      acc[key] = val; // Store original
       return acc;
     }, {});
+    console.log("normalizedMap:", normalizedMap);
 
-    if (normalizedMap[cleanedInput]) return normalizedMap[cleanedInput];
+    //Exact match after cleaning:-frontenddeveloper" matches "Frontend Developer")
+    if (normalizedMap[cleanedInput]) {
+      return normalizedMap[cleanedInput];
+    }
+    const fuzzyPattern = cleanedInput
+      .split('')
+      .map((char, i) => {
+        if ('aeiou'.includes(char)) {
+          return `${char}?`;
+        }
+        return char;
+      })
+      .join('[a-z]*');
 
-    const fuzzyRegex = new RegExp(cleanedInput.split('').join('.*'), 'i');
-    const matched = enumValues.find(val =>
-      fuzzyRegex.test(val.replace(/\s+/g, '').toLowerCase())
-    );
+    const fuzzyRegex = new RegExp(`^${fuzzyPattern}[a-z]*$`, 'i');
+    console.log("fuzzyPattern:", fuzzyPattern);
 
-    if (matched) return matched;
+    let bestMatch = null;
+    let bestScore = 0;
 
+    for (const [normalized, original] of Object.entries(normalizedMap)) {
+      if (fuzzyRegex.test(normalized)) {
+        let score = 0;
+        for (let i = 0; i < Math.min(cleanedInput.length, normalized.length); i++) {
+          if (cleanedInput[i] === normalized[i]) score++;
+          else break;
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = original;
+        }
+      }
+    }
+
+    if (bestMatch) {
+      console.log("matched:", bestMatch);
+      return bestMatch;
+    }
     errorMessages.push(`Invalid ${fieldName} "${inputValue}" please check.`);
-    return inputValue.trim();
+    return '';
   };
-
   const appliedRole = fuzzyMatchEnum(data['Applied Role'], 'appliedRole');
   const currentCompanyDesignation = fuzzyMatchEnum(data['Current Company Designation'], 'currentCompanyDesignation');
 
