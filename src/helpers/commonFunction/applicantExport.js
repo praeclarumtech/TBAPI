@@ -125,7 +125,6 @@ const normalizeLocationField = async (collection, fieldName, inputValue) => {
   return finalValue;
 };
 const normalizeAppliedSkills = async (collection, fieldName, appliedSkills) => {
-  // Ensure appliedSkills is an array, if it's a string, split and trim it
   const skillArray = Array.isArray(appliedSkills)
     ? appliedSkills
     : appliedSkills.split(',').map(s => s.trim());
@@ -146,15 +145,10 @@ const normalizeAppliedSkills = async (collection, fieldName, appliedSkills) => {
     ) || skill.trim();
   });
 };
-
-
-
-
 const validateAndFillFields = async (data, userRole) => {
   const finalState = await normalizeLocationField(states, 'state_name', data['State']);
   const finalCity = await normalizeLocationField(city, 'city_name', data['Current City']);
   const finalSkills = await normalizeAppliedSkills(Skills, 'skills', data['Applied Skills']);
-  console.log("validateAndFillFields>>>>>>>>>>>>>>>>>>>>>", data)
   return {
     name: {
       firstName: data['First Name']?.trim() || null,
@@ -167,7 +161,10 @@ const validateAndFillFields = async (data, userRole) => {
         data['WhatsApp Number']?.trim() || data['Phone Number']?.trim() || null,
     },
     email: data['Email']?.trim() || null,
-    gender: genderEnum[data['Gender']?.toUpperCase()] || null,
+    // gender: genderEnum[data['Gender']?.toUpperCase()] || null,
+    ...(genderEnum[data['Gender']?.toUpperCase()] && {
+      gender: genderEnum[data['Gender']?.toUpperCase()],
+    }),
     dateOfBirth: parseDate(data['Date of Birth']),
     currentAddress: data['Current Address'] || '',
     state: finalState,
@@ -261,12 +258,11 @@ const validateAndFillFields = async (data, userRole) => {
     // createdBy: userRole,
     // updatedBy: userRole,
     addedBy: applicantEnum.CSV,
-  };
+  }
 };
 export const processCsvRow = async (data, lineNumber, userRole) => {
   lineNumber += 1;
   const errorMessages = [];
-  console.log('data>>>>>>>>>>>>>>>', data)
   if (!data || typeof data !== 'object') {
     errorMessages.push('Invalid data provided to processCsvRow');
   }
@@ -300,14 +296,14 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     //Clean the input
     const cleanedInput = inputValue.replace(/[^a-zA-Z]/g, '').toLowerCase();
     const enumValues = Object.values(applicantEnum);
-    console.log("cleanedInput:", cleanedInput);
+
 
     const normalizedMap = enumValues.reduce((acc, val) => {
       const key = val.replace(/[^a-zA-Z]/g, '').toLowerCase();
       acc[key] = val; // Store original
       return acc;
     }, {});
-    console.log("normalizedMap:", normalizedMap);
+
 
     //Exact match after cleaning:-frontenddeveloper" matches "Frontend Developer")
     if (normalizedMap[cleanedInput]) {
@@ -324,7 +320,7 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
       .join('[a-z]*');
 
     const fuzzyRegex = new RegExp(`^${fuzzyPattern}[a-z]*$`, 'i');
-    console.log("fuzzyPattern:", fuzzyPattern);
+
 
     let bestMatch = null;
     let bestScore = 0;
@@ -344,7 +340,6 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     }
 
     if (bestMatch) {
-      console.log("matched:", bestMatch);
       return bestMatch;
     }
     errorMessages.push(`Invalid ${fieldName} "${inputValue}" please check.`);
@@ -364,7 +359,6 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
 
   validatedData.currentCompanyDesignation = currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER;
   validatedData.appliedRole = appliedRole || validatedData.currentCompanyDesignation;
-  console.log('validatedData>>>>>>>>', data)
   return {
     valid: true,
     data: {
