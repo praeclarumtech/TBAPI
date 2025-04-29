@@ -5,6 +5,7 @@ import {
     getApplicationsByDate,
     applicantSkillStatistics,
     applicantCountByCityAndState,
+    applicantCountByAddedBy
 } from '../../controller/reportsController.js';
 import { authorization } from '../../helpers/userMiddleware.js';
 
@@ -14,7 +15,8 @@ router.get('/applicationOnProcessCount', authorization, applicationOnProcessCoun
 router.get('/statusByPercentage', authorization, statusByPercentage);
 router.post('/applicantSkillStatistics', authorization, applicantSkillStatistics);
 router.get('/applicantCountByCityAndState', applicantCountByCityAndState);
+router.get('/applicantCountByAddedBy', applicantCountByAddedBy);
 
-router.get("/getApplicationsByDate", authorization, getApplicationsByDate);
+router.get('/getApplicationsByDate', authorization, getApplicationsByDate);
 
 export default router;
