@@ -20,7 +20,7 @@ const ApplicantSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     gender: {
       type: String,
-      enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER],
+      enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER, ''],
       required: false,
     },
     dateOfBirth: { type: Date, required: false },
