@@ -1,6 +1,7 @@
 import Applicant from '../models/applicantModel.js';
 import { applicantEnum } from '../utils/enum.js';
 import { getDateRange } from '../helpers/commonFunction/moment.js';
+import moment from 'moment';
 import Skills from '../models/skillsModel.js';
 import city from '../models/citymodel.js';
 import states from '../models/stateModel.js';
@@ -231,3 +232,54 @@ export const getApplicantCountCityAndState = async (type = 'city') => {
     throw error;
   }
 };
+
+
+export const getApplicantCountByAddedBy = async (startDate, endDate) => {
+  try {
+    const query = { isDeleted: false };
+
+    if (startDate && endDate) {
+
+      const hasTime = startDate.includes(':') && endDate.includes(':');
+
+      const start = hasTime
+        ? moment(startDate, 'DD-MM-YYYY HH:mm').startOf('minute').toDate()
+        : moment(startDate, 'DD-MM-YYYY').startOf('day').toDate();
+
+      const end = hasTime
+        ? moment(endDate, 'DD-MM-YYYY HH:mm').endOf('minute').toDate()
+        : moment(endDate, 'DD-MM-YYYY').endOf('day').toDate();
+   
+      query.createdAt = { $gte: start, $lte: end };
+    }
+
+    const result = await Applicant.aggregate([
+      {
+        $match: {
+          ...query,
+          addedBy: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: '$addedBy',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const formatted = result.reduce((acc, curr) => {
+      if (curr._id) {
+        acc[curr._id] = curr.count;
+      }
+      return acc;
+    }, {});
+
+    return formatted;
+  } catch (error) {
+    logger.error(`Failed to fetch applicant count by addedBy: ${error.message}`);
+    throw error;
+  }
+};
+
+

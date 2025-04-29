@@ -6,7 +6,8 @@ import { StatusCodes } from 'http-status-codes';
 import {
   getReport,
   getApplicantSkillCounts,
-  getApplicantCountCityAndState
+  getApplicantCountCityAndState,
+  getApplicantCountByAddedBy
 } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
@@ -191,3 +192,32 @@ export const applicantCountByCityAndState = async (req, res) => {
     );
   }
 };
+
+export const applicantCountByAddedBy = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const result = await getApplicantCountByAddedBy(startDate, endDate);
+
+    logger.info(`Applicant count by addedBy ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by addedBy ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by addedBy: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by addedBy`,
+      error
+    );
+  }
+};
+
