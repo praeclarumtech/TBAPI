@@ -14,8 +14,8 @@ const router = express.Router();
 router.get('/applicationOnProcessCount', authorization, applicationOnProcessCount);
 router.get('/statusByPercentage', authorization, statusByPercentage);
 router.post('/applicantSkillStatistics', authorization, applicantSkillStatistics);
-router.get('/applicantCountByCityAndState', applicantCountByCityAndState);
-router.get('/applicantCountByAddedBy', applicantCountByAddedBy);
+router.get('/applicantCountByCityAndState',authorization, applicantCountByCityAndState);
+router.get('/applicantCountByAddedBy',authorization, applicantCountByAddedBy);
 
 router.get('/getApplicationsByDate', authorization, getApplicationsByDate);
 
