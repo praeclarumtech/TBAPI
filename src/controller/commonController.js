@@ -36,7 +36,7 @@ export const viewCountry = async (req, res) => {
 
       const states = await getAllstates(query);
   
-      logger.info(Message.FETCHING_STATES);
+      logger.info(`All states are ${Message.FETCH_SUCCESSFULLY}`);
       return HandleResponse(res, true, StatusCodes.OK, undefined, states);
     } catch (error) {
       logger.error(`Error fetching states: ${error.message}`, {
@@ -60,7 +60,7 @@ export const viewCountry = async (req, res) => {
 
       const City = await getAllCity(query);
   
-      logger.info(Message.FETCHING_CITIES);
+      logger.info(`All cities are ${Message.FETCH_SUCCESSFULLY}`);
       return HandleResponse(res, true, StatusCodes.OK, undefined, City);
     } catch (error) {
       logger.error(`Error fetching cities: ${error.message}`, {
