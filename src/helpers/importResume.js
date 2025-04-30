@@ -66,7 +66,7 @@ export const extractTextFromDoc = async (filePath) => {
 export const parseResumeText = (text) => {
   const emailRegex =
     /\b[a-zA-Z0-9._%+-]+(?:\s*@\s*|\s+at\s+)[a-zA-Z0-9.-]+\s*\.\s*[a-zA-Z]{2,}\b/g;
-  const phoneRegex = /(\+?\s?91[-\s()]*)?\d{3,5}[-\s()]*\d{3,5}[-\s]*\d{3,5}/g;
+  const phoneRegex = /(?:\+?\s*91[\s-]*)?(?:\(\s*91\s*\)[\s-]*)?(?:\(?\d{3,5}\)?[\s-]*){2,3}\d{2,4}/g;
 
   const nameTagRegex =
     /(?:Name|Full Name)\s*[:\-]\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?(?:\s[A-Z][a-z]+)?)/i;
@@ -502,6 +502,10 @@ export const parseResumeText = (text) => {
       finalGender = 'female';
     }
   }
+
+  console.log("text>>",text)
+  console.log("phone>>>>",phone)
+  console.log("email>>>>>",email)
 
   return {
     name: {
