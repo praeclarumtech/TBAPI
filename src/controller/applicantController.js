@@ -82,13 +82,17 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       const parsedData = parseResumeText(resumeText);
       const { email, phone } = parsedData;
 
-      const existingApplicant = await ExportsApplicants.findOne({
+      const existingExportsApplicant  = await ExportsApplicants.findOne({
         $or: [{ email }, { phone }],
       });
 
-      if (existingApplicant) {
+      const existingMainApplicant = await Applicant.findOne({
+        $or: [{ email }, { phone }],
+      });
+
+      if (existingExportsApplicant  || existingMainApplicant) {
         logger.warn(
-          `Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`
+          `Applicant with email (${email}) or phone (${phone?.phoneNumber}) already exists in ${existingExportsApplicant ? 'ExportsApplicants' : 'Applicants'}`
         );
         return HandleResponse(
           res,
