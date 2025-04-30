@@ -503,10 +503,6 @@ export const parseResumeText = (text) => {
     }
   }
 
-  console.log("text>>",text)
-  console.log("phone>>>>",phone)
-  console.log("email>>>>>",email)
-
   return {
     name: {
       firstName,
