@@ -3,6 +3,11 @@ export const Message = {
   MONGODB_CONNECTED: 'MongoDB Connected.',
   MONGODB_CONNECTION_ERROR: 'MongoDB Connection Error.',
 
+  FILE_TOO_LARGE: 'File size exceeds maximum allowed limit',
+  TOO_MANY_FILES: 'Maximum number of files exceeded',
+  UPLOAD_FAILED: 'File upload failed',
+  INVALID_FILENAME: 'Filename contains invalid characters',
+
   // error
   ALREADY_EXIST: 'already exist.',
   NOT_FOUND: 'not found.',
@@ -38,3 +43,4 @@ export const Message = {
   DONWLOADED: 'File downloaded successfully.',
   IMPORTED: 'File imported successfully.'
 };
+

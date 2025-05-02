@@ -290,9 +290,6 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
   const fuzzyMatchEnum = (inputValue, fieldName) => {
     if (!inputValue) return '';
 
-    console.log("inputValue:", inputValue);
-    console.log("fieldName:", fieldName);
-
     //Clean the input
     const cleanedInput = inputValue.replace(/[^a-zA-Z]/g, '').toLowerCase();
     const enumValues = Object.values(applicantEnum);

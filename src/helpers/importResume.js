@@ -425,7 +425,7 @@ export const parseResumeText = (text) => {
 
   if (skillsMatch) {
     skills = skillsMatch[2]
-      .replace(/[●►⇨❖]/g, '')
+      .replace(/[●►⇨❖•✓]/g, '')
       .split(/,|\n|•/)
       .map((skill) => skill.trim())
       .filter((skill) => skill.length > 1);

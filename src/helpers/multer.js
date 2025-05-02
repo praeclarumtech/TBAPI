@@ -31,33 +31,6 @@ export const upload = multer({
   },
 }).single('profilePicture');
 
-const resumeUploadDir = 'src/uploads/resumes';
-if (!fs.existsSync(resumeUploadDir)) {
-  fs.mkdirSync(resumeUploadDir, { recursive: true });
-}
-
-const resumeStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, resumeUploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-export const uploadResume = multer({
-  storage: resumeStorage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error(Message.INVALID_FILE_TYPE));
-    }
-  },
-}).single('resume');
-
 export const uploadCv = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -109,3 +82,89 @@ export const uploadAttachments = multer({
     }
   },
 }).array('attachments', 5);
+
+const UPLOAD_CONFIG = {
+  RESUME_UPLOAD_DIR: 'src/uploads/resumes',
+  MAX_FILE_SIZE: 800 * 1024 * 1024, // 800MB
+  MAX_FILES: 100,
+  ALLOWED_MIME_TYPES: [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ],
+  FILENAME_PREFIX: 'resume'
+};
+
+const ensureUploadDirExists = () => {
+  try {
+    if (!fs.existsSync(UPLOAD_CONFIG.RESUME_UPLOAD_DIR)) {
+      fs.mkdirSync(UPLOAD_CONFIG.RESUME_UPLOAD_DIR, { recursive: true });
+      logger.info(`Created upload directory: ${UPLOAD_CONFIG.RESUME_UPLOAD_DIR}`);
+    }
+  } catch (error) {
+    logger.error(`Failed to create upload directory: ${error.message}`);
+    throw new Error('Failed to initialize upload directory');
+  }
+};
+
+const resumeStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    ensureUploadDirExists();
+    cb(null, UPLOAD_CONFIG.RESUME_UPLOAD_DIR);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}_${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname);
+    const filename = `${UPLOAD_CONFIG.FILENAME_PREFIX}${uniqueSuffix}${ext}`;
+    cb(null, filename);
+  }
+});
+
+const resumeFileFilter = (req, file, cb) => {
+  try {
+    if (!UPLOAD_CONFIG.ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      logger.warn(`Rejected file type: ${file.mimetype} for ${file.originalname}`);
+      return cb(new Error(Message.INVALID_FILE_TYPE), false);
+    }
+    cb(null, true);
+  } catch (error) {
+    logger.error(`File filter error: ${error.message}`);
+    cb(error, false);
+  }
+};
+
+export const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      logger.warn(`File size limit exceeded: ${err.message}`);
+      return res.status(413).json({
+        success: false,
+        message: Message.FILE_TOO_LARGE
+      });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      logger.warn(`File count limit exceeded: ${err.message}`);
+      return res.status(413).json({
+        success: false,
+        message: Message.TOO_MANY_FILES
+      });
+    }
+  } else if (err) {
+    logger.error(`Upload error: ${err.message}`);
+    return res.status(400).json({
+      success: false,
+      message: err.message || Message.UPLOAD_FAILED
+    });
+  }
+  next();
+};
+
+export const uploadResume = multer({
+  storage: resumeStorage,
+  limits: {
+    fileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
+    files: UPLOAD_CONFIG.MAX_FILES
+  },
+  fileFilter: resumeFileFilter
+}).array('resume', UPLOAD_CONFIG.MAX_FILES); 
+
