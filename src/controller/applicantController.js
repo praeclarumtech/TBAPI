@@ -48,104 +48,245 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
     if (err) {
       logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, err.message);
-    }
-
-    try {
-      const { file } = req;
-      if (!file) {
-        logger.warn(`Resume file is ${Message.NOT_FOUND}`);
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          `Resume file is ${Message.NOT_FOUND}`
-        );
-      }
-
-      let resumeText = '';
-      const filePath = file.path;
-
-      if (file.mimetype === 'application/pdf') {
-        resumeText = await extractTextFromPDF(filePath);
-      } else if (
-        file.mimetype ===
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ) {
-        resumeText = await extractTextFromDocx(filePath);
-      } else if (file.mimetype === 'application/msword') {
-        resumeText = await extractTextFromDoc(filePath);
-      } else {
-        throw new Error('Unsupported file type');
-      }
-
-      const parsedData = parseResumeText(resumeText);
-      const { email, phone } = parsedData;
-
-      const existingExportsApplicant  = await ExportsApplicants.findOne({
-        $or: [{ email }, { phone }],
-      });
-
-      const existingMainApplicant = await Applicant.findOne({
-        $or: [{ email }, { phone }],
-      });
-
-      if (existingExportsApplicant  || existingMainApplicant) {
-        logger.warn(
-          `Applicant with email (${email}) or phone (${phone?.phoneNumber}) already exists in ${existingExportsApplicant ? 'ExportsApplicants' : 'Applicants'}`
-        );
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.CONFLICT,
-          `Applicant with email (${email}) or phone (${phone.phoneNumber}) already exists`
-        );
-      }
-
-      const applicantData = {
-        ...parsedData,
-        addedBy: applicantEnum.RESUME,
-        resumeUrl: `/uploads/resumes/${file.filename}`,
-      };
-
-      const applicant = await createApplicantByResume(applicantData);
-
-      logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
       return HandleResponse(
         res,
-        true,
-        StatusCodes.CREATED,
-        `Applicant ${Message.ADDED_SUCCESSFULLY}`,
-        applicant
+        false,
+        StatusCodes.BAD_REQUEST,
+        err.message.includes('File type')
+          ? Message.INVALID_FILE_TYPE
+          : err.message
+      );
+    }
+
+    if (!req.files || req.files.length === 0) {
+      logger.warn('No files Uploaded');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'No files Uploaded'
+      );
+    }
+
+    const results = {
+      totalFiles: req.files.length,
+      processed: 0,
+      inserted: [],
+      skipped: [],
+      errors: [],
+    };
+
+    try {
+      await Promise.all(
+        req.files.map(async (file) => {
+          try {
+            const allowedTypes = [
+              'application/pdf',
+              'application/msword',
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ];
+
+            if (!allowedTypes.includes(file.mimetype)) {
+              throw new Error(Message.INVALID_FILE_TYPE);
+            }
+
+            const processResult = await processSingleResumeFile(file);
+
+            if (processResult.status === 'inserted') {
+              results.inserted.push(processResult.data);
+            } else {
+              results.skipped.push(processResult.data);
+            }
+
+            results.processed++;
+          } catch (error) {
+            results.errors.push({
+              file: file.originalname,
+              error: error.message,
+              stack:
+                process.env.NODE_ENV === 'development'
+                  ? error.stack
+                  : undefined,
+            });
+            logger.error(
+              `Error processing ${file.originalname}: ${error.message}`
+            );
+          } finally {
+            // Cleanup
+            try {
+              if (fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+              }
+            } catch (cleanupError) {
+              logger.error(
+                `File cleanup failed for ${file.path}: ${cleanupError.message}`
+              );
+            }
+          }
+        })
+      );
+
+      const allSkipped =
+        results.inserted.length === 0 && results.skipped.length > 0;
+      const hasErrors = results.errors.length > 0;
+
+      let responseMessage = '';
+      if (results.inserted.length > 0) {
+        responseMessage = `${results.inserted.length} applicant${
+          results.inserted.length > 1 ? 's' : ''
+        } added successfully. `;
+      }
+
+      if (results.skipped.length > 0 || results.errors.length > 0) {
+        const skippedAndErrorCount =
+          results.skipped.length + results.errors.length;
+        responseMessage += `${skippedAndErrorCount} applicant${
+          skippedAndErrorCount > 1 ? 's' : ''
+        } skipped due to duplicate record or resume not parsing `;
+
+        const skippedFiles = results.skipped.map((item) => item.file);
+        const errorFiles = results.errors.map((item) => item.file);
+        const allProblemFiles = [...skippedFiles, ...errorFiles];
+
+        if (allProblemFiles.length > 0) {
+          responseMessage += `(${allProblemFiles.join(',\n ')}.)`;
+        }
+      }
+
+      if (
+        results.inserted.length === 0 &&
+        results.skipped.length > 0 &&
+        results.errors.length === 0
+      ) {
+        const errorMessages = results.skipped.map(err => 
+          `${err.file}`
+        ).join(',\n');
+        responseMessage =
+          `No applicants has been inserted due to duplicate record file : (${errorMessages})`;
+      }
+
+      if (
+        results.inserted.length === 0 &&
+        results.skipped.length === 0 &&
+        results.errors.length > 0
+      ) {
+        const errorMessages = results.errors.map(err => 
+          `${err.file}`
+        ).join(',\n');
+        responseMessage =
+          `No applicants has been inserted due to could not extract email or phone from resume : ${errorMessages}`;
+      }
+
+      logger.info(`${responseMessage} ${JSON.stringify(results.errors.error)}`);
+      return HandleResponse(
+        res,
+        results.inserted.length > 0,
+        allSkipped
+          ? StatusCodes.CONFLICT
+          : hasErrors
+          ? StatusCodes.CREATED
+          : StatusCodes.CREATED,
+        responseMessage,
+        {
+          summary: {
+            totalFiles: results.totalFiles,
+            successfullyProcessed: results.processed,
+            insertedApplicants: results.inserted.length,
+            skippedApplicants: results.skipped.length,
+            erroredFiles: results.errors.length,
+          },
+          details: {
+            inserted: results.inserted,
+            skipped: results.skipped,
+            errors: results.errors,
+          },
+        }
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} add applicant: ${error}`);
-      if (error.name === 'ValidationError') {
-        const validationMessages = Object.values(error.errors).map(
-          (err) =>
-            err.message.split('Path `')[1]?.split('`')[0] + ' is required'
-        );
-        logger.error(`Validation Error: ${validationMessages.join(', ')}`);
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          validationMessages.join(', ')
-        );
-      }
+      logger.error(`Unexpected error in batch processing: ${error.message}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `${Message.FAILED_TO} add applicant:${error}`
+        'An unexpected error occurred during processing',
+        process.env.NODE_ENV === 'development'
+          ? { error: error.message }
+          : undefined
       );
-    } finally {
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
     }
   });
 };
+
+async function processSingleResumeFile(file) {
+  let resumeText;
+  const filePath = file.path;
+
+  switch (file.mimetype) {
+    case 'application/pdf':
+      resumeText = await extractTextFromPDF(filePath);
+      break;
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+      resumeText = await extractTextFromDocx(filePath);
+      break;
+    case 'application/msword':
+      resumeText = await extractTextFromDoc(filePath);
+      break;
+    default:
+      throw new Error(Message.INVALID_FILE_TYPE);
+  }
+
+  const parsedData = parseResumeText(resumeText);
+  if (!parsedData.email) {
+    throw new Error('Could not extract email or phone from resume');
+  }
+
+  const existingRecords = await Promise.all([
+    ExportsApplicants.findOne({
+      $or: [
+        { email: parsedData.email },
+        { 'phone.phoneNumber': parsedData.phone?.phoneNumber },
+      ],
+    }),
+    Applicant.findOne({
+      $or: [
+        { email: parsedData.email },
+        { 'phone.phoneNumber': parsedData.phone?.phoneNumber },
+      ],
+    }),
+  ]);
+
+  const isDuplicate = existingRecords.some((record) => record !== null);
+  if (isDuplicate) {
+    return {
+      status: 'skipped',
+      data: {
+        file: file.originalname,
+        reason: 'Duplicate applicant',
+        email: parsedData.email,
+        phone: parsedData.phone?.phoneNumber,
+      },
+    };
+  }
+
+  const applicantData = {
+    ...parsedData,
+    addedBy: applicantEnum.RESUME,
+    resumeUrl: `/uploads/resumes/${file.filename}`,
+    originalFileName: file.originalname,
+  };
+
+  const applicant = await createApplicantByResume(applicantData);
+
+  return {
+    status: 'inserted',
+    data: {
+      file: file.originalname,
+      applicantId: applicant._id,
+      email: applicant.email,
+      phone: applicant.phone?.phoneNumber,
+    },
+  };
+}
 
 export const addApplicant = async (req, res) => {
   try {
@@ -247,8 +388,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-            ? { $in: validAddedBy }
-            : undefined;
+          ? { $in: validAddedBy }
+          : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -451,8 +592,7 @@ export const viewAllApplicant = async (req, res) => {
       `${Message.FAILED_TO} view all applicant.`
     );
   }
-}
-
+};
 
 export const viewApplicant = async (req, res) => {
   try {
@@ -912,21 +1052,23 @@ export const exportApplicantCsv = async (req, res) => {
 
       const selectedFields = fields?.length
         ? Array.from(
-          new Set([
-            ...fields,
-            'name.firstName',
-            'email',
-            'phone.phoneNumber',
-            'gender',
-            'appliedRole',
-            'currentCompanyDesignation',
-            'resumeUrl',
-          ])
-        )
+            new Set([
+              ...fields,
+              'name.firstName',
+              'email',
+              'phone.phoneNumber',
+              'gender',
+              'appliedRole',
+              'currentCompanyDesignation',
+              'resumeUrl',
+            ])
+          )
         : null;
 
       const projection = selectedFields
-        ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), { _id: 1 })
+        ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
+            _id: 1,
+          })
         : undefined;
 
       if (main) {
@@ -936,12 +1078,19 @@ export const exportApplicantCsv = async (req, res) => {
       }
 
       if (!applicants.length) {
-        return HandleResponse(res, false, 404, 'No applicants found for provided ids.');
+        return HandleResponse(
+          res,
+          false,
+          404,
+          'No applicants found for provided ids.'
+        );
       }
 
       if (!main && !fields?.length) {
         const emails = applicants.map((a) => a.email);
-        const phones = applicants.map((a) => a.phone?.phoneNumber).filter(Boolean);
+        const phones = applicants
+          .map((a) => a.phone?.phoneNumber)
+          .filter(Boolean);
 
         const existingApplicants = await Applicant.find({
           isDeleted: false,
@@ -952,7 +1101,9 @@ export const exportApplicantCsv = async (req, res) => {
         });
 
         if (existingApplicants.length > 0) {
-          const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
+          const existingEmailSet = new Set(
+            existingApplicants.map((a) => a.email)
+          );
           const existingPhoneSet = new Set(
             existingApplicants.map((a) => a.phone?.phoneNumber)
           );
@@ -968,7 +1119,12 @@ export const exportApplicantCsv = async (req, res) => {
                 `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
             );
 
-          return HandleResponse(res, false, StatusCodes.CONFLICT, conflictDetails);
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.CONFLICT,
+            conflictDetails
+          );
         }
       }
 
@@ -1007,7 +1163,12 @@ export const exportApplicantCsv = async (req, res) => {
       const applicants = await Applicant.find(query);
 
       if (!applicants.length) {
-        return HandleResponse(res, false, 404, 'No applicants found with given skills.');
+        return HandleResponse(
+          res,
+          false,
+          404,
+          'No applicants found with given skills.'
+        );
       }
 
       const csvData = generateApplicantCsv(applicants);
@@ -1017,7 +1178,6 @@ export const exportApplicantCsv = async (req, res) => {
       res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
       return res.status(200).send(csvData);
     }
-
 
     let query = { isDeleted: false };
 
@@ -1039,10 +1199,10 @@ export const exportApplicantCsv = async (req, res) => {
         source === 'both'
           ? { $in: [applicantEnum.RESUME, applicantEnum.CSV] }
           : source === 'Resume'
-            ? applicantEnum.RESUME
-            : source === 'Csv'
-              ? applicantEnum.CSV
-              : applicantEnum.MANUAL;
+          ? applicantEnum.RESUME
+          : source === 'Csv'
+          ? applicantEnum.CSV
+          : applicantEnum.MANUAL;
 
       applicants = await Applicant.find(query);
     } else {
@@ -1089,7 +1249,12 @@ export const exportApplicantCsv = async (req, res) => {
           (a) =>
             `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
         );
-        return HandleResponse(res, false, StatusCodes.CONFLICT, conflictDetails);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.CONFLICT,
+          conflictDetails
+        );
       }
 
       applicants = nonExistingApplicants;
@@ -1145,22 +1310,24 @@ export const exportApplicantCsv = async (req, res) => {
   }
 };
 
-
-
-
 export const importApplicantCsv = async (req, res) => {
   try {
     const updateFlag =
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-          ? false
-          : undefined;
+        ? false
+        : undefined;
 
     const user = await User.findById(req.user.id);
 
     if (!user) {
-      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `User is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `User is ${Message.NOT_FOUND}`
+      );
     }
 
     uploadCv(req, res, async (err) => {
@@ -1204,19 +1371,35 @@ export const importApplicantCsv = async (req, res) => {
 
           if (csvValidationErrors.length > 0) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, csvValidationErrors);
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.BAD_REQUEST,
+              csvValidationErrors
+            );
           }
 
           if (!validApplicants.length) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'No valid applicants found in the file');
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.BAD_REQUEST,
+              'No valid applicants found in the file'
+            );
           }
 
           const normalize = (str) => str.trim().toLowerCase();
-          const emailSet = new Set(validApplicants.map((a) => normalize(a.email)).filter(Boolean));
+          const emailSet = new Set(
+            validApplicants.map((a) => normalize(a.email)).filter(Boolean)
+          );
 
-          const existing = await ExportsApplicants.find({ email: { $in: [...emailSet] } }).lean();
-          const existingEmailsSet = new Set(existing.map((e) => normalize(e.email)));
+          const existing = await ExportsApplicants.find({
+            email: { $in: [...emailSet] },
+          }).lean();
+          const existingEmailsSet = new Set(
+            existing.map((e) => normalize(e.email))
+          );
 
           const phoneSet = new Set();
           const insertedNewRecords = [];
@@ -1293,7 +1476,12 @@ export const importApplicantCsv = async (req, res) => {
           fs.unlinkSync(req.file.path);
 
           if (duplicatePhoneErrors.length > 0) {
-            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, duplicatePhoneErrors);
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.BAD_REQUEST,
+              duplicatePhoneErrors
+            );
           }
 
           if (updateFlag === false) {
@@ -1314,7 +1502,9 @@ export const importApplicantCsv = async (req, res) => {
               res,
               true,
               StatusCodes.OK,
-              `${fileExt.replace(/[.,\/\s]/g, '').toUpperCase()} imported successfully.`,
+              `${fileExt
+                .replace(/[.,\/\s]/g, '')
+                .toUpperCase()} imported successfully.`,
               {
                 insertedNewRecords,
                 updatedRecords,
@@ -1416,7 +1606,6 @@ export const importApplicantCsv = async (req, res) => {
     );
   }
 };
-
 
 export const deleteManyApplicants = async (req, res) => {
   try {
