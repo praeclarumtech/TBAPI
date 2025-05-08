@@ -126,52 +126,49 @@ export const getApplicantSkillCounts = async (skillIds = []) => {
   try {
     let skillCounts = [];
 
-    if (!skillIds.length) {
-      skillCounts = await Applicant.aggregate([
-        { $match: { isDeleted: false } },
-        { $unwind: '$appliedSkills' },
-        { $group: { _id: '$appliedSkills', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-        { $limit: 15 },
-        {
-          $lookup: {
-            from: 'skills',
-            localField: '_id',
-            foreignField: 'skills',
-            as: 'skillDetails',
-          },
-        },
-        { $unwind: '$skillDetails' },
-        { $match: { 'skillDetails.isDeleted': false } },
-        {
-          $project: {
-            skill: '$_id',
-            count: 1,
-          },
-        },
-      ]);
-    } else {
-      const skills = await Skills.find({
+    let skills = [];
+
+    if (skillIds.length > 0) {
+      skills = await Skills.find({
         _id: { $in: skillIds },
         isDeleted: false,
       });
+    } else {
+      const skillCountsAggregation = await Applicant.aggregate([
+        { $match: { isDeleted: false } },
+        { $unwind: '$appliedSkills' },
+        {
+          $group: {
+            _id: '$appliedSkills',
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 16 },
+      ]);
 
-      skillCounts = await Promise.all(
-        skills.map(async (skillDoc) => {
-          const skillName = skillDoc.skills;
-          const escapedSkill = skillName.replace(
-            /[-\/\\^$*+?.()|[\]{}]/g,
-            '\\$&'
-          );
-          const count = await Applicant.countDocuments({
-            appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
-            isDeleted: false,
-          });
-          return { skill: skillName, count };
-        })
-      );
+      const skillNames = skillCountsAggregation.map((item) => item._id);
+      skills = await Skills.find({
+        skills: { $in: skillNames },
+        isDeleted: false,
+      });
     }
+    skillCounts = await Promise.all(
+      skills.map(async (skillDoc) => {
+        const skillName = skillDoc.skills;
+        const escapedSkill = skillName.replace(
+          /[-\/\\^$*+?.()|[\]{}]/g,
+          '\\$&'
+        );
+        const count = await Applicant.countDocuments({
+          appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
+          isDeleted: false,
+        });
+        return { skill: skillName, count };
+      })
+    );
 
+    skillCounts.sort((a, b) => b.count - a.count);
     return skillCounts.reduce((acc, { skill, count }) => {
       acc[skill] = count;
       return acc;
