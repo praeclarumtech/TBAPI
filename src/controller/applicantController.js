@@ -132,17 +132,15 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       let responseMessage = '';
       if (results.inserted.length > 0) {
-        responseMessage = `${results.inserted.length} applicant${
-          results.inserted.length > 1 ? 's' : ''
-        } added successfully. `;
+        responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
+          } added successfully. `;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
         const skippedAndErrorCount =
           results.skipped.length + results.errors.length;
-        responseMessage += `${skippedAndErrorCount} applicant${
-          skippedAndErrorCount > 1 ? 's' : ''
-        } skipped due to duplicate record or resume not parsing `;
+        responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
+          } skipped due to duplicate record or resume not parsing `;
 
         const skippedFiles = results.skipped.map((item) => item.file);
         const errorFiles = results.errors.map((item) => item.file);
@@ -158,7 +156,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         results.skipped.length > 0 &&
         results.errors.length === 0
       ) {
-        const errorMessages = results.skipped.map(err => 
+        const errorMessages = results.skipped.map(err =>
           `${err.file}`
         ).join(',\n');
         responseMessage =
@@ -170,7 +168,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         results.skipped.length === 0 &&
         results.errors.length > 0
       ) {
-        const errorMessages = results.errors.map(err => 
+        const errorMessages = results.errors.map(err =>
           `${err.file}`
         ).join(',\n');
         responseMessage =
@@ -184,8 +182,8 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         allSkipped
           ? StatusCodes.CONFLICT
           : hasErrors
-          ? StatusCodes.CREATED
-          : StatusCodes.CREATED,
+            ? StatusCodes.CREATED
+            : StatusCodes.CREATED,
         responseMessage,
         {
           summary: {
@@ -388,8 +386,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-          ? { $in: validAddedBy }
-          : undefined;
+            ? { $in: validAddedBy }
+            : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -1036,61 +1034,42 @@ export const exportApplicantCsv = async (req, res) => {
     const { ids, fields, main } = req.body;
     let applicants = [];
 
+    const defaultFields = [
+      'name.firstName',
+      'email',
+      'phone.phoneNumber',
+      'gender',
+      'appliedRole',
+      'currentCompanyDesignation',
+      'resumeUrl',
+    ];
+
+    const selectedFields = fields?.length
+      ? Array.from(new Set([...fields, ...defaultFields]))
+      : null;
+
+    const projection = selectedFields
+      ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), { _id: 1 })
+      : undefined;
+
     if (ids && Array.isArray(ids) && ids.length > 0) {
-      const query = {
-        _id: { $in: ids },
-        isDeleted: false,
-      };
+      const query = { _id: { $in: ids }, isDeleted: false };
 
-      if (filtered === 'Resume') {
-        query.addedBy = applicantEnum.RESUME;
-      } else if (filtered === 'Csv') {
-        query.addedBy = applicantEnum.CSV;
-      } else {
-        query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
-      }
+      if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
+      else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
+      else query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
-      const selectedFields = fields?.length
-        ? Array.from(
-            new Set([
-              ...fields,
-              'name.firstName',
-              'email',
-              'phone.phoneNumber',
-              'gender',
-              'appliedRole',
-              'currentCompanyDesignation',
-              'resumeUrl',
-            ])
-          )
-        : null;
-
-      const projection = selectedFields
-        ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-            _id: 1,
-          })
-        : undefined;
-
-      if (main) {
-        applicants = await Applicant.find(query, projection);
-      } else {
-        applicants = await ExportsApplicants.find(query, projection);
-      }
+      applicants = main
+        ? await Applicant.find(query, projection)
+        : await ExportsApplicants.find(query, projection);
 
       if (!applicants.length) {
-        return HandleResponse(
-          res,
-          false,
-          404,
-          'No applicants found for provided ids.'
-        );
+        return HandleResponse(res, false, 404, 'No applicants found for provided ids.');
       }
 
       if (!main && !fields?.length) {
-        const emails = applicants.map((a) => a.email);
-        const phones = applicants
-          .map((a) => a.phone?.phoneNumber)
-          .filter(Boolean);
+        const emails = applicants.map(a => a.email);
+        const phones = applicants.map(a => a.phone?.phoneNumber).filter(Boolean);
 
         const existingApplicants = await Applicant.find({
           isDeleted: false,
@@ -1101,30 +1080,19 @@ export const exportApplicantCsv = async (req, res) => {
         });
 
         if (existingApplicants.length > 0) {
-          const existingEmailSet = new Set(
-            existingApplicants.map((a) => a.email)
-          );
-          const existingPhoneSet = new Set(
-            existingApplicants.map((a) => a.phone?.phoneNumber)
-          );
+          const existingEmailSet = new Set(existingApplicants.map(a => a.email));
+          const existingPhoneSet = new Set(existingApplicants.map(a => a.phone?.phoneNumber));
 
           const conflictDetails = applicants
-            .filter(
-              (a) =>
-                existingEmailSet.has(a.email) ||
-                existingPhoneSet.has(a.phone?.phoneNumber)
+            .filter(a =>
+              existingEmailSet.has(a.email) ||
+              existingPhoneSet.has(a.phone?.phoneNumber)
             )
-            .map(
-              (a) =>
-                `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
+            .map(a =>
+              `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
             );
 
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.CONFLICT,
-            conflictDetails
-          );
+          return HandleResponse(res, false, StatusCodes.CONFLICT, conflictDetails);
         }
       }
 
@@ -1144,138 +1112,126 @@ export const exportApplicantCsv = async (req, res) => {
 
       return;
     }
+
     if (appliedSkills) {
-      const skillsArray = appliedSkills
-        .split(',')
-        .map(
-          (skill) =>
-            new RegExp(
-              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
-              'i'
-            )
-        );
+            const skillsArray = appliedSkills
+              .split(',')
+              .map(
+                (skill) =>
+                  new RegExp(
+                    `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+                    'i'
+                  )
+              );
+            const query = {
+              isDeleted: false,
+              appliedSkills: { $all: skillsArray },
+            };
+            const applicants = await Applicant.find(query);
+            if (!applicants.length) {
+              return HandleResponse(res,false,404,'No applicants found with given skills.');
+            }
+            const csvData = generateApplicantCsv(applicants);
+            const filename = `skills_filtered_applicants.csv`;
+      
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+            return res.status(200).send(csvData);
+          }
 
-      const query = {
-        isDeleted: false,
-        appliedSkills: { $all: skillsArray },
-      };
+    //filtered or source
+    let query = { isDeleted: false };
 
-      const applicants = await Applicant.find(query);
+    if (filtered) {
+      query.addedBy =
+        filtered === 'Resume' ? applicantEnum.RESUME
+        : filtered === 'Csv' ? applicantEnum.CSV
+        : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
-      if (!applicants.length) {
-        return HandleResponse(
-          res,
-          false,
-          404,
-          'No applicants found with given skills.'
-        );
+      const tempApplicants = await ExportsApplicants.find(query, projection);
+
+      if (!tempApplicants.length) {
+        return HandleResponse(res, false, 404, 'No applicants found for given filter.');
       }
 
-      const csvData = generateApplicantCsv(applicants);
-      const filename = `skills_filtered_applicants.csv`;
+      if (!fields?.length) {
+        const tempEmails = tempApplicants.map(a => a.email);
+        const tempPhones = tempApplicants.map(a => a.phone?.phoneNumber).filter(Boolean);
+
+        const existingApplicants = await Applicant.find({
+          isDeleted: false,
+          $or: [
+            { email: { $in: tempEmails } },
+            { 'phone.phoneNumber': { $in: tempPhones } },
+          ],
+        });
+
+        const existingEmailSet = new Set(existingApplicants.map(a => a.email));
+        const existingPhoneSet = new Set(existingApplicants.map(a => a.phone?.phoneNumber));
+
+        const nonExistingApplicants = tempApplicants.filter(
+          a => !existingEmailSet.has(a.email) && !existingPhoneSet.has(a.phone?.phoneNumber)
+        );
+
+        const existingConflicts = tempApplicants.filter(
+          a => existingEmailSet.has(a.email) || existingPhoneSet.has(a.phone?.phoneNumber)
+        );
+
+        if (nonExistingApplicants.length > 0) {
+          await insertManyApplicantsToMain(nonExistingApplicants);
+          await deleteExportedApplicants({ _id: { $in: nonExistingApplicants.map(a => a._id) } });
+        }
+
+        if (existingConflicts.length > 0) {
+          const conflictDetails = existingConflicts.map(
+            a => `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
+          );
+          return HandleResponse(res, false, StatusCodes.CONFLICT, conflictDetails);
+        }
+
+        applicants = nonExistingApplicants;
+      } else {
+        applicants = tempApplicants;
+      }
+
+      const csvData = generateApplicantCsv(applicants, selectedFields);
+      const filename = `${filtered}_filtered_applicants.csv`;
 
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
       return res.status(200).send(csvData);
     }
 
-    let query = { isDeleted: false };
-
-    if (filtered === 'both') {
-      query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
-    } else if (filtered === 'Resume') {
-      query.addedBy = applicantEnum.RESUME;
-    } else if (filtered === 'Csv') {
-      query.addedBy = applicantEnum.CSV;
-    }
-
-    if (
-      source === 'both' ||
-      source === 'Csv' ||
-      source === 'Resume' ||
-      source === 'Manual'
-    ) {
+    if (source) {
       query.addedBy =
-        source === 'both'
-          ? { $in: [applicantEnum.RESUME, applicantEnum.CSV] }
-          : source === 'Resume'
-          ? applicantEnum.RESUME
-          : source === 'Csv'
-          ? applicantEnum.CSV
-          : applicantEnum.MANUAL;
+        source === 'Resume' ? applicantEnum.RESUME
+        : source === 'Csv' ? applicantEnum.CSV
+        : source === 'Manual' ? applicantEnum.MANUAL
+        : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
-      applicants = await Applicant.find(query);
-    } else {
-      const tempApplicants = await ExportsApplicants.find(query);
-      const tempEmails = tempApplicants.map((a) => a.email);
-      const tempPhones = tempApplicants
-        .map((a) => a.phone?.phoneNumber)
-        .filter(Boolean);
+      applicants = await Applicant.find(query, projection);
 
-      const existingApplicants = await Applicant.find({
-        isDeleted: false,
-        $or: [
-          { email: { $in: tempEmails } },
-          { 'phone.phoneNumber': { $in: tempPhones } },
-        ],
-      });
-
-      const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
-      const existingPhoneSet = new Set(
-        existingApplicants.map((a) => a.phone?.phoneNumber)
-      );
-
-      const nonExistingApplicants = tempApplicants.filter(
-        (a) =>
-          !existingEmailSet.has(a.email) &&
-          !existingPhoneSet.has(a.phone?.phoneNumber)
-      );
-
-      const existingConflicts = tempApplicants.filter(
-        (a) =>
-          existingEmailSet.has(a.email) ||
-          existingPhoneSet.has(a.phone?.phoneNumber)
-      );
-
-      if (nonExistingApplicants.length > 0) {
-        await insertManyApplicantsToMain(nonExistingApplicants);
-        await deleteExportedApplicants({
-          _id: { $in: nonExistingApplicants.map((a) => a._id) },
-        });
+      if (!applicants.length) {
+        return HandleResponse(res, false, 404, 'No applicants found for given source.');
       }
 
-      if (existingConflicts.length > 0) {
-        const conflictDetails = existingConflicts.map(
-          (a) =>
-            `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
-        );
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.CONFLICT,
-          conflictDetails
-        );
-      }
+      const csvData = generateApplicantCsv(applicants, selectedFields);
+      const filename = `${source}_source_applicants.csv`;
 
-      applicants = nonExistingApplicants;
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      return res.status(200).send(csvData);
     }
 
-    // Export all if no filters
-    if (!ids && !filtered && !source) {
-      applicants = await Applicant.find({ isDeleted: false });
-    }
+    // If no filters provided, export all from main
+    applicants = await Applicant.find({ isDeleted: false }, projection);
 
     if (!applicants.length) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        'No applicants found for the given filter.'
-      );
+      return HandleResponse(res, false, 404, 'No applicants found.');
     }
 
-    const csvData = generateApplicantCsv(applicants);
-    const filename = `${filtered || source || 'all'}_filtered_applicants.csv`;
+    const csvData = generateApplicantCsv(applicants, selectedFields);
+    const filename = 'all_applicants.csv';
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
@@ -1285,14 +1241,8 @@ export const exportApplicantCsv = async (req, res) => {
     logger.error(`${Message.FAILED_TO} export file`);
 
     if (error.code === 11000) {
-      const duplicateField =
-        error.errmsg
-          ?.match(/index: (.+?) dup key/)?.[1]
-          ?.split('_')[0]
-          ?.split('.')
-          .pop() || 'unknown';
-      const duplicateValue =
-        error.errmsg?.match(/dup key: {.*?: "(.*?)"/)?.[1] || 'unknown';
+      const duplicateField = error.errmsg?.match(/index: (.+?) dup key/)?.[1]?.split('_')[0]?.split('.').pop() || 'unknown';
+      const duplicateValue = error.errmsg?.match(/dup key: {.*?: "(.*?)"/)?.[1] || 'unknown';
 
       return HandleResponse(
         res,
@@ -1302,14 +1252,12 @@ export const exportApplicantCsv = async (req, res) => {
       );
     }
 
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} export file`
-    );
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} export file`);
   }
 };
+
+
+
 
 export const importApplicantCsv = async (req, res) => {
   try {
@@ -1317,8 +1265,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     const user = await User.findById(req.user.id);
 

@@ -125,6 +125,9 @@ const normalizeLocationField = async (collection, fieldName, inputValue) => {
   return finalValue;
 };
 const normalizeAppliedSkills = async (collection, fieldName, appliedSkills) => {
+  if (!appliedSkills || (typeof appliedSkills !== 'string' && !Array.isArray(appliedSkills))) {
+    return [];
+  }
   const skillArray = Array.isArray(appliedSkills)
     ? appliedSkills
     : appliedSkills.split(',').map(s => s.trim());
@@ -366,7 +369,6 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     number: lineNumber,
   };
 };
-
 
 
 
