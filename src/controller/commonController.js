@@ -1,7 +1,4 @@
 import {
-  getAllcountry,
-  getAllstates,
-  getAllCity,
   createCountry,
   getCountryById,
   updateCountry,
@@ -25,11 +22,26 @@ import logger from '../loggers/logger.js';
 import states from '../models/stateModel.js';
 import country from '../models/countryModel.js';
 import city from '../models/citymodel.js';
+import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const viewCountry = async (req, res) => {
   try {
-    const countries = await getAllcountry();
+    const { page = 1, limit , search = ""} = req.query;
+    const query = {};
+
+     if (search) {
+      query.country_name = { $regex: search, $options: "i" };
+    }
+
+     const countries = await pagination({
+      Schema: country,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      query: query,
+      sort:  { country_name: 1 },
+    });
+  
     logger.info(`All countries are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -39,7 +51,7 @@ export const viewCountry = async (req, res) => {
       countries
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch countries`);
+    logger.error(`${Message.FAILED_TO} fetch countries`,error);
     return HandleResponse(
       res,
       false,
@@ -250,13 +262,25 @@ export const viewCountryById = async (req, res) => {
 
 export const viewState = async (req, res) => {
   try {
-    const { country_id } = req.query;
-    const query = country_id ? { country_id } : {};
+    const { country_id, page = 1, limit, search = "" } = req.query;
+    const query ={}
 
-    const states = await getAllstates(query);
+    if (country_id) query.country_id = country_id;
+
+     if (search) {
+      query.state_name = { $regex: search, $options: "i" };
+    }
+
+    const state = await pagination({
+      Schema: states,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      query: query,
+      sort:  { state_name: 1 },
+    });
 
     logger.info(`All states are ${Message.FETCH_SUCCESSFULLY}`);
-    return HandleResponse(res, true, StatusCodes.OK, undefined, states);
+    return HandleResponse(res, true, StatusCodes.OK, undefined, state);
   } catch (error) {
     logger.error(`Error fetching states: ${error.message}`, {
       stack: error.stack,
@@ -505,13 +529,24 @@ export const deleteManyStates = async (req, res) => {
 
 export const viewCity = async (req, res) => {
   try {
-    const { state_id } = req.query;
-    const query = state_id ? { state_id } : {};
+    const { state_id ,page = 1, limit, search = ""} = req.query;
+     const query = {};
+    if (state_id) query.state_id = state_id;
 
-    const City = await getAllCity(query);
+     if (search) {
+      query.city_name = { $regex: search, $options: "i" };
+    }
+
+     const citys = await pagination({
+      Schema: city,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      query: query,
+      sort: {city_name : 1},
+    });
 
     logger.info(`All cities are ${Message.FETCH_SUCCESSFULLY}`);
-    return HandleResponse(res, true, StatusCodes.OK, undefined, City);
+    return HandleResponse(res, true, StatusCodes.OK, undefined, citys);
   } catch (error) {
     logger.error(`Error fetching cities: ${error.message}`, {
       stack: error.stack,
