@@ -1,5 +1,7 @@
 import Applicant from '../models/applicantModel.js';
 import ExportsApplicants from '../models/exportsApplicantsModel.js';
+import Skills from '../models/skillsModel.js';
+import appliedRoleModel from '../models/appliedRoleModel.js';
 import logger from '../loggers/logger.js';
 
 export const createApplicant = async (body) => {
@@ -125,8 +127,71 @@ export const AddManyApplicantsByImport = async (body) => {
   try {
     const applicant = new ExportsApplicants({ ...body });
     return await applicant.save();
-
   } catch (error) {
     throw new Error('Failed to update multiple applicants: ' + error);
+  }
+};
+
+export const extractSkillsFromResume = async (resumeText) => {
+  try {
+    if (!resumeText) {
+      throw new Error('Resume text is empty');
+    }
+
+    const skillDocs = await Skills.find({ isDeleted: false })
+      .select('skills -_id')
+      .lean();
+
+    const skillWordList = skillDocs.map((doc) => doc.skills);
+    const lowerCaseText = resumeText.toLowerCase();
+
+    const escapeRegex = (word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const matchedSkills = skillWordList.filter((skill) => {
+      const skillRegex = new RegExp(
+        `\\b${escapeRegex(skill.toLowerCase())}\\b`,
+        'i'
+      );
+      return skillRegex.test(lowerCaseText);
+    });
+
+    return matchedSkills.join(', ');
+  } catch (error) {
+    logger.error(`Failed to extract skills from resume: ${error.message}`);
+    return [];
+  }
+};
+
+const escapeRegex = (word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const extractMatchingRoleFromResume = async (resumeText) => {
+  try {
+    if (!resumeText) {
+      throw new Error('Resume text is empty');
+    }
+
+    const appliedRoles = await appliedRoleModel
+      .find({ isDeleted: false })
+      .select('appliedRole -_id')
+      .lean();
+
+    const normalize = (text) => text.toLowerCase().replace(/[\s\-_]+/g, '');
+
+    const escapeRegex = (word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const cleanResumeText = normalize(resumeText);
+
+    const matchedRole = appliedRoles.find((doc) => {
+      const roleNormalized = normalize(doc.appliedRole);
+      const regex = new RegExp(escapeRegex(roleNormalized), 'i');
+      return regex.test(cleanResumeText);
+    });
+
+    return matchedRole?.appliedRole || 'Software Engineer';
+  } catch (error) {
+    logger.error(
+      `Failed to extract applied role from resume: ${error.message}`
+    );
+    return 'Software Engineer';
   }
 };

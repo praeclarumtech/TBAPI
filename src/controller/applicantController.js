@@ -43,6 +43,8 @@ import {
   extractTextFromDoc,
 } from '../helpers/importResume.js';
 import ExportsApplicants from '../models/exportsApplicantsModel.js';
+import { extractMatchingRoleFromResume } from '../services/applicantService.js';
+import { extractSkillsFromResume } from '../services/applicantService.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
@@ -133,7 +135,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
       let responseMessage = '';
       if (results.inserted.length > 0) {
         responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
-          } added successfully. `;
+          } added successfully.`;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
@@ -175,7 +177,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
           `No applicants has been inserted due to could not extract email or phone from resume : ${errorMessages}`;
       }
 
-      logger.info(`${responseMessage} ${JSON.stringify(results.errors.error)}`);
+      logger.info(`${responseMessage} ${JSON.stringify(results.errors)}`);
       return HandleResponse(
         res,
         results.inserted.length > 0,
@@ -238,6 +240,10 @@ async function processSingleResumeFile(file) {
     throw new Error('Could not extract email or phone from resume');
   }
 
+  const matchedSkills = await extractSkillsFromResume(resumeText);
+
+  const role = await extractMatchingRoleFromResume(resumeText);
+
   const existingRecords = await Promise.all([
     ExportsApplicants.findOne({
       $or: [
@@ -268,10 +274,14 @@ async function processSingleResumeFile(file) {
 
   const applicantData = {
     ...parsedData,
+    otherSkills: matchedSkills,
+    appliedRole:role,
     addedBy: applicantEnum.RESUME,
     resumeUrl: `/uploads/resumes/${file.filename}`,
     originalFileName: file.originalname,
   };
+
+  
 
   const applicant = await createApplicantByResume(applicantData);
 
@@ -312,7 +322,7 @@ export const addApplicant = async (req, res) => {
       ...body,
     };
     const applicant = await createApplicant(applicantData);
-    logger.info(`Applicant is ${Message.ADDED_SUCCESSFULLY}: ${applicant._id}`);
+    logger.info(`Applicant is ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
