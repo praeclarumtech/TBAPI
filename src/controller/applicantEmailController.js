@@ -11,9 +11,10 @@ import applicantEmail from '../models/applicantEmailModel.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
-
+import Applicant from '../models/applicantModel.js'
+import QRCode from 'qrcode'
 export const sendEmail = async (req, res) => {
-  
+
   try {
     const { email_to, email_bcc, subject, description } = req.body;
 
@@ -29,9 +30,9 @@ export const sendEmail = async (req, res) => {
     const recipients = Array.isArray(email_to) ? email_to : [email_to];
 
     const attachments = req.files?.map((file) => ({
-              filename: file.originalname,
-              path: file.path,
-            })) || [];
+      filename: file.originalname,
+      path: file.path,
+    })) || [];
 
     await sendingEmail({
       email_to: recipients,
@@ -204,5 +205,35 @@ export const deleteManyEmails = async (req, res) => {
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} deleteMany emails.`
     );
+  }
+};
+
+export const generateMultipleQrs = async (req, res) => {
+  try {
+    const { emails } = req.body;
+
+    if (!Array.isArray(emails) || emails.length === 0) {
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'Emails are required')
+    }
+
+    const applicants = await Applicant.find({ email: { $in: emails } });
+
+    if (applicants.length === 0) {
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Applicants are ${Message.NOT_FOUND}`)
+    }
+
+    const qrResults = await Promise.all(
+      applicants.map(async (applicant) => {
+        const url = `https://tb-front.vercel.app/applicants/edit-applicant/${applicant._id}`;
+        const qrCode = await QRCode.toDataURL(url);
+        return { email: applicant.email, qrCode };
+      })
+    );
+    logger.info('QR generated successfully.')
+    return HandleResponse(res, true, StatusCodes.OK, 'QR Generated Successfully.', qrResults)
+
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} generate QR`, error);
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} generate QR.`)
   }
 };
