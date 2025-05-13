@@ -128,6 +128,7 @@ const normalizeAppliedSkills = async (collection, fieldName, appliedSkills) => {
   if (!appliedSkills || (typeof appliedSkills !== 'string' && !Array.isArray(appliedSkills))) {
     return [];
   }
+
   const skillArray = Array.isArray(appliedSkills)
     ? appliedSkills
     : appliedSkills.split(',').map(s => s.trim());
@@ -143,11 +144,25 @@ const normalizeAppliedSkills = async (collection, fieldName, appliedSkills) => {
 
   return skillArray.map(skill => {
     const cleaned = skill.replace(/\s+/g, '').toLowerCase();
-    return normalizedMap[cleaned] || values.find(val =>
-      new RegExp(cleaned.split('').join('.*'), 'i').test(val.replace(/\s+/g, '').toLowerCase())
-    ) || skill.trim();
+
+    if (cleaned === 'c') {
+      return values.find(val => new RegExp(`^c$`, 'i').test(val.trim())) || skill.trim();
+    }
+
+    if (cleaned === 'c++') {
+      return values.find(val => new RegExp(`^c\\s?\\+\\+$`, 'i').test(val.trim())) || skill.trim();
+    }
+
+    return (
+      normalizedMap[cleaned] ||
+      values.find(val =>
+        new RegExp(cleaned.split('').join('.*'), 'i').test(val.replace(/\s+/g, '').toLowerCase())
+      ) ||
+      skill.trim()
+    );
   });
 };
+
 const validateAndFillFields = async (data, userRole) => {
   const finalState = await normalizeLocationField(states, 'state_name', data['State']);
   const finalCity = await normalizeLocationField(city, 'city_name', data['Current City']);
