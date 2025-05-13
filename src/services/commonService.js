@@ -12,8 +12,7 @@ import city from '../models/citymodel.js';
 
   export const createCountry = async (body) => {
     try {
-      const newCountry = new country(body);
-      return await newCountry.save();
+      return await country.create(body);
     } catch (error) {
       throw new Error(`Failed to add country: ${error.message}`);
     }
@@ -69,8 +68,7 @@ import city from '../models/citymodel.js';
 
   export const createState = async (body) => {
     try {
-      const newState = new states(body);
-      return await newState.save();
+      return await states.create(body);
     } catch (error) {
       throw new Error(`Failed to add state: ${error.message}`);
     }
@@ -102,8 +100,7 @@ import city from '../models/citymodel.js';
 
   export const createCity = async (body) => {
   try {
-    const newCity = new city(body);
-    return await newCity.save();
+    return await city.create(body);
   } catch (error) {
     throw new Error(`Failed to add city: ${error.message}`);
   }
