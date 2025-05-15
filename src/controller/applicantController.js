@@ -554,6 +554,9 @@ export const viewAllApplicant = async (req, res) => {
         'name.middleName',
         'name.lastName',
         'appliedSkills',
+        'phone.phoneNumber',
+        'phone.whatsappNumber',
+        'email'
       ];
 
       const searchResults = await commonSearch(
@@ -564,7 +567,7 @@ export const viewAllApplicant = async (req, res) => {
         pageNum,
         limitNum
       );
-      if (searchResults.results.length > 0) {
+     
         return HandleResponse(
           res,
           true,
@@ -572,7 +575,7 @@ export const viewAllApplicant = async (req, res) => {
           `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
           searchResults
         );
-      }
+  
     }
 
     const findApplicants = await pagination({
@@ -660,6 +663,7 @@ export const getResumeAndCsvApplicants = async (req, res) => {
       rating,
       communicationSkill,
       currentPkg,
+      search
     } = req.query;
 
     const query = {
@@ -831,36 +835,34 @@ export const getResumeAndCsvApplicants = async (req, res) => {
       }
     }
 
-    if (applicantName || searchSkills) {
+    if (search && typeof search === 'string') {
       const searchFields = [
         'name.firstName',
         'name.middleName',
         'name.lastName',
         'appliedSkills',
+        'phone.phoneNumber',
+        'phone.whatsappNumber',
+        'email'
       ];
 
-      const searchQuery = applicantName || searchSkills;
-
-      if (searchQuery) {
-        const searchResults = await commonSearch(
-          ExportsApplicants,
-          searchFields,
-          searchQuery,
-          typeof searchSkills === 'string' ? searchSkills : '',
-          pageNum,
-          limitNum
+      const searchResults = await commonSearch(
+        ExportsApplicants,
+        searchFields,
+        search,
+        search,
+        pageNum,
+        limitNum
+      );
+     
+        return HandleResponse(
+          res,
+          true,
+          StatusCodes.OK,
+          `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+          searchResults
         );
-
-        if (searchResults.results.length > 0) {
-          return HandleResponse(
-            res,
-            true,
-            StatusCodes.OK,
-            `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
-            searchResults
-          );
-        }
-      }
+  
     }
 
     const applicants = await pagination({
