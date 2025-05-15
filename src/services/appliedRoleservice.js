@@ -1,38 +1,69 @@
 import appliedRoleModel from '../models/appliedRoleModel.js';
 import Skills from '../models/skillsModel.js';
 import Degree from '../models/degreeModel.js';
+import logger from '../loggers/logger.js';
 
 export const create = async (body) => {
-  const { skill, appliedRole } = body;
-  const skills = new appliedRoleModel({ skill, appliedRole });
-  return skills.save();
+  try {
+    const { skill, appliedRole } = body;
+    const skills = new appliedRoleModel({ skill, appliedRole });
+    return await skills.save();
+  } catch (error) {
+    logger.error('Error while creating applied role', error);
+    throw error;
+  }
 };
 
 export const getSkillsByAppliedRole = async (appliedRole) => {
-  return appliedRoleModel.find({
-    appliedRole: { $regex: `^${appliedRole.trim()}$`, $options: 'i' },
-    isDeleted: false,
-  });
+  try {
+    return await appliedRoleModel.find({
+      appliedRole: { $regex: `^${appliedRole.trim()}$`, $options: 'i' },
+      isDeleted: false,
+    });
+  } catch (error) {
+    logger.error('Error while fetching skills by applied role', error);
+    throw error;
+  }
 };
 
 export const getAllSkillAndAppliedRole = async (page, limit) => {
-  return appliedRoleModel
-    .find({ isDeleted: false })
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit);
+  try {
+    return await appliedRoleModel
+      .find({ isDeleted: false })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+  } catch (error) {
+    logger.error('Error while fetching all skills and applied roles', error);
+    throw error;
+  }
 };
 
 export const updateAppliedRole = async (id, updateData) => {
-  return appliedRoleModel.updateOne({ _id: id }, updateData);
+  try {
+    return await appliedRoleModel.updateOne({ _id: id }, updateData);
+  } catch (error) {
+    logger.error('Error while updating applied role', error);
+    throw error;
+  }
 };
 
 export const deleteSkill = async (id) => {
-  return appliedRoleModel.deleteOne({ _id: id });
+  try {
+    return await appliedRoleModel.deleteOne({ _id: id });
+  } catch (error) {
+    logger.error('Error while deleting applied role skill', error);
+    throw error;
+  }
 };
 
 export const getSkillById = async (id) => {
-  return appliedRoleModel.findOne({ _id: id, isDeleted: false });
+  try {
+    return await appliedRoleModel.findOne({ _id: id, isDeleted: false });
+  } catch (error) {
+    logger.error('Error while getting applied role skill  by ID', error);
+    throw error;
+  }
 };
 
 export const findAndReplaceFieldValue = async (field, find, replaceWith) => {
