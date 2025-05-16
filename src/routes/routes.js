@@ -25,5 +25,4 @@ router.use('/appliedRole', appliedRoleRouter);
 router.use('/', countryRouter);
 router.use('/email/template', applicantEmailTempletRouter);
 router.use('/designation', designationRouter);
-
 export default router;
