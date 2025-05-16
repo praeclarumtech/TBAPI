@@ -13,7 +13,6 @@ import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 
 export const sendEmail = async (req, res) => {
-  
   try {
     const { email_to, email_bcc, subject, description } = req.body;
 
@@ -28,20 +27,38 @@ export const sendEmail = async (req, res) => {
 
     const recipients = Array.isArray(email_to) ? email_to : [email_to];
 
-    const attachments = req.files?.map((file) => ({
-              filename: file.originalname,
-              path: file.path,
-            })) || [];
+    // Fetch active applicants only
+    const activeApplicants = await Applicant.find({
+      email: { $in: recipients },
+      isActive: true // or use { status: 'active' } if that's your field
+    }).select('email');
 
+    const activeEmails = activeApplicants.map(applicant => applicant.email);
+
+    if (activeEmails.length === 0) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'No active applicants found to send email.'
+      );
+    }
+
+    const attachments = req.files?.map((file) => ({
+      filename: file.originalname,
+      path: file.path,
+    })) || [];
+
+    // Send email only to active applicants
     await sendingEmail({
-      email_to: recipients,
+      email_to: activeEmails,
       email_bcc,
       subject,
       description,
       attachments
     });
 
-    const storedEmails = recipients.map((email) => ({
+    const storedEmails = activeEmails.map((email) => ({
       email_to: email,
       email_bcc: email_bcc || [],
       subject,
@@ -49,20 +66,21 @@ export const sendEmail = async (req, res) => {
       attachments
     }));
 
-    const insertedEmails = await createEmail(storedEmails);
+    await createEmail(storedEmails);
 
     logger.info(Message.MAIL_SENT);
     return HandleResponse(res, true, StatusCodes.CREATED, Message.MAIL_SENT);
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} send mail.`);
+    logger.error(`${Message.FAILED_TO} send mail.`, error);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} send mail.${error}`
+      `${Message.FAILED_TO} send mail. ${error.message}`
     );
   }
 };
+
 
 export const getAllEmails = async (req, res) => {
   try {

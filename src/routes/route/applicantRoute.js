@@ -18,7 +18,9 @@ import {
   deleteImportedApplicant,
   deleteManyImportedApplicants,
   hardDeleteImportedApplicant,
-  updateStatusImportApplicant
+  updateStatusImportApplicant,
+  activeApplicant,
+  inActiveApplicant
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
@@ -42,8 +44,8 @@ router.delete('/deleteImportedApplicant/:id', authorization, deleteImportedAppli
 router.delete('/deleteManyImportedApplicants', authorization, deleteManyImportedApplicants);
 router.delete('/hardDeleteImportedApplicant/:id', authorization, hardDeleteImportedApplicant);
 
-router.put('/update/importApplicantstatus/:id', authorization,validator.body(updateApplicantValidation), updateStatusImportApplicant);
- 
+router.put('/update/importApplicantstatus/:id', authorization, validator.body(updateApplicantValidation), updateStatusImportApplicant);
+
 router.put('/update/status/:id', authorization, updateStatus);
 router.delete('/deleteApplicant/:id', authorization, deleteApplicant);
 
@@ -55,5 +57,9 @@ router.post('/importCsv', authorization, importApplicantCsv);
 router.delete('/deleteManyApplicants', authorization, deleteManyApplicants);
 
 router.get('/checkApplicant', authorization, checkApplicantExists);
+
+// Active - InActive
+router.patch('/activateApplicant/:id', authorization, activeApplicant);
+router.patch('/inactivateApplicant/:id', authorization, inActiveApplicant);
 
 export default router;

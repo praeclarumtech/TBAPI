@@ -16,6 +16,8 @@ import {
   removeManyExportsApplicants,
   hardDeleteExportsApplicantById,
   AddManyApplicantsByImport,
+  inActivateApplicant,
+  activateApplicant,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -275,13 +277,13 @@ async function processSingleResumeFile(file) {
   const applicantData = {
     ...parsedData,
     otherSkills: matchedSkills,
-    appliedRole:role,
+    appliedRole: role,
     addedBy: applicantEnum.RESUME,
     resumeUrl: `/uploads/resumes/${file.filename}`,
     originalFileName: file.originalname,
   };
 
-  
+
 
   const applicant = await createApplicantByResume(applicantData);
 
@@ -567,15 +569,15 @@ export const viewAllApplicant = async (req, res) => {
         pageNum,
         limitNum
       );
-     
-        return HandleResponse(
-          res,
-          true,
-          StatusCodes.OK,
-          `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
-          searchResults
-        );
-  
+
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+        searchResults
+      );
+
     }
 
     const findApplicants = await pagination({
@@ -854,15 +856,15 @@ export const getResumeAndCsvApplicants = async (req, res) => {
         pageNum,
         limitNum
       );
-     
-        return HandleResponse(
-          res,
-          true,
-          StatusCodes.OK,
-          `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
-          searchResults
-        );
-  
+
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+        searchResults
+      );
+
     }
 
     const applicants = await pagination({
@@ -1126,30 +1128,30 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     if (appliedSkills) {
-            const skillsArray = appliedSkills
-              .split(',')
-              .map(
-                (skill) =>
-                  new RegExp(
-                    `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
-                    'i'
-                  )
-              );
-            const query = {
-              isDeleted: false,
-              appliedSkills: { $all: skillsArray },
-            };
-            const applicants = await Applicant.find(query);
-            if (!applicants.length) {
-              return HandleResponse(res,false,404,'No applicants found with given skills.');
-            }
-            const csvData = generateApplicantCsv(applicants);
-            const filename = `skills_filtered_applicants.csv`;
-      
-            res.setHeader('Content-Type', 'text/csv');
-            res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-            return res.status(200).send(csvData);
-          }
+      const skillsArray = appliedSkills
+        .split(',')
+        .map(
+          (skill) =>
+            new RegExp(
+              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            )
+        );
+      const query = {
+        isDeleted: false,
+        appliedSkills: { $all: skillsArray },
+      };
+      const applicants = await Applicant.find(query);
+      if (!applicants.length) {
+        return HandleResponse(res, false, 404, 'No applicants found with given skills.');
+      }
+      const csvData = generateApplicantCsv(applicants);
+      const filename = `skills_filtered_applicants.csv`;
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      return res.status(200).send(csvData);
+    }
 
     //filtered or source
     let query = { isDeleted: false };
@@ -1157,8 +1159,8 @@ export const exportApplicantCsv = async (req, res) => {
     if (filtered) {
       query.addedBy =
         filtered === 'Resume' ? applicantEnum.RESUME
-        : filtered === 'Csv' ? applicantEnum.CSV
-        : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+          : filtered === 'Csv' ? applicantEnum.CSV
+            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
       const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1217,9 +1219,9 @@ export const exportApplicantCsv = async (req, res) => {
     if (source) {
       query.addedBy =
         source === 'Resume' ? applicantEnum.RESUME
-        : source === 'Csv' ? applicantEnum.CSV
-        : source === 'Manual' ? applicantEnum.MANUAL
-        : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+          : source === 'Csv' ? applicantEnum.CSV
+            : source === 'Manual' ? applicantEnum.MANUAL
+              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
       applicants = await Applicant.find(query, projection);
 
@@ -1911,6 +1913,74 @@ export const deleteManyImportedApplicants = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} deleteMany Applicants.`
+    );
+  }
+};
+
+export const activeApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+
+    const applicant = await activateApplicant(applicantId);
+
+    if (!applicant) {
+      logger.warn(`User is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `User is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.ACTIVE_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.ACTIVE_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} active applicant.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} active applicant.`
+    );
+  }
+};
+
+export const inActiveApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+
+    const applicant = await inActivateApplicant(applicantId);
+
+    if (!applicant) {
+      logger.warn(`User is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `User is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.INACTIVE_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.INACTIVE_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} inactive applicant.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} inactive applicant.`
     );
   }
 };
