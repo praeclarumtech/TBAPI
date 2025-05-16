@@ -4,6 +4,7 @@ const countrySchema = new mongoose.Schema(
   {
     country_name : {
       type: String,
+      unique: true
     }
   }
 );
