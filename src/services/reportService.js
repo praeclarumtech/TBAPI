@@ -230,23 +230,19 @@ export const getApplicantCountCityAndState = async (type = 'city') => {
   }
 };
 
-
 export const getApplicantCountByAddedBy = async (startDate, endDate) => {
   try {
     const query = { isDeleted: false };
 
-    if (startDate && endDate) {
+    if (startDate || endDate) {
+      const start = startDate
+        ? moment(startDate, 'DD-MM-YYYY').startOf('day').toDate()
+        : new Date('1970-01-01T00:00:00Z');
 
-      const hasTime = startDate.includes(':') && endDate.includes(':');
+      const end = endDate
+        ? moment(endDate, 'DD-MM-YYYY').endOf('day').toDate()
+        : moment().endOf('day').toDate();
 
-      const start = hasTime
-        ? moment(startDate, 'DD-MM-YYYY HH:mm').startOf('minute').toDate()
-        : moment(startDate, 'DD-MM-YYYY').startOf('day').toDate();
-
-      const end = hasTime
-        ? moment(endDate, 'DD-MM-YYYY HH:mm').endOf('minute').toDate()
-        : moment(endDate, 'DD-MM-YYYY').endOf('day').toDate();
-   
       query.createdAt = { $gte: start, $lte: end };
     }
 
@@ -279,4 +275,50 @@ export const getApplicantCountByAddedBy = async (startDate, endDate) => {
   }
 };
 
+export const getApplicantCountByExperienceRange = async () => {
+  try {
+    const ranges = [
+      { label: '0-2 years', min: 0, max: 2 },
+      { label: '2-4 years', min: 2, max: 4 },
+      { label: '4-6 years', min: 4, max: 6 },
+      { label: '6-8 years', min: 6, max: 8 },
+      { label: '8-10 years', min: 8, max: 10 },
+      { label: '10-12 years', min: 10, max: 12 },
+      { label: '12-14 years', min: 12, max: 14 },
+      { label: '14-16 years', min: 14, max: 16 },
+      { label: '16+ years', min: 16, max: Infinity }
+    ];
+
+    const result = await Applicant.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+          totalExperience: { $ne: null }, // Ensure experience exists
+        },
+      },
+      {
+        $bucket: {
+          groupBy: "$totalExperience",
+          boundaries: [0, 2, 4, 6, 8, 10, 12, 14, 16, Infinity],
+          default: "Other",
+          output: {
+            count: { $sum: 1 },
+          },
+        },
+      },
+    ]);
+
+    // Format result
+    const formatted = {};
+    ranges.forEach((range, index) => {
+      const bucket = result.find(r => r._id === range.min) || { count: 0 };
+      formatted[range.label] = bucket.count;
+    });
+
+    return formatted;
+  } catch (error) {
+    logger.error(`Failed to fetch applicant count by experience range: ${error.message}`);
+    throw error;
+  }
+};
 

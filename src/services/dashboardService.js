@@ -55,3 +55,50 @@ export const getApplicantsByMonth = async (month, year) => {
 
   return { totalApplicantsInMonth, percentage };
 };
+
+export const getMonthlyApplicantCount = async (year) => {
+  const currentDate = new Date();
+  const targetYear = year ? parseInt(year) : currentDate.getFullYear();
+  const isCurrentYear = targetYear === currentDate.getFullYear();
+
+  const pipeline = [
+    {
+      $match: {
+        createdAt: {
+          $gte: new Date(`${targetYear}-01-01T00:00:00Z`),
+          $lte: new Date(`${targetYear}-12-31T23:59:59Z`)
+        }
+      }
+    },
+    {
+      $group: {
+        _id: { $month: '$createdAt' },
+        applicants: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        month: '$_id',
+        applicants: 1,
+        _id: 0
+      }
+    },
+    {
+      $sort: { month: 1 }
+    }
+  ];
+
+  const result = await Applicant.aggregate(pipeline);
+
+  const totalMonths = isCurrentYear ? currentDate.getMonth() + 1 : 12;
+
+  const fullYearData = Array.from({ length: totalMonths  }, (_, index) => {
+    const monthData = result.find(item => item.month === index + 1);
+    return {
+      month: index + 1,
+      applicants: monthData ? monthData.applicants : 0
+    };
+  });
+
+  return fullYearData;
+};

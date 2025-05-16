@@ -7,7 +7,8 @@ import {
   getReport,
   getApplicantSkillCounts,
   getApplicantCountCityAndState,
-  getApplicantCountByAddedBy
+  getApplicantCountByAddedBy,
+  getApplicantCountByExperienceRange
 } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
@@ -216,6 +217,32 @@ export const applicantCountByAddedBy = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch applicant count by addedBy`,
+      error
+    );
+  }
+};
+
+export const applicantCountByExperienceRange = async (req, res) => {
+  try {
+    const result = await getApplicantCountByExperienceRange();
+
+    logger.info(`Applicant count by experience range ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by experience range ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by experience range: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by experience range`,
       error
     );
   }

@@ -56,7 +56,6 @@ export const addAppliedRoleAndSkills = async (req, res) => {
 
     const existing = await appliedRoleModel.findOne({
       appliedRole: { $regex: `^${trimmedAppliedRole}$`, $options: 'i' },
-      skill: { $in: validSkillIds },
       isDeleted: false,
     });
 
@@ -66,7 +65,7 @@ export const addAppliedRoleAndSkills = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        'This skill already exists for the given applied role.'
+        'This applied role already exists!.'
       );
     }
 
@@ -201,17 +200,16 @@ export const updateAppliedRoleAndSkill = async (req, res) => {
       const duplicate = await appliedRoleModel.findOne({
         _id: { $ne: id },
         appliedRole: { $regex: `^${updateData.appliedRole}$`, $options: 'i' },
-        skill: { $in: validSkillIds },
         isDeleted: false,
       });
 
       if (duplicate) {
-        logger.warn('Duplicate combination found.');
+        logger.warn('This applied role already exists!.');
         return HandleResponse(
           res,
           false,
           StatusCodes.CONFLICT,
-          'Same applied role and skill combination already exists.'
+          'This applied role already exists!.'
         );
       }
     }

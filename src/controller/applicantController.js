@@ -427,7 +427,7 @@ export const viewAllApplicant = async (req, res) => {
         const min = parseFloat(rangeMatch[1]);
         const max = parseFloat(rangeMatch[3]);
 
-        query.totalExperience = { $gte: min, $lte: max };
+        query.totalExperience = { $gte: min, $lt: max };
       } else if (!isNaN(parseFloat(totalExperience))) {
         query.totalExperience = parseFloat(totalExperience);
       }
