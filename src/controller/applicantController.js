@@ -1069,7 +1069,7 @@ export const exportApplicantCsv = async (req, res) => {
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
-      else query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+      else query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV,applicantEnum.MANUAL] };
 
       applicants = main
         ? await Applicant.find(query, projection)
