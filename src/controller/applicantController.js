@@ -284,11 +284,8 @@ async function processSingleResumeFile(file) {
     originalFileName: file.originalname,
   };
 
-<<<<<<< HEAD
 
 
-=======
->>>>>>> c8b530aa5f38343bd34b19c7638635308b6bf7c4
   const applicant = await createApplicantByResume(applicantData);
 
   return {
@@ -581,10 +578,6 @@ export const viewAllApplicant = async (req, res) => {
         `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
         searchResults
       );
-<<<<<<< HEAD
-
-=======
->>>>>>> c8b530aa5f38343bd34b19c7638635308b6bf7c4
     }
 
     const findApplicants = await pagination({
@@ -871,10 +864,6 @@ export const getResumeAndCsvApplicants = async (req, res) => {
         `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
         searchResults
       );
-<<<<<<< HEAD
-
-=======
->>>>>>> c8b530aa5f38343bd34b19c7638635308b6bf7c4
     }
 
     const applicants = await pagination({
@@ -1054,10 +1043,10 @@ export const updateStatusImportApplicant = async (req, res) => {
 };
 export const exportApplicantCsv = async (req, res) => {
   try {
-    const { filtered, source, appliedSkills, addedBy } = req.query;
+    const { filtered, source, appliedSkills, addedBy, } = req.query;
     const { ids, fields, main } = req.body;
     let applicants = [];
-    const { viewAll = 'true' } = req.query;
+    const { viewAll = 'true', } = req.query;
 
     const defaultFields = [
       'name.firstName',
@@ -1080,14 +1069,14 @@ export const exportApplicantCsv = async (req, res) => {
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
-      const query = { _id: { $in: ids }, isDeleted: false };
+      const query = { _id: { $in: ids }, isDeleted: false, isActive: true };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
       else query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
       applicants = main
-        ? await Applicant.find(query, projection)
+        ? await Applicant.find(query, projection,)
         : await ExportsApplicants.find(query, projection);
 
       if (!applicants.length) {
@@ -1160,7 +1149,7 @@ export const exportApplicantCsv = async (req, res) => {
 
     if (!main) {
 
-      const query = { isDeleted: false };
+      const query = { isDeleted: false, isActive: true };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;

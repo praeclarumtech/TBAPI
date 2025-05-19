@@ -10,6 +10,7 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import applicantEmail from '../models/applicantEmailModel.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
+import Applicant from '../models/applicantModel.js';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 
 export const sendEmail = async (req, res) => {
@@ -27,20 +28,35 @@ export const sendEmail = async (req, res) => {
 
     const recipients = Array.isArray(email_to) ? email_to : [email_to];
 
-    // Fetch active applicants only
-    const activeApplicants = await Applicant.find({
+    const applicants = await Applicant.find({
       email: { $in: recipients },
-      isActive: true // or use { status: 'active' } if that's your field
-    }).select('email');
+    }).select('email isActive');
 
-    const activeEmails = activeApplicants.map(applicant => applicant.email);
+    const emailsInDB = applicants.map(applicant => applicant.email);
 
-    if (activeEmails.length === 0) {
+    const activeEmailsFromDB = [];
+    const inactiveEmails = [];
+
+applicants.forEach(applicant => {
+      if (applicant.isActive) {
+        activeEmailsFromDB.push(applicant.email);
+      } else {
+        inactiveEmails.push(applicant.email);
+      }
+    });
+
+      const emailsNotInDB = recipients.filter(email => !emailsInDB.includes(email));
+
+    // Final list of emails to send
+    const finalEmailsToSend = [...activeEmailsFromDB, ...emailsNotInDB];
+
+    if (finalEmailsToSend.length === 0) {
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'No active applicants found to send email.'
+        'Email not sent. Inactive or no eligible recipients found.'
+
       );
     }
 
@@ -51,14 +67,14 @@ export const sendEmail = async (req, res) => {
 
     // Send email only to active applicants
     await sendingEmail({
-      email_to: activeEmails,
+      email_to: finalEmailsToSend,
       email_bcc,
       subject,
       description,
       attachments
     });
 
-    const storedEmails = activeEmails.map((email) => ({
+    const storedEmails = finalEmailsToSend.map((email) => ({
       email_to: email,
       email_bcc: email_bcc || [],
       subject,
@@ -68,8 +84,16 @@ export const sendEmail = async (req, res) => {
 
     await createEmail(storedEmails);
 
+    const messageParts = [`Mail sent successfully to: ${finalEmailsToSend.join(', ')}`];
+
+     if (inactiveEmails.length > 0) {
+      messageParts.push(
+        `Email not sent to inactive applicants: ${inactiveEmails.join(', ')}`
+      );
+    }
+
     logger.info(Message.MAIL_SENT);
-    return HandleResponse(res, true, StatusCodes.CREATED, Message.MAIL_SENT);
+    return HandleResponse(res, true, StatusCodes.CREATED, messageParts.join('. '));
   } catch (error) {
     logger.error(`${Message.FAILED_TO} send mail.`, error);
     return HandleResponse(
