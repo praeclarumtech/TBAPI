@@ -15,7 +15,7 @@ export const create = async (body) => {
 export const getAllDesignation = async (page, limit) => {
   try {
     return await designations.find({ isDeleted: false })
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: 1 })
       .skip((page - 1) * limit)
       .limit(limit);
   } catch (error) {
