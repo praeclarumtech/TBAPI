@@ -378,6 +378,7 @@ export const viewAllApplicant = async (req, res) => {
       currentPkg,
       addedBy,
       search,
+      isActive,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -515,6 +516,10 @@ export const viewAllApplicant = async (req, res) => {
 
     if (anyHandOnOffers !== undefined) {
       query.anyHandOnOffers = anyHandOnOffers === 'true';
+    }
+
+    if (req.query.isActive !== undefined) {
+      query.isActive = req.query.isActive === 'true';
     }
 
     if (rating) {
@@ -1069,7 +1074,10 @@ export const exportApplicantCsv = async (req, res) => {
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
-      else query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV,applicantEnum.MANUAL] };
+      else
+        query.addedBy = {
+          $in: [applicantEnum.RESUME, applicantEnum.CSV, applicantEnum.MANUAL],
+        };
 
       applicants = main
         ? await Applicant.find(query, projection)
@@ -1144,7 +1152,6 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     if (!main) {
-
       const query = { isDeleted: false };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
@@ -1212,7 +1219,6 @@ export const exportApplicantCsv = async (req, res) => {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
       res.status(200).send(csvData);
-
 
       if (!fields?.length && !main) {
         const finalIds = applicants.map((item) => item._id);
@@ -1361,7 +1367,7 @@ export const exportApplicantCsv = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
     return res.status(200).send(csvData);
   } catch (error) {
-    console.log("error>>", error)
+    console.log('error>>', error);
     logger.error(`${Message.FAILED_TO} export file`);
 
     if (error.code === 11000) {
