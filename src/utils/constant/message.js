@@ -43,5 +43,6 @@ export const Message = {
   DONWLOADED: 'File downloaded successfully.',
   IMPORTED: 'File imported successfully.',
   ACTIVE_SUCCESSFULLY: 'active Successfully.',
+  INACTIVE_SUCCESSFULLY:'Inactive Successfully.'
 };
 
