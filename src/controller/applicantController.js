@@ -280,6 +280,7 @@ async function processSingleResumeFile(file) {
     otherSkills: matchedSkills,
     appliedRole: role,
     addedBy: applicantEnum.RESUME,
+    isActive :true,
     resumeUrl: `/uploads/resumes/${file.filename}`,
     originalFileName: file.originalname,
   };
@@ -321,6 +322,7 @@ export const addApplicant = async (req, res) => {
       user_id: id,
       addedBy: applicantEnum.MANUAL,
       appliedRole,
+      isActive : true,
       meta: meta || {},
       ...body,
     };
@@ -1517,6 +1519,7 @@ export const importApplicantCsv = async (req, res) => {
               createdBy: user.role,
               updatedBy: user.role,
               addedBy: applicantEnum.CSV,
+              isActive : true
             };
 
             const isPhoneDuplicate = await ExportsApplicants.findOne({

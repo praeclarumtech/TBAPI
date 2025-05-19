@@ -1,26 +1,27 @@
 import mongoose from 'mongoose';
 import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
 
-const TemporaryExportsApplicantsSchema = new mongoose.Schema({
+const TemporaryExportsApplicantsSchema = new mongoose.Schema(
+  {
     user_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: false,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+      required: false,
     },
     name: {
-        firstName: { type: String, required: true },
-        middleName: { type: String },
-        lastName: { type: String, required: false },
+      firstName: { type: String, required: true },
+      middleName: { type: String },
+      lastName: { type: String, required: false },
     },
     phone: {
-        whatsappNumber: { type: String, required: true, unique: true },
-        phoneNumber: { type: String, required: true, unique: true },
+      whatsappNumber: { type: String, required: true, unique: true },
+      phoneNumber: { type: String, required: true, unique: true },
     },
     email: { type: String, required: true, unique: true },
     gender: {
-        type: String,
-        enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER, ''],
-        required: false,
+      type: String,
+      enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER, ''],
+      required: false,
     },
     dateOfBirth: { type: Date, required: false },
     qualification: { type: String, required: false },
@@ -44,57 +45,59 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema({
     noticePeriod: { type: Number },
     negotiation: { type: String, required: false },
     workPreference: {
-        type: String,
-        enum: [applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, ''],
-        required: false,
+      type: String,
+      enum: [
+        applicantEnum.REMOTE,
+        applicantEnum.HYBRID,
+        applicantEnum.ONSITE,
+        '',
+      ],
+      required: false,
     },
     comment: { type: String },
     feedback: { type: String },
     status: {
-        type: String,
-        enum: [
-            applicantEnum.PENDING,
-            applicantEnum.SELECTED,
-            applicantEnum.REJECTED,
-            applicantEnum.HOLD,
-            applicantEnum.IN_PROCESS,
-        ],
-        default: applicantEnum.PENDING,
-        required: false,
+      type: String,
+      enum: [
+        applicantEnum.PENDING,
+        applicantEnum.SELECTED,
+        applicantEnum.REJECTED,
+        applicantEnum.HOLD,
+        applicantEnum.IN_PROCESS,
+      ],
+      default: applicantEnum.PENDING,
+      required: false,
     },
     interviewStage: {
-        type: String,
-        enum: [
-            applicantEnum.HR_ROUND,
-            applicantEnum.TECHNICAL,
-            applicantEnum.FIRST_INTERVIEW_ROUND,
-            applicantEnum.PRACTICAL,
-            applicantEnum.CLIENT,
-        ],
-        default: applicantEnum.FIRST_INTERVIEW_ROUND,
-        required: false,
+      type: String,
+      enum: [
+        applicantEnum.HR_ROUND,
+        applicantEnum.TECHNICAL,
+        applicantEnum.FIRST_INTERVIEW_ROUND,
+        applicantEnum.PRACTICAL,
+        applicantEnum.CLIENT,
+      ],
+      default: applicantEnum.FIRST_INTERVIEW_ROUND,
+      required: false,
     },
     currentCompanyDesignation: {
-        type: String,
-        required: false
+      type: String,
+      required: false,
     },
     appliedRole: {
-        type: String, required: false,
+      type: String,
+      required: false,
     },
     practicalUrl: { type: String },
     practicalFeedback: { type: String },
     portfolioUrl: { type: String },
     referral: { type: String },
     resumeUrl: { type: String, required: false },
-    preferredLocations: { type: String, },
-    currentCompanyName: { type: String, },
+    preferredLocations: { type: String },
+    currentCompanyName: { type: String },
     maritalStatus: {
-        type: String,
-        enum: [
-            applicantEnum.SINGLE,
-            applicantEnum.MARRIED,
-            '',
-        ],
+      type: String,
+      enum: [applicantEnum.SINGLE, applicantEnum.MARRIED, ''],
     },
     lastFollowUpDate: { type: Date },
     permanentAddress: { type: String, required: false },
@@ -106,25 +109,34 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema({
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     createdBy: {
-        type: String,
-        enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
     },
     updatedBy: {
-        type: String,
-        enum: [Enum.ADMIN, Enum.HR, Enum.USER]
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
     },
     addedBy: {
-        type: String,
-        enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
-        required: true
+      type: String,
+      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
+      required: true,
     },
     meta: {
-        type: Object,
-        default: {}
+      type: Object,
+      default: {},
     },
-},
-    { timestamps: true }
-)
+    isActive: {
+      type: Boolean,
+      default: true,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-const ExportsApplicants = mongoose.model('ExportsApplicants', TemporaryExportsApplicantsSchema, 'exports_applicants')
-export default ExportsApplicants
+const ExportsApplicants = mongoose.model(
+  'ExportsApplicants',
+  TemporaryExportsApplicantsSchema,
+  'exports_applicants'
+);
+export default ExportsApplicants;
