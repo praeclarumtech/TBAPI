@@ -20,6 +20,7 @@ export const buildApplicantQuery = (params) => {
     anyHandOnOffers,
     rating,
     communicationSkill,
+    appliedSkillsOR
   } = params;
 
   let query = { isDeleted: false, isActive: true };
@@ -32,6 +33,20 @@ export const buildApplicantQuery = (params) => {
     );
     query.appliedSkills = { $all: skillsArray };
   }
+
+  if (appliedSkillsOR) {
+      const skillsArray = appliedSkillsOR
+        .split(',')
+        .map(
+          (skill) =>
+            new RegExp(
+              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            )
+        );
+
+      query.appliedSkills = { $in: skillsArray };
+    }
 
   if (totalExperience) {
     const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
@@ -84,6 +99,10 @@ export const buildApplicantQuery = (params) => {
   if (anyHandOnOffers !== undefined) {
     query.anyHandOnOffers = anyHandOnOffers === 'true';
   }
+
+  if (params.isActive !== undefined) {
+  query.isActive = params.isActive === 'true';
+}
 
   if (rating) {
     const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
