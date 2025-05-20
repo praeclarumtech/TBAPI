@@ -647,227 +647,15 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     const {
       page = 1,
       limit = 10,
-      applicationNo,
-      applicantName,
-      appliedSkills,
-      searchSkills = '',
-      totalExperience,
-      startDate,
-      endDate,
-      currentCity,
-      interviewStage,
-      expectedPkg,
-      noticePeriod,
-      status,
-      gender,
-      currentCompanyDesignation,
-      state,
-      workPreference,
-      anyHandOnOffers,
-      rating,
-      communicationSkill,
-      currentPkg,
-      search,
     } = req.query;
-
+ 
     const query = {
       isDeleted: false,
     };
-
+ 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
-
-    if (applicationNo && !isNaN(applicationNo)) {
-      query.applicationNo = parseInt(applicationNo);
-    }
-
-    if (appliedSkills) {
-      const skillsArray = appliedSkills
-        .split(',')
-        .map(
-          (skill) =>
-            new RegExp(
-              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
-              'i'
-            )
-        );
-
-      query.appliedSkills = { $all: skillsArray };
-    }
-
-    if (totalExperience) {
-      const rangeMatch = totalExperience
-        .toString()
-        .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-
-      if (rangeMatch) {
-        const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[3]);
-
-        query.totalExperience = { $gte: min, $lte: max };
-      } else if (!isNaN(parseFloat(totalExperience))) {
-        query.totalExperience = parseFloat(totalExperience);
-      }
-    }
-
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate)
-        query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
-      if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
-    }
-
-    if (currentCity && typeof currentCity === 'string') {
-      query.currentCity = { $regex: new RegExp(currentCity, 'i') };
-    }
-
-    if (interviewStage && typeof interviewStage === 'string') {
-      query.interviewStage = interviewStage;
-    }
-
-    if (expectedPkg) {
-      const rangeMatch = expectedPkg
-        .toString()
-        .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-
-      if (rangeMatch) {
-        const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[3]);
-
-        query.expectedPkg = { $gte: min, $lte: max };
-      } else if (!isNaN(parseFloat(expectedPkg))) {
-        query.expectedPkg = parseFloat(expectedPkg);
-      }
-    }
-
-    if (totalExperience) {
-      const rangeMatch = totalExperience
-        .toString()
-        .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-
-      if (rangeMatch) {
-        const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[3]);
-
-        query.totalExperience = { $gte: min, $lte: max };
-      } else if (!isNaN(parseFloat(totalExperience))) {
-        query.totalExperience = parseFloat(totalExperience);
-      }
-    }
-
-    if (currentPkg) {
-      const rangeMatch = currentPkg
-        .toString()
-        .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-
-      if (rangeMatch) {
-        const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[3]);
-
-        query.currentPkg = { $gte: min, $lte: max };
-      } else if (!isNaN(parseFloat(currentPkg))) {
-        query.currentPkg = parseFloat(currentPkg);
-      }
-    }
-
-    if (noticePeriod) {
-      const rangeMatch = noticePeriod.toString().match(/^(\d+)-(\d+)$/);
-
-      if (rangeMatch) {
-        const min = parseInt(rangeMatch[1]);
-        const max = parseInt(rangeMatch[2]);
-
-        query.noticePeriod = { $gte: min, $lte: max };
-      } else {
-        query.noticePeriod = parseInt(noticePeriod);
-      }
-    }
-
-    if (gender && typeof gender === 'string') {
-      query.gender = gender;
-    }
-
-    if (status && typeof status === 'string') {
-      query.status = status;
-    }
-    if (
-      currentCompanyDesignation &&
-      typeof currentCompanyDesignation === 'string'
-    ) {
-      query.currentCompanyDesignation = currentCompanyDesignation;
-    }
-
-    if (state && typeof state === 'string') {
-      query.state = { $regex: new RegExp(state, 'i') };
-    }
-
-    if (workPreference && typeof workPreference === 'string') {
-      query.workPreference = workPreference;
-    }
-
-    if (anyHandOnOffers !== undefined) {
-      query.anyHandOnOffers = anyHandOnOffers === 'true';
-    }
-
-    if (rating) {
-      const rangeMatch = rating
-        .toString()
-        .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-
-      if (rangeMatch) {
-        const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[3]);
-
-        query.rating = { $gte: min, $lte: max };
-      } else if (!isNaN(parseFloat(rating))) {
-        query.rating = parseFloat(rating);
-      }
-    }
-
-    if (communicationSkill) {
-      const rangeMatch = communicationSkill
-        .toString()
-        .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
-
-      if (rangeMatch) {
-        const min = parseFloat(rangeMatch[1]);
-        const max = parseFloat(rangeMatch[3]);
-
-        query.communicationSkill = { $gte: min, $lte: max };
-      } else if (!isNaN(parseFloat(communicationSkill))) {
-        query.communicationSkill = parseFloat(communicationSkill);
-      }
-    }
-
-    if (search && typeof search === 'string') {
-      const searchFields = [
-        'name.firstName',
-        'name.middleName',
-        'name.lastName',
-        'appliedSkills',
-        'phone.phoneNumber',
-        'phone.whatsappNumber',
-        'email',
-      ];
-
-      const searchResults = await commonSearch(
-        ExportsApplicants,
-        searchFields,
-        search,
-        search,
-        pageNum,
-        limitNum
-      );
-
-      return HandleResponse(
-        res,
-        true,
-        StatusCodes.OK,
-        `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
-        searchResults
-      );
-    }
-
+ 
     const applicants = await pagination({
       Schema: ExportsApplicants,
       page: pageNum,
@@ -875,7 +663,7 @@ export const getResumeAndCsvApplicants = async (req, res) => {
       query,
       sort: { createdAt: -1 },
     });
-
+ 
     logger.info(`Applicant are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -894,17 +682,15 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     );
   }
 };
+
+
 export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
-    const { ...body } = req.body;
-    let updateData = {
-      ...body,
-    };
-    const updatedApplicant = await updateApplicantById(applicantId, updateData);
-
+    const updatedApplicant = await updateApplicantById(applicantId,  req.body);
+ 
     if (!updatedApplicant) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.error(`Applicant is ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -912,12 +698,12 @@ export const updateApplicant = async (req, res) => {
         `Applicant is ${Message.NOT_FOUND}`
       );
     }
-
+ 
     logger.info(`Applicant is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
-      StatusCodes.OK,
+      StatusCodes.ACCEPTED,
       `Applicant is ${Message.UPDATED_SUCCESSFULLY}`,
       updatedApplicant
     );
@@ -1070,166 +856,33 @@ export const exportApplicantCsv = async (req, res) => {
         })
       : undefined;
 
-    if (ids && Array.isArray(ids) && ids.length > 0) {
-      const query = { _id: { $in: ids }, isDeleted: false, isActive: true };
-
-      if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
-      else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
-      else
-        query.addedBy = {
-          $in: [applicantEnum.RESUME, applicantEnum.CSV, applicantEnum.MANUAL],
-        };
-
-      applicants = main
-        ? await Applicant.find(query, projection,)
-        : await ExportsApplicants.find(query, projection);
-
-      if (!applicants.length) {
-        return HandleResponse(
-          res,
-          false,
-          404,
-          'No applicants found for provided ids.'
-        );
-      }
-
-      if (!main && !fields?.length) {
-        const emails = applicants.map((a) => a.email);
-        const phones = applicants
-          .map((a) => a.phone?.phoneNumber)
-          .filter(Boolean);
-
-        const existingApplicants = await Applicant.find({
-          isDeleted: false,
-          $or: [
-            { email: { $in: emails } },
-            { 'phone.phoneNumber': { $in: phones } },
-          ],
-        });
-
-        if (existingApplicants.length > 0) {
-          const existingEmailSet = new Set(
-            existingApplicants.map((a) => a.email)
-          );
-          const existingPhoneSet = new Set(
-            existingApplicants.map((a) => a.phone?.phoneNumber)
-          );
-
-          const conflictDetails = applicants
-            .filter(
-              (a) =>
-                existingEmailSet.has(a.email) ||
-                existingPhoneSet.has(a.phone?.phoneNumber)
-            )
-            .map(
-              (a) =>
-                `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
-            );
-
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.CONFLICT,
-            conflictDetails
-          );
-        }
-      }
-
-      const csvData = generateApplicantCsv(applicants, selectedFields, ids);
-      const filename = fields?.length
-        ? 'selected_fields_applicants.csv'
-        : 'selected_ids_applicants.csv';
-
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-      res.status(200).send(csvData);
-
-      if (!fields?.length && !main) {
-        await insertManyApplicantsToMain(applicants);
-        await deleteExportedApplicants({ _id: { $in: ids } });
-      }
-
-      return;
+if (ids && Array.isArray(ids) && ids.length > 0) {
+      const flag = main ? main : false;
+ 
+      return await reuseableFunction(
+        flag,
+        ids,
+        filtered,
+        projection,
+        selectedFields,
+        fields,
+        res
+      );
     }
-
-    if (!main) {
-
-      const query = { isDeleted: false, isActive: true };
-
-      if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
-      else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
-      else query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
-
-      applicants = await ExportsApplicants.find(query, projection);
-
-      if (!applicants.length) {
-        return HandleResponse(
-          res,
-          false,
-          404,
-          'No applicants found for provided ids.'
-        );
-      }
-
-      if (!fields?.length) {
-        const emails = applicants.map((a) => a.email);
-        const phones = applicants
-          .map((a) => a.phone?.phoneNumber)
-          .filter(Boolean);
-
-        const existingApplicants = await Applicant.find({
-          isDeleted: false,
-          $or: [
-            { email: { $in: emails } },
-            { 'phone.phoneNumber': { $in: phones } },
-          ],
-        });
-
-        if (existingApplicants.length > 0) {
-          const existingEmailSet = new Set(
-            existingApplicants.map((a) => a.email)
-          );
-          const existingPhoneSet = new Set(
-            existingApplicants.map((a) => a.phone?.phoneNumber)
-          );
-
-          const conflictDetails = applicants
-            .filter(
-              (a) =>
-                existingEmailSet.has(a.email) ||
-                existingPhoneSet.has(a.phone?.phoneNumber)
-            )
-            .map(
-              (a) =>
-                `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
-            );
-
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.CONFLICT,
-            conflictDetails
-          );
-        }
-      }
-
-      const csvData = generateApplicantCsv(applicants, selectedFields);
-      const filename = fields?.length
-        ? 'selected_fields_applicants.csv'
-        : 'selected_ids_applicants.csv';
-
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-      res.status(200).send(csvData);
-
-      if (!fields?.length && !main) {
-        const finalIds = applicants.map((item) => item._id);
-        await insertManyApplicantsToMain(applicants);
-        await deleteExportedApplicants({ _id: { $in: finalIds } });
-      }
-
-      return;
-    }
+ 
+     if (!main) {
+      let flag = false;
+ 
+      return await reuseableFunction(
+        flag,
+        ids,
+        filtered,
+        projection,
+        selectedFields,
+        fields,
+        res
+      );
+     }
 
     //filtered or source
     let query = { isDeleted: false };
@@ -2108,4 +1761,103 @@ export const inActiveApplicant = async (req, res) => {
       `${Message.FAILED_TO} inactive applicant.`
     );
   }
+};
+
+const reuseableFunction = async (
+  main,
+  ids,
+  filtered,
+  projection,
+  selectedFields,
+  fields,
+  res
+) => {
+  let query = { isDeleted: false };
+  let applicants = null;
+ 
+  if (ids && ids.length > 0) {
+    query._id = { $in: ids };
+  }
+  console.log('quer---------------', query);
+ 
+  if (filtered === applicantEnum.RESUME) query.addedBy = applicantEnum.RESUME;
+  else if (filtered === applicantEnum.CSV) query.addedBy = applicantEnum.CSV;
+  else if (filtered === applicantEnum.MANUAL) query.addedBy = applicantEnum.MANUAL;
+  else query.addedBy = { $in: [applicantEnum.RESUME, applicantEnum.CSV, applicantEnum.MANUAL] };
+ 
+  applicants = main
+    ? await Applicant.find(query, projection)
+    : await ExportsApplicants.find(query, projection);
+ 
+  console.log('main-----------', main);
+  console.log('applicants-----------', applicants);
+ 
+  if (!applicants.length) {
+    return HandleResponse(
+      res,
+      false,
+      404,
+      'No applicants found for provided ids.'
+    );
+  }
+ 
+  if (!main && !fields?.length) {
+    const emails = applicants.map((a) => a.email);
+    const phones = applicants.map((a) => a.phone?.phoneNumber).filter(Boolean);
+ 
+    const existingApplicants = await Applicant.find({
+      isDeleted: false,
+      $or: [
+        { email: { $in: emails } },
+        { 'phone.phoneNumber': { $in: phones } },
+      ],
+    });
+ 
+    if (existingApplicants.length > 0) {
+      const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
+      const existingPhoneSet = new Set(
+        existingApplicants.map((a) => a.phone?.phoneNumber)
+      );
+ 
+      const conflictDetails = applicants
+        .filter(
+          (a) =>
+            existingEmailSet.has(a.email) ||
+            existingPhoneSet.has(a.phone?.phoneNumber)
+        )
+        .map(
+          (a) =>
+            `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
+        );
+ 
+      return HandleResponse(res, false, StatusCodes.CONFLICT, conflictDetails);
+    }
+  }
+ 
+  const csvData = generateApplicantCsv(applicants, selectedFields, ids);
+ 
+  const filename = fields?.length
+    ? 'selected_fields_applicants.csv'
+    : 'selected_ids_applicants.csv';
+ 
+  if (fields?.length === 0 && !main) {
+    await insertManyApplicantsToMain(applicants);
+ 
+    console.log('ids', ids);
+ 
+    if (ids?.length === 0 && !main) {
+      console.log('enter');
+      const ids = applicants.map((item) => item._id);
+      await deleteExportedApplicants({ _id: { $in: ids } });
+    } else {
+      console.log('exit');
+      await deleteExportedApplicants({ _id: { $in: ids } });
+    }
+  }
+ 
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+  res.status(200).send(csvData);
+ 
+  return;
 };
