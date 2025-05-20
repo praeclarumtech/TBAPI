@@ -10,7 +10,6 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import applicantEmail from '../models/applicantEmailModel.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-import Applicant from '../models/applicantModel.js';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 import Applicant from '../models/applicantModel.js'
 import QRCode from 'qrcode'
