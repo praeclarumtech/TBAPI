@@ -123,6 +123,11 @@ const ApplicantSchema = new mongoose.Schema(
       type: Object,
       default: {}
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+      required: true
+    },
   },
   { timestamps: true }
 );
