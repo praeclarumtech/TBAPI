@@ -322,3 +322,95 @@ export const getApplicantCountByExperienceRange = async () => {
   }
 };
 
+
+export const getExpectedPackageChartData = async () => {
+  const pipeline = [
+    {
+      $project: {
+        salary: '$expectedPkg'
+      }
+    },
+    {
+      $bucket: {
+        groupBy: '$salary',
+        boundaries: [0, 2, 4, 6, 8, 10, 12],
+        default: '10+',
+        output: {
+          count: { $sum: 1 }
+        }
+      }
+    }
+  ];
+
+  const result = await Applicant.aggregate(pipeline);
+
+  // Build a single object like { "0-2 LPA": 5, "2-4 LPA": 8, ... }
+  const formatted = {};
+
+  result.forEach(bucket => {
+    let rangeLabel;
+
+    if (bucket._id === '10+') {
+      rangeLabel = '10+ LPA';
+    } else {
+      const lower = bucket._id;
+      const upper = {
+        0: 2,
+        2: 4,
+        4: 6,
+        6: 8,
+        8: 10
+      }[lower];
+      rangeLabel = `${lower}-${upper} LPA`;
+    }
+
+    formatted[rangeLabel] = bucket.count;
+  });
+
+  return formatted;
+};
+
+export const getNoticePeriodHistogram = async () => {
+  const pipeline = [
+    {
+      $project: {
+        notice: '$noticePeriod'
+      }
+    },
+    {
+      $bucket: {
+        groupBy: '$notice',
+        boundaries: [0, 15, 30, 60],
+        default: '60+',
+        output: {
+          count: { $sum: 1 }
+        }
+      }
+    }
+  ];
+
+  const result = await Applicant.aggregate(pipeline);
+
+  const formatted = {};
+
+  result.forEach(bucket => {
+    let rangeLabel;
+    if (bucket._id === '60+') {
+      rangeLabel = '60+ days';
+    } else {
+      const lower = bucket._id;
+      const upper = {
+        0: 15,
+        15: 30,
+        30: 60
+      }[lower];
+      rangeLabel = `${lower}-${upper} days`;
+    }
+
+    formatted[rangeLabel] = bucket.count;
+  });
+
+  return formatted;
+};
+
+

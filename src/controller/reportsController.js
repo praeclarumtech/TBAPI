@@ -8,7 +8,9 @@ import {
   getApplicantSkillCounts,
   getApplicantCountCityAndState,
   getApplicantCountByAddedBy,
-  getApplicantCountByExperienceRange
+  getApplicantCountByExperienceRange,
+  getExpectedPackageChartData,
+  getNoticePeriodHistogram
 } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
@@ -243,6 +245,58 @@ export const applicantCountByExperienceRange = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch applicant count by experience range`,
+      error
+    );
+  }
+};
+
+export const expectedPackageChart = async (req, res) => {
+  try {
+    const data = await getExpectedPackageChartData();
+
+    logger.info(`Expected package chart ${Message.FETCH_SUCCESSFULLY}`);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Expected package chart ${Message.FETCH_SUCCESSFULLY}`,
+      data
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch expected package chart`, error);
+
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch expected package chart`,
+      error
+    );
+  }
+};
+
+export const noticePeriodHistogram = async (req, res) => {
+  try {
+    const data = await getNoticePeriodHistogram();
+
+    logger.info(`Notice period histogram ${Message.FETCH_SUCCESSFULLY}`);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Notice period histogram ${Message.FETCH_SUCCESSFULLY}`,
+      data
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch notice period histogram`, error);
+
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch notice period histogram`,
       error
     );
   }
