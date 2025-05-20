@@ -74,7 +74,7 @@ export const getSkills = async (req, res) => {
 
     if (search) {
       const searchFields = ['skills'];
-      const searchResult = await commonSearch(Skills, searchFields, search,);
+      const searchResult = await commonSearch(Skills, searchFields, search, '', page, limit, { createdAt: -1, _id: 1 });
       data = searchResult.results;
       totalRecords = searchResult.totalRecords;
     } else {
