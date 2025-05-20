@@ -16,6 +16,8 @@ import {
   removeManyExportsApplicants,
   hardDeleteExportsApplicantById,
   AddManyApplicantsByImport,
+  inActivateApplicant,
+  activateApplicant,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -278,9 +280,12 @@ async function processSingleResumeFile(file) {
     otherSkills: matchedSkills,
     appliedRole: role,
     addedBy: applicantEnum.RESUME,
+    isActive :true,
     resumeUrl: `/uploads/resumes/${file.filename}`,
     originalFileName: file.originalname,
   };
+
+
 
   const applicant = await createApplicantByResume(applicantData);
 
@@ -317,6 +322,7 @@ export const addApplicant = async (req, res) => {
       user_id: id,
       addedBy: applicantEnum.MANUAL,
       appliedRole,
+      isActive : true,
       meta: meta || {},
       ...body,
     };
@@ -1039,10 +1045,10 @@ export const updateStatusImportApplicant = async (req, res) => {
 };
 export const exportApplicantCsv = async (req, res) => {
   try {
-    const { filtered, source, appliedSkills, addedBy } = req.query;
+    const { filtered, source, appliedSkills, addedBy, } = req.query;
     const { ids, fields, main } = req.body;
     let applicants = [];
-    const { viewAll = 'true' } = req.query;
+    const { viewAll = 'true', } = req.query;
 
     const defaultFields = [
       'name.firstName',
@@ -1065,7 +1071,7 @@ export const exportApplicantCsv = async (req, res) => {
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
-      const query = { _id: { $in: ids }, isDeleted: false };
+      const query = { _id: { $in: ids }, isDeleted: false, isActive: true };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
@@ -1075,7 +1081,7 @@ export const exportApplicantCsv = async (req, res) => {
         };
 
       applicants = main
-        ? await Applicant.find(query, projection)
+        ? await Applicant.find(query, projection,)
         : await ExportsApplicants.find(query, projection);
 
       if (!applicants.length) {
@@ -1147,7 +1153,8 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     if (!main) {
-      const query = { isDeleted: false };
+
+      const query = { isDeleted: false, isActive: true };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
@@ -1513,6 +1520,7 @@ export const importApplicantCsv = async (req, res) => {
               createdBy: user.role,
               updatedBy: user.role,
               addedBy: applicantEnum.CSV,
+              isActive : true
             };
 
             const isPhoneDuplicate = await ExportsApplicants.findOne({
@@ -2030,6 +2038,74 @@ export const deleteManyImportedApplicants = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} deleteMany Applicants.`
+    );
+  }
+};
+
+export const activeApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+
+    const applicant = await activateApplicant(applicantId);
+
+    if (!applicant) {
+      logger.warn(`User is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `User is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.ACTIVE_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.ACTIVE_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} active applicant.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} active applicant.`
+    );
+  }
+};
+
+export const inActiveApplicant = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+
+    const applicant = await inActivateApplicant(applicantId);
+
+    if (!applicant) {
+      logger.warn(`User is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `User is ${Message.NOT_FOUND}`
+      );
+    }
+
+    logger.info(`Applicant is ${Message.INACTIVE_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant is ${Message.INACTIVE_SUCCESSFULLY}`
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} inactive applicant.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} inactive applicant.`
     );
   }
 };

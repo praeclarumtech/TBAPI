@@ -240,3 +240,31 @@ export const extractMatchingRoleFromResume = async (resumeText) => {
     return 'Software Engineer';
   }
 };
+
+
+export const activateApplicant = async (applicantId) => {
+  try {
+    const applicant = await Applicant.findById(applicantId);
+    if (!applicant) throw new Error('Applicant not found');
+ 
+    applicant.isActive = true;
+    return await applicant.save();
+  } catch (error) {
+    logger.error('Error in activateApplicant', error);
+    throw error;
+  }
+};
+ 
+export const inActivateApplicant = async (applicantId) => {
+  try {
+    const applicant = await Applicant.findById(applicantId);
+    if (!applicant) throw new Error('Applicant not found');
+ 
+    applicant.isActive = false;
+    return await applicant.save();
+  } catch (error) {
+    logger.error('Error in inActivateApplicant', error);
+    throw error;
+  }
+}
+ 

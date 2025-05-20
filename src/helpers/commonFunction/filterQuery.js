@@ -22,7 +22,7 @@ export const buildApplicantQuery = (params) => {
     communicationSkill,
   } = params;
 
-  let query = { isDeleted: false };
+  let query = { isDeleted: false, isActive: true };
 
   if (applicationNo && !isNaN(applicationNo)) query.applicationNo = parseInt(applicationNo);
 
