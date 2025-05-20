@@ -167,43 +167,60 @@ export const updateDegreebyId = async (req, res) => {
 };
 
 export const deleteDegree = async (req, res) => {
-    try {
-        const { ids } = req.body;
-
-        if (!ids || !Array.isArray(ids) || ids.length === 0) {
-            logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
-            return HandleResponse(
-                res,
-                false,
-                StatusCodes.BAD_REQUEST,
-                `ObjectId is ${Message.NOT_FOUND}`
-            );
-        }
-        const deletedDegree = await deleteManyDegrees(ids);
-        if (deletedDegree.deletedCount === 0) {
-            logger.warn(`Qualification is ${Message.NOT_FOUND}`);
-            return HandleResponse(
-                res,
-                false,
-                StatusCodes.NOT_FOUND,
-                `Qualification is found from given id's`
-            );
-        }
-        logger.info(`Qualification is ${Message.DELETED_SUCCESSFULLY}`);
-        return HandleResponse(
-            res,
-            true,
-            StatusCodes.OK,
-            `Qualification is ${Message.DELETED_SUCCESSFULLY}`,
-            deletedDegree
-        );
-    } catch (error) {
-        logger.error(`${Message.FAILED_TO} delete qualification.`);
-        return HandleResponse(
-            res,
-            false,
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `${Message.FAILED_TO} delete qualification.`
-        );
+  try {
+    const { ids } = req.body;
+ 
+    let idsToDelete = [];
+ 
+    if (Array.isArray(ids)) {
+      // If array of full objects or array of strings
+      idsToDelete = ids.map(item => typeof item === 'object' && item._id ? item._id : item);
+    } else if (typeof ids === 'object' && ids._id) {
+      // Single object
+      idsToDelete = [ids._id];
+    } else if (typeof ids === 'string') {
+      // Single string ID
+      idsToDelete = [ids];
     }
+ 
+    if (!idsToDelete.length) {
+      logger.warn(`Invalid ids received: ${JSON.stringify(ids)}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `ObjectId is ${Message.NOT_FOUND}`
+      );
+    }
+ 
+    const deletedDegree = await deleteManyDegrees(idsToDelete);
+ 
+    if (deletedDegree.deletedCount === 0) {
+      logger.warn(`Qualification is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Qualification is not found from given id(s)`
+      );
+    }
+ 
+    logger.info(`Qualification is ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Qualification is ${Message.DELETED_SUCCESSFULLY}`,
+      deletedDegree
+    );
+  } catch (error) {
+    console.error("Error in deleteDegree controller:", error);
+    logger.error(`${Message.FAILED_TO} delete qualification.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} delete qualification.`
+    );
+  }
 };
