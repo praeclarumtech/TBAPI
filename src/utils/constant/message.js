@@ -41,6 +41,8 @@ export const Message = {
   FORGOT_SUCCESSFULLY: 'forgot successfully.',
   ENTER_CALENDAR_TYPE: 'Provide a calendarType (week, month, year) or both startDate and endDate.',
   DONWLOADED: 'File downloaded successfully.',
-  IMPORTED: 'File imported successfully.'
+  IMPORTED: 'File imported successfully.',
+  ACTIVE_SUCCESSFULLY: 'active Successfully.',
+  INACTIVE_SUCCESSFULLY:'Inactive Successfully.'
 };
 

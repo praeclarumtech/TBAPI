@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-export const commonSearch = async (model, searchFields, query,searchSkills='', page = 1, limit = 10, sort = { createdAt: -1 }) => {
+export const commonSearch = async (model, searchFields, query,searchSkills='', page = 1, limit = 10, sort = { createdAt: -1, }) => {
   if ((!query || typeof query !== 'string') && !searchSkills) {
     return { results: [], totalRecords: 0 };
   }

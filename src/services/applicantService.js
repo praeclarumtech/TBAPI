@@ -5,9 +5,14 @@ import appliedRoleModel from '../models/appliedRoleModel.js';
 import logger from '../loggers/logger.js';
 
 export const createApplicant = async (body) => {
+  try{
   const applicant = new Applicant({ ...body });
   await applicant.save();
   return applicant;
+  } catch (error){
+    logger.error('Error while creating applicant', error);
+    throw error;
+  }
 };
 
 export const createApplicantByResume = async (body) => {
@@ -79,19 +84,39 @@ export const getAllapplicant = async (query) => {
 };
 
 export const getApplicantById = async (id) => {
+  try{
   return Applicant.findById(id);
+  } catch(error) {
+    logger.error('Error while getting applicant by ID', error);
+    throw error;
+  }
 };
 
 export const updateApplicantById = async (id, updateData) => {
+  try{
   return Applicant.updateOne({ _id: id }, updateData);
+  } catch(error){
+    logger.error('Error while updating applicant by ID', error);
+    throw error;
+  }
 };
 
 export const removeManyApplicants = async (ids) => {
-  return await Applicant.deleteMany({ _id: { $in: ids } });
+  try {
+    return await Applicant.deleteMany({ _id: { $in: ids } });
+  } catch (error) {
+    logger.error('Error while removing many applicants', error);
+    throw error;
+  }
 };
 
 export const findApplicantByField = async (field, value) => {
-  return await Applicant.findOne({ [field]: value });
+  try {
+    return await Applicant.findOne({ [field]: value });
+  } catch (error) {
+    logger.error(`Error while finding applicant by field ${field}`, error);
+    throw error;
+  }
 };
 
 export const updateManyApplicantsService = async (applicantIds, updateData) => {
@@ -107,19 +132,39 @@ export const updateManyApplicantsService = async (applicantIds, updateData) => {
 };
 
 export const getExportsApplicantById = async (id) => {
-  return ExportsApplicants.findById(id);
+  try {
+    return await ExportsApplicants.findById(id);
+  } catch (error) {
+    logger.error('Error while getting exports applicant by ID', error);
+    throw error;
+  }
 };
 
 export const updateExportsApplicantById = async (id, updateData) => {
-  return ExportsApplicants.updateOne({ _id: id }, updateData);
+  try {
+    return await ExportsApplicants.updateOne({ _id: id }, updateData);
+  } catch (error) {
+    logger.error('Error while updating exports applicant by ID', error);
+    throw error;
+  }
 };
 
 export const hardDeleteExportsApplicantById = async (id) => {
-  return ExportsApplicants.deleteOne({ _id: id });
+  try {
+    return await ExportsApplicants.deleteOne({ _id: id });
+  } catch (error) {
+    logger.error('Error while hard deleting exports applicant by ID', error);
+    throw error;
+  }
 };
 
 export const removeManyExportsApplicants = async (ids) => {
-  return await ExportsApplicants.deleteMany({ _id: { $in: ids } });
+  try {
+    return await ExportsApplicants.deleteMany({ _id: { $in: ids } });
+  } catch (error) {
+    logger.error('Error while removing many exports applicants', error);
+    throw error;
+  }
 };
 
 
@@ -195,3 +240,31 @@ export const extractMatchingRoleFromResume = async (resumeText) => {
     return 'Software Engineer';
   }
 };
+
+
+export const activateApplicant = async (applicantId) => {
+  try {
+    const applicant = await Applicant.findById(applicantId);
+    if (!applicant) throw new Error('Applicant not found');
+ 
+    applicant.isActive = true;
+    return await applicant.save();
+  } catch (error) {
+    logger.error('Error in activateApplicant', error);
+    throw error;
+  }
+};
+ 
+export const inActivateApplicant = async (applicantId) => {
+  try {
+    const applicant = await Applicant.findById(applicantId);
+    if (!applicant) throw new Error('Applicant not found');
+ 
+    applicant.isActive = false;
+    return await applicant.save();
+  } catch (error) {
+    logger.error('Error in inActivateApplicant', error);
+    throw error;
+  }
+}
+ 
