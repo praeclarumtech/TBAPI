@@ -280,12 +280,10 @@ async function processSingleResumeFile(file) {
     otherSkills: matchedSkills,
     appliedRole: role,
     addedBy: applicantEnum.RESUME,
-    isActive :true,
+    isActive: true,
     resumeUrl: `/uploads/resumes/${file.filename}`,
     originalFileName: file.originalname,
   };
-
-
 
   const applicant = await createApplicantByResume(applicantData);
 
@@ -322,7 +320,7 @@ export const addApplicant = async (req, res) => {
       user_id: id,
       addedBy: applicantEnum.MANUAL,
       appliedRole,
-      isActive : true,
+      isActive: true,
       meta: meta || {},
       ...body,
     };
@@ -384,10 +382,11 @@ export const viewAllApplicant = async (req, res) => {
       currentPkg,
       addedBy,
       search,
+      appliedSkillsOR,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
+    const limitNum = parseInt(limit) || 100;
 
     let query = { isDeleted: false };
 
@@ -421,6 +420,20 @@ export const viewAllApplicant = async (req, res) => {
         );
 
       query.appliedSkills = { $all: skillsArray };
+    }
+
+    if (appliedSkillsOR) {
+      const skillsArray = appliedSkillsOR
+        .split(',')
+        .map(
+          (skill) =>
+            new RegExp(
+              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            )
+        );
+
+      query.appliedSkills = { $in: skillsArray };
     }
 
     if (totalExperience) {
@@ -523,6 +536,10 @@ export const viewAllApplicant = async (req, res) => {
       query.anyHandOnOffers = anyHandOnOffers === 'true';
     }
 
+    if (req.query.isActive !== undefined) {
+      query.isActive = req.query.isActive === 'true';
+    }
+
     if (rating) {
       const rangeMatch = rating
         .toString()
@@ -568,7 +585,7 @@ export const viewAllApplicant = async (req, res) => {
         Applicant,
         searchFields,
         search,
-        search,
+        '',
         pageNum,
         limitNum
       );
@@ -1045,10 +1062,10 @@ export const updateStatusImportApplicant = async (req, res) => {
 };
 export const exportApplicantCsv = async (req, res) => {
   try {
-    const { filtered, source, appliedSkills, addedBy, } = req.query;
+    const { filtered, source, appliedSkills, addedBy } = req.query;
     const { ids, fields, main } = req.body;
     let applicants = [];
-    const { viewAll = 'true', } = req.query;
+    const { viewAll = 'true' } = req.query;
 
     const defaultFields = [
       'name.firstName',
@@ -1071,7 +1088,7 @@ export const exportApplicantCsv = async (req, res) => {
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
-      const query = { _id: { $in: ids }, isDeleted: false, isActive: true };
+      const query = { _id: { $in: ids }, isDeleted: false };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
@@ -1081,7 +1098,7 @@ export const exportApplicantCsv = async (req, res) => {
         };
 
       applicants = main
-        ? await Applicant.find(query, projection,)
+        ? await Applicant.find(query, projection)
         : await ExportsApplicants.find(query, projection);
 
       if (!applicants.length) {
@@ -1153,8 +1170,7 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     if (!main) {
-
-      const query = { isDeleted: false, isActive: true };
+      const query = { isDeleted: false };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
@@ -1369,7 +1385,7 @@ export const exportApplicantCsv = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
     return res.status(200).send(csvData);
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} export file`);
+    logger.error(`${Message.FAILED_TO} export file`, error);
 
     if (error.code === 11000) {
       const duplicateField =
@@ -1520,7 +1536,7 @@ export const importApplicantCsv = async (req, res) => {
               createdBy: user.role,
               updatedBy: user.role,
               addedBy: applicantEnum.CSV,
-              isActive : true
+              isActive: true,
             };
 
             const isPhoneDuplicate = await ExportsApplicants.findOne({
