@@ -12,6 +12,7 @@ import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import Applicant from '../models/applicantModel.js';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
+import { Parser as Json2csvParser } from 'json2csv'
 
 export const sendEmail = async (req, res) => {
   try {
@@ -246,5 +247,83 @@ export const deleteManyEmails = async (req, res) => {
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} deleteMany emails.`
     );
+  }
+};
+
+export const exportEmails = async (req, res) => {
+  try {
+    const emails = await applicantEmail.aggregate([
+      {
+        $addFields: {
+          primaryEmailTo: { $arrayElemAt: ['$email_to', 0] } // Use first email in `email_to`
+        }
+      },
+      {
+        $lookup: {
+          from: 'applicants', // your applicant collection name
+          localField: 'primaryEmailTo',
+          foreignField: 'email',
+          as: 'applicantData'
+        }
+      },
+      {
+        $unwind: {
+          path: '$applicantData',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          ApplicantName: { $ifNull: ['$applicantData.name', 'N/A'] },
+          ApplicantEmail: { $ifNull: ['$applicantData.email', 'N/A'] },
+          Subject: '$subject',
+          Description: '$description',
+          To: { $reduce: {
+            input: '$email_to',
+            initialValue: '',
+            in: {
+              $cond: [
+                { $eq: ['$$value', ''] },
+                '$$this',
+                { $concat: ['$$value', ', ', '$$this'] }
+              ]
+            }
+          }},
+          BCC: { $reduce: {
+            input: '$email_bcc',
+            initialValue: '',
+            in: {
+              $cond: [
+                { $eq: ['$$value', ''] },
+                '$$this',
+                { $concat: ['$$value', ', ', '$$this'] }
+              ]
+            }
+          }},
+          Date: '$createdAt'
+        }
+      }
+    ]);
+ 
+    console.log("emails==------->>>>>>>>", emails);
+ 
+    // Format dates
+    const formattedEmails = emails.map(email => ({
+      ...email,
+      Date: new Date(email.Date).toISOString()
+    }));
+ 
+    console.log("formattedEmails==------>>>>>>>",formattedEmails);
+ 
+    const json2csvParser = new Json2csvParser({ header: true });
+    const csv = json2csvParser.parse(formattedEmails);
+ 
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="emails.csv"');
+    return res.status(200).end(csv);
+  } catch (error) {
+    console.error('Failed to export emails:', error.message);
+    return res.status(500).json({ message: 'Failed to export emails.' });
   }
 };
