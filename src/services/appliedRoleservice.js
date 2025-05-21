@@ -147,6 +147,7 @@ export const previewFindFieldValue = async (field, find) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
+  
   const findTerms = Array.isArray(find)
     ? find
     : find.split(',').map((item) => item.trim()).filter(Boolean);
