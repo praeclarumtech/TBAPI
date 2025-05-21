@@ -10,9 +10,109 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import applicantEmail from '../models/applicantEmailModel.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
+import { sendingEmail, generateQrEmailHtml } from '../helpers/commonFunction/handleEmail.js';
 import Applicant from '../models/applicantModel.js'
 import QRCode from 'qrcode'
+
+// import { fileURLToPath } from 'url';
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+
+
+// export const sendEmail = async (req, res) => {
+//   try {
+//     const { email_to, email_bcc, subject, description } = req.body;
+
+//     if (!email_to || (Array.isArray(email_to) && email_to.length === 0)) {
+//       return HandleResponse(
+//         res,
+//         false,
+//         StatusCodes.BAD_REQUEST,
+//         'Recipient email list is required.'
+//       );
+//     }
+
+//     const recipients = Array.isArray(email_to) ? email_to : [email_to];
+
+//     const applicants = await Applicant.find({
+//       email: { $in: recipients },
+//     }).select('email isActive');
+
+//     const emailsInDB = applicants.map(applicant => applicant.email);
+
+//     const activeEmailsFromDB = [];
+//     const inactiveEmails = [];
+
+// applicants.forEach(applicant => {
+//       if (applicant.isActive) {
+//         activeEmailsFromDB.push(applicant.email);
+//       } else {
+//         inactiveEmails.push(applicant.email);
+//       }
+//     });
+
+//       const emailsNotInDB = recipients.filter(email => !emailsInDB.includes(email));
+
+//     // Final list of emails to send
+//     const finalEmailsToSend = [...activeEmailsFromDB, ...emailsNotInDB];
+
+//     if (finalEmailsToSend.length === 0) {
+//       return HandleResponse(
+//         res,
+//         false,
+//         StatusCodes.BAD_REQUEST,
+//         'Email not sent. Inactive or no eligible recipients found.'
+
+//       );
+//     }
+
+//     const attachments = req.files?.map((file) => ({
+//       filename: file.originalname,
+//       path: file.path,
+//     })) || [];
+
+//     // Send email only to active applicants
+//     await sendingEmail({
+//       email_to: finalEmailsToSend,
+//       email_bcc,
+//       subject,
+//       description,
+//       attachments
+//     });
+
+//     const storedEmails = finalEmailsToSend.map((email) => ({
+//       email_to: email,
+//       email_bcc: email_bcc || [],
+//       subject,
+//       description,
+//       attachments
+//     }));
+
+//     await createEmail(storedEmails);
+
+//     const messageParts = [`Mail sent successfully to: ${finalEmailsToSend.join(', ')}`];
+
+//      if (inactiveEmails.length > 0) {
+//       messageParts.push(
+//         `Email not sent to inactive applicants: ${inactiveEmails.join(', ')}`
+//       );
+//     }
+
+//     logger.info(Message.MAIL_SENT);
+//     return HandleResponse(res, true, StatusCodes.CREATED, messageParts.join('. '));
+//   } catch (error) {
+//     logger.error(`${Message.FAILED_TO} send mail.`, error);
+//     return HandleResponse(
+//       res,
+//       false,
+//       StatusCodes.INTERNAL_SERVER_ERROR,
+//       `${Message.FAILED_TO} send mail. ${error.message}`
+//     );
+//   }
+// };
+
+
 export const sendEmail = async (req, res) => {
   try {
     const { email_to, email_bcc, subject, description } = req.body;
@@ -30,24 +130,21 @@ export const sendEmail = async (req, res) => {
 
     const applicants = await Applicant.find({
       email: { $in: recipients },
-    }).select('email isActive');
+    }).select('email isActive _id');
 
     const emailsInDB = applicants.map(applicant => applicant.email);
-
     const activeEmailsFromDB = [];
     const inactiveEmails = [];
 
-applicants.forEach(applicant => {
+    for (const applicant of applicants) {
       if (applicant.isActive) {
         activeEmailsFromDB.push(applicant.email);
       } else {
         inactiveEmails.push(applicant.email);
       }
-    });
+    }
 
-      const emailsNotInDB = recipients.filter(email => !emailsInDB.includes(email));
-
-    // Final list of emails to send
+    const emailsNotInDB = recipients.filter(email => !emailsInDB.includes(email));
     const finalEmailsToSend = [...activeEmailsFromDB, ...emailsNotInDB];
 
     if (finalEmailsToSend.length === 0) {
@@ -56,40 +153,57 @@ applicants.forEach(applicant => {
         false,
         StatusCodes.BAD_REQUEST,
         'Email not sent. Inactive or no eligible recipients found.'
-
       );
     }
 
+    // Attachments remain the same
     const attachments = req.files?.map((file) => ({
       filename: file.originalname,
       path: file.path,
     })) || [];
 
-    // Send email only to active applicants
-    await sendingEmail({
-      email_to: finalEmailsToSend,
-      email_bcc,
-      subject,
-      description,
-      attachments
-    });
+    // Send email individually for each recipient with their own QR code
+    for (const email of finalEmailsToSend) {
+      const applicant = applicants.find(a => a.email === email && a.isActive);
 
+      let htmlContent = `<p>${description || 'Please find your QR code below.'}</p>`;
+      const inlineImages = [];
+
+      if (applicant) {
+        const { htmlBlockforUpdate, inlineImage } = await generateQrEmailHtml(applicant._id);
+        htmlContent += htmlBlockforUpdate;
+        inlineImages.push(inlineImage);
+      } else {
+        const { htmlBlock, inlineImage } = await generateQrEmailHtml();
+        htmlContent += htmlBlock;
+        inlineImages.push(inlineImage);
+      }
+
+      await sendingEmail({
+        email_to: [email],
+        email_bcc,
+        subject,
+        description: htmlContent,
+        inlineImages,
+        attachments,
+      });
+    }
+
+
+    // Save all emails sent (could be improved to track individually)
     const storedEmails = finalEmailsToSend.map((email) => ({
       email_to: email,
       email_bcc: email_bcc || [],
       subject,
-      description,
-      attachments
+      description, // general description text here
+      attachments,
     }));
 
     await createEmail(storedEmails);
 
     const messageParts = [`Mail sent successfully to: ${finalEmailsToSend.join(', ')}`];
-
-     if (inactiveEmails.length > 0) {
-      messageParts.push(
-        `Email not sent to inactive applicants: ${inactiveEmails.join(', ')}`
-      );
+    if (inactiveEmails.length > 0) {
+      messageParts.push(`Email not sent to inactive applicants: ${inactiveEmails.join(', ')}`);
     }
 
     logger.info(Message.MAIL_SENT);
@@ -104,6 +218,10 @@ applicants.forEach(applicant => {
     );
   }
 };
+
+
+
+
 
 
 export const getAllEmails = async (req, res) => {
