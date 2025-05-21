@@ -1088,7 +1088,7 @@ export const exportApplicantCsv = async (req, res) => {
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
-      const query = { _id: { $in: ids }, isDeleted: false, isActive: true };
+      const query = { _id: { $in: ids }, isDeleted: false };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
@@ -1170,7 +1170,7 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     if (!main) {
-      const query = { isDeleted: false, isActive: true };
+      const query = { isDeleted: false };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;

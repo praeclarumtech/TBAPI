@@ -6,10 +6,10 @@ export const commonSearch = async (model, searchFields, query,searchSkills='', p
   }
   const searchConditions = [];
 
-  if (query) {
+   if (query) {
     searchConditions.push(
       ...searchFields.map(field => ({
-        [field]: { $regex: query, $options: 'i' }
+        [field]: { $regex: `^${query}`, $options: 'i' }
       }))
     );
   }

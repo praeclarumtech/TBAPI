@@ -23,7 +23,7 @@ export const buildApplicantQuery = (params) => {
     appliedSkillsOR
   } = params;
 
-  let query = { isDeleted: false, isActive: true };
+  let query = { isDeleted: false };
 
   if (applicationNo && !isNaN(applicationNo)) query.applicationNo = parseInt(applicationNo);
 
