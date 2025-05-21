@@ -3,6 +3,9 @@ import { applicantEnum, genderEnum } from '../../utils/enum.js';
 import states from '../../models/stateModel.js';
 import city from '../../models/citymodel.js';
 import Skills from '../../models/skillsModel.js';
+import appliedRoleModel from '../../models/appliedRoleModel.js'
+import designation from '../../models/designationModel.js'
+import mongoose from 'mongoose';
 
 export const generateApplicantCsv = (applicants, selectedFields = null, ids) => {
   const allFields = [
@@ -148,10 +151,53 @@ const normalizeAppliedSkills = async (collection, fieldName, appliedSkills) => {
     ) || skill.trim();
   });
 };
+const normalizeAppliedRole = async (model, input) => {
+  return normalizeField(model, 'appliedRole', input);
+};
+
+const normalizeCurrentCompanyDesignation = async (model, input) => {
+  return normalizeField(model, 'designation', input);
+};
+const normalizeField = async (model, fieldName, input) => {
+  if (!input) return '';
+  if (mongoose.Types.ObjectId.isValid(input)) {
+    const doc = await model.findById(input).select({ [fieldName]: 1 }).lean();
+    if (doc && doc[fieldName]) return doc[fieldName];
+  }
+
+  const cleanedInput = input.toString().replace(/\s+/g, '').toLowerCase();
+
+  const values = (await model.find({}, { [fieldName]: 1, _id: 0 }).lean())
+    .map(item => item[fieldName]);
+
+  const normalizedMap = Object.fromEntries(
+    values
+      .filter(val => val != null)
+      .map(val => {
+        if (typeof val === 'string') {
+          return [val.replace(/\s+/g, '').toLowerCase(), val];
+        }
+        return [val, val];
+      })
+  );
+
+  const exactMatch = normalizedMap[cleanedInput];
+  if (exactMatch) return exactMatch;
+
+  const fuzzyMatch = values.find(val =>
+    typeof val === 'string' &&
+    new RegExp(cleanedInput.split('').join('.*'), 'i').test(val.replace(/\s+/g, '').toLowerCase())
+  );
+  if (fuzzyMatch) return fuzzyMatch;
+  return input.toString().trim();
+};
 const validateAndFillFields = async (data, userRole) => {
   const finalState = await normalizeLocationField(states, 'state_name', data['State']);
   const finalCity = await normalizeLocationField(city, 'city_name', data['Current City']);
   const finalSkills = await normalizeAppliedSkills(Skills, 'skills', data['Applied Skills']);
+  const finalRole = await normalizeAppliedRole(appliedRoleModel, data['Applied Role']);
+  const finalDesignation = await normalizeCurrentCompanyDesignation(designation, data['Current Company Designation']);
+
   return {
     name: {
       firstName: data['First Name']?.trim() || null,
@@ -164,7 +210,6 @@ const validateAndFillFields = async (data, userRole) => {
         data['WhatsApp Number']?.trim() || data['Phone Number']?.trim() || null,
     },
     email: data['Email']?.trim() || null,
-    // gender: genderEnum[data['Gender']?.toUpperCase()] || null,
     ...(genderEnum[data['Gender']?.toUpperCase()] && {
       gender: genderEnum[data['Gender']?.toUpperCase()],
     }),
@@ -185,7 +230,6 @@ const validateAndFillFields = async (data, userRole) => {
     collegeName: data['College Name'] || '',
     cgpa: !isNaN(Number(data['CGPA'])) ? Number(data['CGPA']) : null,
     appliedSkills: finalSkills,
-    // appliedSkills: data['Applied Skills']?.split(',').map(skill => skill.trim()).filter(Boolean) || [],
     totalExperience: !isNaN(Number(data['Total Experience (years)']))
       ? Number(data['Total Experience (years)'])
       : 0,
@@ -200,26 +244,8 @@ const validateAndFillFields = async (data, userRole) => {
     otherSkills: data['Other Skills'] || '',
     rating: !isNaN(Number(data['Rating'])) ? Number(data['Rating']) : null,
     currentCompanyName: data['Current Company Name']?.trim() || '',
-
-    currentCompanyDesignation:
-      Object.values(applicantEnum).find(
-        (value) =>
-          value.replace(/\s+/g, '').toUpperCase() ===
-          data['Current Company Designation']
-            ?.trim()
-            .replace(/\s+/g, '')
-            .toUpperCase()
-      ) ||
-      data['Current Company Designation']?.trim() ||
-      null,
-    appliedRole:
-      Object.values(applicantEnum).find(
-        (value) =>
-          value.replace(/\s+/g, '').toUpperCase() ===
-          data['Applied Role']?.trim().replace(/\s+/g, '').toUpperCase()
-      ) ||
-      data['Applied Role']?.trim() ||
-      null,
+    urrentCompanyDesignation: finalDesignation,
+    appliedRole: finalRole,
     currentPkg:
       data['Current Package'] && !isNaN(Number(data['Current Package']))
         ? Number(data['Current Package'])
@@ -258,14 +284,13 @@ const validateAndFillFields = async (data, userRole) => {
     linkedinUrl: data['LinkedIn URL'] || '',
     clientCvUrl: data['Client CV URL'] || '',
     clientFeedback: data['Client Feedback'] || '',
-    // createdBy: userRole,
-    // updatedBy: userRole,
     addedBy: applicantEnum.CSV,
   }
 };
 export const processCsvRow = async (data, lineNumber, userRole) => {
   lineNumber += 1;
   const errorMessages = [];
+
   if (!data || typeof data !== 'object') {
     errorMessages.push('Invalid data provided to processCsvRow');
   }
@@ -290,63 +315,8 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     errorMessages.push(`${missingFields.join(', ')} field(s) are required at line ${lineNumber}.`);
   }
 
-  const fuzzyMatchEnum = (inputValue, fieldName) => {
-    if (!inputValue) return '';
-
-    //Clean the input
-    const cleanedInput = inputValue.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const enumValues = Object.values(applicantEnum);
-
-
-    const normalizedMap = enumValues.reduce((acc, val) => {
-      const key = val.replace(/[^a-zA-Z]/g, '').toLowerCase();
-      acc[key] = val; // Store original
-      return acc;
-    }, {});
-
-
-    //Exact match after cleaning:-frontenddeveloper" matches "Frontend Developer")
-    if (normalizedMap[cleanedInput]) {
-      return normalizedMap[cleanedInput];
-    }
-    const fuzzyPattern = cleanedInput
-      .split('')
-      .map((char, i) => {
-        if ('aeiou'.includes(char)) {
-          return `${char}?`;
-        }
-        return char;
-      })
-      .join('[a-z]*');
-
-    const fuzzyRegex = new RegExp(`^${fuzzyPattern}[a-z]*$`, 'i');
-
-
-    let bestMatch = null;
-    let bestScore = 0;
-
-    for (const [normalized, original] of Object.entries(normalizedMap)) {
-      if (fuzzyRegex.test(normalized)) {
-        let score = 0;
-        for (let i = 0; i < Math.min(cleanedInput.length, normalized.length); i++) {
-          if (cleanedInput[i] === normalized[i]) score++;
-          else break;
-        }
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = original;
-        }
-      }
-    }
-
-    if (bestMatch) {
-      return bestMatch;
-    }
-    errorMessages.push(`Invalid ${fieldName} "${inputValue}" please check.`);
-    return '';
-  };
-  const appliedRole = fuzzyMatchEnum(data['Applied Role'], 'appliedRole');
-  const currentCompanyDesignation = fuzzyMatchEnum(data['Current Company Designation'], 'currentCompanyDesignation');
+  const finalRole = await normalizeAppliedRole(appliedRoleModel, data['Applied Role']);
+  const finalDesignation = await normalizeCurrentCompanyDesignation(designation, data['Current Company Designation']);
 
   if (errorMessages.length > 0) {
     throw {
@@ -357,8 +327,9 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
 
   const validatedData = await validateAndFillFields(data, userRole);
 
-  validatedData.currentCompanyDesignation = currentCompanyDesignation || applicantEnum.SOFTWARE_ENGINEER;
-  validatedData.appliedRole = appliedRole || validatedData.currentCompanyDesignation;
+  validatedData.currentCompanyDesignation = finalDesignation || 'Software Engineer';
+  validatedData.appliedRole = finalRole || validatedData.currentCompanyDesignation;
+
   return {
     valid: true,
     data: {
