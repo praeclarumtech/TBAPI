@@ -2,6 +2,7 @@ import appliedRoleModel from '../models/appliedRoleModel.js';
 import Skills from '../models/skillsModel.js';
 import Degree from '../models/degreeModel.js';
 import logger from '../loggers/logger.js';
+import Applicant from '../models/applicantModel.js';
 
 export const create = async (body) => {
   try {
@@ -84,7 +85,7 @@ export const findAndReplaceFieldValue = async (field, find, replaceWith) => {
   for (let i = 0; i < findArray.length; i++) {
     const findValue = findArray[i].trim();
     const replaceValue = replaceArray[i].trim();
-    const regex = new RegExp(`^${escapeRegex(findValue)}$`, 'i');
+    const regex = new RegExp(`^${escapeRegex(findValue)}$`);
 
     let result;
 
@@ -103,7 +104,33 @@ export const findAndReplaceFieldValue = async (field, find, replaceWith) => {
         { degree: regex, isDeleted: false },
         { $set: { degree: replaceValue } }
       );
-    } else {
+    }else if (field === 'appliedSkills') {
+      result = await Applicant.updateMany(
+        {
+          appliedSkills: regex,
+          isDeleted: false
+        },
+        [
+          {
+            $set: {
+              appliedSkills: {
+                $map: {
+                  input: '$appliedSkills',
+                  as: 'skill',
+                  in: {
+                    $cond: [
+                      { $regexMatch: { input: '$$skill', regex: regex } },
+                      replaceValue,
+                      '$$skill'
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      );} 
+    else {
       throw new Error('Unsupported field for find and replace');
     }
 
@@ -128,7 +155,7 @@ export const previewFindFieldValue = async (field, find) => {
     let totalMatched = 0;
 
     for (const term of findTerms) {
-      const regex = new RegExp(`^${escapeRegex(term)}$`, 'i');
+      const regex = new RegExp(`^${escapeRegex(term)}$`);
       const query = {
         [field]: { $in: [regex] },
         isDeleted: false,
@@ -142,6 +169,8 @@ export const previewFindFieldValue = async (field, find) => {
         count = await Skills.countDocuments(query);
       } else if (field === 'degree') {
         count = await Degree.countDocuments(query);
+      }else if (field === 'appliedSkills') {
+        count = await Applicant.countDocuments(query);
       } else {
         throw new Error('Unsupported field for find');
       }
