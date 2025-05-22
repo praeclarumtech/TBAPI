@@ -20,7 +20,8 @@ export const buildApplicantQuery = (params) => {
     anyHandOnOffers,
     rating,
     communicationSkill,
-    appliedSkillsOR
+    appliedSkillsOR,
+    appliedRole
   } = params;
 
   let query = { isDeleted: false };
@@ -46,6 +47,14 @@ export const buildApplicantQuery = (params) => {
         );
 
       query.appliedSkills = { $in: skillsArray };
+    }
+
+     if (appliedRole && typeof appliedRole === 'string') {
+      const roleArray = appliedRole
+        .split(',')
+        .map((role) => new RegExp(`^${role.trim()}$`, 'i'))
+
+      query.appliedRole = { $in: roleArray };
     }
 
   if (totalExperience) {
