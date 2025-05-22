@@ -394,13 +394,13 @@ export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
   const isValidSingleInput =
     typeof find === 'string' && typeof replaceWith === 'string';
 
-  if (!['skills', 'appliedRole', 'degree'].includes(field)) {
+  if (!['skills', 'appliedRole', 'degree', 'appliedSkills'].includes(field)) {
     logger.warn(`Invalid field provided for find and replace`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Invalid field. Must be 'skills', 'appliedRole' or 'degree'.`
+      `Invalid field. Must be 'skills', 'appliedRole', 'appliedSkills' or 'degree'.`
     );
   }
 
@@ -470,6 +470,7 @@ export const previewFindSkillOrAppliedRole = async (req, res) => {
       'skills',
       'appliedRole',
       'degree',
+      'appliedSkills'
     ].includes(field)
   ) {
     logger.warn(`Invalid field provided for preview`);
