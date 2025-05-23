@@ -383,6 +383,7 @@ export const viewAllApplicant = async (req, res) => {
       addedBy,
       search,
       appliedSkillsOR,
+      appliedRole,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -434,6 +435,14 @@ export const viewAllApplicant = async (req, res) => {
         );
 
       query.appliedSkills = { $in: skillsArray };
+    }
+
+    if (appliedRole && typeof appliedRole === 'string') {
+      const roleArray = appliedRole
+        .split(',')
+        .map((role) => new RegExp(`^${role.trim()}$`, 'i'))
+
+      query.appliedRole = { $in: roleArray };
     }
 
     if (totalExperience) {
