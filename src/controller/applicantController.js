@@ -281,7 +281,7 @@ async function processSingleResumeFile(file) {
     appliedRole: role,
     addedBy: applicantEnum.RESUME,
     isActive: true,
-    resumeUrl: `/uploads/resumes/${file.filename}`,
+    resumeUrl: ``,
     originalFileName: file.originalname,
   };
 
