@@ -281,6 +281,7 @@ async function processSingleResumeFile(file) {
     appliedRole: role,
     addedBy: applicantEnum.RESUME,
     isActive: true,
+    country:'India',
     resumeUrl: `/uploads/resumes/${file.filename}`,
     originalFileName: file.originalname,
   };

@@ -85,7 +85,7 @@ export const findAndReplaceFieldValue = async (field, find, replaceWith) => {
   for (let i = 0; i < findArray.length; i++) {
     const findValue = findArray[i].trim();
     const replaceValue = replaceArray[i].trim();
-    const regex = new RegExp(`^${escapeRegex(findValue)}$`);
+    const regex = new RegExp(`^${escapeRegex(findValue)}$`,'i');
 
     let result;
 
@@ -156,7 +156,7 @@ export const previewFindFieldValue = async (field, find) => {
     let totalMatched = 0;
 
     for (const term of findTerms) {
-      const regex = new RegExp(`^${escapeRegex(term)}$`);
+      const regex = new RegExp(`^${escapeRegex(term)}$`,'i');
       const query = {
         [field]: { $in: [regex] },
         isDeleted: false,
