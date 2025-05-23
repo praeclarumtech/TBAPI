@@ -95,14 +95,14 @@ export const findAndReplaceFieldValue = async (field, find, replaceWith) => {
         { $set: { skills: replaceValue } }
       );
     } else if (field === 'appliedRole') {
-      result = await appliedRoleModel.updateMany(
+      result = await Applicant.updateMany(
         { appliedRole: regex, isDeleted: false },
         { $set: { appliedRole: replaceValue } }
       );
-    } else if (field === 'degree') {
-      result = await Degree.updateMany(
-        { degree: regex, isDeleted: false },
-        { $set: { degree: replaceValue } }
+    } else if (field === 'qualification') {
+      result = await Applicant.updateMany(
+        { qualification: regex, isDeleted: false },
+        { $set: { qualification: replaceValue } }
       );
     }else if (field === 'appliedSkills') {
       result = await Applicant.updateMany(
@@ -165,11 +165,11 @@ export const previewFindFieldValue = async (field, find) => {
       let count = 0;
 
       if (field === 'appliedRole') {
-        count = await appliedRoleModel.countDocuments(query);
+        count = await Applicant.countDocuments(query);
       } else if (field === 'skills') {
         count = await Skills.countDocuments(query);
-      } else if (field === 'degree') {
-        count = await Degree.countDocuments(query);
+      } else if (field === 'qualification') {
+        count = await Applicant.countDocuments(query);
       }else if (field === 'appliedSkills') {
         count = await Applicant.countDocuments(query);
       } else {
