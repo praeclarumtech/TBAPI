@@ -20,9 +20,11 @@ export const buildApplicantQuery = (params) => {
     anyHandOnOffers,
     rating,
     communicationSkill,
+    appliedSkillsOR,
+    appliedRole
   } = params;
 
-  let query = { isDeleted: false, isActive: true };
+  let query = { isDeleted: false };
 
   if (applicationNo && !isNaN(applicationNo)) query.applicationNo = parseInt(applicationNo);
 
@@ -32,6 +34,28 @@ export const buildApplicantQuery = (params) => {
     );
     query.appliedSkills = { $all: skillsArray };
   }
+
+  if (appliedSkillsOR) {
+      const skillsArray = appliedSkillsOR
+        .split(',')
+        .map(
+          (skill) =>
+            new RegExp(
+              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            )
+        );
+
+      query.appliedSkills = { $in: skillsArray };
+    }
+
+     if (appliedRole && typeof appliedRole === 'string') {
+      const roleArray = appliedRole
+        .split(',')
+        .map((role) => new RegExp(`^${role.trim()}$`, 'i'))
+
+      query.appliedRole = { $in: roleArray };
+    }
 
   if (totalExperience) {
     const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
@@ -84,6 +108,10 @@ export const buildApplicantQuery = (params) => {
   if (anyHandOnOffers !== undefined) {
     query.anyHandOnOffers = anyHandOnOffers === 'true';
   }
+
+  if (params.isActive !== undefined) {
+  query.isActive = params.isActive === 'true';
+}
 
   if (rating) {
     const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);

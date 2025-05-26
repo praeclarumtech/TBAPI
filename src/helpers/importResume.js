@@ -110,7 +110,7 @@ export const parseResumeText = (text) => {
   const preferredLocations = preferredLocationMatch
     ? preferredLocationMatch[2].trim()
     : 'Not Provided';
-  const linkedinUrl = linkedInMatch ? linkedInMatch[0] : 'Not Found';
+  const linkedinUrl = linkedInMatch ? linkedInMatch[0] : '';
   const currentCompanyName = currentCompanyMatch
     ? currentCompanyMatch[2].trim()
     : '';
