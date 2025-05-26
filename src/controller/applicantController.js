@@ -1375,11 +1375,8 @@ export const exportApplicantCsv = async (req, res) => {
 
       return;
     }
-    console.log("came from here")
     if (viewAll === 'true') {
       const query = buildApplicantQuery(req.query);
-      console.log("inside viewAll>>>>>>>>")
-
       if (source) {
         query.addedBy =
           source === 'Resume'
@@ -1390,7 +1387,6 @@ export const exportApplicantCsv = async (req, res) => {
                 ? applicantEnum.MANUAL
                 : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
       }
-      console.log("query.addedBy>>>>>>", query.addedBy)
       if (filtered) {
         query.addedBy =
           filtered === 'Resume'
@@ -1460,7 +1456,6 @@ export const exportApplicantCsv = async (req, res) => {
           }
 
           if (existingConflicts.length > 0) {
-            console.log("view all>>>>>")
             const conflictDetails = existingConflicts.map(
               (a) =>
                 `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
