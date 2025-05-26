@@ -105,8 +105,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
               results.skipped.push(processResult.data);
               await duplicateRecord.create({
                 fileName: processResult.data.file
-              });
-              console.log("skipped console",processResult.data.file)
+              })
             }
 
             results.processed++;
@@ -125,7 +124,6 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
             await duplicateRecord.create({
               fileName: file.originalname
             });
-            console.log("erorrr console",file.originalname)
           } finally {
             // Cleanup
             try {

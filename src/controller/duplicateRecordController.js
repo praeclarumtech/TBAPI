@@ -12,17 +12,17 @@ export const viewAllDuplicateRecord = async (req, res) => {
         let limit = Math.min(800, Math.max(1, parseInt(req.query.limit))) || 10;
         let search = req.query.search || "";
 
-        let data;
+        let item;
         let totalRecords;
 
         if (search) {
             const searchFields = ['fileName'];
             const searchResult = await commonSearch(duplicateRecord, searchFields, search,);
-            data = searchResult.results;
+            item = searchResult.results;
             totalRecords = searchResult.totalRecords;
         } else {
             totalRecords = await duplicateRecord.countDocuments();
-            data = await getAllDuplicateRecord(page, limit);
+            item = await getAllDuplicateRecord(page, limit);
         }
 
         logger.info(`All duplicate Record are ${Message.FETCH_SUCCESSFULLY}`);
@@ -32,7 +32,7 @@ export const viewAllDuplicateRecord = async (req, res) => {
             StatusCodes.OK,
             `All duplicate Record are ${Message.FETCH_SUCCESSFULLY}`,
             {
-                data,
+                item,
                 pagination: {
                     totalRecords: totalRecords,
                     currentPage: page,
@@ -42,7 +42,7 @@ export const viewAllDuplicateRecord = async (req, res) => {
             }
         );
     } catch (error) {
-        logger.error(`${Message.FAILED_TO} fetch duplicate Record.`);
+        logger.error(`${Message.FAILED_TO} fetch duplicate Record.`,error);
         return HandleResponse(
             res,
             false,
