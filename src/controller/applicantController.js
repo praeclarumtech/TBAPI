@@ -1095,7 +1095,7 @@ export const exportApplicantCsv = async (req, res) => {
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
-      const query = { _id: { $in: ids }, isDeleted: false, isActive: true };
+      const query = { _id: { $in: ids }, isDeleted: false };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
@@ -1186,7 +1186,7 @@ export const exportApplicantCsv = async (req, res) => {
                 res,
                 false,
                 StatusCodes.CONFLICT,
-                `All ${duplicateApplicants.length} records are duplicates: ` +
+                `${duplicateApplicants.length} records are duplicates: ` +
                 conflictDetails.join('; ')
               );
             }
@@ -1359,8 +1359,6 @@ export const exportApplicantCsv = async (req, res) => {
           }
         }
       }
-
-      // Handle case where fields are specified (just export)
       if (flag === false) {
         const csvData = generateApplicantCsv(applicants, selectedFields);
         const filename = fields?.length
@@ -1378,7 +1376,6 @@ export const exportApplicantCsv = async (req, res) => {
       return;
     }
     console.log("came from here")
-    //filtered or source
     if (viewAll === 'true') {
       const query = buildApplicantQuery(req.query);
       console.log("inside viewAll>>>>>>>>")
@@ -1490,7 +1487,6 @@ export const exportApplicantCsv = async (req, res) => {
             'Content-Disposition',
             `attachment; filename=${filename}`
           );
-
           return res.status(200).send(csvData);
         }
       }
