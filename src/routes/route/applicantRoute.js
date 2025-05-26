@@ -32,6 +32,11 @@ import { authorization } from '../../helpers/userMiddleware.js'
 const router = express.Router();
 
 router.post('/addApplicant', authorization, validator.body(applicantValidation), addApplicant);
+
+//same applicant route for Qr without auth 
+router.post('/addApplicantByQr', validator.body(applicantValidation), addApplicant);
+router.put('/updateApplicantByQr/:id', validator.body(updateApplicantValidation), updateApplicant);
+
 router.get('/viewAllApplicant', viewAllApplicant);
 router.get('/viewApplicant/:id', authorization, viewApplicant);
 router.get('/viewResumeAndCsvApplicant', authorization, getResumeAndCsvApplicants);

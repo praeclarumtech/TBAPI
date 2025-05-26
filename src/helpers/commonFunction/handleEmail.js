@@ -117,11 +117,13 @@ export const generateQrEmailHtml = async (applicantId) => {
 
   if (applicantId) {
     // url = `https://tb-front.vercel.app/applicants/edit-applicant/${applicantId}`;
-    url = `baseUrl/applicants/edit-applicant/${applicantId}`;
+    // url = `baseUrl/applicants/edit-applicant/${applicantId}`;
+    url = `http://localhost:3000/api/applicants/updateApplicantByQr/${applicantId}`
     cid = `qr-${applicantId}@qr`;
   } else {
     // url = `https://tb-front.vercel.app/applicants/add-applicant`
-    url = `baseUrl/applicants/add-applicant`
+    // url = `baseUrl/applicants/add-applicant`
+    url = `http://localhost:3000/api/applicants/addApplicantByQr`
     cid = `qr-new-applicant@qr`
   }
 
