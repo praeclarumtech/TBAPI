@@ -56,17 +56,16 @@ export const addAppliedRoleAndSkills = async (req, res) => {
 
     const existing = await appliedRoleModel.findOne({
       appliedRole: { $regex: `^${trimmedAppliedRole}$`, $options: 'i' },
-      skill: { $in: validSkillIds },
       isDeleted: false,
     });
 
     if (existing) {
-      logger.warn('Duplicate skill for the same applied role not allowed.');
+      logger.warn('Duplicate applied role not allowed.');
       return HandleResponse(
         res,
         false,
         StatusCodes.CONFLICT,
-        'This skill already exists for the given applied role.'
+        'This role already exists!.'
       );
     }
 
@@ -201,17 +200,16 @@ export const updateAppliedRoleAndSkill = async (req, res) => {
       const duplicate = await appliedRoleModel.findOne({
         _id: { $ne: id },
         appliedRole: { $regex: `^${updateData.appliedRole}$`, $options: 'i' },
-        skill: { $in: validSkillIds },
         isDeleted: false,
       });
 
       if (duplicate) {
-        logger.warn('Duplicate combination found.');
+        logger.warn('This role already exists!.');
         return HandleResponse(
           res,
           false,
           StatusCodes.CONFLICT,
-          'Same applied role and skill combination already exists.'
+          'This role already exists!.'
         );
       }
     }
@@ -394,13 +392,13 @@ export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
   const isValidSingleInput =
     typeof find === 'string' && typeof replaceWith === 'string';
 
-  if (!['skills', 'appliedRole', 'degree'].includes(field)) {
+  if (!['appliedRole', 'qualification', 'appliedSkills'].includes(field)) {
     logger.warn(`Invalid field provided for find and replace`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Invalid field. Must be 'skills', 'appliedRole' or 'degree'.`
+      `Invalid field. Must be 'appliedRole', 'appliedSkills' or 'qualification'.`
     );
   }
 
@@ -469,7 +467,8 @@ export const previewFindSkillOrAppliedRole = async (req, res) => {
     ![
       'skills',
       'appliedRole',
-      'degree',
+      'qualification',
+      'appliedSkills'
     ].includes(field)
   ) {
     logger.warn(`Invalid field provided for preview`);
@@ -477,7 +476,7 @@ export const previewFindSkillOrAppliedRole = async (req, res) => {
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Invalid field. Must be 'skills', 'appliedRole' or 'degree'.`
+      `Invalid field. Must be 'appliedSkills', 'appliedRole' or 'qualification'.`
     );
   }
 
