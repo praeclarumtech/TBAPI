@@ -29,6 +29,7 @@ import {
 } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
 import { authorization } from '../../helpers/userMiddleware.js'
+import { uploadResume } from '../../helpers/multer.js';
 const router = express.Router();
 
 router.post('/addApplicant', authorization, validator.body(applicantValidation), addApplicant);
@@ -49,7 +50,7 @@ router.put('/update/importApplicantstatus/:id', authorization, validator.body(up
 router.put('/update/status/:id', authorization, updateStatus);
 router.delete('/deleteApplicant/:id', authorization, deleteApplicant);
 
-router.post('/upload-resume', authorization, validator.body(updateApplicantValidation), uploadResumeAndCreateApplicant);
+router.post('/upload-resume', authorization, uploadResume, validator.body(updateApplicantValidation),uploadResumeAndCreateApplicant);
 
 // import export applicant
 router.post('/exportCsv', authorization, exportApplicantCsv);

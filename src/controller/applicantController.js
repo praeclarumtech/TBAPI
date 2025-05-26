@@ -50,18 +50,18 @@ import { extractSkillsFromResume } from '../services/applicantService.js';
 import { buildApplicantQuery } from '../helpers/commonFunction/filterQuery.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
-  uploadResume(req, res, async (err) => {
-    if (err) {
-      logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        err.message.includes('File type')
-          ? Message.INVALID_FILE_TYPE
-          : err.message
-      );
-    }
+  // uploadResume(req, res, async (err) => {
+  //   if (err) {
+  //     logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
+  //     return HandleResponse(
+  //       res,
+  //       false,
+  //       StatusCodes.BAD_REQUEST,
+  //       err.message.includes('File type')
+  //         ? Message.INVALID_FILE_TYPE
+  //         : err.message
+  //     );
+  //   }
 
     if (!req.files || req.files.length === 0) {
       logger.warn('No files Uploaded');
@@ -217,7 +217,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
           : undefined
       );
     }
-  });
+  // });
 };
 
 async function processSingleResumeFile(file) {
@@ -563,6 +563,8 @@ export const viewAllApplicant = async (req, res) => {
         'phone.whatsappNumber',
         'email',
       ];
+
+      // const pageNum = 1;
 
       const searchResults = await commonSearch(
         Applicant,
