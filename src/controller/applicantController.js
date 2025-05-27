@@ -1167,10 +1167,10 @@ export const exportApplicantCsv = async (req, res) => {
                   res,
                   true,
                   StatusCodes.PARTIAL_CONTENT,
-                  `${nonDuplicateApplicants.length} Records are moved successfully in main and ${duplicateApplicants.length} Records is already exist in main.`,
+                  `${nonDuplicateApplicants.length} records were moved successfully in applicants and ${duplicateApplicants.length} records is already exist.`,
                   {
                     duplicantCount: duplicateApplicants?.length || 0,
-                    successCount: nonDuplicateApplicants?.length || 0
+                    successCount: nonDuplicateApplicants.length || 0
                   }
                 );
               } else {
@@ -1292,15 +1292,14 @@ export const exportApplicantCsv = async (req, res) => {
                 const conflictDetails = duplicateApplicants.map(
                   (a) => `Duplicate skipped: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
                 );
-
                 return HandleResponse(
                   res,
                   true,
                   StatusCodes.PARTIAL_CONTENT,
-                  `${nonDuplicateApplicants.length} Records are moved successfully in main and ${duplicateApplicants.length} Records is already exist in main.`,
+                  `${nonDuplicateApplicants.length} records were moved successfully in applicants and ${duplicateApplicants.length} records is already exist.`,
                   {
                     duplicantCount: duplicateApplicants?.length || 0,
-                    successCount: nonDuplicateApplicants?.length || 0
+                    successCount: nonDuplicateApplicants.length || 0
                   }
                 );
               } else {
@@ -1321,8 +1320,8 @@ export const exportApplicantCsv = async (req, res) => {
                 res,
                 false,
                 StatusCodes.CONFLICT,
+                Message.DUPLICATE_RECORDS,
                 {
-                  message: 'All records are duplicates',
                   count: duplicateApplicants.length,
                   duplicates: conflictDetails
                 }
