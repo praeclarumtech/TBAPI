@@ -26,5 +26,5 @@ router.use('/appliedRole', appliedRoleRouter);
 router.use('/', countryRouter);
 router.use('/email/template', applicantEmailTempletRouter);
 router.use('/designation', designationRouter);
-router.use('/duplicateRecord', duplicateRecordRouter);
+router.use('/applicants', duplicateRecordRouter);
 export default router;

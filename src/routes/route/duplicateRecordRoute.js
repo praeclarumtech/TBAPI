@@ -5,10 +5,7 @@ import { authorization } from '../../helpers/userMiddleware.js';
 
 const router = express.Router();
 
-// router.post('/addDegree', authorization, validator.body(degreeValidation), addDegree);
-router.get('/viewAllDuplicateRecord', authorization, viewAllDuplicateRecord);
-// router.get('/viewById/:degreeId', authorization, getSingleDegree);
-// router.put('/update/:degreeId', authorization, validator.body(degreeValidation), updateDegreebyId);
-router.delete('/deleteManyDuplicatrecords', authorization, deleteManyDuplicatrecords);
+router.get('/duplicate-record', authorization, viewAllDuplicateRecord);
+router.delete('/duplicate-record/delete', authorization, deleteManyDuplicatrecords);
 
 export default router;
