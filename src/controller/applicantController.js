@@ -1168,14 +1168,17 @@ export const exportApplicantCsv = async (req, res) => {
                   true,
                   StatusCodes.PARTIAL_CONTENT,
                   `${nonDuplicateApplicants.length} Records are moved successfully in main and ${duplicateApplicants.length} Records is already exist in main.`,
-
+                  {
+                    duplicantCount: duplicateApplicants?.length || 0,
+                    successCount: nonDuplicateApplicants?.length || 0
+                  }
                 );
               } else {
                 return HandleResponse(
                   res,
                   true,
                   StatusCodes.GONE,
-                  `Records sucessfully to move applicants.`
+                  Message.MOVED_SUCCESSFULLY
                 );
               }
             } else {
@@ -1295,6 +1298,10 @@ export const exportApplicantCsv = async (req, res) => {
                   true,
                   StatusCodes.PARTIAL_CONTENT,
                   `${nonDuplicateApplicants.length} Records are moved successfully in main and ${duplicateApplicants.length} Records is already exist in main.`,
+                  {
+                    duplicantCount: duplicateApplicants?.length || 0,
+                    successCount: nonDuplicateApplicants?.length || 0
+                  }
                 );
               } else {
                 // All records moved successfully
@@ -1302,7 +1309,7 @@ export const exportApplicantCsv = async (req, res) => {
                   res,
                   true,
                   StatusCodes.GONE,
-                  `Records sucessfully to move applicants.`
+                  Message.MOVED_SUCCESSFULLY
                 );
               }
             } else {
@@ -1343,7 +1350,7 @@ export const exportApplicantCsv = async (req, res) => {
               res,
               true,
               StatusCodes.GONE,
-              `Records sucessfully to move applicants.`
+              Message.MOVED_SUCCESSFULLY
             );
           } else if (flag === false) {
             // Export all records
