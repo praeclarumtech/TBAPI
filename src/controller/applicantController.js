@@ -323,12 +323,12 @@ export const addApplicant = async (req, res) => {
       ...body,
     };
     const applicant = await createApplicant(applicantData);
-    logger.info(`Applicant is ${Message.ADDED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `Applicant is ${Message.ADDED_SUCCESSFULLY}`,
+      `Applicant ${Message.ADDED_SUCCESSFULLY}`,
       applicant
     );
   } catch (error) {
@@ -647,12 +647,12 @@ export const viewApplicant = async (req, res) => {
         `Applicant ${Message.NOT_FOUND}`
       );
     }
-    logger.info(`Applicant is ${Message.FETCH_BY_ID}: ${applicantId}`);
+    logger.info(`Applicant ${Message.FETCH_BY_ID}: ${applicantId}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is  ${Message.FETCH_BY_ID}`,
+      `Applicant ${Message.FETCH_BY_ID}`,
       applicant
     );
   } catch (error) {
@@ -928,21 +928,21 @@ export const updateApplicant = async (req, res) => {
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Applicant ${Message.UPDATED_SUCCESSFULLY}`,
       updatedApplicant
     );
   } catch (error) {
@@ -965,21 +965,21 @@ export const deleteApplicant = async (req, res) => {
     });
 
     if (!applicant) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} delete applicant.`);
@@ -1003,21 +1003,21 @@ export const updateStatus = async (req, res) => {
     });
 
     if (!updateStatus) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant status is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant status ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.ACCEPTED,
-      `Applicant status is ${Message.UPDATED_SUCCESSFULLY}`
+      `Applicant status ${Message.UPDATED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} update applicant.`);
@@ -1041,21 +1041,21 @@ export const updateStatusImportApplicant = async (req, res) => {
     });
 
     if (!updateStatus) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant status is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant status ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.ACCEPTED,
-      `Applicant status is ${Message.UPDATED_SUCCESSFULLY}`
+      `Applicant status ${Message.UPDATED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} update applicant.`);
@@ -1865,21 +1865,21 @@ export const deleteManyApplicants = async (req, res) => {
     }
     const removeApplicats = await removeManyApplicants(ids);
     if (removeApplicats.deletedCount === 0) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`,
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`,
       removeApplicats
     );
   } catch (error) {
@@ -2057,21 +2057,21 @@ export const updateImportedApplicant = async (req, res) => {
     );
 
     if (!updatedApplicant) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Applicant ${Message.UPDATED_SUCCESSFULLY}`,
       updatedApplicant
     );
   } catch (error) {
@@ -2094,21 +2094,21 @@ export const deleteImportedApplicant = async (req, res) => {
     });
 
     if (!applicant) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} delete applicant.`);
@@ -2128,21 +2128,21 @@ export const hardDeleteImportedApplicant = async (req, res) => {
     const result = await hardDeleteExportsApplicantById(applicantId);
 
     if (result.deletedCount === 0) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} delete applicant.`);
@@ -2170,21 +2170,21 @@ export const deleteManyImportedApplicants = async (req, res) => {
     const removeApplicats = await removeManyExportsApplicants(ids);
 
     if (removeApplicats.deletedCount === 0) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`,
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`,
       removeApplicats
     );
   } catch (error) {
@@ -2205,7 +2205,7 @@ export const activeApplicant = async (req, res) => {
     const applicant = await activateApplicant(applicantId);
 
     if (!applicant) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -2214,12 +2214,12 @@ export const activeApplicant = async (req, res) => {
       );
     }
 
-    logger.info(`Applicant is ${Message.ACTIVE_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.ACTIVE_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.ACTIVE_SUCCESSFULLY}`
+      `Applicant ${Message.ACTIVE_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} active applicant.`);
@@ -2244,16 +2244,16 @@ export const inActiveApplicant = async (req, res) => {
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.INACTIVE_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.INACTIVE_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.INACTIVE_SUCCESSFULLY}`
+      `Applicant ${Message.INACTIVE_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} inactive applicant.`);
