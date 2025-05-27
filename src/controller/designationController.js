@@ -16,7 +16,7 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 export const adddesignations = async (req, res) => {
   const { designation } = req.body;
   if (!designation || typeof designation !== 'string') {
-    logger.warn(`Designation is ${Message.NOT_FOUND}`);
+    logger.warn(`Designation ${Message.NOT_FOUND}`);
     return HandleResponse(
       res,
       false,
@@ -38,12 +38,12 @@ export const adddesignations = async (req, res) => {
     }
 
     const result = await create({ designation });
-    logger.info(`Designation is ${Message.ADDED_SUCCESSFULLY}`);
+    logger.info(`Designation ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `Designation is ${Message.ADDED_SUCCESSFULLY}`,
+      `Designation ${Message.ADDED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {
@@ -119,12 +119,12 @@ export const getDesignationsById = async (req, res) => {
         Message.NOT_FOUND
       );
     }
-    logger.info(`Designations is ${Message.FETCH_BY_ID}`);
+    logger.info(`Designations ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Designations is ${Message.FETCH_BY_ID}`,
+      `Designations ${Message.FETCH_BY_ID}`,
       result
     );
   } catch (error) {
@@ -163,7 +163,7 @@ export const updateDesignations = async (req, res) => {
     );
 
     if (!updatedDesignations) {
-      logger.warn(`Designation is ${Message.NOT_FOUND}`);
+      logger.warn(`Designation ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -171,12 +171,12 @@ export const updateDesignations = async (req, res) => {
         `Designation is ${Message.NOT_FOUND}`
       );
     }
-    logger.info(`Designation is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Designation ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.ACCEPTED,
-      `Designation is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Designation ${Message.UPDATED_SUCCESSFULLY}`,
       updatedDesignations
     );
   } catch (error) {
@@ -197,21 +197,21 @@ export const deleteDesignation = async (req, res) => {
     const result = await deleteDesignationById(id);
 
     if (result.deletedCount === 0) {
-      logger.warn(`Designation is ${Message.NOT_FOUND}`);
+      logger.warn(`Designation ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Designation is ${Message.NOT_FOUND}`
+        `Designation ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Designation is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Designation ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Designation is ${Message.DELETED_SUCCESSFULLY}`,
+      `Designation ${Message.DELETED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {
@@ -230,7 +230,7 @@ export const deleteManyDesignation = async (req, res) => {
     const { ids } = req.body;
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      logger.warn(`ObjectId is ${Message.NOT_FOUND}`);
+      logger.warn(`ObjectId ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -242,21 +242,21 @@ export const deleteManyDesignation = async (req, res) => {
     const removeEmails = await removeManyDesignation(ids);
 
     if (removeEmails.deletedCount === 0) {
-      logger.warn(`Designation is ${Message.NOT_FOUND}`);
+      logger.warn(`Designation ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `Designation is ${Message.NOT_FOUND}`
+        `Designation ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Designation is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Designation ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Designation is ${Message.DELETED_SUCCESSFULLY}`,
+      `Designation ${Message.DELETED_SUCCESSFULLY}`,
       removeEmails
     );
   } catch (error) {

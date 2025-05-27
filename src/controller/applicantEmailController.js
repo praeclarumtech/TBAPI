@@ -230,12 +230,12 @@ export const deleteManyEmails = async (req, res) => {
       );
     }
 
-    logger.info(`Email is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Email ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Email is ${Message.DELETED_SUCCESSFULLY}`,
+      `Email ${Message.DELETED_SUCCESSFULLY}`,
       removeEmails
     );
   } catch (error) {
