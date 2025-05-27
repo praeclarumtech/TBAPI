@@ -97,7 +97,7 @@ export const viewSkillsByAppliedRole = async (req, res) => {
   const { appliedRole } = req.query;
 
   if (!appliedRole) {
-    logger.warn(`Applied role is ${Message.NOT_FOUND}`);
+    logger.warn(`Applied role ${Message.NOT_FOUND}`);
     return HandleResponse(
       res,
       false,
@@ -259,12 +259,12 @@ export const getSkillsById = async (req, res) => {
         Message.NOT_FOUND
       );
     }
-    logger.info(`Skill is ${Message.FETCH_BY_ID}`);
+    logger.info(`Skill ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Skill is ${Message.FETCH_BY_ID}`,
+      `Skill ${Message.FETCH_BY_ID}`,
       result
     );
   } catch (error) {
@@ -352,21 +352,21 @@ export const deleteAppliedRoleAndSkill = async (req, res) => {
     const result = await deleteSkill(id);
 
     if (result.deletedCount === 0) {
-      logger.warn(`Skill is ${Message.NOT_FOUND}`);
+      logger.warn(`Skill ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Skill is ${Message.NOT_FOUND}`
+        `Skill ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Skill is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Skill ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Skill is ${Message.DELETED_SUCCESSFULLY}`,
+      `Skill ${Message.DELETED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {

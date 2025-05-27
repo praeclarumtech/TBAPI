@@ -43,6 +43,8 @@ export const Message = {
   DONWLOADED: 'File downloaded successfully.',
   IMPORTED: 'File imported successfully.',
   ACTIVE_SUCCESSFULLY: 'active Successfully.',
-  INACTIVE_SUCCESSFULLY:'Inactive Successfully.'
+  INACTIVE_SUCCESSFULLY: 'Inactive Successfully.',
+  MOVED_SUCCESSFULLY: 'Records sucessfully to move applicants.',
+  DUPLICATE_RECORDS: 'All records are duplicates.'
 };
 
