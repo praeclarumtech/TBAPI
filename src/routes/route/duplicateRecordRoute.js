@@ -6,6 +6,6 @@ import { authorization } from '../../helpers/userMiddleware.js';
 const router = express.Router();
 
 router.get('/duplicate-record', authorization, viewAllDuplicateRecord);
-router.delete('/duplicate-record/delete', authorization, deleteManyDuplicatrecords);
+router.delete('/delete/duplicate-record', authorization, deleteManyDuplicatrecords);
 
 export default router;
