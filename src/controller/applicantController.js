@@ -104,12 +104,18 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
             } else {
               results.skipped.push(processResult.data);
               await duplicateRecord.create({
-                fileName: processResult.data.file
-              })
+                fileName: processResult.data.file,
+                reason: processResult.data.reason,
+                email: processResult.data.email,
+              });
             }
 
             results.processed++;
           } catch (error) {
+            let reason = 'could not extract email or phone from resume';
+            if (error.code === 11000) {
+              reason = `Duplicate applicant`;
+            }
             results.errors.push({
               file: file.originalname,
               error: error.message,
@@ -122,7 +128,8 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
               `Error processing ${file.originalname}: ${error.message}`
             );
             await duplicateRecord.create({
-              fileName: file.originalname
+              fileName: file.originalname,
+              reason: reason,
             });
           } finally {
             // Cleanup

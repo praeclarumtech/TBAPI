@@ -4,6 +4,12 @@ const duplicateRecordSchema = new mongoose.Schema(
     {
         fileName: {
             type: String
+        },
+        reason:{
+            type: String
+        },
+        email:{
+             type: String
         }
     },
     {
