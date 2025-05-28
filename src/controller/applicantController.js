@@ -151,23 +151,17 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       let responseMessage = '';
       if (results.inserted.length > 0) {
-        responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
-          } added successfully.`;
+        responseMessage = `${results.inserted.length} applicant${
+          results.inserted.length > 1 ? 's' : ''
+        } added successfully.`;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
         const skippedAndErrorCount =
           results.skipped.length + results.errors.length;
-        responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
-          } skipped due to duplicate record or resume not parsing `;
-
-        const skippedFiles = results.skipped.map((item) => item.file);
-        const errorFiles = results.errors.map((item) => item.file);
-        const allProblemFiles = [...skippedFiles, ...errorFiles];
-
-        if (allProblemFiles.length > 0) {
-          responseMessage += `(${allProblemFiles.join(',\n ')}.)`;
-        }
+        responseMessage += `${skippedAndErrorCount} applicant${
+          skippedAndErrorCount > 1 ? 's' : ''
+        } skipped due to duplicate record or resume not parsing `;
       }
 
       if (
@@ -175,10 +169,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         results.skipped.length > 0 &&
         results.errors.length === 0
       ) {
-        const errorMessages = results.skipped
-          .map((err) => `${err.file}`)
-          .join(',\n');
-        responseMessage = `No applicants has been inserted due to duplicate record file : (${errorMessages})`;
+        responseMessage = `No applicants has been inserted due to duplicate record.`;
       }
 
       if (
@@ -186,21 +177,14 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         results.skipped.length === 0 &&
         results.errors.length > 0
       ) {
-        const errorMessages = results.errors
-          .map((err) => `${err.file}`)
-          .join(',\n');
-        responseMessage = `No applicants has been inserted due to could not extract email or phone from resume : ${errorMessages}`;
+        responseMessage = `No applicants has been inserted due to could not extract email or phone from resume.`;
       }
 
       logger.info(`${responseMessage} ${JSON.stringify(results.errors)}`);
       return HandleResponse(
         res,
         results.inserted.length > 0,
-        allSkipped
-          ? StatusCodes.CONFLICT
-          : hasErrors
-            ? StatusCodes.CREATED
-            : StatusCodes.CREATED,
+        allSkipped ? StatusCodes.CONFLICT : StatusCodes.CREATED,
         responseMessage,
         {
           summary: {
@@ -209,11 +193,6 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
             insertedApplicants: results.inserted.length,
             skippedApplicants: results.skipped.length,
             erroredFiles: results.errors.length,
-          },
-          details: {
-            inserted: results.inserted,
-            skipped: results.skipped,
-            errors: results.errors,
           },
         }
       );
@@ -413,8 +392,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-            ? { $in: validAddedBy }
-            : undefined;
+          ? { $in: validAddedBy }
+          : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -1104,8 +1083,8 @@ export const exportApplicantCsv = async (req, res) => {
 
     const projection = selectedFields
       ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-        _id: 1,
-      })
+          _id: 1,
+        })
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
@@ -1146,7 +1125,9 @@ export const exportApplicantCsv = async (req, res) => {
         });
 
         if (existingApplicants.length > 0) {
-          const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
+          const existingEmailSet = new Set(
+            existingApplicants.map((a) => a.email)
+          );
           const existingPhoneSet = new Set(
             existingApplicants.map((a) => a.phone?.phoneNumber)
           );
@@ -1167,7 +1148,7 @@ export const exportApplicantCsv = async (req, res) => {
           if (flag === true) {
             if (nonDuplicateApplicants.length > 0) {
               // Get IDs of non-duplicate applicants to move
-              const nonDuplicateIds = nonDuplicateApplicants.map(a => a._id);
+              const nonDuplicateIds = nonDuplicateApplicants.map((a) => a._id);
 
               // Move only non-duplicate records
               await insertManyApplicantsToMain(nonDuplicateApplicants);
@@ -1184,7 +1165,7 @@ export const exportApplicantCsv = async (req, res) => {
                   `${nonDuplicateApplicants.length} records were moved successfully in applicants and ${duplicateApplicants.length} records is already exist.`,
                   {
                     duplicantCount: duplicateApplicants?.length || 0,
-                    successCount: nonDuplicateApplicants.length || 0
+                    successCount: nonDuplicateApplicants.length || 0,
                   }
                 );
               } else {
@@ -1204,7 +1185,7 @@ export const exportApplicantCsv = async (req, res) => {
                 false,
                 StatusCodes.CONFLICT,
                 `${duplicateApplicants.length} records are duplicates: ` +
-                conflictDetails.join('; ')
+                  conflictDetails.join('; ')
               );
             }
           }
@@ -1213,7 +1194,7 @@ export const exportApplicantCsv = async (req, res) => {
         // If no duplicates found or flag is false
         if (flag === true) {
           // No duplicates - move all records using their actual IDs
-          const applicantIds = applicants.map(a => a._id);
+          const applicantIds = applicants.map((a) => a._id);
           await insertManyApplicantsToMain(applicants);
           await deleteExportedApplicants({ _id: { $in: applicantIds } });
           return HandleResponse(
@@ -1274,7 +1255,9 @@ export const exportApplicantCsv = async (req, res) => {
         });
 
         if (existingApplicants.length > 0) {
-          const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
+          const existingEmailSet = new Set(
+            existingApplicants.map((a) => a.email)
+          );
           const existingPhoneSet = new Set(
             existingApplicants.map((a) => a.phone?.phoneNumber)
           );
@@ -1298,13 +1281,14 @@ export const exportApplicantCsv = async (req, res) => {
               // Move only non-duplicate records
               await insertManyApplicantsToMain(nonDuplicateApplicants);
               await deleteExportedApplicants({
-                _id: { $in: nonDuplicateApplicants.map(a => a._id) }
+                _id: { $in: nonDuplicateApplicants.map((a) => a._id) },
               });
 
               if (duplicateApplicants.length > 0) {
                 // Partial success - some moved, some duplicates
                 const conflictDetails = duplicateApplicants.map(
-                  (a) => `Duplicate skipped: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
+                  (a) =>
+                    `Duplicate skipped: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
                 );
                 return HandleResponse(
                   res,
@@ -1313,7 +1297,7 @@ export const exportApplicantCsv = async (req, res) => {
                   `${nonDuplicateApplicants.length} records were moved successfully in applicants and ${duplicateApplicants.length} records is already exist.`,
                   {
                     duplicantCount: duplicateApplicants?.length || 0,
-                    successCount: nonDuplicateApplicants.length || 0
+                    successCount: nonDuplicateApplicants.length || 0,
                   }
                 );
               } else {
@@ -1327,7 +1311,8 @@ export const exportApplicantCsv = async (req, res) => {
               }
             } else {
               const conflictDetails = duplicateApplicants.map(
-                (a) => `Duplicate: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
+                (a) =>
+                  `Duplicate: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
               );
 
               return HandleResponse(
@@ -1337,7 +1322,7 @@ export const exportApplicantCsv = async (req, res) => {
                 Message.DUPLICATE_RECORDS,
                 {
                   count: duplicateApplicants.length,
-                  duplicates: conflictDetails
+                  duplicates: conflictDetails,
                 }
               );
             }
@@ -1357,7 +1342,9 @@ export const exportApplicantCsv = async (req, res) => {
           if (flag === true) {
             // Move all records
             await insertManyApplicantsToMain(applicants);
-            await deleteExportedApplicants({ _id: { $in: applicants.map(a => a._id) } });
+            await deleteExportedApplicants({
+              _id: { $in: applicants.map((a) => a._id) },
+            });
 
             return HandleResponse(
               res,
@@ -1399,21 +1386,21 @@ export const exportApplicantCsv = async (req, res) => {
       const query = buildApplicantQuery(req.query);
       if (source) {
         query.addedBy =
-          source === 'Resume'
+          source === applicantEnum.RESUME
             ? applicantEnum.RESUME
-            : source === 'Csv'
-              ? applicantEnum.CSV
-              : source === 'Manual'
-                ? applicantEnum.MANUAL
-                : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+            : source === applicantEnum.CSV
+            ? applicantEnum.CSV
+            : source === applicantEnum.MANUAL
+            ? applicantEnum.MANUAL
+            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
       }
       if (filtered) {
         query.addedBy =
-          filtered === 'Resume'
+          filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
-            : filtered === 'Csv'
-              ? applicantEnum.CSV
-              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+            : filtered === applicantEnum.CSV
+            ? applicantEnum.CSV
+            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1573,8 +1560,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-          ? false
-          : undefined;
+        ? false
+        : undefined;
 
     const user = await User.findById(req.user.id);
 
