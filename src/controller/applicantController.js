@@ -18,6 +18,7 @@ import {
   AddManyApplicantsByImport,
   inActivateApplicant,
   activateApplicant,
+  addToFavApplicntService,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -2265,3 +2266,40 @@ export const inActiveApplicant = async (req, res) => {
     );
   }
 };
+
+export const favoriteStatus = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { isFavorite } = req.body
+
+    const applicant = await addToFavApplicntService(applicantId, { isFavorite });
+    console.log(applicant)
+    if (!applicant) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+    const message = isFavorite
+      ? 'Successfully added to favorites'
+      : 'Successfully removed from favorites';
+    logger.info(`Applicant ${Message.ADD_TO_FAV}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      message
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} add favorite`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} add favorite applicant.`
+    );
+  }
+}

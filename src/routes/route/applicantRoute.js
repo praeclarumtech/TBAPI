@@ -20,7 +20,8 @@ import {
   hardDeleteImportedApplicant,
   updateStatusImportApplicant,
   activeApplicant,
-  inActiveApplicant
+  inActiveApplicant,
+  favoriteStatus
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
@@ -61,5 +62,10 @@ router.get('/checkApplicant', authorization, checkApplicantExists);
 // Active - InActive
 router.patch('/activateApplicant/:id', authorization, activeApplicant);
 router.patch('/inactivateApplicant/:id', authorization, inActiveApplicant);
+
+//favorite
+router.patch('/favorite/:id', favoriteStatus);
+
+
 
 export default router;

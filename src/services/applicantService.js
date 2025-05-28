@@ -5,11 +5,11 @@ import appliedRoleModel from '../models/appliedRoleModel.js';
 import logger from '../loggers/logger.js';
 
 export const createApplicant = async (body) => {
-  try{
-  const applicant = new Applicant({ ...body });
-  await applicant.save();
-  return applicant;
-  } catch (error){
+  try {
+    const applicant = new Applicant({ ...body });
+    await applicant.save();
+    return applicant;
+  } catch (error) {
     logger.error('Error while creating applicant', error);
     throw error;
   }
@@ -84,18 +84,18 @@ export const getAllapplicant = async (query) => {
 };
 
 export const getApplicantById = async (id) => {
-  try{
-  return Applicant.findById(id);
-  } catch(error) {
+  try {
+    return Applicant.findById(id);
+  } catch (error) {
     logger.error('Error while getting applicant by ID', error);
     throw error;
   }
 };
 
 export const updateApplicantById = async (id, updateData) => {
-  try{
-  return Applicant.updateOne({ _id: id }, updateData);
-  } catch(error){
+  try {
+    return Applicant.updateOne({ _id: id }, updateData);
+  } catch (error) {
     logger.error('Error while updating applicant by ID', error);
     throw error;
   }
@@ -241,12 +241,20 @@ export const extractMatchingRoleFromResume = async (resumeText) => {
   }
 };
 
+export const addToFavApplicntService = async (applicantId, data) => {
+  try {
+    return await Applicant.updateOne({ _id: applicantId }, data);
+  } catch (error) {
+    logger.error('Error in addToFavApplicntService', error);
+    throw error;
+  }
+};
 
 export const activateApplicant = async (applicantId) => {
   try {
     const applicant = await Applicant.findById(applicantId);
     if (!applicant) throw new Error('Applicant not found');
- 
+
     applicant.isActive = true;
     return await applicant.save();
   } catch (error) {
@@ -254,12 +262,12 @@ export const activateApplicant = async (applicantId) => {
     throw error;
   }
 };
- 
+
 export const inActivateApplicant = async (applicantId) => {
   try {
     const applicant = await Applicant.findById(applicantId);
     if (!applicant) throw new Error('Applicant not found');
- 
+
     applicant.isActive = false;
     return await applicant.save();
   } catch (error) {
@@ -267,4 +275,3 @@ export const inActivateApplicant = async (applicantId) => {
     throw error;
   }
 }
- 
