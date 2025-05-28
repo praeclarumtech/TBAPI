@@ -152,17 +152,15 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       let responseMessage = '';
       if (results.inserted.length > 0) {
-        responseMessage = `${results.inserted.length} applicant${
-          results.inserted.length > 1 ? 's' : ''
-        } added successfully.`;
+        responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
+          } added successfully.`;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
         const skippedAndErrorCount =
           results.skipped.length + results.errors.length;
-        responseMessage += `${skippedAndErrorCount} applicant${
-          skippedAndErrorCount > 1 ? 's' : ''
-        } skipped due to duplicate record or resume not parsing `;
+        responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
+          } skipped due to duplicate record or resume not parsing `;
 
         const skippedFiles = results.skipped.map((item) => item.file);
         const errorFiles = results.errors.map((item) => item.file);
@@ -202,8 +200,8 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         allSkipped
           ? StatusCodes.CONFLICT
           : hasErrors
-          ? StatusCodes.CREATED
-          : StatusCodes.CREATED,
+            ? StatusCodes.CREATED
+            : StatusCodes.CREATED,
         responseMessage,
         {
           summary: {
@@ -340,12 +338,12 @@ export const addApplicant = async (req, res) => {
       ...body,
     };
     const applicant = await createApplicant(applicantData);
-    logger.info(`Applicant is ${Message.ADDED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `Applicant is ${Message.ADDED_SUCCESSFULLY}`,
+      `Applicant ${Message.ADDED_SUCCESSFULLY}`,
       applicant
     );
   } catch (error) {
@@ -416,8 +414,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-          ? { $in: validAddedBy }
-          : undefined;
+            ? { $in: validAddedBy }
+            : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -664,12 +662,12 @@ export const viewApplicant = async (req, res) => {
         `Applicant ${Message.NOT_FOUND}`
       );
     }
-    logger.info(`Applicant is ${Message.FETCH_BY_ID}: ${applicantId}`);
+    logger.info(`Applicant ${Message.FETCH_BY_ID}: ${applicantId}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is  ${Message.FETCH_BY_ID}`,
+      `Applicant ${Message.FETCH_BY_ID}`,
       applicant
     );
   } catch (error) {
@@ -945,21 +943,21 @@ export const updateApplicant = async (req, res) => {
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Applicant ${Message.UPDATED_SUCCESSFULLY}`,
       updatedApplicant
     );
   } catch (error) {
@@ -982,21 +980,21 @@ export const deleteApplicant = async (req, res) => {
     });
 
     if (!applicant) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} delete applicant.`);
@@ -1020,21 +1018,21 @@ export const updateStatus = async (req, res) => {
     });
 
     if (!updateStatus) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant status is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant status ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.ACCEPTED,
-      `Applicant status is ${Message.UPDATED_SUCCESSFULLY}`
+      `Applicant status ${Message.UPDATED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} update applicant.`);
@@ -1058,21 +1056,21 @@ export const updateStatusImportApplicant = async (req, res) => {
     });
 
     if (!updateStatus) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant status is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant status ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.ACCEPTED,
-      `Applicant status is ${Message.UPDATED_SUCCESSFULLY}`
+      `Applicant status ${Message.UPDATED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} update applicant.`);
@@ -1107,12 +1105,12 @@ export const exportApplicantCsv = async (req, res) => {
 
     const projection = selectedFields
       ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-          _id: 1,
-        })
+        _id: 1,
+      })
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
-      const query = { _id: { $in: ids }, isDeleted: false, isActive: true };
+      const query = { _id: { $in: ids }, isDeleted: false };
 
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
@@ -1148,34 +1146,85 @@ export const exportApplicantCsv = async (req, res) => {
           ],
         });
 
-        if (existingApplicants.length > 0 && flag === true) {
-          const existingEmailSet = new Set(
-            existingApplicants.map((a) => a.email)
-          );
+        if (existingApplicants.length > 0) {
+          const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
           const existingPhoneSet = new Set(
             existingApplicants.map((a) => a.phone?.phoneNumber)
           );
 
-          const conflictDetails = applicants
-            .filter(
-              (a) =>
-                existingEmailSet.has(a.email) ||
-                existingPhoneSet.has(a.phone?.phoneNumber)
-            )
-            .map(
-              (a) =>
-                `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
-            );
+          // Separate non-duplicate and duplicate applicants
+          const nonDuplicateApplicants = applicants.filter(
+            (a) =>
+              !existingEmailSet.has(a.email) &&
+              !existingPhoneSet.has(a.phone?.phoneNumber)
+          );
 
+          const duplicateApplicants = applicants.filter(
+            (a) =>
+              existingEmailSet.has(a.email) ||
+              existingPhoneSet.has(a.phone?.phoneNumber)
+          );
+
+          if (flag === true) {
+            if (nonDuplicateApplicants.length > 0) {
+              // Get IDs of non-duplicate applicants to move
+              const nonDuplicateIds = nonDuplicateApplicants.map(a => a._id);
+
+              // Move only non-duplicate records
+              await insertManyApplicantsToMain(nonDuplicateApplicants);
+              await deleteExportedApplicants({ _id: { $in: nonDuplicateIds } });
+
+              if (duplicateApplicants.length > 0) {
+                const conflictDetails = duplicateApplicants.map(
+                  (a) => `Email: ${a.email}, Phone: ${a.phone?.phoneNumber}`
+                );
+                return HandleResponse(
+                  res,
+                  true,
+                  StatusCodes.PARTIAL_CONTENT,
+                  `${nonDuplicateApplicants.length} records were moved successfully in applicants and ${duplicateApplicants.length} records is already exist.`,
+                  {
+                    duplicantCount: duplicateApplicants?.length || 0,
+                    successCount: nonDuplicateApplicants.length || 0
+                  }
+                );
+              } else {
+                return HandleResponse(
+                  res,
+                  true,
+                  StatusCodes.GONE,
+                  Message.MOVED_SUCCESSFULLY
+                );
+              }
+            } else {
+              const conflictDetails = duplicateApplicants.map(
+                (a) => `Email: ${a.email}, Phone: ${a.phone?.phoneNumber}`
+              );
+              return HandleResponse(
+                res,
+                false,
+                StatusCodes.CONFLICT,
+                `${duplicateApplicants.length} records are duplicates: ` +
+                conflictDetails.join('; ')
+              );
+            }
+          }
+        }
+
+        // If no duplicates found or flag is false
+        if (flag === true) {
+          // No duplicates - move all records using their actual IDs
+          const applicantIds = applicants.map(a => a._id);
+          await insertManyApplicantsToMain(applicants);
+          await deleteExportedApplicants({ _id: { $in: applicantIds } });
           return HandleResponse(
             res,
-            false,
-            StatusCodes.CONFLICT,
-            conflictDetails
+            true,
+            StatusCodes.GONE,
+            `${applicants.length} records moved successfully`
           );
         }
       }
-
       if (flag === false) {
         const csvData = generateApplicantCsv(applicants, selectedFields, ids);
         const filename = fields?.length
@@ -1187,21 +1236,7 @@ export const exportApplicantCsv = async (req, res) => {
           'Content-Disposition',
           `attachment; filename=${filename}`
         );
-        res.status(StatusCodes.OK).send(csvData);
-      }
-
-      if (!fields?.length && !main) {
-        if (flag === true) {
-          await insertManyApplicantsToMain(applicants);
-          await deleteExportedApplicants({ _id: { $in: ids } });
-
-          return HandleResponse(
-            res,
-            true,
-            StatusCodes.GONE,
-            'Records sucessfully to move applicants'
-          );
-        }
+        return res.status(StatusCodes.OK).send(csvData);
       }
 
       return;
@@ -1221,7 +1256,7 @@ export const exportApplicantCsv = async (req, res) => {
           res,
           false,
           404,
-          'No applicants found for provided ids.'
+          'No applicants found for the current filter.'
         );
       }
 
@@ -1239,88 +1274,147 @@ export const exportApplicantCsv = async (req, res) => {
           ],
         });
 
-        if (existingApplicants.length > 0 && flag === true) {
-          const existingEmailSet = new Set(
-            existingApplicants.map((a) => a.email)
-          );
+        if (existingApplicants.length > 0) {
+          const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
           const existingPhoneSet = new Set(
             existingApplicants.map((a) => a.phone?.phoneNumber)
           );
 
-          const conflictDetails = applicants
-            .filter(
-              (a) =>
-                existingEmailSet.has(a.email) ||
-                existingPhoneSet.has(a.phone?.phoneNumber)
-            )
-            .map(
-              (a) =>
-                `Duplicate records found with Email:-${a.email} and Phone:- ${a.phone?.phoneNumber}`
-            );
-
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.CONFLICT,
-            conflictDetails
+          // Separate non-duplicate applicants
+          const nonDuplicateApplicants = applicants.filter(
+            (a) =>
+              !existingEmailSet.has(a.email) &&
+              !existingPhoneSet.has(a.phone?.phoneNumber)
           );
+
+          // Get conflicting applicants for reporting
+          const duplicateApplicants = applicants.filter(
+            (a) =>
+              existingEmailSet.has(a.email) ||
+              existingPhoneSet.has(a.phone?.phoneNumber)
+          );
+
+          if (flag === true) {
+            if (nonDuplicateApplicants.length > 0) {
+              // Move only non-duplicate records
+              await insertManyApplicantsToMain(nonDuplicateApplicants);
+              await deleteExportedApplicants({
+                _id: { $in: nonDuplicateApplicants.map(a => a._id) }
+              });
+
+              if (duplicateApplicants.length > 0) {
+                // Partial success - some moved, some duplicates
+                const conflictDetails = duplicateApplicants.map(
+                  (a) => `Duplicate skipped: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
+                );
+                return HandleResponse(
+                  res,
+                  true,
+                  StatusCodes.PARTIAL_CONTENT,
+                  `${nonDuplicateApplicants.length} records were moved successfully in applicants and ${duplicateApplicants.length} records is already exist.`,
+                  {
+                    duplicantCount: duplicateApplicants?.length || 0,
+                    successCount: nonDuplicateApplicants.length || 0
+                  }
+                );
+              } else {
+                // All records moved successfully
+                return HandleResponse(
+                  res,
+                  true,
+                  StatusCodes.GONE,
+                  Message.MOVED_SUCCESSFULLY
+                );
+              }
+            } else {
+              const conflictDetails = duplicateApplicants.map(
+                (a) => `Duplicate: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
+              );
+
+              return HandleResponse(
+                res,
+                false,
+                StatusCodes.CONFLICT,
+                Message.DUPLICATE_RECORDS,
+                {
+                  count: duplicateApplicants.length,
+                  duplicates: conflictDetails
+                }
+              );
+            }
+          } else if (flag === false) {
+            const csvData = generateApplicantCsv(applicants, selectedFields);
+            const filename = `${filtered || 'all'}_applicants.csv`;
+
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader(
+              'Content-Disposition',
+              `attachment; filename=${filename}`
+            );
+            return res.status(200).send(csvData);
+          }
+        } else {
+          // No duplicates found
+          if (flag === true) {
+            // Move all records
+            await insertManyApplicantsToMain(applicants);
+            await deleteExportedApplicants({ _id: { $in: applicants.map(a => a._id) } });
+
+            return HandleResponse(
+              res,
+              true,
+              StatusCodes.GONE,
+              Message.MOVED_SUCCESSFULLY
+            );
+          } else if (flag === false) {
+            // Export all records
+            const csvData = generateApplicantCsv(applicants, selectedFields);
+            const filename = `${filtered || 'all'}_applicants.csv`;
+
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader(
+              'Content-Disposition',
+              `attachment; filename=${filename}`
+            );
+            return res.status(200).send(csvData);
+          }
         }
       }
-
       if (flag === false) {
         const csvData = generateApplicantCsv(applicants, selectedFields);
         const filename = fields?.length
           ? 'selected_fields_applicants.csv'
-          : 'selected_ids_applicants.csv';
+          : 'filtered_applicants.csv';
 
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader(
           'Content-Disposition',
           `attachment; filename=${filename}`
         );
-        res.status(200).send(csvData);
-      }
-
-      if (!fields?.length && !main) {
-        if (flag === true) {
-          const finalIds = applicants.map((item) => item._id);
-          await insertManyApplicantsToMain(applicants);
-          await deleteExportedApplicants({ _id: { $in: finalIds } });
-
-          return HandleResponse(
-            res,
-            true,
-            StatusCodes.GONE,
-            'Records sucessfully to move applicants'
-          );
-        }
+        return res.status(200).send(csvData);
       }
 
       return;
     }
-
-    //filtered or source
     if (viewAll === 'true') {
       const query = buildApplicantQuery(req.query);
-
       if (source) {
         query.addedBy =
           source === 'Resume'
             ? applicantEnum.RESUME
             : source === 'Csv'
-            ? applicantEnum.CSV
-            : source === 'Manual'
-            ? applicantEnum.MANUAL
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : source === 'Manual'
+                ? applicantEnum.MANUAL
+                : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
       }
-
       if (filtered) {
         query.addedBy =
           filtered === 'Resume'
             ? applicantEnum.RESUME
             : filtered === 'Csv'
-            ? applicantEnum.CSV
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1409,7 +1503,6 @@ export const exportApplicantCsv = async (req, res) => {
             'Content-Disposition',
             `attachment; filename=${filename}`
           );
-
           return res.status(200).send(csvData);
         }
       }
@@ -1481,8 +1574,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     const user = await User.findById(req.user.id);
 
@@ -1787,21 +1880,21 @@ export const deleteManyApplicants = async (req, res) => {
     }
     const removeApplicats = await removeManyApplicants(ids);
     if (removeApplicats.deletedCount === 0) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`,
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`,
       removeApplicats
     );
   } catch (error) {
@@ -1979,21 +2072,21 @@ export const updateImportedApplicant = async (req, res) => {
     );
 
     if (!updatedApplicant) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Applicant ${Message.UPDATED_SUCCESSFULLY}`,
       updatedApplicant
     );
   } catch (error) {
@@ -2016,21 +2109,21 @@ export const deleteImportedApplicant = async (req, res) => {
     });
 
     if (!applicant) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} delete applicant.`);
@@ -2050,21 +2143,21 @@ export const hardDeleteImportedApplicant = async (req, res) => {
     const result = await hardDeleteExportsApplicantById(applicantId);
 
     if (result.deletedCount === 0) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} delete applicant.`);
@@ -2092,21 +2185,21 @@ export const deleteManyImportedApplicants = async (req, res) => {
     const removeApplicats = await removeManyExportsApplicants(ids);
 
     if (removeApplicats.deletedCount === 0) {
-      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `Applicant is ${Message.NOT_FOUND}`
+        `Applicant ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.DELETED_SUCCESSFULLY}`,
+      `Applicant ${Message.DELETED_SUCCESSFULLY}`,
       removeApplicats
     );
   } catch (error) {
@@ -2127,7 +2220,7 @@ export const activeApplicant = async (req, res) => {
     const applicant = await activateApplicant(applicantId);
 
     if (!applicant) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -2136,12 +2229,12 @@ export const activeApplicant = async (req, res) => {
       );
     }
 
-    logger.info(`Applicant is ${Message.ACTIVE_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.ACTIVE_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.ACTIVE_SUCCESSFULLY}`
+      `Applicant ${Message.ACTIVE_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} active applicant.`);
@@ -2166,16 +2259,16 @@ export const inActiveApplicant = async (req, res) => {
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Applicant is ${Message.INACTIVE_SUCCESSFULLY}`);
+    logger.info(`Applicant ${Message.INACTIVE_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant is ${Message.INACTIVE_SUCCESSFULLY}`
+      `Applicant ${Message.INACTIVE_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} inactive applicant.`);

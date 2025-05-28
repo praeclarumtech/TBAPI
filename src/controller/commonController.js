@@ -129,15 +129,6 @@ export const updateCountryById = async (req, res) => {
 
     const updatedcountrys = await updateCountry(countryId, updateData);
 
-    if (!updatedcountrys.modifiedCount) {
-      logger.warn(`country is ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `country is ${Message.NOT_FOUND}`
-      );
-    }
     logger.info(`country  is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -344,12 +335,12 @@ export const addState = async (req, res) => {
 
     const result = await createState({ state_name, country_id });
 
-    logger.info(`State is ${Message.ADDED_SUCCESSFULLY}`);
+    logger.info(`State ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `State is ${Message.ADDED_SUCCESSFULLY}`,
+      `State ${Message.ADDED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {
@@ -413,22 +404,12 @@ export const updateStateById = async (req, res) => {
 
     const updatedState = await updateState(stateId, { state_name, country_id });
 
-    if (!updatedState.modifiedCount) {
-      logger.warn(`State is ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `State is ${Message.NOT_FOUND}`
-      );
-    }
-
-    logger.info(`State is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`State ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.ACCEPTED,
-      `State is ${Message.UPDATED_SUCCESSFULLY}`,
+      `State ${Message.UPDATED_SUCCESSFULLY}`,
       updatedState
     );
   } catch (error) {
@@ -577,21 +558,21 @@ export const viewStateById = async (req, res) => {
       );
     }
 
-    logger.info(`State is ${Message.FETCH_BY_ID}`);
+    logger.info(`State ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `State is ${Message.FETCH_BY_ID}`,
+      `State ${Message.FETCH_BY_ID}`,
       stateData
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch State by id.`);
+    logger.error(`${Message.FAILED_TO} fetch state by id.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} fetch State by id.`,
+      `${Message.FAILED_TO} fetch state by id.`,
       undefined,
       error
     );
@@ -646,12 +627,12 @@ export const addCity = async (req, res) => {
 
     const result = await createCity({ city_name, state_id });
 
-    logger.info(`City is ${Message.ADDED_SUCCESSFULLY}`);
+    logger.info(`City ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `City is ${Message.ADDED_SUCCESSFULLY}`,
+      `City ${Message.ADDED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {

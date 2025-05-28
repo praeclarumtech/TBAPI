@@ -26,12 +26,12 @@ export const register = async (req, res, next) => {
     const existingUser = await getUser({ email });
 
     if (existingUser) {
-      logger.warn(`User is ${Message.ALREADY_EXIST}`);
+      logger.warn(`User ${Message.ALREADY_EXIST}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `User is ${Message.ALREADY_EXIST}`
+        `User ${Message.ALREADY_EXIST}`
       );
     }
 
@@ -63,12 +63,12 @@ export const login = async (req, res) => {
     const user = await getUser(isEmail ? { email } : { userName: email });
 
     if (!user) {
-      logger.info(`User is ${Message.NOT_FOUND}`);
+      logger.info(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
     const isMatch = await bcrypt.compare(password, user.password);
@@ -112,12 +112,12 @@ export const viewProfile = async (req, res) => {
   try {
     const user = await getAllusers();
     if (!user) {
-      logger.warn(`Profile is ${Message.NOT_FOUND}`);
+      logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Profile is ${Message.NOT_FOUND}`
+        `Profile ${Message.NOT_FOUND}`
       );
     }
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
@@ -145,12 +145,12 @@ export const getProfileByToken = async (req, res) => {
 
     const user = await getUserById(userId);
     if (!user) {
-      logger.warn(`Profile is ${Message.NOT_FOUND}`);
+      logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Profile is ${Message.NOT_FOUND}`
+        `Profile ${Message.NOT_FOUND}`
       );
     }
 
@@ -178,21 +178,21 @@ export const viewProfileById = async (req, res) => {
     const userId = req.params.id;
     const user = await getUserById(userId);
     if (!user) {
-      logger.warn(`Profile is ${Message.NOT_FOUND}`);
+      logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Profile is ${Message.NOT_FOUND}`
+        `Profile ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Profile is ${Message.FETCH_BY_ID}`);
+    logger.info(`Profile ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Profile is ${Message.FETCH_BY_ID}`,
+      `Profile ${Message.FETCH_BY_ID}`,
       user
     );
   } catch (error) {
@@ -242,21 +242,21 @@ export const updateProfile = (req, res) => {
       const updatedUser = await updateProfileById(userId, updateData);
 
       if (!updatedUser) {
-        logger.warn(`Profile is ${Message.NOT_FOUND}`);
+        logger.warn(`Profile ${Message.NOT_FOUND}`);
         return HandleResponse(
           res,
           false,
           StatusCodes.NOT_FOUND,
-          `Profile is ${Message.NOT_FOUND}`
+          `Profile ${Message.NOT_FOUND}`
         );
       }
 
-      logger.info(`Profile is ${Message.UPDATED_SUCCESSFULLY}`);
+      logger.info(`Profile ${Message.UPDATED_SUCCESSFULLY}`);
       return HandleResponse(
         res,
         true,
         StatusCodes.OK,
-        `Profile is ${Message.UPDATED_SUCCESSFULLY}`,
+        `Profile ${Message.UPDATED_SUCCESSFULLY}`,
         updatedUser
       );
     } catch (error) {
@@ -276,12 +276,12 @@ export const sendEmail = async (req, res) => {
     const { email } = req.body;
     const user = await findUserEmail({ email });
     if (!user) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
     const newOtp = Math.floor(1000 + Math.random() * 9000);
@@ -291,12 +291,12 @@ export const sendEmail = async (req, res) => {
 
     const data = await sendingEmail({ email, newOtp });
     if (!data) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
     await storeOtp(email, newOtp, expireOtp);
@@ -323,12 +323,12 @@ export const verifyOtp = async (req, res) => {
     const { email, otp } = req.body;
     const user = await findEmailForOtp({ email });
     if (!user) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
     if (new Date() > user.expirationIn) {
@@ -369,12 +369,12 @@ export const forgotPassword = async (req, res) => {
     const { email, newPassword, confirmPassword } = req.body;
     const user = await findUserEmail({ email });
     if (!user) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
 
@@ -390,12 +390,12 @@ export const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUserById(email, { password: hashedPassword });
 
-    logger.info(`Password is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Password ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.ACCEPTED,
-      `Password is ${Message.UPDATED_SUCCESSFULLY}`
+      `Password ${Message.UPDATED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} forgot passoword.`);
@@ -416,12 +416,12 @@ export const changePassword = async (req, res) => {
     const user = await getUserById(userId);
 
     if (!user) {
-      logger.warn(`User is ${Message.NOT_FOUND}`);
+      logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `User is ${Message.NOT_FOUND}`
+        `User ${Message.NOT_FOUND}`
       );
     }
     const isMatch = await bcrypt.compare(oldPassword, user.password);
