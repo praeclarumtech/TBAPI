@@ -116,6 +116,7 @@ import QRCode from 'qrcode'
 export const sendEmail = async (req, res) => {
   try {
     const { email_to, email_bcc, subject, description } = req.body;
+    let { flag } = req.query
 
     if (!email_to || (Array.isArray(email_to) && email_to.length === 0)) {
       return HandleResponse(
@@ -162,6 +163,8 @@ export const sendEmail = async (req, res) => {
       path: file.path,
     })) || [];
 
+    const sendQr = flag === 'true' || flag === '1';
+
     // Send email individually for each recipient with their own QR code
     for (const email of finalEmailsToSend) {
       const applicant = applicants.find(a => a.email === email && a.isActive);
@@ -169,14 +172,16 @@ export const sendEmail = async (req, res) => {
       let htmlContent = `<p>${description || 'Please find your QR code below.'}</p>`;
       const inlineImages = [];
 
-      if (applicant) {
-        const { htmlBlockforUpdate, inlineImage } = await generateQrEmailHtml(applicant._id);
-        htmlContent += htmlBlockforUpdate;
-        inlineImages.push(inlineImage);
-      } else {
-        const { htmlBlock, inlineImage } = await generateQrEmailHtml();
-        htmlContent += htmlBlock;
-        inlineImages.push(inlineImage);
+      if (sendQr) {
+        if (applicant) {
+          const { htmlBlockforUpdate, inlineImage } = await generateQrEmailHtml(applicant._id);
+          htmlContent += htmlBlockforUpdate;
+          inlineImages.push(inlineImage);
+        } else {
+          const { htmlBlock, inlineImage } = await generateQrEmailHtml();
+          htmlContent += htmlBlock;
+          inlineImages.push(inlineImage);
+        }
       }
 
       await sendingEmail({
@@ -188,8 +193,6 @@ export const sendEmail = async (req, res) => {
         attachments,
       });
     }
-
-
     // Save all emails sent (could be improved to track individually)
     const storedEmails = finalEmailsToSend.map((email) => ({
       email_to: email,
