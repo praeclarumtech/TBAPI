@@ -301,7 +301,6 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
     appliedRole: data['Applied Role']?.trim(),
     currentCompanyDesignation: data['Current Company Designation']?.trim(),
-    resumeUrl: data['Resume URL']?.trim(),
   };
 
   const missingFields = Object.entries(requiredFields)

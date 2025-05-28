@@ -15,7 +15,7 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 export const addDegree = async (req, res) => {
     const { degree } = req.body;
     if (!degree || typeof degree !== "string") {
-        logger.warn(`Qualification is ${Message.NOT_FOUND}`);
+        logger.warn(`Qualification ${Message.NOT_FOUND}`);
         return HandleResponse(
             res,
             false,
@@ -35,12 +35,12 @@ export const addDegree = async (req, res) => {
         }
 
         const result = await create({ degree });
-        logger.info(`Qualification is ${Message.ADDED_SUCCESSFULLY}`);
+        logger.info(`Qualification ${Message.ADDED_SUCCESSFULLY}`);
         HandleResponse(
             res,
             true,
             StatusCodes.CREATED,
-            `Qualification is ${Message.ADDED_SUCCESSFULLY}`,
+            `Qualification ${Message.ADDED_SUCCESSFULLY}`,
             result
         );
     } catch (error) {
@@ -109,15 +109,15 @@ export const getSingleDegree = async (req, res) => {
                 res,
                 false,
                 StatusCodes.NOT_FOUND,
-                `Qualification is ${Message.NOT_FOUND}`
+                `Qualification ${Message.NOT_FOUND}`
             );
         }
-        logger.info(`Qualification is ${Message.FETCH_BY_ID}`);
+        logger.info(`Qualification ${Message.FETCH_BY_ID}`);
         return HandleResponse(
             res,
             true,
             StatusCodes.OK,
-            `Qualification is ${Message.FETCH_BY_ID}`,
+            `Qualification ${Message.FETCH_BY_ID}`,
             result
         );
     } catch (error) {
@@ -139,20 +139,20 @@ export const updateDegreebyId = async (req, res) => {
         const updateddegree = await updateDegree(degreeId, updateData);
 
         if (!updateddegree) {
-            logger.warn(`Qualification is ${Message.NOT_FOUND}`);
+            logger.warn(`Qualification ${Message.NOT_FOUND}`);
             return HandleResponse(
                 res,
                 false,
                 StatusCodes.NOT_FOUND,
-                `Qualification is ${Message.NOT_FOUND}`
+                `Qualification ${Message.NOT_FOUND}`
             );
         }
-        logger.info(`Qualification is ${Message.UPDATED_SUCCESSFULLY}`);
+        logger.info(`Qualification ${Message.UPDATED_SUCCESSFULLY}`);
         return HandleResponse(
             res,
             true,
             StatusCodes.ACCEPTED,
-            `Qualification is ${Message.UPDATED_SUCCESSFULLY}`,
+            `Qualification ${Message.UPDATED_SUCCESSFULLY}`,
             updateddegree
         );
     } catch (error) {
@@ -189,14 +189,14 @@ export const deleteDegree = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `ObjectId is ${Message.NOT_FOUND}`
+        `ObjectId ${Message.NOT_FOUND}`
       );
     }
  
     const deletedDegree = await deleteManyDegrees(idsToDelete);
  
     if (deletedDegree.deletedCount === 0) {
-      logger.warn(`Qualification is ${Message.NOT_FOUND}`);
+      logger.warn(`Qualification ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -205,12 +205,12 @@ export const deleteDegree = async (req, res) => {
       );
     }
  
-    logger.info(`Qualification is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Qualification ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Qualification is ${Message.DELETED_SUCCESSFULLY}`,
+      `Qualification ${Message.DELETED_SUCCESSFULLY}`,
       deletedDegree
     );
   } catch (error) {
