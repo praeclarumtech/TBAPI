@@ -2,10 +2,6 @@ import duplicateRecord from "../models/duplicateRecordModel.js";
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import logger from '../loggers/logger.js';
 
-export const createDuplicateRecords = async (fileName) => {
-  return await duplicateRecord.create({ fileName });
-};
-
 export const getAllDuplicateRecord = async (page, limit) => {
   try {
     return await duplicateRecord.find()
