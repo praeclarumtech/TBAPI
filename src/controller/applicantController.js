@@ -20,7 +20,6 @@ import {
   activateApplicant,
 } from '../services/applicantService.js';
 import duplicateRecord from '../models/duplicateRecordModel.js';
-// import { createDuplicateRecords } from '../services/duplicateRecordService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 import { generateApplicantNo } from '../helpers/generateApplicationNo.js';
