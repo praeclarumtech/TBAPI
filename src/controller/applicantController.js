@@ -112,7 +112,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
             results.processed++;
           } catch (error) {
-            let reason = 'could not extract email or phone from resume';
+            let reason = 'Could not extract email or phone from resume';
             if (error.code === 11000) {
               reason = `Duplicate applicant`;
             }
