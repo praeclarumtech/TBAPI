@@ -21,7 +21,7 @@ import {
   updateStatusImportApplicant,
   activeApplicant,
   inActiveApplicant,
-  favoriteStatus
+  applicantFavoriteStatus
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
@@ -64,8 +64,5 @@ router.patch('/activateApplicant/:id', authorization, activeApplicant);
 router.patch('/inactivateApplicant/:id', authorization, inActiveApplicant);
 
 //favorite
-router.patch('/favorite/:id', favoriteStatus);
-
-
-
+router.patch('/favorite/status/:id', applicantFavoriteStatus);
 export default router;

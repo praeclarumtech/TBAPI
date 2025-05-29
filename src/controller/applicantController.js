@@ -18,7 +18,6 @@ import {
   AddManyApplicantsByImport,
   inActivateApplicant,
   activateApplicant,
-  addToFavApplicntService,
 } from '../services/applicantService.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -2267,12 +2266,12 @@ export const inActiveApplicant = async (req, res) => {
   }
 };
 
-export const favoriteStatus = async (req, res) => {
+export const applicantFavoriteStatus = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const { isFavorite } = req.body
 
-    const applicant = await addToFavApplicntService(applicantId, { isFavorite });
+    const applicant = await updateApplicantById(applicantId, { isFavorite });
     console.log(applicant)
     if (!applicant) {
       logger.warn(`Applicant is ${Message.NOT_FOUND}`);
@@ -2286,7 +2285,7 @@ export const favoriteStatus = async (req, res) => {
     const message = isFavorite
       ? 'Successfully added to favorites'
       : 'Successfully removed from favorites';
-    logger.info(`Applicant ${Message.ADD_TO_FAV}`);
+    logger.info(`Applicant ${isFavorite ? 'added to' : 'removed from'} favorites`);
     return HandleResponse(
       res,
       true,

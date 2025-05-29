@@ -241,15 +241,6 @@ export const extractMatchingRoleFromResume = async (resumeText) => {
   }
 };
 
-export const addToFavApplicntService = async (applicantId, data) => {
-  try {
-    return await Applicant.updateOne({ _id: applicantId }, data);
-  } catch (error) {
-    logger.error('Error in addToFavApplicntService', error);
-    throw error;
-  }
-};
-
 export const activateApplicant = async (applicantId) => {
   try {
     const applicant = await Applicant.findById(applicantId);
