@@ -2272,9 +2272,7 @@ export const applicantFavoriteStatus = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const { isFavorite } = req.body
-
     const applicant = await updateApplicantById(applicantId, { isFavorite });
-    console.log(applicant)
     if (!applicant) {
       logger.warn(`Applicant is ${Message.NOT_FOUND}`);
       return HandleResponse(
