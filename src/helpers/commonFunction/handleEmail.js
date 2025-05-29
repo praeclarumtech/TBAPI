@@ -114,16 +114,15 @@ export const generateQrEmailHtml = async (applicantId) => {
   let url = ''
   let cid = ''
   let baseUrl = process.env.FORM_URL
-
   if (applicantId) {
     // url = `https://tb-front.vercel.app/applicants/edit-applicant/${applicantId}`;
     // url = `baseUrl/applicants/edit-applicant/${applicantId}`;
-    url = `http://localhost:3000/api/applicants/updateApplicantByQr/${applicantId}`
+    url = `http://localhost:3000/api/applicants/applicant-edit-qr-code/${applicantId}`
     cid = `qr-${applicantId}@qr`;
   } else {
     // url = `https://tb-front.vercel.app/applicants/add-applicant`
     // url = `baseUrl/applicants/add-applicant`
-    url = `http://localhost:3000/api/applicants/addApplicantByQr`
+    url = `http://localhost:3000/api/applicants/applicant-add-qr-code`
     cid = `qr-new-applicant@qr`
   }
 

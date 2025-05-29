@@ -34,8 +34,8 @@ const router = express.Router();
 router.post('/addApplicant', authorization, validator.body(applicantValidation), addApplicant);
 
 //same applicant route for Qr without auth 
-router.post('/addApplicantByQr', validator.body(applicantValidation), addApplicant);
-router.put('/updateApplicantByQr/:id', validator.body(updateApplicantValidation), updateApplicant);
+router.post('/applicant-add-qr-code',addApplicant);
+router.put('/applicant-edit-qr-code/:id',updateApplicant);
 
 router.get('/viewAllApplicant', viewAllApplicant);
 router.get('/viewApplicant/:id', authorization, viewApplicant);
