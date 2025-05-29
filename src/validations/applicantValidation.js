@@ -327,7 +327,7 @@ export const updateApplicantValidation = Joi.object({
   collegeName: Joi.string().allow(null, ''),
   appliedRole: Joi.string()
     .messages({
-      'any.required': 'CurrentCompanyDesignation is required.',
+      'any.required': 'Applied role is required.',
     }),
   cgpa: Joi.number().allow(''),
   linkedinUrl: Joi.string().allow(''),
