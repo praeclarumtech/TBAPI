@@ -58,7 +58,7 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'linkedinUrl', label: 'LinkedIn URL', value: row => row.linkedinUrl || '' },
     { key: 'clientCvUrl', label: 'Client CV URL', value: row => row.clientCvUrl || '' },
     { key: 'clientFeedback', label: 'Client Feedback', value: row => row.clientFeedback || '' },
-    { key: 'meta', label: 'Meta', value: row => row.meta || '' },
+    { key: 'meta', label: 'Relevant Skills Experience', value: row => row.meta || '' },
   ];
   const exportKeys = (ids || selectedFields)
     ? selectedFields?.length
