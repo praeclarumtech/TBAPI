@@ -38,7 +38,7 @@ router.post('/applicant-add-qr-code',addApplicant);
 router.put('/applicant-edit-qr-code/:id',updateApplicant);
 
 router.get('/viewAllApplicant', viewAllApplicant);
-router.get('/viewApplicant/:id', authorization, viewApplicant);
+router.get('/viewApplicant/:id', viewApplicant);
 router.get('/viewResumeAndCsvApplicant', authorization, getResumeAndCsvApplicants);
 router.put('/updateApplicant/:id', authorization, validator.body(updateApplicantValidation), updateApplicant);
 
@@ -61,7 +61,7 @@ router.post('/exportCsv', authorization, exportApplicantCsv);
 router.post('/importCsv', authorization, importApplicantCsv);
 router.delete('/deleteManyApplicants', authorization, deleteManyApplicants);
 
-router.get('/checkApplicant', authorization, checkApplicantExists);
+router.get('/checkApplicant', checkApplicantExists);
 
 // Active - InActive
 router.patch('/activateApplicant/:id', authorization, activeApplicant);

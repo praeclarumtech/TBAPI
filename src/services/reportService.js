@@ -235,18 +235,15 @@ export const getApplicantCountByAddedBy = async (startDate, endDate) => {
   try {
     const query = { isDeleted: false };
 
-    if (startDate && endDate) {
+    if (startDate || endDate) {
+      const start = startDate
+        ? moment(startDate, 'DD-MM-YYYY').startOf('day').toDate()
+        : new Date('1970-01-01T00:00:00Z');
 
-      const hasTime = startDate.includes(':') && endDate.includes(':');
+      const end = endDate
+        ? moment(endDate, 'DD-MM-YYYY').endOf('day').toDate()
+        : moment().endOf('day').toDate();
 
-      const start = hasTime
-        ? moment(startDate, 'DD-MM-YYYY HH:mm').startOf('minute').toDate()
-        : moment(startDate, 'DD-MM-YYYY').startOf('day').toDate();
-
-      const end = hasTime
-        ? moment(endDate, 'DD-MM-YYYY HH:mm').endOf('minute').toDate()
-        : moment(endDate, 'DD-MM-YYYY').endOf('day').toDate();
-   
       query.createdAt = { $gte: start, $lte: end };
     }
 

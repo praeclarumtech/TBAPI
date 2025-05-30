@@ -12,7 +12,7 @@ import { authorization } from '../../helpers/userMiddleware.js';
 const router = express.Router();
 
 router.post('/adddesignations', authorization, adddesignations);
-router.get('/viewDesignation', authorization, getDesignation);
+router.get('/viewDesignation', getDesignation);
 router.get(
   '/getDesignationsById/:designationId',
   authorization,
