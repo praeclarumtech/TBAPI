@@ -151,17 +151,15 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       let responseMessage = '';
       if (results.inserted.length > 0) {
-        responseMessage = `${results.inserted.length} applicant${
-          results.inserted.length > 1 ? 's' : ''
-        } added successfully.`;
+        responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
+          } added successfully.`;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
         const skippedAndErrorCount =
           results.skipped.length + results.errors.length;
-        responseMessage += `${skippedAndErrorCount} applicant${
-          skippedAndErrorCount > 1 ? 's' : ''
-        } skipped due to duplicate record or resume not parsing `;
+        responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
+          } skipped due to duplicate record or resume not parsing `;
       }
 
       if (
@@ -392,8 +390,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-          ? { $in: validAddedBy }
-          : undefined;
+            ? { $in: validAddedBy }
+            : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -1083,8 +1081,8 @@ export const exportApplicantCsv = async (req, res) => {
 
     const projection = selectedFields
       ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-          _id: 1,
-        })
+        _id: 1,
+      })
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
@@ -1185,7 +1183,7 @@ export const exportApplicantCsv = async (req, res) => {
                 false,
                 StatusCodes.CONFLICT,
                 `${duplicateApplicants.length} records are duplicates: ` +
-                  conflictDetails.join('; ')
+                conflictDetails.join('; ')
               );
             }
           }
@@ -1389,18 +1387,18 @@ export const exportApplicantCsv = async (req, res) => {
           source === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : source === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : source === applicantEnum.MANUAL
-            ? applicantEnum.MANUAL
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : source === applicantEnum.MANUAL
+                ? applicantEnum.MANUAL
+                : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
       }
       if (filtered) {
         query.addedBy =
           filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : filtered === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1560,8 +1558,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     const user = await User.findById(req.user.id);
 
@@ -1591,86 +1589,103 @@ export const importApplicantCsv = async (req, res) => {
           const validApplicants = [];
           const csvValidationErrors = [];
 
-          for (let i = 0; i < results.length; i++) {
-            const row = results[i];
-            try {
-              const processed = await processCsvRow(row, i, user.role);
-              if (processed.valid) {
-                validApplicants.push({
-                  ...processed.data,
-                  __lineNumber: processed.number,
+          // Process all CSV rows
+          await Promise.all(
+            results.map(async (row, i) => {
+              try {
+                const processed = await processCsvRow(row, i, user.role);
+                if (processed.valid) {
+                  validApplicants.push({
+                    ...processed.data,
+                    __lineNumber: processed.number,
+                  });
+                }
+              } catch (err) {
+                const line = err?.lineNumber || i + 1;
+                const messages = Array.isArray(err.message) ? err.message : [err.message];
+                messages.forEach((msg) => {
+                  csvValidationErrors.push(`Line ${line}: ${msg}`);
                 });
               }
-            } catch (err) {
-              const line = err?.lineNumber || i + 1;
-              const messages = Array.isArray(err.message)
-                ? err.message
-                : [err.message];
-
-              messages.forEach((msg) => {
-                csvValidationErrors.push(`Line ${line}: ${msg}`);
-              });
-            }
-          }
+            })
+          );
 
           if (csvValidationErrors.length > 0) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(
-              res,
-              false,
-              StatusCodes.BAD_REQUEST,
-              csvValidationErrors
-            );
+            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, csvValidationErrors);
           }
 
           if (!validApplicants.length) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(
-              res,
-              false,
-              StatusCodes.BAD_REQUEST,
-              'No valid applicants found in the file'
-            );
+            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'No valid applicants found in the file');
           }
 
           const normalize = (str) => str.trim().toLowerCase();
-          const emailSet = new Set(
-            validApplicants.map((a) => normalize(a.email)).filter(Boolean)
+          const emailSet = new Set(validApplicants.map((a) => normalize(a.email)).filter(Boolean));
+
+          const [existingApplicants, existingPhones] = await Promise.all([
+            ExportsApplicants.find({ email: { $in: [...emailSet] } }).lean(),
+            ExportsApplicants.find({
+              $or: validApplicants.flatMap((a) => {
+                const { phone: { phoneNumber, whatsappNumber } = {} } = a;
+                const filters = [];
+                if (phoneNumber) filters.push({ 'phone.phoneNumber': phoneNumber });
+                if (whatsappNumber) filters.push({ 'phone.whatsappNumber': whatsappNumber });
+                return filters;
+              }),
+            }).lean(),
+          ]);
+
+          const existingEmailsSet = new Set(existingApplicants.map((e) => normalize(e.email)));
+          const existingPhoneSet = new Set(
+            existingPhones.flatMap((e) => [e?.phone?.phoneNumber, e?.phone?.whatsappNumber]).filter(Boolean)
           );
 
-          const existing = await ExportsApplicants.find({
-            email: { $in: [...emailSet] },
-          }).lean();
-          const existingEmailsSet = new Set(
-            existing.map((e) => normalize(e.email))
-          );
-
-          const phoneSet = new Set();
+          // const phoneSet = new Set();
+          const phoneMap = new Map();
           const insertedNewRecords = [];
           const updatedRecords = [];
           const skippedRecords = [];
           const duplicatePhoneErrors = [];
 
+          const itemsToInsert = [];
+          const itemsToUpdate = [];
           for (const item of validApplicants) {
-            const {
-              __lineNumber: line,
-              email,
-              phone: { phoneNumber, whatsappNumber } = {},
-            } = item;
+            const { __lineNumber: line, email, phone: { phoneNumber, whatsappNumber } = {} } = item;
+            let isDuplicateInFile = false
 
-            if (phoneSet.has(phoneNumber) || phoneSet.has(whatsappNumber)) {
-              duplicatePhoneErrors.push(
-                `Duplicate phone:- ${phoneNumber} or WhatsApp:-${whatsappNumber} number in file at Line:${line}`
-              );
+            if (phoneNumber && phoneMap.has(phoneNumber)) {
+              const originalLine = phoneMap.get(phoneNumber);
+              duplicatePhoneErrors.push(`Line ${line}: Duplicate phone number (${phoneNumber}) already used at Line ${originalLine}`);
+              console.log("originalLine>>>>>>", originalLine)
+              isDuplicateInFile = true;
+            }
+            if (whatsappNumber && phoneMap.has(whatsappNumber)) {
+              const originalLine = phoneMap.get(whatsappNumber);
+              duplicatePhoneErrors.push(`Line ${line}: Duplicate WhatsApp number (${whatsappNumber}) already used at Line ${originalLine}`);
+              isDuplicateInFile = true;
+            }
+            if (isDuplicateInFile) {
               skippedRecords.push(email);
               continue;
             }
 
-            phoneSet.add(phoneNumber);
-            phoneSet.add(whatsappNumber);
+            if (phoneNumber) phoneMap.set(phoneNumber, line);
+            if (whatsappNumber) phoneMap.set(whatsappNumber, line);
 
+            if (existingPhoneSet.has(phoneNumber) || existingPhoneSet.has(whatsappNumber)) {
+              if (existingPhoneSet.has(phoneNumber) && existingPhoneSet.has(whatsappNumber)) {
+                duplicatePhoneErrors.push(`Line ${line}: Phone: ${phoneNumber} and WhatsApp: ${whatsappNumber} already exist in DB.`);
+              } else if (existingPhoneSet.has(phoneNumber)) {
+                duplicatePhoneErrors.push(`Line ${line}: Phone: ${phoneNumber} already exists in DB.`);
+              } else if (existingPhoneSet.has(whatsappNumber)) {
+                duplicatePhoneErrors.push(`Line ${line}: WhatsApp: ${whatsappNumber} already exists in DB.`);
+              }
+
+              skippedRecords.push(email);
+              continue;
+            }
             const emailLower = normalize(email);
-
             const mappedItem = {
               ...item,
               email: emailLower,
@@ -1680,104 +1695,65 @@ export const importApplicantCsv = async (req, res) => {
               isActive: true,
             };
 
-            const isPhoneDuplicate = await ExportsApplicants.findOne({
-              email: { $ne: emailLower },
-              $or: [
-                { 'phone.phoneNumber': phoneNumber },
-                { 'phone.whatsappNumber': whatsappNumber },
-              ],
-            }).lean();
-
-            if (isPhoneDuplicate) {
-              duplicatePhoneErrors.push(
-                `Line ${line}: Phone or WhatsApp already exists in DB (Phone: ${phoneNumber}, WhatsApp: ${whatsappNumber})`
-              );
-              skippedRecords.push(email);
-              continue;
-            }
-
-            const isExistingEmail = existingEmailsSet.has(emailLower);
-
-            if (isExistingEmail && updateFlag) {
-              try {
-                await UpdateManyApplicantsByImport([mappedItem]);
+            if (existingEmailsSet.has(emailLower)) {
+              if (updateFlag) {
+                itemsToUpdate.push(mappedItem);
                 updatedRecords.push(email);
-              } catch (updateErr) {
-                logger.error(`Line ${line} update error:`, updateErr);
-                duplicatePhoneErrors.push(
-                  `Line ${line}: Failed to update record for ${emailLower}: ${updateErr.message}`
-                );
+              } else {
                 skippedRecords.push(email);
-                continue;
               }
-            } else if (!isExistingEmail) {
-              await ExportsApplicants.create(mappedItem);
-              insertedNewRecords.push(email);
             } else {
-              skippedRecords.push(email);
+              itemsToInsert.push(mappedItem);
+              insertedNewRecords.push(email);
             }
+          }
+
+          // Perform insert in batch
+          if (itemsToInsert.length > 0) {
+            await ExportsApplicants.insertMany(itemsToInsert, { ordered: false });
+          }
+
+          // Perform update in parallel
+          if (itemsToUpdate.length > 0) {
+            await Promise.all(
+              itemsToUpdate.map((item) =>
+                UpdateManyApplicantsByImport([item]).catch((updateErr) => {
+                  const line = item.__lineNumber;
+                  duplicatePhoneErrors.push(`Line ${line}: Failed to update record for ${item.email}: ${updateErr.message}`);
+                  skippedRecords.push(item.email);
+                })
+              )
+            );
           }
 
           fs.unlinkSync(req.file.path);
 
           if (duplicatePhoneErrors.length > 0) {
-            return HandleResponse(
-              res,
-              false,
-              StatusCodes.BAD_REQUEST,
-              duplicatePhoneErrors
-            );
+            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, duplicatePhoneErrors);
           }
 
-          if (updateFlag === false) {
+          if (!updateFlag) {
             const hasDuplicates = skippedRecords.length > 0;
             if (hasDuplicates) {
-              return HandleResponse(
-                res,
-                false,
-                StatusCodes.CONFLICT,
-                'Duplicate records found. Do you want to update?',
-                {
-                  existingEmails: skippedRecords,
-                }
-              );
+              return HandleResponse(res, false, StatusCodes.CONFLICT, 'Duplicate records found. Do you want to update?', {
+                existingEmails: skippedRecords,
+              });
             }
 
-            return HandleResponse(
-              res,
-              true,
-              StatusCodes.OK,
-              `${fileExt
-                .replace(/[.,\/\s]/g, '')
-                .toUpperCase()} imported successfully.`,
-              {
-                insertedNewRecords,
-                updatedRecords,
-              }
-            );
+            return HandleResponse(res, true, StatusCodes.OK, `${fileExt.replace(/[.,\/\s]/g, '').toUpperCase()} imported successfully.`, {
+              insertedNewRecords,
+              updatedRecords,
+            });
           }
 
-          if (updateFlag === true) {
-            return HandleResponse(
-              res,
-              true,
-              StatusCodes.OK,
-              'Records updated successfully.',
-              {
-                insertedNewRecords,
-                updatedRecords,
-              }
-            );
-          }
+          return HandleResponse(res, true, StatusCodes.OK, 'Records updated successfully.', {
+            insertedNewRecords,
+            updatedRecords,
+          });
         } catch (err) {
           logger.error('Error in processAndRespond:', err);
           fs.unlinkSync(req.file.path);
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            'An error occurred during processing.'
-          );
+          return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred during processing.');
         }
       };
 
