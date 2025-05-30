@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import { Parser as Json2csvParser } from 'json2csv';
 
 export const viewAllDuplicateRecord = async (req, res) => {
     try {
@@ -94,5 +95,33 @@ export const deleteManyDuplicatrecords = async (req, res) => {
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} deleteMany duplicate Record.`
     );
+  }
+};
+
+export const exportDuplicateRecords = async (req, res) => {
+  try {
+    const records = await duplicateRecord.find({}, {
+      _id: 0,
+      fileName: 1,
+      reason: 1,
+      createdAt: 1
+    }).lean();
+
+    const formattedRecords = records.map(record => ({
+      Filename: record.fileName || '',
+      Reason: record.reason || '',
+      Date: record.createdAt || ''
+    }));
+
+    const fields = ['Filename', 'Reason', 'Date'];
+    const json2csvParser = new Json2csvParser({ fields });
+    const csv = json2csvParser.parse(formattedRecords);
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="duplicateRecords.csv"');
+    return res.status(200).end(csv);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} export duplicate records`)
+    return res.status(500).json({ message: `${Message.FAILED_TO} export duplicate records` });
   }
 };
