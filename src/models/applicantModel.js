@@ -14,7 +14,7 @@ const ApplicantSchema = new mongoose.Schema(
       lastName: { type: String, required: false },
     },
     phone: {
-      whatsappNumber: { type: String, unique: true },
+      whatsappNumber: { type: String, required: false, unique: true },
       phoneNumber: { type: String, required: true, unique: true },
     },
     email: { type: String, required: true, unique: true },
