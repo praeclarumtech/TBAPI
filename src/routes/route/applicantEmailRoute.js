@@ -1,5 +1,5 @@
 import express from 'express';
-import { sendEmail, getAllEmails, deleteManyEmails, viewEmailById } from '../../controller/applicantEmailController.js';
+import { sendEmail, getAllEmails, deleteManyEmails, viewEmailById, getEmailCount } from '../../controller/applicantEmailController.js';
 import { sendEmailValidation } from '../../validations/sendEMailValidation.js'
 import { validator } from '../../helpers/validator.js';
 import { authorization } from '../../helpers/userMiddleware.js';
@@ -11,4 +11,5 @@ router.post('/editEmail', authorization, validator.body(sendEmailValidation), se
 router.get('/getAllEmails', authorization, getAllEmails);
 router.get('/viewEmailById/:id', authorization, viewEmailById);
 router.delete('/deleteManyEmails', authorization, deleteManyEmails);
+router.get('/count', authorization, getEmailCount);
 export default router;

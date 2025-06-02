@@ -98,3 +98,20 @@ export const createEmail = async (emailRecords) => {
     throw error;
   }
 };
+
+export const countEmailsByDate = async (startDate, endDate) => {
+  try {
+    const query = {
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    };
+
+    const count = await applicantEmail.countDocuments(query);
+    return count;
+  } catch (error) {
+    logger.error(`Error while counting emails between ${startDate} and ${endDate}:`, error);
+    throw new Error('Failed to count emails');
+  }
+};
