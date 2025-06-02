@@ -373,6 +373,7 @@ export const viewAllApplicant = async (req, res) => {
       search,
       appliedSkillsOR,
       appliedRole,
+      isFavorite
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -537,7 +538,9 @@ export const viewAllApplicant = async (req, res) => {
     if (req.query.isActive !== undefined) {
       query.isActive = req.query.isActive === 'true';
     }
-
+    if (req.query.isFavorite !== undefined) {
+      query.isFavorite = req.query.isFavorite === 'true';
+    }
     if (rating) {
       const rangeMatch = rating
         .toString()
@@ -2249,3 +2252,38 @@ export const inActiveApplicant = async (req, res) => {
     );
   }
 };
+
+export const applicantFavoriteStatus = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { isFavorite } = req.body
+    const applicant = await updateApplicantById(applicantId, { isFavorite });
+    if (!applicant) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+    const message = isFavorite
+      ? 'Successfully added to favorites'
+      : 'Successfully removed from favorites';
+    logger.info(`Applicant ${isFavorite ? 'added to' : 'removed from'} favorites`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      message
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} add favorite`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} add favorite applicant.`
+    );
+  }
+}

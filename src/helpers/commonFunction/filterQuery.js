@@ -21,7 +21,8 @@ export const buildApplicantQuery = (params) => {
     rating,
     communicationSkill,
     appliedSkillsOR,
-    appliedRole
+    appliedRole,
+    isFavorite,
   } = params;
 
   let query = { isDeleted: false };
@@ -36,26 +37,26 @@ export const buildApplicantQuery = (params) => {
   }
 
   if (appliedSkillsOR) {
-      const skillsArray = appliedSkillsOR
-        .split(',')
-        .map(
-          (skill) =>
-            new RegExp(
-              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
-              'i'
-            )
-        );
+    const skillsArray = appliedSkillsOR
+      .split(',')
+      .map(
+        (skill) =>
+          new RegExp(
+            `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+            'i'
+          )
+      );
 
-      query.appliedSkills = { $in: skillsArray };
-    }
+    query.appliedSkills = { $in: skillsArray };
+  }
 
-     if (appliedRole && typeof appliedRole === 'string') {
-      const roleArray = appliedRole
-        .split(',')
-        .map((role) => new RegExp(`^${role.trim()}$`, 'i'))
+  if (appliedRole && typeof appliedRole === 'string') {
+    const roleArray = appliedRole
+      .split(',')
+      .map((role) => new RegExp(`^${role.trim()}$`, 'i'))
 
-      query.appliedRole = { $in: roleArray };
-    }
+    query.appliedRole = { $in: roleArray };
+  }
 
   if (totalExperience) {
     const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
@@ -110,8 +111,11 @@ export const buildApplicantQuery = (params) => {
   }
 
   if (params.isActive !== undefined) {
-  query.isActive = params.isActive === 'true';
-}
+    query.isActive = params.isActive === 'true';
+  }
+  if (params.isFavorite !== undefined) {
+    query.isFavorite = params.isFavorite === 'true';
+  }
 
   if (rating) {
     const rangeMatch = rating.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
