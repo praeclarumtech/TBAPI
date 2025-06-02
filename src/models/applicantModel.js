@@ -128,6 +128,10 @@ const ApplicantSchema = new mongoose.Schema(
       default: true,
       required: true
     },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true }
 );

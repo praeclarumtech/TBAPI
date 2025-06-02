@@ -45,6 +45,7 @@ export const Message = {
   ACTIVE_SUCCESSFULLY: 'active Successfully.',
   INACTIVE_SUCCESSFULLY: 'Inactive Successfully.',
   MOVED_SUCCESSFULLY: 'Records sucessfully to move applicants.',
-  DUPLICATE_RECORDS: 'All records are duplicates.'
+  DUPLICATE_RECORDS: 'All records are duplicates.',
+  ADD_TO_FAV: 'successfully add to favorite.'
 };
 
