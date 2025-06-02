@@ -14,8 +14,8 @@ import { authorization } from '../../helpers/userMiddleware.js';
 const router = express.Router();
 
 router.post('/addAppliedRoleAndSkills', authorization, addAppliedRoleAndSkills);
-router.get('/viewSkillsByAppliedRole', authorization, viewSkillsByAppliedRole);
-router.get('/ViewAllSkillAndAppliedRole', authorization, ViewAllSkillAndAppliedRole);
+router.get('/viewSkillsByAppliedRole', viewSkillsByAppliedRole);
+router.get('/ViewAllSkillAndAppliedRole', ViewAllSkillAndAppliedRole);
 router.get('/viewskillAndAppliedRoleById/:id', authorization, getSkillsById);
 router.put('/updateAppliedRoleAndSkill/:id', authorization, updateAppliedRoleAndSkill);
 router.delete('/deleteAppliedRoleAndSkill/:id', authorization, deleteAppliedRoleAndSkill);
