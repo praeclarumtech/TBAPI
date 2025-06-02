@@ -151,17 +151,15 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       let responseMessage = '';
       if (results.inserted.length > 0) {
-        responseMessage = `${results.inserted.length} applicant${
-          results.inserted.length > 1 ? 's' : ''
-        } added successfully.`;
+        responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
+          } added successfully.`;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
         const skippedAndErrorCount =
           results.skipped.length + results.errors.length;
-        responseMessage += `${skippedAndErrorCount} applicant${
-          skippedAndErrorCount > 1 ? 's' : ''
-        } skipped due to duplicate record or resume not parsing `;
+        responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
+          } skipped due to duplicate record or resume not parsing `;
       }
 
       if (
@@ -375,6 +373,7 @@ export const viewAllApplicant = async (req, res) => {
       search,
       appliedSkillsOR,
       appliedRole,
+      isFavorite
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -392,8 +391,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-          ? { $in: validAddedBy }
-          : undefined;
+            ? { $in: validAddedBy }
+            : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -539,7 +538,9 @@ export const viewAllApplicant = async (req, res) => {
     if (req.query.isActive !== undefined) {
       query.isActive = req.query.isActive === 'true';
     }
-
+    if (req.query.isFavorite !== undefined) {
+      query.isFavorite = req.query.isFavorite === 'true';
+    }
     if (rating) {
       const rangeMatch = rating
         .toString()
@@ -1083,8 +1084,8 @@ export const exportApplicantCsv = async (req, res) => {
 
     const projection = selectedFields
       ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-          _id: 1,
-        })
+        _id: 1,
+      })
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
@@ -1185,7 +1186,7 @@ export const exportApplicantCsv = async (req, res) => {
                 false,
                 StatusCodes.CONFLICT,
                 `${duplicateApplicants.length} records are duplicates: ` +
-                  conflictDetails.join('; ')
+                conflictDetails.join('; ')
               );
             }
           }
@@ -1389,18 +1390,18 @@ export const exportApplicantCsv = async (req, res) => {
           source === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : source === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : source === applicantEnum.MANUAL
-            ? applicantEnum.MANUAL
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : source === applicantEnum.MANUAL
+                ? applicantEnum.MANUAL
+                : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
       }
       if (filtered) {
         query.addedBy =
           filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : filtered === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1560,8 +1561,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     const user = await User.findById(req.user.id);
 
@@ -2266,3 +2267,38 @@ export const inActiveApplicant = async (req, res) => {
     );
   }
 };
+
+export const applicantFavoriteStatus = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { isFavorite } = req.body
+    const applicant = await updateApplicantById(applicantId, { isFavorite });
+    if (!applicant) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+    const message = isFavorite
+      ? 'Successfully added to favorites'
+      : 'Successfully removed from favorites';
+    logger.info(`Applicant ${isFavorite ? 'added to' : 'removed from'} favorites`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      message
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} add favorite`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} add favorite applicant.`
+    );
+  }
+}
