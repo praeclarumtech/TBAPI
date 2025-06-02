@@ -19,6 +19,7 @@ import {
   inActivateApplicant,
   activateApplicant,
 } from '../services/applicantService.js';
+import duplicateRecord from '../models/duplicateRecordModel.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 import { generateApplicantNo } from '../helpers/generateApplicationNo.js';
@@ -101,10 +102,19 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
               results.inserted.push(processResult.data);
             } else {
               results.skipped.push(processResult.data);
+              await duplicateRecord.create({
+                fileName: processResult.data.file,
+                reason: processResult.data.reason,
+                email: processResult.data.email,
+              });
             }
 
             results.processed++;
           } catch (error) {
+            let reason = 'Could not extract email or phone from resume';
+            if (error.code === 11000) {
+              reason = `Duplicate applicant`;
+            }
             results.errors.push({
               file: file.originalname,
               error: error.message,
@@ -116,6 +126,10 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
             logger.error(
               `Error processing ${file.originalname}: ${error.message}`
             );
+            await duplicateRecord.create({
+              fileName: file.originalname,
+              reason: reason,
+            });
           } finally {
             // Cleanup
             try {
@@ -146,14 +160,6 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
           results.skipped.length + results.errors.length;
         responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
           } skipped due to duplicate record or resume not parsing `;
-
-        const skippedFiles = results.skipped.map((item) => item.file);
-        const errorFiles = results.errors.map((item) => item.file);
-        const allProblemFiles = [...skippedFiles, ...errorFiles];
-
-        if (allProblemFiles.length > 0) {
-          responseMessage += `(${allProblemFiles.join(',\n ')}.)`;
-        }
       }
 
       if (
@@ -161,10 +167,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         results.skipped.length > 0 &&
         results.errors.length === 0
       ) {
-        const errorMessages = results.skipped
-          .map((err) => `${err.file}`)
-          .join(',\n');
-        responseMessage = `No applicants has been inserted due to duplicate record file : (${errorMessages})`;
+        responseMessage = `No applicants has been inserted due to duplicate record.`;
       }
 
       if (
@@ -172,21 +175,14 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         results.skipped.length === 0 &&
         results.errors.length > 0
       ) {
-        const errorMessages = results.errors
-          .map((err) => `${err.file}`)
-          .join(',\n');
-        responseMessage = `No applicants has been inserted due to could not extract email or phone from resume : ${errorMessages}`;
+        responseMessage = `No applicants has been inserted due to could not extract email or phone from resume.`;
       }
 
       logger.info(`${responseMessage} ${JSON.stringify(results.errors)}`);
       return HandleResponse(
         res,
         results.inserted.length > 0,
-        allSkipped
-          ? StatusCodes.CONFLICT
-          : hasErrors
-            ? StatusCodes.CREATED
-            : StatusCodes.CREATED,
+        allSkipped ? StatusCodes.CONFLICT : StatusCodes.CREATED,
         responseMessage,
         {
           summary: {
@@ -195,11 +191,6 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
             insertedApplicants: results.inserted.length,
             skippedApplicants: results.skipped.length,
             erroredFiles: results.errors.length,
-          },
-          details: {
-            inserted: results.inserted,
-            skipped: results.skipped,
-            errors: results.errors,
           },
         }
       );
@@ -382,6 +373,7 @@ export const viewAllApplicant = async (req, res) => {
       search,
       appliedSkillsOR,
       appliedRole,
+      isFavorite
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -438,7 +430,7 @@ export const viewAllApplicant = async (req, res) => {
     if (appliedRole && typeof appliedRole === 'string') {
       const roleArray = appliedRole
         .split(',')
-        .map((role) => new RegExp(`^${role.trim()}$`, 'i'))
+        .map((role) => new RegExp(`^${role.trim()}$`, 'i'));
 
       query.appliedRole = { $in: roleArray };
     }
@@ -546,7 +538,9 @@ export const viewAllApplicant = async (req, res) => {
     if (req.query.isActive !== undefined) {
       query.isActive = req.query.isActive === 'true';
     }
-
+    if (req.query.isFavorite !== undefined) {
+      query.isFavorite = req.query.isFavorite === 'true';
+    }
     if (rating) {
       const rangeMatch = rating
         .toString()
@@ -1132,7 +1126,9 @@ export const exportApplicantCsv = async (req, res) => {
         });
 
         if (existingApplicants.length > 0) {
-          const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
+          const existingEmailSet = new Set(
+            existingApplicants.map((a) => a.email)
+          );
           const existingPhoneSet = new Set(
             existingApplicants.map((a) => a.phone?.phoneNumber)
           );
@@ -1153,7 +1149,7 @@ export const exportApplicantCsv = async (req, res) => {
           if (flag === true) {
             if (nonDuplicateApplicants.length > 0) {
               // Get IDs of non-duplicate applicants to move
-              const nonDuplicateIds = nonDuplicateApplicants.map(a => a._id);
+              const nonDuplicateIds = nonDuplicateApplicants.map((a) => a._id);
 
               // Move only non-duplicate records
               await insertManyApplicantsToMain(nonDuplicateApplicants);
@@ -1170,7 +1166,7 @@ export const exportApplicantCsv = async (req, res) => {
                   `${nonDuplicateApplicants.length} records were moved successfully in applicants and ${duplicateApplicants.length} records is already exist.`,
                   {
                     duplicantCount: duplicateApplicants?.length || 0,
-                    successCount: nonDuplicateApplicants.length || 0
+                    successCount: nonDuplicateApplicants.length || 0,
                   }
                 );
               } else {
@@ -1199,7 +1195,7 @@ export const exportApplicantCsv = async (req, res) => {
         // If no duplicates found or flag is false
         if (flag === true) {
           // No duplicates - move all records using their actual IDs
-          const applicantIds = applicants.map(a => a._id);
+          const applicantIds = applicants.map((a) => a._id);
           await insertManyApplicantsToMain(applicants);
           await deleteExportedApplicants({ _id: { $in: applicantIds } });
           return HandleResponse(
@@ -1260,7 +1256,9 @@ export const exportApplicantCsv = async (req, res) => {
         });
 
         if (existingApplicants.length > 0) {
-          const existingEmailSet = new Set(existingApplicants.map((a) => a.email));
+          const existingEmailSet = new Set(
+            existingApplicants.map((a) => a.email)
+          );
           const existingPhoneSet = new Set(
             existingApplicants.map((a) => a.phone?.phoneNumber)
           );
@@ -1284,13 +1282,14 @@ export const exportApplicantCsv = async (req, res) => {
               // Move only non-duplicate records
               await insertManyApplicantsToMain(nonDuplicateApplicants);
               await deleteExportedApplicants({
-                _id: { $in: nonDuplicateApplicants.map(a => a._id) }
+                _id: { $in: nonDuplicateApplicants.map((a) => a._id) },
               });
 
               if (duplicateApplicants.length > 0) {
                 // Partial success - some moved, some duplicates
                 const conflictDetails = duplicateApplicants.map(
-                  (a) => `Duplicate skipped: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
+                  (a) =>
+                    `Duplicate skipped: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
                 );
                 return HandleResponse(
                   res,
@@ -1299,7 +1298,7 @@ export const exportApplicantCsv = async (req, res) => {
                   `${nonDuplicateApplicants.length} records were moved successfully in applicants and ${duplicateApplicants.length} records is already exist.`,
                   {
                     duplicantCount: duplicateApplicants?.length || 0,
-                    successCount: nonDuplicateApplicants.length || 0
+                    successCount: nonDuplicateApplicants.length || 0,
                   }
                 );
               } else {
@@ -1313,7 +1312,8 @@ export const exportApplicantCsv = async (req, res) => {
               }
             } else {
               const conflictDetails = duplicateApplicants.map(
-                (a) => `Duplicate: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
+                (a) =>
+                  `Duplicate: Email ${a.email}, Phone ${a.phone?.phoneNumber}`
               );
 
               return HandleResponse(
@@ -1323,7 +1323,7 @@ export const exportApplicantCsv = async (req, res) => {
                 Message.DUPLICATE_RECORDS,
                 {
                   count: duplicateApplicants.length,
-                  duplicates: conflictDetails
+                  duplicates: conflictDetails,
                 }
               );
             }
@@ -1343,7 +1343,9 @@ export const exportApplicantCsv = async (req, res) => {
           if (flag === true) {
             // Move all records
             await insertManyApplicantsToMain(applicants);
-            await deleteExportedApplicants({ _id: { $in: applicants.map(a => a._id) } });
+            await deleteExportedApplicants({
+              _id: { $in: applicants.map((a) => a._id) },
+            });
 
             return HandleResponse(
               res,
@@ -1385,19 +1387,19 @@ export const exportApplicantCsv = async (req, res) => {
       const query = buildApplicantQuery(req.query);
       if (source) {
         query.addedBy =
-          source === 'Resume'
+          source === applicantEnum.RESUME
             ? applicantEnum.RESUME
-            : source === 'Csv'
+            : source === applicantEnum.CSV
               ? applicantEnum.CSV
-              : source === 'Manual'
+              : source === applicantEnum.MANUAL
                 ? applicantEnum.MANUAL
                 : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
       }
       if (filtered) {
         query.addedBy =
-          filtered === 'Resume'
+          filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
-            : filtered === 'Csv'
+            : filtered === applicantEnum.CSV
               ? applicantEnum.CSV
               : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
@@ -2265,3 +2267,38 @@ export const inActiveApplicant = async (req, res) => {
     );
   }
 };
+
+export const applicantFavoriteStatus = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { isFavorite } = req.body
+    const applicant = await updateApplicantById(applicantId, { isFavorite });
+    if (!applicant) {
+      logger.warn(`Applicant is ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant is ${Message.NOT_FOUND}`
+      );
+    }
+    const message = isFavorite
+      ? 'Successfully added to favorites'
+      : 'Successfully removed from favorites';
+    logger.info(`Applicant ${isFavorite ? 'added to' : 'removed from'} favorites`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      message
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} add favorite`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} add favorite applicant.`
+    );
+  }
+}

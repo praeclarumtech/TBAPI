@@ -149,8 +149,14 @@ export const getApplicantSkillCounts = async (skillIds = []) => {
 
       const skillNames = skillCountsAggregation.map((item) => item._id);
       skills = await Skills.find({
-        skills: { $in: skillNames },
-        isDeleted: false,
+        $and: [
+          {
+            $or: skillNames.map((name) => ({
+              skills: { $regex: new RegExp(`^${name}$`, 'i') },
+            })),
+          },
+          { isDeleted: false },
+        ],
       });
     }
     skillCounts = await Promise.all(

@@ -3,6 +3,7 @@ import {
   createEmail,
   findAllEmails,
   findEmailById,
+  countEmailsByDate
 } from '../services/applicantEmailService.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
@@ -399,3 +400,45 @@ export const generateMultipleQrs = async (req, res) => {
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} generate QR.`)
   }
 };
+export const getEmailCount = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    let start, end;
+
+    if (startDate && endDate) {
+      start = new Date(startDate);
+      end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+    } else if (startDate && !endDate) {
+      start = new Date(startDate);
+      end = new Date();
+      end.setHours(23, 59, 59, 999);
+    } else {
+      start = new Date();
+      start.setHours(0, 0, 0, 0);
+      end = new Date();
+      end.setHours(23, 59, 59, 999);
+    }
+
+    const count = await countEmailsByDate(start, end);
+
+    logger.info(`Email count ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Email count ${Message.FETCH_SUCCESSFULLY}`,
+      {count}
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} get email count.`, error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} get email count.`
+    );
+  }
+};
+
