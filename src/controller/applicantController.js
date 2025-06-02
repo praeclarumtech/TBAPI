@@ -1592,65 +1592,75 @@ export const importApplicantCsv = async (req, res) => {
           const validApplicants = [];
           const csvValidationErrors = [];
 
-          for (let i = 0; i < results.length; i++) {
-            const row = results[i];
-            try {
-              const processed = await processCsvRow(row, i, user.role);
-              if (processed.valid) {
-                validApplicants.push({
-                  ...processed.data,
-                  __lineNumber: processed.number,
-                });
-              }
-            } catch (err) {
-              const line = err?.lineNumber || i + 1;
-              const messages = Array.isArray(err.message)
-                ? err.message
-                : [err.message];
+          // Parallel row validation
+          const rowPromises = results.map((row, i) =>
+            processCsvRow(row, i, user.role)
+              .then((processed) => ({
+                valid: true,
+                data: processed.data,
+                number: processed.number,
+              }))
+              .catch((err) => ({
+                valid: false,
+                error: err,
+                line: err?.lineNumber || i + 1,
+              }))
+          );
 
+          const processedResults = await Promise.all(rowPromises);
+
+          for (const result of processedResults) {
+            if (result.valid) {
+              validApplicants.push({
+                ...result.data,
+                __lineNumber: result.number,
+              });
+            } else {
+              const messages = Array.isArray(result.error.message)
+                ? result.error.message
+                : [result.error.message];
               messages.forEach((msg) => {
-                csvValidationErrors.push(`Line ${line}: ${msg}`);
+                csvValidationErrors.push(`Line ${result.line}: ${msg}`);
               });
             }
           }
 
           if (csvValidationErrors.length > 0) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(
-              res,
-              false,
-              StatusCodes.BAD_REQUEST,
-              csvValidationErrors
-            );
+            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, csvValidationErrors);
           }
 
           if (!validApplicants.length) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(
-              res,
-              false,
-              StatusCodes.BAD_REQUEST,
-              'No valid applicants found in the file'
-            );
+            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'No valid applicants found in the file');
           }
 
           const normalize = (str) => str.trim().toLowerCase();
-          const emailSet = new Set(
-            validApplicants.map((a) => normalize(a.email)).filter(Boolean)
+
+          const emailSet = new Set(validApplicants.map((a) => normalize(a.email)).filter(Boolean));
+          const phoneSetInFile = new Set();
+
+          // Bulk fetch existing emails and phones
+          const [existingEmailsDocs, existingPhoneDocs] = await Promise.all([
+            ExportsApplicants.find({ email: { $in: [...emailSet] } }).lean(),
+            ExportsApplicants.find({
+              $or: validApplicants.flatMap(({ email, phone: { phoneNumber, whatsappNumber } = {} }) => [
+                { email: { $ne: normalize(email) }, 'phone.phoneNumber': phoneNumber },
+                { email: { $ne: normalize(email) }, 'phone.whatsappNumber': whatsappNumber },
+              ]),
+            }).lean(),
+          ]);
+
+          const existingEmailsSet = new Set(existingEmailsDocs.map((e) => normalize(e.email)));
+          const existingPhonesSet = new Set(
+            existingPhoneDocs.flatMap((e) => [e?.phone?.phoneNumber, e?.phone?.whatsappNumber].filter(Boolean))
           );
 
-          const existing = await ExportsApplicants.find({
-            email: { $in: [...emailSet] },
-          }).lean();
-          const existingEmailsSet = new Set(
-            existing.map((e) => normalize(e.email))
-          );
-
-          const phoneSet = new Set();
           const insertedNewRecords = [];
           const updatedRecords = [];
           const skippedRecords = [];
           const duplicatePhoneErrors = [];
+          const itemsToInsert = [];
 
           for (const item of validApplicants) {
             const {
@@ -1659,7 +1669,9 @@ export const importApplicantCsv = async (req, res) => {
               phone: { phoneNumber, whatsappNumber } = {},
             } = item;
 
-            if (phoneSet.has(phoneNumber) || phoneSet.has(whatsappNumber)) {
+            const emailLower = normalize(email);
+
+            if (phoneSetInFile.has(phoneNumber) || phoneSetInFile.has(whatsappNumber)) {
               duplicatePhoneErrors.push(
                 `Duplicate phone:- ${phoneNumber} or WhatsApp:-${whatsappNumber} number in file at Line:${line}`
               );
@@ -1667,11 +1679,16 @@ export const importApplicantCsv = async (req, res) => {
               continue;
             }
 
-            phoneSet.add(phoneNumber);
-            phoneSet.add(whatsappNumber);
+            phoneSetInFile.add(phoneNumber);
+            phoneSetInFile.add(whatsappNumber);
 
-            const emailLower = normalize(email);
-
+            if (existingPhonesSet.has(phoneNumber) || existingPhonesSet.has(whatsappNumber)) {
+              duplicatePhoneErrors.push(
+                `Line ${line}: Phone or WhatsApp already exists in DB (Phone: ${phoneNumber}, WhatsApp: ${whatsappNumber})`
+              );
+              skippedRecords.push(email);
+              continue;
+            }
             const mappedItem = {
               ...item,
               email: emailLower,
@@ -1681,24 +1698,7 @@ export const importApplicantCsv = async (req, res) => {
               isActive: true,
             };
 
-            const isPhoneDuplicate = await ExportsApplicants.findOne({
-              email: { $ne: emailLower },
-              $or: [
-                { 'phone.phoneNumber': phoneNumber },
-                { 'phone.whatsappNumber': whatsappNumber },
-              ],
-            }).lean();
-
-            if (isPhoneDuplicate) {
-              duplicatePhoneErrors.push(
-                `Line ${line}: Phone or WhatsApp already exists in DB (Phone: ${phoneNumber}, WhatsApp: ${whatsappNumber})`
-              );
-              skippedRecords.push(email);
-              continue;
-            }
-
             const isExistingEmail = existingEmailsSet.has(emailLower);
-
             if (isExistingEmail && updateFlag) {
               try {
                 await UpdateManyApplicantsByImport([mappedItem]);
@@ -1709,26 +1709,20 @@ export const importApplicantCsv = async (req, res) => {
                   `Line ${line}: Failed to update record for ${emailLower}: ${updateErr.message}`
                 );
                 skippedRecords.push(email);
-                continue;
               }
             } else if (!isExistingEmail) {
-              await ExportsApplicants.create(mappedItem);
+              itemsToInsert.push(mappedItem);
               insertedNewRecords.push(email);
             } else {
               skippedRecords.push(email);
             }
           }
+          // Insert all new records in one go
+          if (itemsToInsert.length > 0) {
+            await ExportsApplicants.insertMany(itemsToInsert, { ordered: false });
+          }
 
           fs.unlinkSync(req.file.path);
-
-          if (duplicatePhoneErrors.length > 0) {
-            return HandleResponse(
-              res,
-              false,
-              StatusCodes.BAD_REQUEST,
-              duplicatePhoneErrors
-            );
-          }
 
           if (updateFlag === false) {
             const hasDuplicates = skippedRecords.length > 0;
@@ -1748,9 +1742,7 @@ export const importApplicantCsv = async (req, res) => {
               res,
               true,
               StatusCodes.OK,
-              `${fileExt
-                .replace(/[.,\/\s]/g, '')
-                .toUpperCase()} imported successfully.`,
+              `${fileExt.replace(/[.,\/\s]/g, '').toUpperCase()} imported successfully.`,
               {
                 insertedNewRecords,
                 updatedRecords,
@@ -1759,26 +1751,19 @@ export const importApplicantCsv = async (req, res) => {
           }
 
           if (updateFlag === true) {
-            return HandleResponse(
-              res,
-              true,
-              StatusCodes.OK,
-              'Records updated successfully.',
-              {
-                insertedNewRecords,
-                updatedRecords,
-              }
-            );
+            if (duplicatePhoneErrors.length > 0) {
+              return HandleResponse(res, false, StatusCodes.BAD_REQUEST, duplicatePhoneErrors);
+            }
+
+            return HandleResponse(res, true, StatusCodes.OK, 'Records updated successfully.', {
+              insertedNewRecords,
+              updatedRecords,
+            });
           }
         } catch (err) {
           logger.error('Error in processAndRespond:', err);
           fs.unlinkSync(req.file.path);
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            'An error occurred during processing.'
-          );
+          return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred during processing.');
         }
       };
 
