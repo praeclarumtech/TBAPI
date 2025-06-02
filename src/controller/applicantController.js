@@ -1589,7 +1589,7 @@ export const importApplicantCsv = async (req, res) => {
           const validApplicants = [];
           const csvValidationErrors = [];
 
-          // ✅ Parallel row validation
+          // Parallel row validation
           const rowPromises = results.map((row, i) =>
             processCsvRow(row, i, user.role)
               .then((processed) => ({
@@ -1637,7 +1637,7 @@ export const importApplicantCsv = async (req, res) => {
           const emailSet = new Set(validApplicants.map((a) => normalize(a.email)).filter(Boolean));
           const phoneSetInFile = new Set();
 
-          // 🟢 Bulk fetch existing emails and phones
+          // Bulk fetch existing emails and phones
           const [existingEmailsDocs, existingPhoneDocs] = await Promise.all([
             ExportsApplicants.find({ email: { $in: [...emailSet] } }).lean(),
             ExportsApplicants.find({
@@ -1686,7 +1686,6 @@ export const importApplicantCsv = async (req, res) => {
               skippedRecords.push(email);
               continue;
             }
-            console.log("skipped records>>>>>>>", skippedRecords)
             const mappedItem = {
               ...item,
               email: emailLower,
@@ -1697,10 +1696,9 @@ export const importApplicantCsv = async (req, res) => {
             };
 
             const isExistingEmail = existingEmailsSet.has(emailLower);
-            console.log("updatedRecords>>>>>>>>>>>>", updatedRecords)
             if (isExistingEmail && updateFlag) {
               try {
-                  await UpdateManyApplicantsByImport([mappedItem]);
+                await UpdateManyApplicantsByImport([mappedItem]);
                 updatedRecords.push(email);
               } catch (updateErr) {
                 logger.error(`Line ${line} update error:`, updateErr);
@@ -1716,7 +1714,6 @@ export const importApplicantCsv = async (req, res) => {
               skippedRecords.push(email);
             }
           }
-
           // Insert all new records in one go
           if (itemsToInsert.length > 0) {
             await ExportsApplicants.insertMany(itemsToInsert, { ordered: false });
