@@ -69,6 +69,4 @@ router.get('/checkApplicant', checkApplicantExists);
 router.patch('/activateApplicant/:id', authorization, activeApplicant);
 router.patch('/inactivateApplicant/:id', authorization, inActiveApplicant);
 
-//favorite
-router.patch('/favorite/status/:id', applicantFavoriteStatus);
 export default router;
