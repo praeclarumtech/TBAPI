@@ -20,8 +20,7 @@ import {
   hardDeleteImportedApplicant,
   updateStatusImportApplicant,
   activeApplicant,
-  inActiveApplicant,
-  applicantFavoriteStatus
+  inActiveApplicant
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
