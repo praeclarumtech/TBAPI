@@ -44,7 +44,7 @@ export const sendingEmail = async ({
 
   // Also map normal attachments if any
   const normalAttachments = attachments.map(file => ({
-    filename: file.originalname,
+    filename: file.filename,
     path: file.path,
   }));
 

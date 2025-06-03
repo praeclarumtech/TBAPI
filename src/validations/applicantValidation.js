@@ -336,6 +336,7 @@ export const updateApplicantValidation = Joi.object({
   meta: Joi.object().optional().messages({
     'object.base': 'Meta must be an object with key-value pairs.',
   }),
+  isFavorite: Joi.boolean().optional()
 });
 
 

@@ -30,13 +30,14 @@ import {
 } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
 import { authorization } from '../../helpers/userMiddleware.js'
+import { uploadAttachments } from '../../helpers/multer.js';
 const router = express.Router();
 
 router.post('/addApplicant', authorization, validator.body(applicantValidation), addApplicant);
 
 //same applicant route for Qr without auth 
-router.post('/applicant-add-qr-code', addApplicant);
-router.put('/applicant-edit-qr-code/:id', updateApplicant);
+router.post('/applicant-add-qr-code', uploadAttachments, addApplicant);
+router.put('/applicant-edit-qr-code/:id',uploadAttachments, updateApplicant);
 
 router.get('/viewAllApplicant', viewAllApplicant);
 router.get('/viewApplicant/:id', viewApplicant);
