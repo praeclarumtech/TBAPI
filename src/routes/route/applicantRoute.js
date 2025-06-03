@@ -21,7 +21,6 @@ import {
   updateStatusImportApplicant,
   activeApplicant,
   inActiveApplicant,
-  applicantFavoriteStatus
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
