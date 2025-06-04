@@ -67,6 +67,7 @@ export const generateQrEmailHtml = async (applicantId) => {
   let url = ''
   let cid = ''
   let baseUrl = process.env.FRONT_URL
+
   if (applicantId) {
     url = `${baseUrl}/applicants/applicant-edit-qr-code/${applicantId}`
     cid = `qr-${applicantId}@qr`;
@@ -81,14 +82,20 @@ export const generateQrEmailHtml = async (applicantId) => {
     <div style="margin-bottom: 20px;">
      <h2>Fill Out Your Details</h2>
     <p>Please scan the QR code below to fill out your application form.</p>
-      <img src="cid:${cid}" alt=Q"R Code" width="150" height="150" />
+    <p>Or simply click it to open the form on your device.</p>
+    <a href="${url}">
+      <img src="cid:${cid}" alt="QR Code" width="150" height="150" style="cursor: pointer;" />
+    </a>
     </div>
   `;
   const htmlBlockforUpdate = `
     <div style="margin-bottom: 20px;">
       <h2>Edit Your Submitted Details</h2>
     <p>Scan the QR code below to review and update your existing application information.</p>
-      <img src="cid:${cid}" alt=Q"R Code" width="150" height="150" />
+    <p>Or simply click it to open the form on your device.</p>
+    <a href="${url}">
+      <img src="cid:${cid}" alt="QR Code" width="150" height="150" style="cursor: pointer;" />
+    </a>
     </div>
   `;
 
