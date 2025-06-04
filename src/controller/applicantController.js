@@ -946,6 +946,7 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     );
   }
 };
+
 export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
@@ -955,7 +956,27 @@ export const updateApplicant = async (req, res) => {
     };
 
     const existingApplicant = await getApplicantById(applicantId);
-    console.log('exooooooo', existingApplicant.name);
+     if (!existingApplicant) {
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant ${Message.NOT_FOUND}`
+      );
+    }
+
+    const updatedApplicant = await updateApplicantById(applicantId, updateData);
+
+    if (!updatedApplicant) {
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant ${Message.NOT_FOUND}`
+      );
+    }
 
     const resumeFile = req.files || [];
 
@@ -985,24 +1006,12 @@ export const updateApplicant = async (req, res) => {
       };
 
       sendingEmail(emailData)
-        .then((result) => {
+        .then(() => {
           logger.info('Resume email sent successfully');
         })
         .catch((error) => {
           logger.error('Failed to send resume email:', error);
         });
-    }
-
-    const updatedApplicant = await updateApplicantById(applicantId, updateData);
-
-    if (!updatedApplicant) {
-      logger.warn(`Applicant ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Applicant ${Message.NOT_FOUND}`
-      );
     }
 
     logger.info(`Applicant ${Message.UPDATED_SUCCESSFULLY}`);
