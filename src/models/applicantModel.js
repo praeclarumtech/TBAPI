@@ -14,7 +14,7 @@ const ApplicantSchema = new mongoose.Schema(
       lastName: { type: String, required: false },
     },
     phone: {
-      whatsappNumber: { type: String, required: true, unique: true },
+      whatsappNumber: { type: String, required: false, unique: true },
       phoneNumber: { type: String, required: true, unique: true },
     },
     email: { type: String, required: true, unique: true },
@@ -128,6 +128,10 @@ const ApplicantSchema = new mongoose.Schema(
       default: true,
       required: true
     },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true }
 );
