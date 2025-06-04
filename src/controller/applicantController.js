@@ -49,6 +49,7 @@ import ExportsApplicants from '../models/exportsApplicantsModel.js';
 import { extractMatchingRoleFromResume } from '../services/applicantService.js';
 import { extractSkillsFromResume } from '../services/applicantService.js';
 import { buildApplicantQuery } from '../helpers/commonFunction/filterQuery.js';
+import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
@@ -151,15 +152,17 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       let responseMessage = '';
       if (results.inserted.length > 0) {
-        responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
-          } added successfully.`;
+        responseMessage = `${results.inserted.length} applicant${
+          results.inserted.length > 1 ? 's' : ''
+        } added successfully.`;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
         const skippedAndErrorCount =
           results.skipped.length + results.errors.length;
-        responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
-          } skipped due to duplicate record or resume not parsing `;
+        responseMessage += `${skippedAndErrorCount} applicant${
+          skippedAndErrorCount > 1 ? 's' : ''
+        } skipped due to duplicate record or resume not parsing `;
       }
 
       if (
@@ -293,6 +296,7 @@ export const addApplicant = async (req, res) => {
       name: { firstName, middleName, lastName },
       appliedRole,
       meta,
+      email_to,
       ...body
     } = req.body;
 
@@ -303,6 +307,7 @@ export const addApplicant = async (req, res) => {
     }
     const applicationNo = await generateApplicantNo();
 
+    
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
@@ -313,7 +318,36 @@ export const addApplicant = async (req, res) => {
       meta: meta || {},
       ...body,
     };
+
     const applicant = await createApplicant(applicantData);
+
+    const resumeFile = req.files || [];
+
+    if (resumeFile.length > 0) {
+      const attachments = resumeFile.map((file) => ({
+        filename: file.originalname || file.filename,
+        path: path.join(file.destination, file.filename),
+      }));
+
+      const emailData = {
+        email_to: [process.env.HR_EMAIL],
+        subject: `New Applicant Resume Received from QR Code Form – ${req.body.name.firstName} ${req.body.name.lastName}`,
+        description: `
+           <p>The applicant <strong>${req.body.name.firstName} ${req.body.name.lastName}</strong> has submitted their resume via the QR Code form for the position of <strong>${req.body.appliedRole}</strong>.</p>
+           <p>Please find the attached resume for your review.</p>
+        `,
+        attachments,
+      };
+
+      sendingEmail(emailData)
+        .then((result) => {
+          logger.info('Resume email sent successfully');
+        })
+        .catch((error) => {
+          logger.error('Failed to send resume email:', error);
+        });
+    }
+
     logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -323,7 +357,7 @@ export const addApplicant = async (req, res) => {
       applicant
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} add aplicant.`);
+    logger.error(`${Message.FAILED_TO} add aplicant.`, error);
     if (error.code === 11000) {
       const duplicateField = Object.keys(error.keyValue)[0];
       const duplicateValue = Object.values(error.keyValue)[0];
@@ -373,7 +407,7 @@ export const viewAllApplicant = async (req, res) => {
       search,
       appliedSkillsOR,
       appliedRole,
-      isFavorite
+      isFavorite,
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -391,8 +425,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-            ? { $in: validAddedBy }
-            : undefined;
+          ? { $in: validAddedBy }
+          : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -912,13 +946,26 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     );
   }
 };
+
 export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
-    const { ...body } = req.body;
+    const { email_to, ...body } = req.body;
     let updateData = {
       ...body,
     };
+
+    const existingApplicant = await getApplicantById(applicantId);
+     if (!existingApplicant) {
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant ${Message.NOT_FOUND}`
+      );
+    }
+
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
@@ -929,6 +976,42 @@ export const updateApplicant = async (req, res) => {
         StatusCodes.NOT_FOUND,
         `Applicant ${Message.NOT_FOUND}`
       );
+    }
+
+    const resumeFile = req.files || [];
+
+    if (resumeFile.length > 0) {
+      const attachments = resumeFile.map((file) => ({
+        filename: file.originalname || file.filename,
+        path: path.join(file.destination, file.filename),
+      }));
+
+      const firstName =
+        req.body?.name?.firstName || existingApplicant.name?.firstName || '';
+      const lastName =
+        req.body?.name?.lastName || existingApplicant.name?.lastName || '';
+      const role =
+        req.body?.appliedRole ||
+        existingApplicant.appliedRole ||
+        '';
+
+      const emailData = {
+        email_to: [process.env.HR_EMAIL],
+        subject: `Applicant Details Updated – ${firstName} ${lastName} Resume Received from QR Code Form`,
+        description: `
+           <p>The applicant <strong>${firstName} ${lastName}</strong> has updated their details and submitted a resume via the QR Code form for the position of <strong>${role}</strong>.</p>
+           <p>Please review the attached resume for more information.</p>
+        `,
+        attachments,
+      };
+
+      sendingEmail(emailData)
+        .then(() => {
+          logger.info('Resume email sent successfully');
+        })
+        .catch((error) => {
+          logger.error('Failed to send resume email:', error);
+        });
     }
 
     logger.info(`Applicant ${Message.UPDATED_SUCCESSFULLY}`);
@@ -1084,8 +1167,8 @@ export const exportApplicantCsv = async (req, res) => {
 
     const projection = selectedFields
       ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-        _id: 1,
-      })
+          _id: 1,
+        })
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
@@ -1186,7 +1269,7 @@ export const exportApplicantCsv = async (req, res) => {
                 false,
                 StatusCodes.CONFLICT,
                 `${duplicateApplicants.length} records are duplicates: ` +
-                conflictDetails.join('; ')
+                  conflictDetails.join('; ')
               );
             }
           }
@@ -1390,18 +1473,18 @@ export const exportApplicantCsv = async (req, res) => {
           source === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : source === applicantEnum.CSV
-              ? applicantEnum.CSV
-              : source === applicantEnum.MANUAL
-                ? applicantEnum.MANUAL
-                : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+            ? applicantEnum.CSV
+            : source === applicantEnum.MANUAL
+            ? applicantEnum.MANUAL
+            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
       }
       if (filtered) {
         query.addedBy =
           filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : filtered === applicantEnum.CSV
-              ? applicantEnum.CSV
-              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+            ? applicantEnum.CSV
+            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1561,8 +1644,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-          ? false
-          : undefined;
+        ? false
+        : undefined;
 
     const user = await User.findById(req.user.id);
 
@@ -1627,33 +1710,57 @@ export const importApplicantCsv = async (req, res) => {
 
           if (csvValidationErrors.length > 0) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, csvValidationErrors);
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.BAD_REQUEST,
+              csvValidationErrors
+            );
           }
 
           if (!validApplicants.length) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'No valid applicants found in the file');
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.BAD_REQUEST,
+              'No valid applicants found in the file'
+            );
           }
 
           const normalize = (str) => str.trim().toLowerCase();
 
-          const emailSet = new Set(validApplicants.map((a) => normalize(a.email)).filter(Boolean));
+          const emailSet = new Set(
+            validApplicants.map((a) => normalize(a.email)).filter(Boolean)
+          );
           const phoneSetInFile = new Set();
 
           // Bulk fetch existing emails and phones
           const [existingEmailsDocs, existingPhoneDocs] = await Promise.all([
             ExportsApplicants.find({ email: { $in: [...emailSet] } }).lean(),
             ExportsApplicants.find({
-              $or: validApplicants.flatMap(({ email, phone: { phoneNumber, whatsappNumber } = {} }) => [
-                { email: { $ne: normalize(email) }, 'phone.phoneNumber': phoneNumber },
-                { email: { $ne: normalize(email) }, 'phone.whatsappNumber': whatsappNumber },
-              ]),
+              $or: validApplicants.flatMap(
+                ({ email, phone: { phoneNumber, whatsappNumber } = {} }) => [
+                  {
+                    email: { $ne: normalize(email) },
+                    'phone.phoneNumber': phoneNumber,
+                  },
+                  {
+                    email: { $ne: normalize(email) },
+                    'phone.whatsappNumber': whatsappNumber,
+                  },
+                ]
+              ),
             }).lean(),
           ]);
 
-          const existingEmailsSet = new Set(existingEmailsDocs.map((e) => normalize(e.email)));
+          const existingEmailsSet = new Set(
+            existingEmailsDocs.map((e) => normalize(e.email))
+          );
           const existingPhonesSet = new Set(
-            existingPhoneDocs.flatMap((e) => [e?.phone?.phoneNumber, e?.phone?.whatsappNumber].filter(Boolean))
+            existingPhoneDocs.flatMap((e) =>
+              [e?.phone?.phoneNumber, e?.phone?.whatsappNumber].filter(Boolean)
+            )
           );
 
           const insertedNewRecords = [];
@@ -1671,7 +1778,10 @@ export const importApplicantCsv = async (req, res) => {
 
             const emailLower = normalize(email);
 
-            if (phoneSetInFile.has(phoneNumber) || phoneSetInFile.has(whatsappNumber)) {
+            if (
+              phoneSetInFile.has(phoneNumber) ||
+              phoneSetInFile.has(whatsappNumber)
+            ) {
               duplicatePhoneErrors.push(
                 `Duplicate phone:- ${phoneNumber} or WhatsApp:-${whatsappNumber} number in file at Line:${line}`
               );
@@ -1682,7 +1792,10 @@ export const importApplicantCsv = async (req, res) => {
             phoneSetInFile.add(phoneNumber);
             phoneSetInFile.add(whatsappNumber);
 
-            if (existingPhonesSet.has(phoneNumber) || existingPhonesSet.has(whatsappNumber)) {
+            if (
+              existingPhonesSet.has(phoneNumber) ||
+              existingPhonesSet.has(whatsappNumber)
+            ) {
               duplicatePhoneErrors.push(
                 `Line ${line}: Phone or WhatsApp already exists in DB (Phone: ${phoneNumber}, WhatsApp: ${whatsappNumber})`
               );
@@ -1719,7 +1832,9 @@ export const importApplicantCsv = async (req, res) => {
           }
           // Insert all new records in one go
           if (itemsToInsert.length > 0) {
-            await ExportsApplicants.insertMany(itemsToInsert, { ordered: false });
+            await ExportsApplicants.insertMany(itemsToInsert, {
+              ordered: false,
+            });
           }
 
           fs.unlinkSync(req.file.path);
@@ -1742,7 +1857,9 @@ export const importApplicantCsv = async (req, res) => {
               res,
               true,
               StatusCodes.OK,
-              `${fileExt.replace(/[.,\/\s]/g, '').toUpperCase()} imported successfully.`,
+              `${fileExt
+                .replace(/[.,\/\s]/g, '')
+                .toUpperCase()} imported successfully.`,
               {
                 insertedNewRecords,
                 updatedRecords,
@@ -1752,18 +1869,34 @@ export const importApplicantCsv = async (req, res) => {
 
           if (updateFlag === true) {
             if (duplicatePhoneErrors.length > 0) {
-              return HandleResponse(res, false, StatusCodes.BAD_REQUEST, duplicatePhoneErrors);
+              return HandleResponse(
+                res,
+                false,
+                StatusCodes.BAD_REQUEST,
+                duplicatePhoneErrors
+              );
             }
 
-            return HandleResponse(res, true, StatusCodes.OK, 'Records updated successfully.', {
-              insertedNewRecords,
-              updatedRecords,
-            });
+            return HandleResponse(
+              res,
+              true,
+              StatusCodes.OK,
+              'Records updated successfully.',
+              {
+                insertedNewRecords,
+                updatedRecords,
+              }
+            );
           }
         } catch (err) {
           logger.error('Error in processAndRespond:', err);
           fs.unlinkSync(req.file.path);
-          return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred during processing.');
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            'An error occurred during processing.'
+          );
         }
       };
 
