@@ -330,7 +330,7 @@ export const addApplicant = async (req, res) => {
       }));
 
       const emailData = {
-        email_to: ['legend6338@gmail.com'],
+        email_to: [process.env.HR_EMAIL],
         subject: `New Applicant Resume Received from QR Code Form – ${req.body.name.firstName}${req.body.name.lastName}`,
         description: `
            <p>The applicant <strong>${req.body.name.firstName}${req.body.name.lastName}</strong> has submitted their resume via the QR Code form for the position of <strong>${req.body.currentCompanyDesignation}</strong>.</p>
@@ -996,7 +996,7 @@ export const updateApplicant = async (req, res) => {
         '';
 
       const emailData = {
-        email_to: ['legend6338@gmail.com'],
+        email_to: [process.env.HR_EMAIL],
         subject: `Applicant Details Updated – ${firstName}${lastName} Resume Received from QR Code Form`,
         description: `
            <p>The applicant <strong>${firstName} ${lastName}</strong> has updated their details and submitted a resume via the QR Code form for the position of <strong>${designation}</strong>.</p>
