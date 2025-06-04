@@ -53,7 +53,8 @@ export const uploadCv = multer({
   },
 }).single('csvFile');
 
-const uploadAttachmentsDir = 'src/uploads/Attachments';
+// const uploadAttachmentsDir = 'src/uploads/Attachments';
+const uploadAttachmentsDir = path.join('src', 'uploads', 'Attachments');;
 if (!fs.existsSync(uploadAttachmentsDir)) {
   fs.mkdirSync(uploadAttachmentsDir, { recursive: true });
 }
@@ -63,7 +64,7 @@ const attachmentStorage = multer.diskStorage({
     cb(null, uploadAttachmentsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+    cb(null,file.originalname);
   },
 });
 
