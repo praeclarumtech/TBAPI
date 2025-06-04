@@ -119,7 +119,7 @@ export const exportDuplicateRecords = async (req, res) => {
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="duplicateRecords.csv"');
-    return res.status(200).end(csv);
+    return res.status(200).send(csv);
   } catch (error) {
     logger.error(`${Message.FAILED_TO} export duplicate records`)
     return res.status(500).json({ message: `${Message.FAILED_TO} export duplicate records` });
