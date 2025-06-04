@@ -112,9 +112,12 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
             results.processed++;
           } catch (error) {
             let reason = 'Could not extract email or phone from resume';
-            if (error.code === 11000) {
+            if (error.message.includes('Invalid resume format')) {
+              reason = error.message;
+            } else if (error.code === 11000) {
               reason = `Duplicate applicant`;
             }
+
             results.errors.push({
               file: file.originalname,
               error: error.message,
@@ -177,7 +180,15 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         results.skipped.length === 0 &&
         results.errors.length > 0
       ) {
-        responseMessage = `No applicants has been inserted due to could not extract email or phone from resume.`;
+        const isAllMatrimony = results.errors.every((err) =>
+          err.error.includes('Invalid resume format')
+        );
+
+        if (isAllMatrimony) {
+          responseMessage = `All resumes were rejected: Invalid resume format detected. Please upload valid job-related resumes.`;
+        } else {
+          responseMessage = `No applicants have been inserted due to resume issues (e.g., invalid format or missing email/phone).`;
+        }
       }
 
       logger.info(`${responseMessage} ${JSON.stringify(results.errors)}`);
@@ -228,9 +239,11 @@ async function processSingleResumeFile(file) {
     default:
       throw new Error(Message.INVALID_FILE_TYPE);
   }
-     // 🔒 Reject matrimony biodata
+  // 🔒 Reject matrimony biodata
   if (detectMatrimonyBioData(resumeText)) {
-    throw new Error('Invalid resume format detected. Please upload a valid job-related resume.');
+    throw new Error(
+      'Invalid resume format detected. Please upload a valid job-related resume.'
+    );
   }
 
   const parsedData = parseResumeText(resumeText);
