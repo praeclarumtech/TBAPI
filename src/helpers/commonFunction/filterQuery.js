@@ -25,7 +25,7 @@ export const buildApplicantQuery = (params) => {
     isFavorite,
   } = params;
 
-  let query = { isDeleted: false };
+  let query = { isDeleted: false, isActive: true };
 
   if (applicationNo && !isNaN(applicationNo)) query.applicationNo = parseInt(applicationNo);
 
