@@ -1614,7 +1614,7 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     // If no filters provided, export all from main
-    applicants = await Applicant.find({ isDeleted: false }, projection);
+    applicants = await Applicant.find({ isDeleted: false,isActive: true }, projection);
 
     if (!applicants.length) {
       return HandleResponse(res, false, 404, 'No applicants found.');
