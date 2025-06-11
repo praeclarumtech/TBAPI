@@ -12,6 +12,7 @@ import appliedRoleRouter from './route/appliedRoleRoute.js'
 import applicantEmailTempletRouter from './route/emailTemplateRoute.js'
 import designationRouter from './route/designationRoute.js'
 import duplicateRecordRouter from './route/duplicateRecordRoute.js'
+import jobsRouter from './route/jobsRoute.js'
 const router = express.Router();
 
 router.use('/year', yearRoute);
@@ -20,6 +21,7 @@ router.use('/email/applicant', applicantEmailRouter);
 router.use('/skill', skillsRoute);
 router.use('/degree', degreeRoute);
 router.use('/applicants', applicantRouter);
+router.use('/jobs', jobsRouter);
 router.use('/dashboard/applicant', dashboardRouter);
 router.use('/reports/applicants', reportsRouter);
 router.use('/appliedRole', appliedRoleRouter);
