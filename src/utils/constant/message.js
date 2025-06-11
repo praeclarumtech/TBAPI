@@ -19,7 +19,7 @@ export const Message = {
   TOKEN_IS_NOT_VALID: 'Token is not valid.',
 
   ADDED_SUCCESSFULLY: 'addedd successfully.',
-  DELETED_SUCCESSFULLY: 'deleted successfully',
+  DELETED_SUCCESSFULLY: 'deleted successfully.',
   UPDATED_SUCCESSFULLY: 'updated successfully.',
   REGISTERED_SUCCESSFULLY: 'Congratulation! You are registered successfully..',
   USER_LOGGED_IN_SUCCESSFULLY: 'User logged in successfully.',

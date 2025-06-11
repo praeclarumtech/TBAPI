@@ -50,6 +50,7 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'portfolioUrl', label: 'Portfolio URL', value: row => row.portfolioUrl || '' },
     { key: 'referral', label: 'Referral', value: row => row.referral || '' },
     { key: 'resumeUrl', label: 'Resume URL', value: row => row.resumeUrl || '' },
+    { key: 'gitHubUrl', label: 'Github URL', value: row => row.gitHubUrl || '' },
     { key: 'preferredLocations', label: 'Preferred Locations', value: row => row.preferredLocations || '' },
     { key: 'currentCompanyName', label: 'Current Company Name', value: row => row.currentCompanyName || '' },
     { key: 'maritalStatus', label: 'Marital Status', value: row => row.maritalStatus || ' ' },
@@ -270,6 +271,7 @@ const validateAndFillFields = async (data, userRole) => {
     portfolioUrl: data['Portfolio URL'] || '',
     referral: data['Referral'] || '',
     resumeUrl: data['Resume URL'] || '',
+    gitHubUrl: data['Github URL'] || '',
     preferredLocations: data['Preferred Locations']?.trim() || '',
     maritalStatus:
       applicantEnum[data['Marital Status']?.toUpperCase()?.trim()] ||

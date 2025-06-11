@@ -93,6 +93,7 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
     portfolioUrl: { type: String },
     referral: { type: String },
     resumeUrl: { type: String, required: false },
+    gitHubUrl: { type: String, required: false },
     preferredLocations: { type: String },
     currentCompanyName: { type: String },
     maritalStatus: {
