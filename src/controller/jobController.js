@@ -74,7 +74,7 @@ export const updateJob = async (req, res) => {
         const updateData = { ...req.body }
         const updateJob = await updateJobService(jobId, updateData)
         logger.info(`Job is ${Message.UPDATED_SUCCESSFULLY}`)
-        return HandleResponse(res, true, StatusCodes.ACCEPTED, `Job is ${Message.UPDATED_SUCCESSFULLY}`, updateJob)
+        return HandleResponse(res, true, StatusCodes.OK, `Job is ${Message.UPDATED_SUCCESSFULLY}`, updateJob)
     } catch (error) {
         logger.error(`${Message.FAILED_TO} fetch job`)
         return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} update job`)

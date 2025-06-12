@@ -337,7 +337,7 @@ export const addApplicant = async (req, res) => {
     };
 
     const applicant = await createApplicant(applicantData);
-
+    
     const resumeFile = req.files || [];
 
     if (resumeFile.length > 0) {

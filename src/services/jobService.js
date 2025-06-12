@@ -32,7 +32,7 @@ export const fetchJobService = async (jobId) => {
 
 export const updateJobService = async (id, updateData) => {
     try {
-        return jobs.updateOne({ _id: id }, updateData)
+        return jobs.updateOne({ _id: id }, { $set: updateData })
     } catch (error) {
         logger.error('Error while update job', error);
         throw error;
