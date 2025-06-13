@@ -332,6 +332,7 @@ export const addApplicant = async (req, res) => {
       appliedRole,
       isActive: true,
       meta: meta || {},
+      job_id,
       ...body,
     };
 
