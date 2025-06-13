@@ -46,7 +46,6 @@ export const viewJobs = async (req, res) => {
     logger.info(`All jobs ${Message.FETCH_SUCCESSFULLY}`)
     return HandleResponse(res, true, StatusCodes.OK, `All jobs ${Message.FETCH_SUCCESSFULLY}`, result)
   } catch (error) {
-    console.log(error)
     logger.error(`${Message.FAILED_TO} fetch job`)
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} fetchjob`)
   }
@@ -81,7 +80,6 @@ export const updateJob = async (req, res) => {
     logger.info(`Job is ${Message.UPDATED_SUCCESSFULLY}`)
     return HandleResponse(res, true, StatusCodes.OK, `Job is ${Message.UPDATED_SUCCESSFULLY}`, updateJob)
   } catch (error) {
-    console.log(error)
     logger.error(`${Message.FAILED_TO} fetch job`)
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} update job`)
   }

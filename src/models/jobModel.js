@@ -21,7 +21,6 @@ const jobSchema = new mongoose.Schema(
     min_salary: { type: Number, required: false },
     max_salary: { type: Number, required: false },
     contract_duration: { type: String, required: false },
-    // posted_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
   },
   { timestamps: true }
 );
