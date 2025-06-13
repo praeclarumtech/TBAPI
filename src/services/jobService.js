@@ -30,9 +30,9 @@ export const fetchJobService = async (jobId) => {
     }
 }
 
-export const updateJobService = async (id, updateData) => {
+export const updateJobService = async (id, body) => {
     try {
-        return jobs.updateOne({ _id: id }, { $set: updateData })
+        return jobs.updateOne({ _id: id }, { $set: body })
     } catch (error) {
         logger.error('Error while update job', error);
         throw error;

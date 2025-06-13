@@ -4,29 +4,20 @@ import Skills from '../models/skillsModel.js';
 import appliedRoleModel from '../models/appliedRoleModel.js';
 import logger from '../loggers/logger.js';
 
-// export const createApplicant = async (body) => {
-//   try {
-//     const applicant = new Applicant({ ...body });
-//     await applicant.save();
-//     return applicant;
-//   } catch (error) {
-//     logger.error('Error while creating applicant', error);
-//     throw error;
-//   }
-// };
-
 export const createApplicant = async (body) => {
   try {
-    // Define how you identify an "existing" applicant — here by email
-    // const filter = { email: body.email };
-
-    // Find and update if exists, otherwise insert (upsert)
+    const query = {
+      $or: [
+        { email: body.email },
+        { 'phone.phoneNumber': body.phone?.phoneNumber },
+        { 'phone.whatsappNumber': body.phone?.whatsappNumber }
+      ]
+    };
     const applicant = await Applicant.findOneAndUpdate(
-      { email: body.email },
+      query,
       { $set: { ...body } },
       {
-        new: true,          // Return the updated/new document
-        upsert: true,       // Create if it doesn't exist
+        upsert: true,
         setDefaultsOnInsert: true,
       }
     );
