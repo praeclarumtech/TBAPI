@@ -2,7 +2,22 @@ export const Enum = {
   ADMIN: 'admin',
   HR: 'hr',
   USER: 'user',
+  VENDOR: 'vendor',
+  VISITOR: 'visitor'
 };
+
+export const jodTypeEnum = {
+  FULL_TIME: 'full-time',
+  PART_TIME: 'part-time',
+  CONTRACT: 'contract',
+  INTERNSHIP: 'internship',
+  FREELANCE: 'freelance'
+}
+export const timeZome = {
+  IST: 'IST',
+  UTC: 'UTC',
+  EST: 'EST'
+}
 export const genderEnum = {
   MALE: 'male',
   FEMALE: 'female',

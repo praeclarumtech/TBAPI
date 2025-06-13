@@ -6,14 +6,29 @@ import logger from '../loggers/logger.js';
 
 export const createApplicant = async (body) => {
   try {
-    const applicant = new Applicant({ ...body });
-    await applicant.save();
+    const query = {
+      $or: [
+        { email: body.email },
+        { 'phone.phoneNumber': body.phone?.phoneNumber },
+        { 'phone.whatsappNumber': body.phone?.whatsappNumber }
+      ]
+    };
+    const applicant = await Applicant.findOneAndUpdate(
+      query,
+      { $set: { ...body } },
+      {
+        upsert: true,
+        setDefaultsOnInsert: true,
+      }
+    );
+
     return applicant;
   } catch (error) {
-    logger.error('Error while creating applicant', error);
+    logger.error('Error while creating or updating applicant', error);
     throw error;
   }
 };
+
 
 export const createApplicantByResume = async (body) => {
   try {
