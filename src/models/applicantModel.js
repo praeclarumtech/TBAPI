@@ -132,6 +132,9 @@ const ApplicantSchema = new mongoose.Schema(
     isFavorite: {
       type: Boolean,
       default: false,
+    },
+    job_id: {
+      type: String,
     }
   },
   { timestamps: true }
