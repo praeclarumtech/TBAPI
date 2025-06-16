@@ -11,19 +11,10 @@ export const createJobService = async (jobData) => {
     }
 }
 
-export const fetchJobsService = async (query) => {
-    try {
-        return await jobs.find(query)
-    } catch (error) {
-        logger.error('Error while fetch jobs', error);
-        throw error;
-    }
-}
-
 export const fetchJobService = async (jobId) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(jobId)) return null;
-        return await jobs.findById(jobId)
+        return await jobs.findOne({ _id: jobId })
     } catch (error) {
         logger.error('Error while fetch job', error);
         throw error;

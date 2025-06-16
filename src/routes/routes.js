@@ -21,7 +21,7 @@ router.use('/email/applicant', applicantEmailRouter);
 router.use('/skill', skillsRoute);
 router.use('/degree', degreeRoute);
 router.use('/applicants', applicantRouter);
-router.use('/jobs', jobsRouter);
+router.use('/job', jobsRouter);
 router.use('/dashboard/applicant', dashboardRouter);
 router.use('/reports/applicants', reportsRouter);
 router.use('/appliedRole', appliedRoleRouter);

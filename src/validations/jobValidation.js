@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 export const createJobValidation = Joi.object().keys({
-    job_subject: Joi.string().required().min(5).messages({
+    job_subject: Joi.string().required().min(2).messages({
         'string.base': 'Subject must be a string',
         'any.required': 'Subject is required'
     }),
@@ -19,7 +19,6 @@ export const createJobValidation = Joi.object().keys({
     time_zone: Joi.string().required().messages({
         'any.only': 'Time-Zone must ne one of IST,UTC,EST',
         'any.required': 'Time-Zone  is required',
-
     }),
     start_time: Joi.string().required().messages({
         'string.base': 'Start Time must be a string',

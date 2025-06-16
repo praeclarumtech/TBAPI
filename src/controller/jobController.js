@@ -40,11 +40,11 @@ export const viewJobs = async (req, res) => {
             sort: { createdAt: -1 },
         });
         if (!result || result?.length === 0) {
-            logger.error(`jobs ${Message.NOT_FOUND}`)
-            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `jobs ${Message.NOT_FOUND}`)
+            logger.error(`Jobs ${Message.NOT_FOUND}`)
+            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Jobs ${Message.NOT_FOUND}`)
         }
         logger.info(`All jobs ${Message.FETCH_SUCCESSFULLY}`)
-        return HandleResponse(res, true, StatusCodes.OK, `All jobs ${Message.FETCH_SUCCESSFULLY}`, result)
+        return HandleResponse(res, true, StatusCodes.OK, undefined, result)
     } catch (error) {
         logger.error(`${Message.FAILED_TO} fetch job`)
         return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} fetchjob`)
@@ -56,11 +56,11 @@ export const viewJobDetails = async (req, res) => {
         const jobId = req.params.id
         const result = await fetchJobService(jobId)
         if (!result) {
-            logger.error(`job is  ${Message.NOT_FOUND}`)
-            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `job is ${Message.NOT_FOUND}`)
+            logger.error(`Job ${Message.NOT_FOUND}`)
+            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Job ${Message.NOT_FOUND}`)
         }
-        logger.info(`job is ${Message.FETCH_SUCCESSFULLY}`)
-        return HandleResponse(res, true, StatusCodes.OK, `job is ${Message.FETCH_SUCCESSFULLY}`, result)
+        logger.info(`Job ${Message.FETCH_SUCCESSFULLY}`)
+        return HandleResponse(res, true, StatusCodes.OK, undefined, result)
     } catch (error) {
         logger.error(`${Message.FAILED_TO} fetch job`)
         return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} fetch job`)
@@ -73,12 +73,12 @@ export const updateJob = async (req, res) => {
         const jobId = req.params.id
         const existJob = await fetchJobService(jobId)
         if (!existJob) {
-            logger.error(`job is  ${Message.NOT_FOUND}`)
-            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `job is ${Message.NOT_FOUND}`)
+            logger.error(`Job ${Message.NOT_FOUND}`)
+            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Job ${Message.NOT_FOUND}`)
         }
-        const updateJob = await updateJobService(jobId, req.body)
-        logger.info(`Job is ${Message.UPDATED_SUCCESSFULLY}`)
-        return HandleResponse(res, true, StatusCodes.OK, `Job is ${Message.UPDATED_SUCCESSFULLY}`, updateJob)
+        await updateJobService(jobId, req.body)
+        logger.info(`Job ${Message.UPDATED_SUCCESSFULLY}`)
+        return HandleResponse(res, true, StatusCodes.ACCEPTED, `Job ${Message.UPDATED_SUCCESSFULLY}`)
     } catch (error) {
         logger.error(`${Message.FAILED_TO} fetch job`)
         return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} update job`)
@@ -89,15 +89,15 @@ export const deleteJob = async (req, res) => {
     try {
         const { ids } = req.body;
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
-            logger.error(`ObjectId is ${Message.NOT_FOUND}`);
-            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `ObjectId is ${Message.NOT_FOUND}`);
+            logger.error(`Job ${Message.NOT_FOUND}`);
+            return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `Job ${Message.NOT_FOUND}`);
         }
         const removeJob = await deletJobService(ids)
         if (removeJob.deletedCount === 0) {
-            logger.error(`Job is ${Message.NOT_FOUND}`);
-            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Job is ${Message.NOT_FOUND}`);
+            logger.error(`Job  ${Message.NOT_FOUND}`);
+            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Job ${Message.NOT_FOUND}`);
         }
-        const message = removeJob.deletedCount > 1 ? `${removeJob.deletedCount} Jobs are ${Message.DELETED_SUCCESSFULLY}` : `${removeJob.deletedCount} Jobs is ${Message.DELETED_SUCCESSFULLY}`
+        const message = removeJob.deletedCount > 1 ? `${removeJob.deletedCount} jobs ${Message.DELETED_SUCCESSFULLY}` : `${removeJob.deletedCount} Job ${Message.DELETED_SUCCESSFULLY}`
         logger.info(message);
         return HandleResponse(res, true, StatusCodes.OK, message, removeJob);
     } catch (error) {
