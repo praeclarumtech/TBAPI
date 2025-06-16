@@ -9,6 +9,19 @@ export const genderEnum = {
   OTHER: 'other',
 };
 
+export const jodTypeEnum = {
+  FULL_TIME: 'full-time',
+  PART_TIME: 'part-time',
+  CONTRACT: 'contract',
+  INTERNSHIP: 'internship',
+  FREELANCE: 'freelance'
+}
+export const timeZome = {
+  IST: 'IST',
+  UTC: 'UTC',
+  EST: 'EST'
+}
+
 export const applicantEnum = {
   YES: 'yes',
   NO: 'no',

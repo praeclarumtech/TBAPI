@@ -155,17 +155,15 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       let responseMessage = '';
       if (results.inserted.length > 0) {
-        responseMessage = `${results.inserted.length} applicant${
-          results.inserted.length > 1 ? 's' : ''
-        } added successfully.`;
+        responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
+          } added successfully.`;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
         const skippedAndErrorCount =
           results.skipped.length + results.errors.length;
-        responseMessage += `${skippedAndErrorCount} applicant${
-          skippedAndErrorCount > 1 ? 's' : ''
-        } skipped due to duplicate record or resume not parsing `;
+        responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
+          } skipped due to duplicate record or resume not parsing `;
       }
 
       if (
@@ -314,6 +312,7 @@ export const addApplicant = async (req, res) => {
       appliedRole,
       meta,
       email_to,
+      job_id,
       ...body
     } = req.body;
 
@@ -324,7 +323,7 @@ export const addApplicant = async (req, res) => {
     }
     const applicationNo = await generateApplicantNo();
 
-    
+
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
@@ -333,6 +332,7 @@ export const addApplicant = async (req, res) => {
       appliedRole,
       isActive: true,
       meta: meta || {},
+      job_id,
       ...body,
     };
 
@@ -345,10 +345,14 @@ export const addApplicant = async (req, res) => {
         filename: file.originalname || file.filename,
         path: path.join(file.destination, file.filename),
       }));
+      const isExist = await findApplicantByField('email', req.body.email)
+      const message = !isExist
+        ? `New applicant resume received from ${req.body.job_id ? 'Job Portal' : 'QR Code form'} – ${req.body.name.firstName} ${req.body.name.lastName}.`
+        : `Applicant Details Updated:– ${req.body.name.firstName} ${req.body.name.lastName} resume received from ${req.body.job_id ? 'Job Portal' : 'QR Code'}`;
 
       const emailData = {
         email_to: [process.env.HR_EMAIL],
-        subject: `New Applicant Resume Received from QR Code Form – ${req.body.name.firstName} ${req.body.name.lastName}`,
+        subject: message,
         description: `
            <p>The applicant <strong>${req.body.name.firstName} ${req.body.name.lastName}</strong> has submitted their resume via the QR Code form for the position of <strong>${req.body.appliedRole}</strong>.</p>
            <p>Please find the attached resume for your review.</p>
@@ -442,8 +446,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-          ? { $in: validAddedBy }
-          : undefined;
+            ? { $in: validAddedBy }
+            : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -973,7 +977,7 @@ export const updateApplicant = async (req, res) => {
     };
 
     const existingApplicant = await getApplicantById(applicantId);
-     if (!existingApplicant) {
+    if (!existingApplicant) {
       logger.warn(`Applicant ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
@@ -1184,8 +1188,8 @@ export const exportApplicantCsv = async (req, res) => {
 
     const projection = selectedFields
       ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-          _id: 1,
-        })
+        _id: 1,
+      })
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
@@ -1286,7 +1290,7 @@ export const exportApplicantCsv = async (req, res) => {
                 false,
                 StatusCodes.CONFLICT,
                 `${duplicateApplicants.length} records are duplicates: ` +
-                  conflictDetails.join('; ')
+                conflictDetails.join('; ')
               );
             }
           }
@@ -1490,18 +1494,18 @@ export const exportApplicantCsv = async (req, res) => {
           source === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : source === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : source === applicantEnum.MANUAL
-            ? applicantEnum.MANUAL
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : source === applicantEnum.MANUAL
+                ? applicantEnum.MANUAL
+                : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
       }
       if (filtered) {
         query.addedBy =
           filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : filtered === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1614,7 +1618,7 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     // If no filters provided, export all from main
-    applicants = await Applicant.find({ isDeleted: false,isActive: true }, projection);
+    applicants = await Applicant.find({ isDeleted: false, isActive: true }, projection);
 
     if (!applicants.length) {
       return HandleResponse(res, false, 404, 'No applicants found.');
@@ -1661,8 +1665,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     const user = await User.findById(req.user.id);
 
