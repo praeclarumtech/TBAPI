@@ -1,4 +1,5 @@
 import Applicant from '../models/applicantModel.js';
+import jobs from '../models/jobModel.js'
 
 
 export const generateApplicantNo = async () => {
