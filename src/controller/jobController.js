@@ -6,7 +6,6 @@ import logger from '../loggers/logger.js'
 import { pagination } from '../helpers/commonFunction/handlePagination.js'
 import jobs from '../models/jobModel.js'
 import { generateJobId } from '../helpers/generateApplicationNo.js'
-import { commonSearch } from '../helpers/commonFunction/search.js'
 
 export const createJob = async (req, res) => {
     try {
