@@ -308,7 +308,9 @@ export const ViewAllSkillAndAppliedRole = async (req, res) => {
       data = await appliedRoleModel
         .find(filter)
         .populate('skill')
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
     } else {
       totalRecords = await appliedRoleModel.countDocuments({
         isDeleted: false,

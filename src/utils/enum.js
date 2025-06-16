@@ -2,8 +2,11 @@ export const Enum = {
   ADMIN: 'admin',
   HR: 'hr',
   USER: 'user',
-  VENDOR: 'vendor',
-  VISITOR: 'visitor'
+};
+export const genderEnum = {
+  MALE: 'male',
+  FEMALE: 'female',
+  OTHER: 'other',
 };
 
 export const jodTypeEnum = {
@@ -18,11 +21,6 @@ export const timeZome = {
   UTC: 'UTC',
   EST: 'EST'
 }
-export const genderEnum = {
-  MALE: 'male',
-  FEMALE: 'female',
-  OTHER: 'other',
-};
 
 export const applicantEnum = {
   YES: 'yes',

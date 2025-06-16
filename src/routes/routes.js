@@ -12,7 +12,7 @@ import appliedRoleRouter from './route/appliedRoleRoute.js'
 import applicantEmailTempletRouter from './route/emailTemplateRoute.js'
 import designationRouter from './route/designationRoute.js'
 import duplicateRecordRouter from './route/duplicateRecordRoute.js'
-import jobsRouter from './route/jobsRoute.js'
+import jobsRouter from './route/jobRoute.js'
 const router = express.Router();
 
 router.use('/year', yearRoute);
