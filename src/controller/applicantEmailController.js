@@ -3,7 +3,7 @@ import {
   createEmail,
   findAllEmails,
   findEmailById,
-  countEmailsByDate
+  countEmailsByDate,
 } from '../services/applicantEmailService.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
@@ -11,14 +11,17 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import applicantEmail from '../models/applicantEmailModel.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
-import { sendingEmail, generateQrEmailHtml } from '../helpers/commonFunction/handleEmail.js';
-import Applicant from '../models/applicantModel.js'
-import QRCode from 'qrcode'
+import {
+  sendingEmail,
+  generateQrEmailHtml,
+} from '../helpers/commonFunction/handleEmail.js';
+import Applicant from '../models/applicantModel.js';
+import QRCode from 'qrcode';
 
 export const sendEmail = async (req, res) => {
   try {
     const { email_to, email_bcc, subject, description } = req.body;
-    let { flag } = req.query
+    let { flag } = req.query;
 
     if (!email_to || (Array.isArray(email_to) && email_to.length === 0)) {
       return HandleResponse(
@@ -35,7 +38,7 @@ export const sendEmail = async (req, res) => {
       email: { $in: recipients },
     }).select('email isActive _id');
 
-    const emailsInDB = applicants.map(applicant => applicant.email);
+    const emailsInDB = applicants.map((applicant) => applicant.email);
     const activeEmailsFromDB = [];
     const inactiveEmails = [];
 
@@ -47,7 +50,9 @@ export const sendEmail = async (req, res) => {
       }
     }
 
-    const emailsNotInDB = recipients.filter(email => !emailsInDB.includes(email));
+    const emailsNotInDB = recipients.filter(
+      (email) => !emailsInDB.includes(email)
+    );
     const finalEmailsToSend = [...activeEmailsFromDB, ...emailsNotInDB];
 
     if (finalEmailsToSend.length === 0) {
@@ -60,23 +65,28 @@ export const sendEmail = async (req, res) => {
     }
 
     // Attachments remain the same
-    const attachments = req.files?.map((file) => ({
-      filename: file.originalname,
-      path: file.path,
-    })) || [];
+    const attachments =
+      req.files?.map((file) => ({
+        filename: file.originalname,
+        path: file.path,
+      })) || [];
 
     const sendQr = flag === 'true' || flag === '1';
 
     // Send email individually for each recipient with their own QR code
     for (const email of finalEmailsToSend) {
-      const applicant = applicants.find(a => a.email === email && a.isActive);
+      const applicant = applicants.find((a) => a.email === email && a.isActive);
 
-      let htmlContent = `<p>${description || 'Please find your QR code below.'}</p>`;
+      let htmlContent = `<p>${
+        description || 'Please find your QR code below.'
+      }</p>`;
       const inlineImages = [];
 
       if (sendQr) {
         if (applicant) {
-          const { htmlBlockforUpdate, inlineImage } = await generateQrEmailHtml(applicant._id);
+          const { htmlBlockforUpdate, inlineImage } = await generateQrEmailHtml(
+            applicant._id
+          );
           htmlContent += htmlBlockforUpdate;
           inlineImages.push(inlineImage);
         } else {
@@ -106,13 +116,22 @@ export const sendEmail = async (req, res) => {
 
     await createEmail(storedEmails);
 
-    const messageParts = [`Mail sent successfully to: ${finalEmailsToSend.join(', ')}`];
+    const messageParts = [
+      `Mail sent successfully to: ${finalEmailsToSend.join(', ')}`,
+    ];
     if (inactiveEmails.length > 0) {
-      messageParts.push(`Email not sent to inactive applicants: ${inactiveEmails.join(', ')}`);
+      messageParts.push(
+        `Email not sent to inactive applicants: ${inactiveEmails.join(', ')}`
+      );
     }
 
     logger.info(Message.MAIL_SENT);
-    return HandleResponse(res, true, StatusCodes.CREATED, messageParts.join('. '));
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.CREATED,
+      messageParts.join('. ')
+    );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} send mail.`, error);
     return HandleResponse(
@@ -124,20 +143,9 @@ export const sendEmail = async (req, res) => {
   }
 };
 
-
-
-
-
-
 export const getAllEmails = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      startDate,
-      endDate,
-      search,
-    } = req.query;
+    const { page = 1, limit = 10, startDate, endDate, search } = req.query;
 
     const numOfpage = parseInt(page) || 1;
     const limitOfRec = parseInt(limit) || 10;
@@ -277,13 +285,23 @@ export const generateMultipleQrs = async (req, res) => {
     const { emails } = req.body;
 
     if (!Array.isArray(emails) || emails.length === 0) {
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'Emails are required')
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Emails are required'
+      );
     }
 
     const applicants = await Applicant.find({ email: { $in: emails } });
 
     if (applicants.length === 0) {
-      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Applicants are ${Message.NOT_FOUND}`)
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicants are ${Message.NOT_FOUND}`
+      );
     }
 
     const qrResults = await Promise.all(
@@ -293,14 +311,25 @@ export const generateMultipleQrs = async (req, res) => {
         return { email: applicant.email, qrCode };
       })
     );
-    logger.info('QR generated successfully.')
-    return HandleResponse(res, true, StatusCodes.OK, 'QR Generated Successfully.', qrResults)
-
+    logger.info('QR generated successfully.');
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      'QR Generated Successfully.',
+      qrResults
+    );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} generate QR`, error);
-    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} generate QR.`)
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} generate QR.`
+    );
   }
 };
+
 export const getEmailCount = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -330,7 +359,9 @@ export const getEmailCount = async (req, res) => {
       true,
       StatusCodes.OK,
       `Email count ${Message.FETCH_SUCCESSFULLY}`,
-      {count}
+      {
+        count
+      }
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} get email count.`, error);
@@ -342,4 +373,3 @@ export const getEmailCount = async (req, res) => {
     );
   }
 };
-
