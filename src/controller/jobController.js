@@ -9,8 +9,9 @@ import { generateJobId } from '../helpers/generateApplicationNo.js'
 
 export const createJob = async (req, res) => {
     try {
+        const user = req.user.id
         const job_id = await generateJobId()
-        const jobData = { job_id, ...req.body }
+        const jobData = { job_id, postedBy: user, ...req.body }
         await createJobService(jobData)
         logger.info(`New job ${Message.ADDED_SUCCESSFULLY}`)
         return HandleResponse(res, true, StatusCodes.CREATED, `New job ${Message.ADDED_SUCCESSFULLY}`)
