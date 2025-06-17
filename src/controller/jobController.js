@@ -9,8 +9,9 @@ import { generateJobId } from '../helpers/generateApplicationNo.js'
 
 export const createJob = async (req, res) => {
     try {
+        const user = req.user.id
         const job_id = await generateJobId()
-        const jobData = { job_id, ...req.body }
+        const jobData = { job_id, addedBy: user, ...req.body }
         await createJobService(jobData)
         logger.info(`New job ${Message.ADDED_SUCCESSFULLY}`)
         return HandleResponse(res, true, StatusCodes.CREATED, `New job ${Message.ADDED_SUCCESSFULLY}`)
@@ -22,15 +23,16 @@ export const createJob = async (req, res) => {
 
 export const viewJobs = async (req, res) => {
     try {
-        const { job_subject, job_type, page = 1, limit = 10 } = req.query
+        const { page = 1, limit = 10, search } = req.query
         const query = {}
-        if (job_subject) {
-            query.job_subject = { $regex: job_subject, $options: 'i' }
-        }
-        if (job_type) {
-            const cleanType = job_type.replace(/[^a-zA-Z0-9]/g, '');
-            const flexiblePattern = cleanType.split('').join('[-_\\s]*')
-            query.job_type = { $regex: flexiblePattern, $options: 'i' }
+        if (search && typeof search === 'string') {
+            const cleanSearch = search.replace(/[^a-zA-Z0-9]/g, '');
+            const flexiblePattern = cleanSearch.split('').join('[-_\\s]*');
+            const regex = new RegExp(flexiblePattern, 'i');
+            query.$or = [
+                { job_subject: { $regex: regex } },
+                { job_type: { $regex: regex } },
+            ];
         }
         const result = await pagination({
             Schema: jobs,

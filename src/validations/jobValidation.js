@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { jodTypeEnum, timeZome } from '../utils/enum.js';
 
 export const createJobValidation = Joi.object().keys({
     job_subject: Joi.string().required().min(2).messages({
@@ -10,16 +11,18 @@ export const createJobValidation = Joi.object().keys({
         'any.required': 'Details are required',
     }),
     job_type: Joi.string()
-        .valid('full-time', 'part-time', 'contract', 'internship', 'freelance')
+        .valid(jodTypeEnum.CONTRACT, jodTypeEnum.FREELANCE, jodTypeEnum.FULL_TIME, jodTypeEnum.PART_TIME, jodTypeEnum.INTERNSHIP,)
         .required()
         .messages({
-            'any.only': 'Job Type must be one of full-time, part-time, contract, internship, or freelance',
+            'any.only': `Job Type must be ${jodTypeEnum.CONTRACT},${jodTypeEnum.FREELANCE},${jodTypeEnum.FULL_TIME},${jodTypeEnum.PART_TIME} or ${jodTypeEnum.INTERNSHIP}.`,
             'any.required': 'Job Type is required',
         }),
-    time_zone: Joi.string().required().messages({
-        'any.only': 'Time-Zone must ne one of IST,UTC,EST',
-        'any.required': 'Time-Zone  is required',
-    }),
+    time_zone: Joi.string()
+        .valid(timeZome.EST, timeZome.IST, timeZome.UTC)
+        .required().messages({
+            'any.only': `Time-Zone must be ${timeZome.EST},${timeZome.IST} or ${timeZome.UTC}`,
+            'any.required': 'Time-Zone  is required',
+        }),
     start_time: Joi.string().required().messages({
         'string.base': 'Start Time must be a string',
         'any.required': 'Start Time is required',
