@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import { HandleResponse } from '../helpers/handleResponse.js'
-import { createJobService, deletJobService, fetchJobService, updateJobService } from '../services/jobService.js'
+import { createJobService, deletJobService, fetchJobsByVendorService, fetchJobService, updateJobService } from '../services/jobService.js'
 import { Message } from '../utils/constant/message.js'
 import logger from '../loggers/logger.js'
 import { pagination } from '../helpers/commonFunction/handlePagination.js'
@@ -11,10 +11,13 @@ export const createJob = async (req, res) => {
     try {
         const user = req.user.id
         const job_id = await generateJobId()
-        const jobData = { job_id, addedBy: user, ...req.body }
+        const application_deadline = new Date()
+        application_deadline.setDate(application_deadline.getDate() + 30)
+        const finalDate = application_deadline.toLocaleDateString('en-CA')
+        const jobData = { job_id, addedBy: user, application_deadline: finalDate, ...req.body }
         await createJobService(jobData)
         logger.info(`New job ${Message.ADDED_SUCCESSFULLY}`)
-        return HandleResponse(res, true, StatusCodes.CREATED, `New job ${Message.ADDED_SUCCESSFULLY}`)
+        return HandleResponse(res, true, StatusCodes.CREATED, `New job ${Message.ADDED_SUCCESSFULLY}`, jobData)
     } catch (error) {
         logger.error(`${Message.FAILED_TO} add job`, error)
         return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} add job`)
@@ -23,7 +26,19 @@ export const createJob = async (req, res) => {
 
 export const viewJobs = async (req, res) => {
     try {
-        const { page = 1, limit = 10, search } = req.query
+        const {
+            page = 1,
+            limit = 10,
+            search,
+            job_type,
+            salary_currency,
+            salary_frequency,
+            min_salary,
+            max_salary,
+            min_experience,
+            work_preference,
+            required_skills,
+        } = req.query
         const query = {}
         if (search && typeof search === 'string') {
             const cleanSearch = search.replace(/[^a-zA-Z0-9]/g, '');
@@ -33,6 +48,45 @@ export const viewJobs = async (req, res) => {
                 { job_subject: { $regex: regex } },
                 { job_type: { $regex: regex } },
             ];
+        }
+        if (job_type) {
+            query.job_type = job_type
+        }
+
+        if (salary_currency) {
+            query.salary_currency = salary_currency;
+        }
+
+        if (salary_frequency) {
+            query.salary_frequency = salary_frequency;
+        }
+
+        if (min_salary) {
+            query.min_salary = { $gte: parseInt(min_salary) };
+        }
+
+        if (max_salary) {
+            query.max_salary = { $lte: parseInt(max_salary) }
+        }
+
+        if (min_experience) {
+            query.min_experience = { $gte: parseInt(min_experience) };
+        }
+        if (work_preference) {
+            query.work_preference = work_preference
+        }
+        if (required_skills) {
+            const skillsArray = required_skills
+                .split(',')
+                .map(skill => skill.trim())
+                .filter(skill => skill.length > 0);
+
+            if (skillsArray.length > 0) {
+                const regexPatterns = skillsArray.map(skill =>
+                    new RegExp(skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+                );
+                query.required_skills = { $in: regexPatterns };
+            }
         }
         const result = await pagination({
             Schema: jobs,
@@ -107,3 +161,23 @@ export const deleteJob = async (req, res) => {
         return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} delete jobs.`);
     }
 }
+
+export const viewJobsByVendorId = async (req, res) => {
+    try {
+        const vendorId = req.params.id;
+        const findJobs = await fetchJobsByVendorService(vendorId)
+        if (!findJobs) {
+            return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Job ${Message.NOT_FOUND}`)
+        }
+        logger.info(`Job ${Message.FETCH_SUCCESSFULLY}`)
+        return HandleResponse(res, true, StatusCodes.OK, undefined, findJobs)
+    } catch (error) {
+        logger.error(`${Message.FAILED_TO} fetch job`)
+        return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} fetch job`)
+    }
+};
+
+
+
+
+
