@@ -95,7 +95,8 @@ export const applicantEnum = {
   MARRIED: 'Married',
   MANUAL: 'Manual',
   CSV: 'Csv',
-  RESUME: 'Resume'
+  RESUME: 'Resume',
+  GUEST: 'Guest'
 };
 
 export const candidateTemplateType = {
