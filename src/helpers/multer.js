@@ -169,3 +169,35 @@ export const uploadResume = multer({
   fileFilter: resumeFileFilter
 }).array('resume', UPLOAD_CONFIG.MAX_FILES); 
 
+const jobScoreDir = 'src/uploads/jobScore';
+if (!fs.existsSync(jobScoreDir)) {
+  fs.mkdirSync(jobScoreDir, { recursive: true });
+}
+
+const jobScorestorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, jobScoreDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+export const jobScoreResume = multer({
+  storage: jobScorestorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(Message.INVALID_FILE_TYPE));
+    }
+  },
+}).fields([
+  { name: 'resume', maxCount: 1 },
+  { name: 'jobDescriptionFile', maxCount: 1 }
+])
+
