@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { jodTypeEnum, timeZome } from '../utils/enum.js';
+import { applicantEnum, jodTypeEnum, salaryFrequencyEnum, timeZome } from '../utils/enum.js';
 
 export const createJobValidation = Joi.object().keys({
     job_subject: Joi.string().required().min(2).messages({
@@ -44,4 +44,25 @@ export const createJobValidation = Joi.object().keys({
         'string.base': 'Contract Duration must be a string',
         'any.required': 'Contract Duration is required',
     }),
+    salary_currency: Joi.string().default('INR').messages({
+        'string.base': 'Salary Currency must be a string',
+    }),
+    salary_frequency: Joi.string()
+        .valid(...Object.values(salaryFrequencyEnum))
+        .optional()
+        .messages({
+            'any.only': `Salary Frequency must be one of ${Object.values(salaryFrequencyEnum).join(', ')}.`,
+        }),
+    min_experience: Joi.number().optional().messages({
+        'number.base': 'Min Experience must be a number',
+    }),
+    work_preference: Joi.string()
+        .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, '')
+        .optional()
+        .messages({
+            'any.only': `Work Preference must be ${applicantEnum.REMOTE}, ${applicantEnum.HYBRID}, ${applicantEnum.ONSITE}, or empty.`,
+        }),
+    required_skills: Joi.array().items(Joi.string()).optional().messages({
+        'array.base': 'Required Skills must be an array of strings',
+    })
 });

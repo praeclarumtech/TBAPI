@@ -38,3 +38,12 @@ export const deletJobService = async (ids) => {
         throw error;
     }
 };
+
+export const fetchJobsByVendorService = async (vendorId) => {
+    try {
+        return await jobs.find({ addedBy: vendorId });
+    } catch (error) {
+        logger.error('Error while fetching jobs by vendor', error);
+        throw error;
+    }
+};
