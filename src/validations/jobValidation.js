@@ -64,5 +64,8 @@ export const createJobValidation = Joi.object().keys({
         }),
     required_skills: Joi.array().items(Joi.string()).optional().messages({
         'array.base': 'Required Skills must be an array of strings',
-    })
+    }),
+    job_location: Joi.string().optional().messages({
+        'string.base': 'Job Location must be a string',
+    }),
 });
