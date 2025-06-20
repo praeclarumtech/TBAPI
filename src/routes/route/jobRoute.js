@@ -4,6 +4,8 @@ import { createJob, viewJobs, viewJobDetails, updateJob, deleteJob, viewJobsByVe
 import { validator } from '../../helpers/validator.js';
 import { createJobValidation } from '../../validations/jobValidation.js';
 import { authorization } from '../../helpers/userMiddleware.js'
+import { addJobApplication, scoreResume } from '../../controller/jobScoreController.js';
+import { uploadResume } from '../../helpers/multer.js';
 const router = express.Router();
 
 
@@ -14,4 +16,8 @@ router.get('/viewJobs/vendor/:id', authorization, viewJobsByVendorId)
 router.get('/:id', viewJobDetails)
 router.put('/:id', authorization, updateJob)
 router.delete('/delete', authorization, deleteJob)
+
+router.post('/jobScore', scoreResume);
+router.post('/addJobApplication',addJobApplication)
+
 export default router;
