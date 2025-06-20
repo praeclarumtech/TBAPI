@@ -46,16 +46,6 @@ export const calculateJobScore = (resumeText, jdText) => {
   const score = Math.round((matchedKeywords.length / jdKeywords.length) * 100);
 
   return score;
-
-  // return {
-  //   score,
-    // insights: {
-    //   matchedKeywords,
-    //   missingKeywords: jdKeywords.filter(w => !resumeKeywords.includes(w)),
-    //   totalJDKeywords: jdKeywords.length,
-    //   totalResumeKeywords: resumeKeywords.length,
-    // }
-  // };
 };
 
 // const stopwords = new Set([
@@ -164,7 +154,7 @@ export const processResumeAndJD = async (resumeFile, jdFile, jdText) => {
   if (resumeFile) fs.unlinkSync(resumeFile.path);
   if (jdFile) fs.unlinkSync(jdFile.path);
 
-  const { score, insights } = calculateJobScore(resumeText, jobDescriptionText);
+  const score = calculateJobScore(resumeText, jobDescriptionText);
 
-  return { score, insights };
+  return { score}
 };

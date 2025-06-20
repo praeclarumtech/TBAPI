@@ -4,7 +4,7 @@ import {
 } from '../services/jobScoreService.js';
 import { StatusCodes } from 'http-status-codes';
 import Applicant from '../models/applicantModel.js';
-import jobApplication from '../models/jonApplicantionModel.js';
+import jobApplication from '../models/jobApplicantionModel.js';
 import logger from '../loggers/logger.js';
 import { jobScoreResume } from '../helpers/multer.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
@@ -20,6 +20,7 @@ import {
   extractMatchingRoleFromResume,
   extractSkillsFromResume,
 } from '../services/applicantService.js';
+import fs from 'fs';
 
 export const scoreResume = (req, res) => {
   jobScoreResume(req, res, async (err) => {
@@ -228,12 +229,10 @@ export const addJobApplication = async (req, res) => {
           job.job_subject
         }, jobdetails: ${job.job_details.replace(/<[^>]*>/g, '')}, jobtype: ${
           job.job_type
-        }, timezone: ${job.time_zone}, starttime: ${job.start_time}, endtime: ${
-          job.end_time
-        }, minsalary: ${job.min_salary}, maxsalary: ${
-          job.max_salary
-        }, contractduration: ${job.contract_duration}`;
-        // console.log(">>>>>>>>>>>",jdText)
+        }, job location: ${job.job_location}, ${job.job_type}, min experience: ${
+          job.min_experience
+        }, contractduration: ${job.contract_duration}, ${job.required_skills}, work preference :${job.work_preference}`;
+        console.log(">>>>>>>>>>>",jdText)
         if (!job) {
           return HandleResponse(
             res,
@@ -263,9 +262,11 @@ export const addJobApplication = async (req, res) => {
             );
           }
         } catch (extractError) {
-          console.error('Error extracting text:', extractError);
+          logger.error('Error extracting text:', extractError);
           throw new Error('Failed to extract text from resume');
         }
+
+        console.log("OPLLLLLL",resumeText)
 
         const applicantData = parseResumeText(resumeText);
         if (!applicantData.email || !applicantData.phone.phoneNumber) {
@@ -330,6 +331,8 @@ export const addJobApplication = async (req, res) => {
           }
         }
 
+        if (resumeFile) fs.unlinkSync(resumeFile.path);
+
         await application.save();
 
         return HandleResponse(
@@ -344,24 +347,22 @@ export const addJobApplication = async (req, res) => {
           }
         );
       } catch (innerError) {
-        console.error('Error in processing:', innerError);
+       logger.error(`${Message.FAILED_TO} process application,`,innerError);
         return HandleResponse(
           res,
           false,
           StatusCodes.INTERNAL_SERVER_ERROR,
-          'Failed to process application',
-          { error: innerError.message }
+          `${Message.FAILED_TO } process application`,
         );
       }
     });
   } catch (outerError) {
-    console.error('Outer error:', outerError);
+   logger.error(`${Message.FAILED_TO} add aplicant.${error}`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Server error',
-      { error: outerError.message }
+      `${Message.FAILED_TO} add aplicant.${error}`
     );
   }
 };
