@@ -19,6 +19,8 @@ import {
 } from '../services/userService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { upload } from '../helpers/multer.js';
+import { pagination } from '../helpers/commonFunction/handlePagination.js';
+import User from '../models/userModel.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -110,23 +112,25 @@ export const login = async (req, res) => {
 
 export const viewProfile = async (req, res) => {
   try {
-    const user = await getAllusers();
-    if (!user) {
-      logger.warn(`Profile ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Profile ${Message.NOT_FOUND}`
-      );
-    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+
+    const paginatedData = await pagination({
+      Schema: User,
+      page,
+      limit,
+      query: {},
+      sort: { createdAt: -1 },
+    });
+
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `All profile are ${Message.FETCH_SUCCESSFULLY}`,
-      user
+      paginatedData
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} view profile.`);
