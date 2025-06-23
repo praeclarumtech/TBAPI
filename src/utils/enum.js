@@ -2,6 +2,8 @@ export const Enum = {
   ADMIN: 'admin',
   HR: 'hr',
   USER: 'user',
+  VENDOR: 'vendor',
+  GUEST: 'guest'
 };
 export const genderEnum = {
   MALE: 'male',
@@ -21,6 +23,20 @@ export const timeZome = {
   UTC: 'UTC',
   EST: 'EST'
 }
+export const salaryFrequencyEnum = {
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
+  HOURLY: 'hourly'
+}
+export const salaryCurrencyEnum = {
+  INR: 'INR',
+  USD: 'USD',
+  EUR: 'EUR',
+  GBP: 'GBP',
+  AUD: 'AUD',
+  CAD: 'CAD',
+  SGD: 'SGD'
+};
 
 export const applicantEnum = {
   YES: 'yes',
