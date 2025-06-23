@@ -1497,8 +1497,11 @@ export const exportApplicantCsv = async (req, res) => {
               ? applicantEnum.CSV
               : source === applicantEnum.MANUAL
                 ? applicantEnum.MANUAL
-                : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+                : source === applicantEnum.GUEST
+                  ? applicantEnum.GUEST
+                  : { $in: [applicantEnum.RESUME, applicantEnum.CSV, applicantEnum.GUEST] };
       }
+
       if (filtered) {
         query.addedBy =
           filtered === applicantEnum.RESUME
