@@ -21,6 +21,8 @@ import {
   extractSkillsFromResume,
 } from '../services/applicantService.js';
 import fs from 'fs';
+import { updateJobApplicantionStatus } from '../services/jobService.js';
+import mongoose from 'mongoose';
 
 export const scoreResume = (req, res) => {
   jobScoreResume(req, res, async (err) => {
@@ -71,121 +73,6 @@ export const scoreResume = (req, res) => {
   });
 };
 
-// export const addJobApplication = async (req, res) => {
-//   try {
-//     jobScoreResume(req, res, async (err) => {
-//         if (err) {
-//           logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
-//           return HandleResponse(
-//             res,
-//             false,
-//             StatusCodes.BAD_REQUEST,
-//             err.message.includes('File type')
-//               ? Message.INVALID_FILE_TYPE
-//               : err.message
-//           );
-//         }
-
-//         if (!req.files || req.files.length === 0) {a
-//           logger.warn('No files Uploaded');
-//           return HandleResponse(
-//             res,
-//             false,
-//             StatusCodes.BAD_REQUEST,
-//             'No files Uploaded'
-//           );
-//         }
-//     const { job_id } = req.body; // Get job ID from request
-//      // Uploaded resume file
-
-//     console.log("job_id",job_id)
-
-//     // const jdtext = jobs.findOne({ job_id: jobId });
-//      const jdText = await jobs.findOne({ job_id });
-//     console.log("JDtext>>>>>>>",jdText.job_details)
-
-//     // 1. Extract text from resume
-//     let resumeText;
-//     if (resumeFile.mimetype === 'application/pdf') {
-//       resumeText = await extractTextFromPDF(resumeFile.path);
-//     } else if (resumeFile.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-//       resumeText = await extractTextFromDocx(resumeFile.path);
-//     } else if (resumeFile.mimetype === 'application/msword') {
-//       resumeText = await extractTextFromDoc(resumeFile.path);
-//     }
-
-//     console.log("resumetexttt",resumeText)
-
-//     // 2. Parse resume text to get applicant info
-//     const applicantData = parseResumeText(resumeText);
-
-//     // 3. Find or create applicant
-//     let applicant = await Applicant.findOne({
-//       $or: [
-//         { email: applicantData.email },
-//         { 'phone.phoneNumber': applicantData.phone.phoneNumber }
-//       ]
-//     });
-
-//     if (!applicant) {
-//       // Create new applicant if not found
-//       applicant = new Applicant({
-//         ...applicantData,
-//         addedBy: 'resume'
-//       });
-//       await applicant.save();
-//     }
-
-//     // 4. Handle job application
-//     let application = await jobApplication.findOne({ applicant_Id: applicant._id });
-
-//     if (!application) {
-//       // Create new application record if doesn't exist
-//       application = new jobApplication({
-//         applicant_Id: applicant._id,
-//         applications: [{
-//           job_id,
-//           score: calculateJobScore(resumeText, jdtext) // Implement your scoring logic
-//         }]
-//       });
-//     } else {
-//       // Check if already applied to this job
-//       const existingApplication = application.applications.find(app => app.job_id.equals(job_id));
-
-//       if (existingApplication) {
-//         // Update existing application
-//         existingApplication.appliedDate = new Date();
-//         existingApplication.score = calculateJobScore(resumeText, jdText.job_details);
-//       } else {
-//         // Add new application to array
-//         application.applications.push({
-//           job_id,
-//           score: calculateJobScore(resumeText, jdText.job_details)
-//         });
-//       }
-//     }
-
-//     await application.save();
-
-//     return res.status(200).json({
-//       success: true,
-//       message: 'Application processed successfully',
-//       data: {
-//         applicant_Id: applicant._id,
-//         applicationId: application._id
-//       }
-//     });
-
-//     })} catch (error) {
-//     console.error('Error processing application:', error);
-//     return res.status(500).json({
-//       success: false,
-//       message: 'Failed to process application',
-//       error: error.message
-//     });
-//   }
-// }
-
 export const addJobApplication = async (req, res) => {
   try {
     jobScoreResume(req, res, async (err) => {
@@ -232,7 +119,6 @@ export const addJobApplication = async (req, res) => {
         }, job location: ${job.job_location}, ${job.job_type}, min experience: ${
           job.min_experience
         }, contractduration: ${job.contract_duration}, ${job.required_skills}, work preference :${job.work_preference}`;
-        console.log(">>>>>>>>>>>",jdText)
         if (!job) {
           return HandleResponse(
             res,
@@ -266,12 +152,13 @@ export const addJobApplication = async (req, res) => {
           throw new Error('Failed to extract text from resume');
         }
 
-        console.log("OPLLLLLL",resumeText)
-
         const applicantData = parseResumeText(resumeText);
         if (!applicantData.email || !applicantData.phone.phoneNumber) {
-          throw new Error(
-            'Failed to extract required applicant info from resume'
+           return HandleResponse(
+            res,
+            false,
+            StatusCodes.BAD_REQUEST,
+            'Could not extract email or phone from resume'
           );
         }
 
@@ -307,21 +194,24 @@ export const addJobApplication = async (req, res) => {
             applications: [
               {
                 job_id: job._id,
-                score: calculateJobScore(resumeText, job.job_details),
+                score: calculateJobScore(resumeText, jdText),
                 appliedDate: new Date(),
               },
             ],
+            user_id: req.user.id 
           });
         } else {
           const existingAppIndex = application.applications.findIndex(
-            (app) => app.job_id.toString() === job_id.toString()
+            (app) => app.job_id.toString() === job._id.toString()
           );
 
           if (existingAppIndex >= 0) {
-            application.applications[existingAppIndex].applied_Date =
-              new Date();
-            application.applications[existingAppIndex].score =
-              calculateJobScore(resumeText, jdText);
+            application.applications[existingAppIndex] = {
+              ...application.applications[existingAppIndex],
+              job_id: job._id,
+              score: calculateJobScore(resumeText, jdText),
+              appliedDate: new Date(),
+            };
           } else {
             application.applications.push({
               job_id: job._id,
@@ -363,6 +253,54 @@ export const addJobApplication = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} add aplicant.${error}`
+    );
+  }
+};
+
+export const updateApplicantionStatus = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { status } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+      logger.warn('Invalid application ID format');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Invalid application ID format'
+      );
+    }
+
+     const result = await updateJobApplicantionStatus(applicationId, status);
+
+    if (result.modifiedCount === 0) {
+      logger.warn(`Application ${Message.NOT_FOUND} with ID: ${applicationId}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Application ${Message.NOT_FOUND}`
+      );
+    }
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Application status ${Message.UPDATED_SUCCESSFULLY}`,
+      {
+        applicationId,
+        newStatus: status
+      }
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} update application status: ${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update application status`
     );
   }
 };

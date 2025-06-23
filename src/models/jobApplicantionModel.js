@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { applicationsEnum } from '../utils/enum.js';
 
 const jobApplicationSchema = new mongoose.Schema({
   applicant_Id: {
@@ -17,8 +18,17 @@ const jobApplicationSchema = new mongoose.Schema({
       default: Date.now
     },
     score: { type: Number, required: true },
+    status: {
+      type: String,
+      enum: [applicationsEnum.SUBMITTED, applicationsEnum.INTERVIEW],
+      default: applicationsEnum.SUBMITTED
+    }
   }],
- 
+   user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+        required: false,
+      }
 }, { 
   timestamps: true,
 });

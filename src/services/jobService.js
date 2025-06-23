@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import logger from '../loggers/logger.js'
 import jobs from '../models/jobModel.js'
+import jobApplication from '../models/jobApplicantionModel.js';
 
 export const createJobService = async (jobData) => {
     try {
@@ -44,6 +45,23 @@ export const fetchJobsByVendorService = async (vendorId) => {
         return await jobs.find({ addedBy: vendorId });
     } catch (error) {
         logger.error('Error while fetching jobs by vendor', error);
+        throw error;
+    }
+};
+
+export const updateJobApplicantionStatus = async (applicationId, status) => {
+    try {
+        const applicationObjectId = new mongoose.Types.ObjectId(applicationId);
+        return await jobApplication.updateOne({ 
+        "applications._id": applicationObjectId
+      },
+      { 
+        $set: { 
+          "applications.$.status": status 
+        } 
+      });
+    } catch (error) {
+        logger.error('Error while updating job application status', error);
         throw error;
     }
 };
