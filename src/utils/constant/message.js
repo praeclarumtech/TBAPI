@@ -46,6 +46,8 @@ export const Message = {
   INACTIVE_SUCCESSFULLY: 'Inactive Successfully.',
   MOVED_SUCCESSFULLY: 'Records sucessfully to move applicants.',
   DUPLICATE_RECORDS: 'All records are duplicates.',
-  ADD_TO_FAV: 'successfully add to favorite.'
+  ADD_TO_FAV: 'successfully add to favorite.',
+  UNSUPPORTED_FILE:'Unsupported file type.',
+  RESUME_SCORED_SUCCESSFULLY:'Resume scored successfully.',
 };
 

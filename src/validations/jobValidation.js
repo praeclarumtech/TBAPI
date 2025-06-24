@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { applicantEnum, jodTypeEnum, salaryFrequencyEnum, timeZome } from '../utils/enum.js';
+import { applicantEnum, applicationsEnum, jodTypeEnum, salaryFrequencyEnum, timeZome } from '../utils/enum.js';
 
 export const createJobValidation = Joi.object().keys({
     job_subject: Joi.string().required().min(2).messages({
@@ -65,4 +65,26 @@ export const createJobValidation = Joi.object().keys({
     required_skills: Joi.array().items(Joi.string()).optional().messages({
         'array.base': 'Required Skills must be an array of strings',
     })
+});
+
+export const jobApplicationStatusValidation = Joi.object({
+  status: Joi.string()
+    .valid(applicationsEnum.SUBMITTED,applicationsEnum.INTERVIEW)
+    .required()
+    .messages({
+      'any.only': 'Invalid application status value.',
+      'any.required': 'Status is required.',
+    }),
+});
+
+export const jobApplicationIdParamValidation = Joi.object({
+  applicationId: Joi.string()
+    .length(24)
+    .hex()
+    .required()
+    .messages({
+      'string.length': 'Invalid application ID format',
+      'string.hex': 'Application ID must be a valid hexadecimal string.',
+      'any.required': 'Application ID is required.',
+    }),
 });
