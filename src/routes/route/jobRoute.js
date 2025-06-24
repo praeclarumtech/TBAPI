@@ -2,9 +2,10 @@ import express from 'express';
 
 import { createJob, viewJobs, viewJobDetails, updateJob, deleteJob, viewJobsByVendorId } from '../../controller/jobController.js'
 import { validator } from '../../helpers/validator.js';
-import { createJobValidation, jobApplicationStatusValidation } from '../../validations/jobValidation.js';
+import { createJobValidation, jobApplicationStatusValidation, jobApplicationIdParamValidation } from '../../validations/jobValidation.js';
 import { authorization } from '../../helpers/userMiddleware.js'
 import { addJobApplication, scoreResume, updateApplicantionStatus } from '../../controller/jobScoreController.js';
+import { jobScoreResume } from '../../helpers/multer.js';
 const router = express.Router();
 
 
@@ -16,8 +17,8 @@ router.get('/:id', viewJobDetails)
 router.put('/:id', authorization, updateJob)
 router.delete('/delete', authorization, deleteJob)
 
-router.post('/jobScore', scoreResume);
-router.post('/addJobApplication', authorization, addJobApplication)
-router.put('/update/applicantionStatus/:applicationId', authorization, validator.body(jobApplicationStatusValidation), updateApplicantionStatus)
+router.post('/jobScore', jobScoreResume, scoreResume);
+router.post('/addJobApplication', authorization, jobScoreResume, addJobApplication)
+router.put('/update/applicantionStatus/:applicationId', authorization, validator.params(jobApplicationIdParamValidation), validator.body(jobApplicationStatusValidation), updateApplicantionStatus)
 
 export default router;

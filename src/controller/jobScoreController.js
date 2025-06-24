@@ -6,7 +6,6 @@ import { StatusCodes } from 'http-status-codes';
 import Applicant from '../models/applicantModel.js';
 import jobApplication from '../models/jobApplicantionModel.js';
 import logger from '../loggers/logger.js';
-import { jobScoreResume } from '../helpers/multer.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { Message } from '../utils/constant/message.js';
 import {
@@ -24,20 +23,8 @@ import fs from 'fs';
 import { updateJobApplicantionStatus } from '../services/jobService.js';
 import mongoose from 'mongoose';
 
-export const scoreResume = (req, res) => {
-  jobScoreResume(req, res, async (err) => {
+export const scoreResume = async (req, res) => {
     try {
-      if (err) {
-        logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          err.message.includes('File type')
-            ? Message.INVALID_FILE_TYPE
-            : err.message
-        );
-      }
       if (!req.files || (!req.files.resume && !req.files.jobDescriptionFile)) {
         logger.warn(Message.UPLOAD_FAILED);
         return HandleResponse(
@@ -54,64 +41,54 @@ export const scoreResume = (req, res) => {
 
       const result = await processResumeAndJD(resumeFile, jdFile, jdText);
 
+      if (resumeFile) fs.unlinkSync(resumeFile.path);
+      if (jdFile) fs.unlinkSync(jdFile.path);
+
+      logger.info(`${Message.RESUME_SCORED_SUCCESSFULLY}`);
       return HandleResponse(
         res,
         true,
         StatusCodes.OK,
-        'Resume scored successfully',
+        `${Message.RESUME_SCORED_SUCCESSFULLY}`,
         result
       );
     } catch (error) {
-      logger.error(`Resume scoring failed: ${error.message}`);
+      logger.error(`${Message.FAILED_TO }process resume scoring. ${error.message}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
-        'Resume scoring failed'
+        `${Message.FAILED_TO }process resume scoring.`
       );
     }
-  });
-};
+  }
 
 export const addJobApplication = async (req, res) => {
   try {
-    jobScoreResume(req, res, async (err) => {
-      try {
-        if (err) {
-          logger.error(`${Message.FAILED_TO} upload resume: ${err.message}`);
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.BAD_REQUEST,
-            err.message.includes('File type')
-              ? Message.INVALID_FILE_TYPE
-              : err.message
-          );
-        }
-
         if (!req.files || req.files.length === 0) {
-          logger.warn('No files Uploaded');
+          logger.warn(Message.UPLOAD_FAILED);
           return HandleResponse(
             res,
             false,
             StatusCodes.BAD_REQUEST,
-            'No files Uploaded'
+            `${Message.UPLOAD_FAILED}`
           );
         }
 
         const { job_id } = req.body;
         const resumeFile = req.files.resume?.[0];
 
-        if (!resumeFile) {
+        const job = await jobs.findOne({ job_id });
+
+         if (!job) {
           return HandleResponse(
             res,
             false,
-            StatusCodes.BAD_REQUEST,
-            'Resume file is required'
+            StatusCodes.NOT_FOUND,
+            `Job ${Message.NOT_FOUND}`
           );
         }
 
-        const job = await jobs.findOne({ job_id });
         const jdText = `jobsubject: ${
           job.job_subject
         }, jobdetails: ${job.job_details.replace(/<[^>]*>/g, '')}, jobtype: ${
@@ -119,34 +96,28 @@ export const addJobApplication = async (req, res) => {
         }, job location: ${job.job_location}, ${job.job_type}, min experience: ${
           job.min_experience
         }, contractduration: ${job.contract_duration}, ${job.required_skills}, work preference :${job.work_preference}`;
-        if (!job) {
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.NOT_FOUND,
-            'Job not found'
-          );
-        }
+       
 
         let resumeText;
         try {
-          if (resumeFile.mimetype === 'application/pdf') {
-            resumeText = await extractTextFromPDF(resumeFile.path);
-          } else if (
-            resumeFile.mimetype ===
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-          ) {
-            resumeText = await extractTextFromDocx(resumeFile.path);
-          } else if (resumeFile.mimetype === 'application/msword') {
-            resumeText = await extractTextFromDoc(resumeFile.path);
-          } else {
-            return HandleResponse(
-              res,
-              false,
-              StatusCodes.BAD_REQUEST,
-              'Unsupported file type'
-            );
-          }
+        switch (resumeFile.mimetype) {
+        case 'application/pdf':
+          resumeText = await extractTextFromPDF(resumeFile.path);
+          break;
+        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+          resumeText = await extractTextFromDocx(resumeFile.path);
+          break;
+        case 'application/msword':
+          resumeText = await extractTextFromDoc(resumeFile.path);
+          break;
+        default:
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.BAD_REQUEST,
+            Message.UNSUPPORTED_FILE
+          );
+      }
         } catch (extractError) {
           logger.error('Error extracting text:', extractError);
           throw new Error('Failed to extract text from resume');
@@ -165,24 +136,25 @@ export const addJobApplication = async (req, res) => {
         const matchedSkills = await extractSkillsFromResume(resumeText);
         const role = await extractMatchingRoleFromResume(resumeText);
 
-        let applicant = await Applicant.findOne({
+        const existingApplicant  = await Applicant.findOne({
           $or: [
             { email: applicantData.email },
             { 'phone.phoneNumber': applicantData.phone.phoneNumber },
           ],
         });
 
-        if (!applicant) {
-          applicant = new Applicant({
-            ...applicantData,
-            otherSkills: matchedSkills,
-            appliedRole: role,
-            isActive: true,
-            resumeUrl: ``,
-            addedBy: 'Resume',
-          });
-          await applicant.save();
-        }
+        const applicant = existingApplicant || new Applicant({
+      ...applicantData,
+      otherSkills: matchedSkills,
+      appliedRole: role,
+      isActive: true,
+      resumeUrl: '',
+      addedBy: 'guest',
+    });
+
+    if (!existingApplicant) {
+      await applicant.save();
+    }
 
         let application = await jobApplication.findOne({
           applicant_Id: applicant._id,
@@ -222,55 +194,35 @@ export const addJobApplication = async (req, res) => {
         }
 
         if (resumeFile) fs.unlinkSync(resumeFile.path);
-
         await application.save();
 
+        logger.info(`Application ${Message.ADDED_SUCCESSFULLY}`);
         return HandleResponse(
           res,
           true,
-          StatusCodes.OK,
-          'Application processed successfully',
+          StatusCodes.CREATED,
+          `Application ${Message.ADDED_SUCCESSFULLY}`,
           {
             applicant_Id: applicant._id,
             applicationId: application._id,
             score: calculateJobScore(resumeText, jdText),
           }
         );
-      } catch (innerError) {
-       logger.error(`${Message.FAILED_TO} process application,`,innerError);
+      } catch (error) {
+       logger.error(`${Message.FAILED_TO} add application.${error}`);
         return HandleResponse(
           res,
           false,
           StatusCodes.INTERNAL_SERVER_ERROR,
-          `${Message.FAILED_TO } process application`,
+          `${Message.FAILED_TO} add application.`,
         );
       }
-    });
-  } catch (outerError) {
-   logger.error(`${Message.FAILED_TO} add aplicant.${error}`);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} add aplicant.${error}`
-    );
-  }
-};
+    }
 
 export const updateApplicantionStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;
     const { status } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
-      logger.warn('Invalid application ID format');
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        'Invalid application ID format'
-      );
-    }
 
      const result = await updateJobApplicantionStatus(applicationId, status);
 
@@ -284,6 +236,7 @@ export const updateApplicantionStatus = async (req, res) => {
       );
     }
 
+    logger.info(`Application status ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,

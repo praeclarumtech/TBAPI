@@ -76,3 +76,15 @@ export const jobApplicationStatusValidation = Joi.object({
       'any.required': 'Status is required.',
     }),
 });
+
+export const jobApplicationIdParamValidation = Joi.object({
+  applicationId: Joi.string()
+    .length(24)
+    .hex()
+    .required()
+    .messages({
+      'string.length': 'Invalid application ID format',
+      'string.hex': 'Application ID must be a valid hexadecimal string.',
+      'any.required': 'Application ID is required.',
+    }),
+});

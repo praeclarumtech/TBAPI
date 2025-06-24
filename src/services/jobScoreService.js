@@ -2,36 +2,41 @@ import fs from 'fs';
 import pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import mammoth from 'mammoth';
 import WordExtractor from 'word-extractor';
+import { Message } from '../utils/constant/message.js';
 
 const extractTextFromFile = async (file) => {
   if (!file) return '';
 
-  const ext = file.originalname.split('.').pop().toLowerCase();
+  const filePath = file.path;
+  const fileType = file.mimetype;
+
   const buffer = new Uint8Array(fs.readFileSync(file.path));
+ switch (fileType) {
+    case 'application/pdf': {
+      const loadingTask = pdfjsLib.getDocument({ data: buffer });
+      const pdf = await loadingTask.promise;
 
-  if (ext === 'pdf') {
-    const loadingTask = pdfjsLib.getDocument({ data: buffer });
-    const pdf = await loadingTask.promise;
-
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const pageText = content.items.map(item => item.str).join(' ');
-      fullText += pageText + '\n';
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+      return fullText.replace(/\s+/g, ' ').trim();
     }
-
-    return fullText.replace(/\s+/g, ' ').trim();
-  } else if (ext === 'docx') {
-    const result = await mammoth.extractRawText({ buffer });
-    return result.value;
-  } else if (ext === 'doc') {
-    const extractor = new WordExtractor();
-    const doc = await extractor.extract(file.path);
-    return doc.getBody();
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
+      const result = await mammoth.extractRawText({ buffer });
+      return result.value;
+    }
+    case 'application/msword': {
+      const extractor = new WordExtractor();
+      const doc = await extractor.extract(filePath);
+      return doc.getBody();
+    }
+    default:
+      throw new Error(`${Message.UNSUPPORTED_FILE}`);
   }
-
-  return '';
 };
 
 
@@ -51,9 +56,6 @@ export const calculateJobScore = (resumeText, jdText) => {
 export const processResumeAndJD = async (resumeFile, jdFile, jdText) => {
   const resumeText = await extractTextFromFile(resumeFile);
   const jobDescriptionText = jdText || await extractTextFromFile(jdFile);
-
-  if (resumeFile) fs.unlinkSync(resumeFile.path);
-  if (jdFile) fs.unlinkSync(jdFile.path);
 
   const score = calculateJobScore(resumeText, jobDescriptionText);
 
