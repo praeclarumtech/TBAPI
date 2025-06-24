@@ -19,6 +19,9 @@ import {
 } from '../services/userService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { upload } from '../helpers/multer.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -98,7 +101,7 @@ export const login = async (req, res) => {
       token
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} login.`);
+    logger.error(`${Message.FAILED_TO} login.`,error);
     return HandleResponse(
       res,
       false,
@@ -107,6 +110,75 @@ export const login = async (req, res) => {
     );
   }
 };
+
+export const googleLogin = async (req, res) => {
+  const { credential } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    const {
+      given_name,
+      family_name,
+      email,
+      name,
+      picture,
+      email_verified
+    } = payload;
+
+    if (!email_verified) {
+      logger.warn('Google email not verified');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.UNAUTHORIZED,
+        'Google email not verified'
+      );
+    }
+
+    const existingUser = await getUser({ email });
+
+     const user = existingUser
+      ? existingUser
+      : await createUser({
+          firstName: given_name,
+          lastName: family_name,
+          email,
+          userName: given_name,
+          profilePicture: picture,
+          role: 'guest',
+        });
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.EXPIRES_IN }
+    );
+
+    logger.info(`${Message.USER_LOGGED_IN_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `${Message.USER_LOGGED_IN_SUCCESSFULLY}`,
+      token
+    );
+  } catch (error) {
+    logger.error(`Google ${Message.TOKEN_IS_NOT_VALID }`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.UNAUTHORIZED,
+      `Google ${Message.TOKEN_IS_NOT_VALID }`
+    );
+  }
+};
+
 
 export const viewProfile = async (req, res) => {
   try {
