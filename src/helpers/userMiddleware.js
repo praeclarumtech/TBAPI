@@ -2,13 +2,13 @@ import jwt from 'jsonwebtoken';
 import { Message } from '../utils/constant/message.js';
 import { StatusCodes } from 'http-status-codes';
 import logger from '../loggers/logger.js';
- 
+
 export const authorization = (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
  
     if (!token) {
-      logger.error(message.NO_TOKEN);
+      logger.error(Message.NO_TOKEN);
       res.status(StatusCodes.UNAUTHORIZED).json({
         success: false,
         statusCode: StatusCodes.UNAUTHORIZED,
@@ -28,5 +28,16 @@ export const authorization = (req, res, next) => {
     });
   }
 };
- 
- 
+
+export const verifyRoles = (allowedRoles = []) => {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        statusCode: StatusCodes.FORBIDDEN,
+        message: `${Message.ACCESS_DENIED} you do not have permission to access this resource.`
+      })
+    }
+    next()
+  }
+}

@@ -17,6 +17,7 @@ export const Message = {
   // token messages
   NO_TOKEN: 'Authorization header is missing.',
   TOKEN_IS_NOT_VALID: 'Token is not valid.',
+  ACCESS_DENIED:'Access denied',
 
   ADDED_SUCCESSFULLY: 'addedd successfully.',
   DELETED_SUCCESSFULLY: 'deleted successfully.',
