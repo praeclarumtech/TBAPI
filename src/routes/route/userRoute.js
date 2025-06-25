@@ -10,6 +10,7 @@ import {
   forgotPassword,
   changePassword,
   getProfileByToken,
+  googleLogin,
 } from '../../controller/userController.js';
 import { validator } from '../../helpers/validator.js';
 import {
@@ -26,6 +27,7 @@ const router = express.Router();
 
 router.post('/register', validator.body(registerValidation), register);
 router.post('/login', validator.body(loginValidation), login);
+router.post('/google-login', googleLogin);
 
 router.get('/viewProfile', authorization, viewProfile);
 router.get('/getProfileByToken', authorization, getProfileByToken);
