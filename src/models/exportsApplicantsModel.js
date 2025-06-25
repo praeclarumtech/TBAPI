@@ -119,7 +119,7 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
     },
     addedBy: {
       type: String,
-      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
+      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, applicantEnum.GUEST],
       required: true,
     },
     meta: {
