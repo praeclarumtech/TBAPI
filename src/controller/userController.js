@@ -110,20 +110,19 @@ export const login = async (req, res) => {
   }
 };
 
-export const viewProfile = async (req, res) => {
+export const listOfUsers = async (req, res) => {
   try {
-
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
-
+ 
     const paginatedData = await pagination({
       Schema: User,
       page,
       limit,
-      query: {},
+      query: { isDeleted: false },
       sort: { createdAt: -1 },
     });
-
+ 
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -142,6 +141,7 @@ export const viewProfile = async (req, res) => {
     );
   }
 };
+ 
 
 export const getProfileByToken = async (req, res) => {
   try {
@@ -458,3 +458,46 @@ export const changePassword = async (req, res) => {
     );
   }
 };
+
+export const updateStatus = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { isActive, isDeleted } = req.body;
+ 
+    const updatedUser = await updateProfileById(userId, req.body);
+ 
+    if (!updatedUser) {
+      logger.warn(`Profile ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Profile ${Message.NOT_FOUND}`
+      );
+    }
+ 
+    let message;
+    if (isActive !== undefined) {
+      message =
+        isActive === false
+          ? `User ${Message.INACTIVE_SUCCESSFULLY}`
+          : `User ${Message.ACTIVE_SUCCESSFULLY}`;
+    } else if (isDeleted !== undefined) {
+      message = `User ${Message.DELETED_SUCCESSFULLY}`;
+    } else {
+      message = `User ${Message.UPDATED_SUCCESSFULLY}`;
+    }
+ 
+    logger.info(message);
+    return HandleResponse(res, true, StatusCodes.ACCEPTED, message, undefined);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} update profile.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update profile.`
+    );
+  }
+};
+ 
