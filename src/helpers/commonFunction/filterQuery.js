@@ -20,6 +20,9 @@ export const buildApplicantQuery = (params) => {
     anyHandOnOffers,
     rating,
     communicationSkill,
+    appliedSkillsOR,
+    appliedRole,
+    isFavorite,
   } = params;
 
   let query = { isDeleted: false, isActive: true };
@@ -31,6 +34,28 @@ export const buildApplicantQuery = (params) => {
       new RegExp(`^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
     );
     query.appliedSkills = { $all: skillsArray };
+  }
+
+  if (appliedSkillsOR) {
+    const skillsArray = appliedSkillsOR
+      .split(',')
+      .map(
+        (skill) =>
+          new RegExp(
+            `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+            'i'
+          )
+      );
+
+    query.appliedSkills = { $in: skillsArray };
+  }
+
+  if (appliedRole && typeof appliedRole === 'string') {
+    const roleArray = appliedRole
+      .split(',')
+      .map((role) => new RegExp(`^${role.trim()}$`, 'i'))
+
+    query.appliedRole = { $in: roleArray };
   }
 
   if (totalExperience) {
@@ -83,6 +108,13 @@ export const buildApplicantQuery = (params) => {
 
   if (anyHandOnOffers !== undefined) {
     query.anyHandOnOffers = anyHandOnOffers === 'true';
+  }
+
+  if (params.isActive !== undefined) {
+    query.isActive = params.isActive === 'true';
+  }
+  if (params.isFavorite !== undefined) {
+    query.isFavorite = params.isFavorite === 'true';
   }
 
   if (rating) {

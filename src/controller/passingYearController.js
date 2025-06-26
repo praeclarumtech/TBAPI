@@ -27,12 +27,12 @@ export const addYear = async (req, res) => {
     }
 
     await createYear(req.body.year);
-    logger.info(`Near year is ${Message.ADDED_SUCCESSFULLY}`);
+    logger.info(`year ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `Near year is ${Message.ADDED_SUCCESSFULLY}`
+      `year ${Message.ADDED_SUCCESSFULLY}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} add year.`);
@@ -51,12 +51,12 @@ export const getYears = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const findYears = await pagination({ Schema: PassingYear, page, limit ,query: { is_deleted: false }},);
 
-    logger.info(`All years are is ${Message.FETCH_SUCCESSFULLY}`);
+    logger.info(`All years ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `All years are ${Message.FETCH_SUCCESSFULLY}`,
+      `All years ${Message.FETCH_SUCCESSFULLY}`,
       findYears
     );
   } catch (error) {
@@ -74,12 +74,12 @@ export const getYearById = async (req, res) => {
   try {
     const yearId = req.params.id;
     const yearDetail = await getOneYear(yearId);
-    logger.info(`Year is ${Message.FETCH_BY_ID}`);
+    logger.info(`Year ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Year is ${Message.FETCH_BY_ID}`,
+      `Year ${Message.FETCH_BY_ID}`,
       yearDetail
     );
   } catch (error) {
@@ -96,12 +96,12 @@ export const getYearById = async (req, res) => {
 export const updateYear = async (req, res) => {
   try {
     const updateYear = await updateYearById(req.params.id, req.body);
-    logger.info(`Year is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Year ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Year is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Year ${Message.UPDATED_SUCCESSFULLY}`,
       updateYear
     );
   } catch (error) {
@@ -121,20 +121,20 @@ export const deleteYear = async (req, res) => {
       is_deleted: true,
     });
     if (!deleteYear) {
-      logger.warn(`Year is ${Message.NOT_FOUND}`);
+      logger.warn(`Year ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `Year is ${Message.NOT_FOUND}`
+        `Year ${Message.NOT_FOUND}`
       );
     }
-    logger.info(`Year is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Year ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Year is ${Message.DELETED_SUCCESSFULLY}`,
+      `Year ${Message.DELETED_SUCCESSFULLY}`,
       deleteYear
     );
   } catch (error) {

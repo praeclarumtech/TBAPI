@@ -13,10 +13,13 @@ export const dashboard = async (req, res) => {
     const {
       totalApplicants,
       holdApplicants,
-      pendingApplicants,
+      appliedApplicants,
       selectedApplicants,
       rejectedApplicants,
-      inProcessApplicants,
+      inProgressApplicants,
+      shortListedApplicants,
+      onboardedApplicants,
+      leavedApplicants,
     } = await getDashboard();
 
     logger.info(`Dashboard data ${Message.FETCH_SUCCESSFULLY}`);
@@ -28,10 +31,13 @@ export const dashboard = async (req, res) => {
       {
         totalApplicants,
         holdApplicants,
-        pendingApplicants,
+        appliedApplicants,
         selectedApplicants,
         rejectedApplicants,
-        inProcessApplicants,
+        inProgressApplicants,
+        shortListedApplicants,
+        onboardedApplicants,
+        leavedApplicants,
       }
     );
   } catch (error) {

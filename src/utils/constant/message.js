@@ -15,11 +15,11 @@ export const Message = {
   ERROR: 'Error',
 
   // token messages
-  NO_TOKEN: 'No token, authorization denied.',
+  NO_TOKEN: 'Authorization header is missing.',
   TOKEN_IS_NOT_VALID: 'Token is not valid.',
 
   ADDED_SUCCESSFULLY: 'addedd successfully.',
-  DELETED_SUCCESSFULLY: 'deleted successfully',
+  DELETED_SUCCESSFULLY: 'deleted successfully.',
   UPDATED_SUCCESSFULLY: 'updated successfully.',
   REGISTERED_SUCCESSFULLY: 'Congratulation! You are registered successfully..',
   USER_LOGGED_IN_SUCCESSFULLY: 'User logged in successfully.',
@@ -43,6 +43,9 @@ export const Message = {
   DONWLOADED: 'File downloaded successfully.',
   IMPORTED: 'File imported successfully.',
   ACTIVE_SUCCESSFULLY: 'active Successfully.',
-  INACTIVE_SUCCESSFULLY:'Inactive Successfully.'
+  INACTIVE_SUCCESSFULLY: 'inactive Successfully.',
+  MOVED_SUCCESSFULLY: 'Records sucessfully to move applicants.',
+  DUPLICATE_RECORDS: 'All records are duplicates.',
+  ADD_TO_FAV: 'successfully add to favorite.'
 };
 

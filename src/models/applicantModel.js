@@ -14,7 +14,7 @@ const ApplicantSchema = new mongoose.Schema(
       lastName: { type: String, required: false },
     },
     phone: {
-      whatsappNumber: { type: String, required: true, unique: true },
+      whatsappNumber: { type: String, required: false, unique: true },
       phoneNumber: { type: String, required: true, unique: true },
     },
     email: { type: String, required: true, unique: true },
@@ -54,13 +54,16 @@ const ApplicantSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        applicantEnum.PENDING,
+        applicantEnum.APPLIED,
+        applicantEnum.IN_PROGRESS,
+        applicantEnum.SHORTLISTED,
         applicantEnum.SELECTED,
         applicantEnum.REJECTED,
-        applicantEnum.HOLD,
-        applicantEnum.IN_PROCESS,
+        applicantEnum.ON_HOLD,
+        applicantEnum.ONBOARDED,
+        applicantEnum.LEAVED
       ],
-      default: applicantEnum.PENDING,
+      default: applicantEnum.APPLIED,
       required: false,
     },
     interviewStage: {
@@ -87,6 +90,7 @@ const ApplicantSchema = new mongoose.Schema(
     portfolioUrl: { type: String },
     referral: { type: String },
     resumeUrl: { type: String, required: false },
+    gitHubUrl: { type: String, required: false },
     preferredLocations: { type: String, },
     currentCompanyName: { type: String, },
     maritalStatus: {
@@ -116,7 +120,7 @@ const ApplicantSchema = new mongoose.Schema(
     },
     addedBy: {
       type: String,
-      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
+      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, applicantEnum.GUEST],
       required: true
     },
     meta: {
@@ -128,6 +132,13 @@ const ApplicantSchema = new mongoose.Schema(
       default: true,
       required: true
     },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+    },
+    job_id: {
+      type: String,
+    }
   },
   { timestamps: true }
 );

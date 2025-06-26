@@ -50,6 +50,7 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'portfolioUrl', label: 'Portfolio URL', value: row => row.portfolioUrl || '' },
     { key: 'referral', label: 'Referral', value: row => row.referral || '' },
     { key: 'resumeUrl', label: 'Resume URL', value: row => row.resumeUrl || '' },
+    { key: 'gitHubUrl', label: 'Github URL', value: row => row.gitHubUrl || '' },
     { key: 'preferredLocations', label: 'Preferred Locations', value: row => row.preferredLocations || '' },
     { key: 'currentCompanyName', label: 'Current Company Name', value: row => row.currentCompanyName || '' },
     { key: 'maritalStatus', label: 'Marital Status', value: row => row.maritalStatus || ' ' },
@@ -58,7 +59,7 @@ export const generateApplicantCsv = (applicants, selectedFields = null, ids) => 
     { key: 'linkedinUrl', label: 'LinkedIn URL', value: row => row.linkedinUrl || '' },
     { key: 'clientCvUrl', label: 'Client CV URL', value: row => row.clientCvUrl || '' },
     { key: 'clientFeedback', label: 'Client Feedback', value: row => row.clientFeedback || '' },
-    { key: 'meta', label: 'Meta', value: row => row.meta || '' },
+    { key: 'meta', label: 'Relevant Skills Experience', value: row => row.meta || '' },
   ];
   const exportKeys = (ids || selectedFields)
     ? selectedFields?.length
@@ -261,7 +262,7 @@ const validateAndFillFields = async (data, userRole) => {
       applicantEnum[data['Work Preference']?.toUpperCase()] ||
       null,
     status:
-      applicantEnum[data['Status']?.toUpperCase()] || applicantEnum.PENDING,
+      applicantEnum[data['Status']?.toUpperCase()] || applicantEnum.APPLIED,
     interviewStage:
       applicantEnum[data['Interview Stage']?.trim().toUpperCase()] ||
       applicantEnum.FIRST_INTERVIEW_ROUND,
@@ -270,6 +271,7 @@ const validateAndFillFields = async (data, userRole) => {
     portfolioUrl: data['Portfolio URL'] || '',
     referral: data['Referral'] || '',
     resumeUrl: data['Resume URL'] || '',
+    gitHubUrl: data['Github URL'] || '',
     preferredLocations: data['Preferred Locations']?.trim() || '',
     maritalStatus:
       applicantEnum[data['Marital Status']?.toUpperCase()?.trim()] ||
@@ -301,7 +303,6 @@ export const processCsvRow = async (data, lineNumber, userRole) => {
     phoneNumber: data['Phone Number'] ? String(data['Phone Number']).trim() : null,
     appliedRole: data['Applied Role']?.trim(),
     currentCompanyDesignation: data['Current Company Designation']?.trim(),
-    resumeUrl: data['Resume URL']?.trim(),
   };
 
   const missingFields = Object.entries(requiredFields)

@@ -58,10 +58,13 @@ export const statusByPercentage = async (req, res) => {
 
     const {
       holdApplicants,
-      pendingApplicants,
+      appliedApplicants,
       selectedApplicants,
       rejectedApplicants,
-      inProcessApplicants,
+      inProgressApplicants,
+      shortListedApplicants,
+      onboardedApplicants,
+      leavedApplicants,
     } = await getReport(calendarType, startDate, endDate);
 
     logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}.`);
@@ -72,10 +75,13 @@ export const statusByPercentage = async (req, res) => {
       `Report data ${Message.FETCH_SUCCESSFULLY}.`,
       {
         holdApplicants,
-        pendingApplicants,
+        appliedApplicants,
         selectedApplicants,
         rejectedApplicants,
-        inProcessApplicants,
+        inProgressApplicants,
+        shortListedApplicants,
+        onboardedApplicants,
+        leavedApplicants,
       }
     );
   } catch (error) {
@@ -184,13 +190,17 @@ export const applicantCountByCityAndState = async (req, res) => {
     );
   } catch (error) {
     logger.error(
-      `${Message.FAILED_TO} fetch applicant count by ${req.query.type || 'city'}: ${error.message}`
+      `${Message.FAILED_TO} fetch applicant count by ${
+        req.query.type || 'city'
+      }: ${error.message}`
     );
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} fetch applicant count by ${req.query.type || 'city'}.`,
+      `${Message.FAILED_TO} fetch applicant count by ${
+        req.query.type || 'city'
+      }.`,
       error
     );
   }

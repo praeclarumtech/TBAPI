@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER, Enum.VENDOR, Enum.GUEST],
       default: Enum.ADMIN,
     },
     phoneNumber: {
@@ -43,6 +43,14 @@ const userSchema = new mongoose.Schema(
     },
     designation: {
       type: String,
+    },
+     isActive: {
+      type: Boolean,
+      default: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

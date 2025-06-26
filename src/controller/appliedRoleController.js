@@ -60,12 +60,12 @@ export const addAppliedRoleAndSkills = async (req, res) => {
     });
 
     if (existing) {
-      logger.warn('Duplicate skill for the same applied role not allowed.');
+      logger.warn('Duplicate applied role not allowed.');
       return HandleResponse(
         res,
         false,
         StatusCodes.CONFLICT,
-        'This applied role already exists!.'
+        'This role already exists!.'
       );
     }
 
@@ -97,7 +97,7 @@ export const viewSkillsByAppliedRole = async (req, res) => {
   const { appliedRole } = req.query;
 
   if (!appliedRole) {
-    logger.warn(`Applied role is ${Message.NOT_FOUND}`);
+    logger.warn(`Applied role ${Message.NOT_FOUND}`);
     return HandleResponse(
       res,
       false,
@@ -204,12 +204,12 @@ export const updateAppliedRoleAndSkill = async (req, res) => {
       });
 
       if (duplicate) {
-        logger.warn('This applied role already exists!.');
+        logger.warn('This role already exists!.');
         return HandleResponse(
           res,
           false,
           StatusCodes.CONFLICT,
-          'This applied role already exists!.'
+          'This role already exists!.'
         );
       }
     }
@@ -259,12 +259,12 @@ export const getSkillsById = async (req, res) => {
         Message.NOT_FOUND
       );
     }
-    logger.info(`Skill is ${Message.FETCH_BY_ID}`);
+    logger.info(`Skill ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Skill is ${Message.FETCH_BY_ID}`,
+      `Skill ${Message.FETCH_BY_ID}`,
       result
     );
   } catch (error) {
@@ -281,7 +281,7 @@ export const getSkillsById = async (req, res) => {
 export const ViewAllSkillAndAppliedRole = async (req, res) => {
   try {
     let page = Math.max(1, parseInt(req.query.page)) || 1;
-    let limit = Math.min(800, Math.max(1, parseInt(req.query.limit))) || 10;
+    let limit = Math.min(800, Math.max(1, parseInt(req.query.limit)));
     let search = req.query.search || '';
 
     let data;
@@ -308,7 +308,9 @@ export const ViewAllSkillAndAppliedRole = async (req, res) => {
       data = await appliedRoleModel
         .find(filter)
         .populate('skill')
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
     } else {
       totalRecords = await appliedRoleModel.countDocuments({
         isDeleted: false,
@@ -352,21 +354,21 @@ export const deleteAppliedRoleAndSkill = async (req, res) => {
     const result = await deleteSkill(id);
 
     if (result.deletedCount === 0) {
-      logger.warn(`Skill is ${Message.NOT_FOUND}`);
+      logger.warn(`Skill ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Skill is ${Message.NOT_FOUND}`
+        `Skill ${Message.NOT_FOUND}`
       );
     }
 
-    logger.info(`Skill is ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Skill ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Skill is ${Message.DELETED_SUCCESSFULLY}`,
+      `Skill ${Message.DELETED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {
@@ -392,13 +394,13 @@ export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
   const isValidSingleInput =
     typeof find === 'string' && typeof replaceWith === 'string';
 
-  if (!['skills', 'appliedRole', 'degree'].includes(field)) {
+  if (!['appliedRole', 'qualification', 'appliedSkills'].includes(field)) {
     logger.warn(`Invalid field provided for find and replace`);
     return HandleResponse(
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Invalid field. Must be 'skills', 'appliedRole' or 'degree'.`
+      `Invalid field. Must be 'appliedRole', 'appliedSkills' or 'qualification'.`
     );
   }
 
@@ -467,7 +469,8 @@ export const previewFindSkillOrAppliedRole = async (req, res) => {
     ![
       'skills',
       'appliedRole',
-      'degree',
+      'qualification',
+      'appliedSkills'
     ].includes(field)
   ) {
     logger.warn(`Invalid field provided for preview`);
@@ -475,7 +478,7 @@ export const previewFindSkillOrAppliedRole = async (req, res) => {
       res,
       false,
       StatusCodes.BAD_REQUEST,
-      `Invalid field. Must be 'skills', 'appliedRole' or 'degree'.`
+      `Invalid field. Must be 'appliedSkills', 'appliedRole' or 'qualification'.`
     );
   }
 

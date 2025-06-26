@@ -70,6 +70,7 @@ export const applicantValidation = Joi.object({
   currentPincode: Joi.number().integer().allow(null, ''),
   currentCity: Joi.string().allow(null, ''),
   resumeUrl: Joi.string().allow(null, ''),
+  gitHubUrl: Joi.string().allow(null, ''),
   practicalUrl: Joi.string().allow(''),
   portfolioUrl: Joi.string().allow(''),
   linkedinUrl: Joi.string().allow(''),
@@ -116,10 +117,9 @@ export const applicantValidation = Joi.object({
       'any.required': 'Work Preference is required.',
     }),
 
-  currentCompanyDesignation: Joi.string()
-    .messages({
-      'any.required': 'CurrentCompanyDesignation is required.',
-    }),
+  currentCompanyDesignation: Joi.string().messages({
+    'any.required': 'CurrentCompanyDesignation is required.',
+  }),
 
   comment: Joi.string().allow(null, ''),
   feedback: Joi.string().allow(null, ''),
@@ -127,13 +127,16 @@ export const applicantValidation = Joi.object({
 
   status: Joi.string()
     .valid(
-      applicantEnum.PENDING,
+      applicantEnum.APPLIED,
+      applicantEnum.IN_PROGRESS,
+      applicantEnum.SHORTLISTED,
       applicantEnum.SELECTED,
       applicantEnum.REJECTED,
-      applicantEnum.HOLD,
-      applicantEnum.IN_PROCESS
+      applicantEnum.ON_HOLD,
+      applicantEnum.ONBOARDED,
+      applicantEnum.LEAVED
     )
-    .default(applicantEnum.PENDING)
+    .default(applicantEnum.APPLIED)
     .messages({
       'any.only': 'Invalid status value.',
       'any.required': 'Status is required.',
@@ -160,7 +163,7 @@ export const applicantValidation = Joi.object({
     .messages({
       'any.only': 'Maritial status must be Single,or Married.',
     }),
-  lastFollowUpDate: Joi.date().allow('').messages({
+  lastFollowUpDate: Joi.date().allow(null, '').messages({
     'date.base': 'lastFollowUpDate must be a valid date.',
   }),
   appliedRole: Joi.string().required(),
@@ -168,7 +171,7 @@ export const applicantValidation = Joi.object({
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
   collegeName: Joi.string().allow(null, ''),
-  cgpa: Joi.number().allow(''),
+  cgpa: Joi.number().allow(null, ''),
   meta: Joi.object().default({}).messages({
     'object.base': 'Meta must be an object with key-value pairs.',
   }),
@@ -237,7 +240,7 @@ export const updateApplicantValidation = Joi.object({
   currentCity: Joi.string().allow(null, ''),
   url: Joi.string().allow(null, ''),
   resumeUrl: Joi.string().allow(null, ''),
-
+  gitHubUrl: Joi.string().allow(null, ''),
   appliedSkills: Joi.array().items(Joi.string()).messages({
     'array.base': 'Applied skills must be an array of strings.',
   }),
@@ -272,11 +275,9 @@ export const updateApplicantValidation = Joi.object({
       'any.only': 'Work Preference must be remote, hybrid, or onsite.',
     }),
 
-  currentCompanyDesignation: Joi.string()
-    .allow(null, '')
-    .messages({
-      'any.required': 'CurrentCompanyDesignation is required.',
-    }),
+  currentCompanyDesignation: Joi.string().allow(null, '').messages({
+    'any.required': 'CurrentCompanyDesignation is required.',
+  }),
 
   comment: Joi.string().allow(null, ''),
   feedback: Joi.string().allow(null, ''),
@@ -284,11 +285,14 @@ export const updateApplicantValidation = Joi.object({
 
   status: Joi.string()
     .valid(
-      applicantEnum.PENDING,
+      applicantEnum.APPLIED,
+      applicantEnum.IN_PROGRESS,
+      applicantEnum.SHORTLISTED,
       applicantEnum.SELECTED,
       applicantEnum.REJECTED,
-      applicantEnum.HOLD,
-      applicantEnum.IN_PROCESS
+      applicantEnum.ON_HOLD,
+      applicantEnum.ONBOARDED,
+      applicantEnum.LEAVED
     )
     .messages({
       'any.only': 'Invalid status value.',
@@ -318,32 +322,36 @@ export const updateApplicantValidation = Joi.object({
     .messages({
       'any.only': 'Maritial status must be Single,or Married.',
     }),
-  lastFollowUpDate: Joi.date().allow('').messages({
+  lastFollowUpDate: Joi.date().allow(null, '').messages({
     'date.base': 'lastFollowUpDate must be a valid date.',
   }),
   permanentAddress: Joi.string().allow(null, ''),
   anyHandOnOffers: Joi.boolean(),
   referral: Joi.string().allow(null, ''),
   collegeName: Joi.string().allow(null, ''),
-  appliedRole: Joi.string()
-    .messages({
-      'any.required': 'CurrentCompanyDesignation is required.',
-    }),
-  cgpa: Joi.number().allow(''),
+  appliedRole: Joi.string().messages({
+    'any.required': 'Applied role is required.',
+  }),
+  cgpa: Joi.number().allow(null, ''),
   linkedinUrl: Joi.string().allow(''),
   clientCvUrl: Joi.string().allow(''),
   clientFeedback: Joi.string().allow(''),
   meta: Joi.object().optional().messages({
     'object.base': 'Meta must be an object with key-value pairs.',
   }),
+  isFavorite: Joi.boolean().optional().allow(''),
 });
-
 
 export const updateManyApplicantsValidation = Joi.object({
   applicantIds: Joi.array()
-    .items(Joi.string().regex(/^[0-9a-fA-F]{24}$/).messages({
-      'string.pattern.base': 'Each applicant ID must be a valid MongoDB ObjectId.',
-    }))
+    .items(
+      Joi.string()
+        .regex(/^[0-9a-fA-F]{24}$/)
+        .messages({
+          'string.pattern.base':
+            'Each applicant ID must be a valid MongoDB ObjectId.',
+        })
+    )
     .min(1)
     .required()
     .messages({
@@ -355,11 +363,14 @@ export const updateManyApplicantsValidation = Joi.object({
   updateData: Joi.object({
     status: Joi.string()
       .valid(
-        applicantEnum.PENDING,
+        applicantEnum.APPLIED,
+        applicantEnum.IN_PROGRESS,
+        applicantEnum.SHORTLISTED,
         applicantEnum.SELECTED,
         applicantEnum.REJECTED,
-        applicantEnum.HOLD,
-        applicantEnum.IN_PROCESS
+        applicantEnum.ON_HOLD,
+        applicantEnum.ONBOARDED,
+        applicantEnum.LEAVED
       )
       .messages({ 'any.only': 'Invalid status value.' }),
 
@@ -374,6 +385,7 @@ export const updateManyApplicantsValidation = Joi.object({
       .messages({ 'any.only': 'Invalid interview stage value.' }),
 
     appliedRole: Joi.string(),
+    appliedSkills: Joi.array().items(Joi.string()),
 
     lastFollowUpDate: Joi.date().iso().messages({
       'date.base': 'lastFollowUpDate must be a valid date.',
@@ -386,5 +398,3 @@ export const updateManyApplicantsValidation = Joi.object({
       'any.required': 'updateData is required.',
     }),
 });
-
-

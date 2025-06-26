@@ -52,12 +52,12 @@ export const getReport = async (
   });
 
   const holdApplicants = await Applicant.countDocuments({
-    status: applicantEnum.HOLD,
+    status: applicantEnum.ON_HOLD,
     isDeleted: false,
     ...dateFilter,
   });
-  const pendingApplicants = await Applicant.countDocuments({
-    status: applicantEnum.PENDING,
+  const appliedApplicants = await Applicant.countDocuments({
+    status: applicantEnum.APPLIED,
     isDeleted: false,
     ...dateFilter,
   });
@@ -71,8 +71,23 @@ export const getReport = async (
     isDeleted: false,
     ...dateFilter,
   });
-  const inProcessApplicants = await Applicant.countDocuments({
-    status: applicantEnum.IN_PROCESS,
+  const inProgressApplicants = await Applicant.countDocuments({
+    status: applicantEnum.IN_PROGRESS,
+    isDeleted: false,
+    ...dateFilter,
+  });
+  const shortListedApplicants = await Applicant.countDocuments({
+    status: applicantEnum.SHORTLISTED,
+    isDeleted: false,
+    ...dateFilter,
+  });
+  const onboardedApplicants = await Applicant.countDocuments({
+    status: applicantEnum.ONBOARDED,
+    isDeleted: false,
+    ...dateFilter,
+  });
+  const leavedApplicants = await Applicant.countDocuments({
+    status: applicantEnum.LEAVED,
     isDeleted: false,
     ...dateFilter,
   });
@@ -115,10 +130,13 @@ export const getReport = async (
     practicalRoundApplicants,
 
     holdApplicants,
-    pendingApplicants,
+    appliedApplicants,
     selectedApplicants,
     rejectedApplicants,
-    inProcessApplicants,
+    inProgressApplicants,
+    shortListedApplicants,
+    onboardedApplicants,
+    leavedApplicants,
   };
 };
 
@@ -149,8 +167,14 @@ export const getApplicantSkillCounts = async (skillIds = []) => {
 
       const skillNames = skillCountsAggregation.map((item) => item._id);
       skills = await Skills.find({
-        skills: { $in: skillNames },
-        isDeleted: false,
+        $and: [
+          {
+            $or: skillNames.map((name) => ({
+              skills: { $regex: new RegExp(`^${name}$`, 'i') },
+            })),
+          },
+          { isDeleted: false },
+        ],
       });
     }
     skillCounts = await Promise.all(
@@ -191,7 +215,10 @@ export const getApplicantCountCityAndState = async (type = 'city') => {
       await Promise.all(
         cities.map(async (cityDoc) => {
           const cityName = cityDoc.city_name;
-          const escapedCity = cityName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          const escapedCity = cityName.replace(
+            /[-\/\\^$*+?.()|[\]{}]/g,
+            '\\$&'
+          );
 
           const count = await Applicant.countDocuments({
             currentCity: { $regex: new RegExp(`^${escapedCity}$`, 'i') },
@@ -209,7 +236,10 @@ export const getApplicantCountCityAndState = async (type = 'city') => {
       await Promise.all(
         state.map(async (stateDoc) => {
           const stateName = stateDoc.state_name;
-          const escapedState = stateName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          const escapedState = stateName.replace(
+            /[-\/\\^$*+?.()|[\]{}]/g,
+            '\\$&'
+          );
 
           const count = await Applicant.countDocuments({
             state: { $regex: new RegExp(`^${escapedState}$`, 'i') },
@@ -225,7 +255,9 @@ export const getApplicantCountCityAndState = async (type = 'city') => {
 
     return result;
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} count applicants by ${type}: ${error.message}`);
+    logger.error(
+      `${Message.FAILED_TO} count applicants by ${type}: ${error.message}`
+    );
     throw error;
   }
 };
@@ -270,7 +302,9 @@ export const getApplicantCountByAddedBy = async (startDate, endDate) => {
 
     return formatted;
   } catch (error) {
-    logger.error(`Failed to fetch applicant count by addedBy: ${error.message}`);
+    logger.error(
+      `Failed to fetch applicant count by addedBy: ${error.message}`
+    );
     throw error;
   }
 };

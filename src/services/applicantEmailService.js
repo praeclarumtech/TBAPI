@@ -98,3 +98,21 @@ export const createEmail = async (emailRecords) => {
     throw error;
   }
 };
+
+
+export const countEmailsByDate = async (start, end) => {
+  const emails = await applicantEmail.find({
+    createdAt: { $gte: start, $lte: end },
+  }, {
+    email_to: 1,
+    email_bcc: 1
+  });
+
+  let total = 0;
+
+  emails.forEach(email => {
+    total += (email.email_to?.length || 0) + (email.email_bcc?.length || 0);
+  });
+
+  return total;
+};

@@ -18,7 +18,7 @@ import { uploadCv } from '../helpers/multer.js';
 export const addSkills = async (req, res) => {
   const { skills } = req.body;
   if (!skills || typeof skills !== "string") {
-    logger.warn(`skills is ${Message.NOT_FOUND}`);
+    logger.warn(`skills ${Message.NOT_FOUND}`);
     return HandleResponse(
       res,
       false,
@@ -44,21 +44,21 @@ export const addSkills = async (req, res) => {
     }
 
     const result = await create({ skills: skills.trim() });
-    logger.info(`Skills is ${Message.ADDED_SUCCESSFULLY}`);
+    logger.info(`Skill ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      `Skills is ${Message.ADDED_SUCCESSFULLY}`,
+      `Skill ${Message.ADDED_SUCCESSFULLY}`,
       result
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} add skills.`);
+    logger.error(`${Message.FAILED_TO} add skill.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} add skills.`
+      `${Message.FAILED_TO} add skill.`
     );
   }
 };
@@ -120,12 +120,12 @@ export const getSkillsById = async (req, res) => {
         Message.NOT_FOUND
       );
     }
-    logger.info(`Skill is ${Message.FETCH_BY_ID}`);
+    logger.info(`Skill ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Skill is ${Message.FETCH_BY_ID}`,
+      `Skill ${Message.FETCH_BY_ID}`,
       result
     );
   } catch (error) {
@@ -147,29 +147,29 @@ export const updateSkills = async (req, res) => {
     const updatedSkill = await updateSkill(skillId, updateData);
 
     if (!updatedSkill) {
-      logger.warn(`Skill is ${Message.NOT_FOUND}`);
+      logger.warn(`Skill ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Skill is ${Message.NOT_FOUND}`
+        `Skill ${Message.NOT_FOUND}`
       );
     }
-    logger.info(`Skills is ${Message.UPDATED_SUCCESSFULLY}`);
+    logger.info(`Skill ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.ACCEPTED,
-      `Skills is ${Message.UPDATED_SUCCESSFULLY}`,
+      `Skill ${Message.UPDATED_SUCCESSFULLY}`,
       updatedSkill
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} update skills.`);
+    logger.error(`${Message.FAILED_TO} update skill.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} update skills.`
+      `${Message.FAILED_TO} update skill.`
     );
   }
 };
@@ -182,29 +182,29 @@ export const deleteSkills = async (req, res) => {
     });
 
     if (!deletedSkill) {
-      logger.warn(`Skill is ${Message.NOT_FOUND}`)
+      logger.warn(`Skill ${Message.NOT_FOUND}`)
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        `Skill is ${Message.NOT_FOUND}`
+        `Skill ${Message.NOT_FOUND}`
       );
     }
-    logger.info(`year ${Message.DELETED_SUCCESSFULLY}`);
+    logger.info(`Skill ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `year is ${Message.DELETED_SUCCESSFULLY}`,
+      `Skill is ${Message.DELETED_SUCCESSFULLY}`,
       deletedSkill
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} delete skills.`);
+    logger.error(`${Message.FAILED_TO} delete skill.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} delete skills.`
+      `${Message.FAILED_TO} delete skill.`
     );
   }
 };

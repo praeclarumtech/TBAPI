@@ -3,13 +3,13 @@ import { applicantEnum } from '../utils/enum.js';
 
 export const getDashboard = async () => {
   const totalApplicants = await Applicant.countDocuments({ isDeleted: false });
-  
+
   const holdApplicants = await Applicant.countDocuments({
-    status: applicantEnum.HOLD,
+    status: applicantEnum.ON_HOLD,
     isDeleted: false,
   });
-  const pendingApplicants = await Applicant.countDocuments({
-    status: applicantEnum.PENDING,
+  const appliedApplicants = await Applicant.countDocuments({
+    status: applicantEnum.APPLIED,
     isDeleted: false,
   });
   const selectedApplicants = await Applicant.countDocuments({
@@ -20,31 +20,46 @@ export const getDashboard = async () => {
     status: applicantEnum.REJECTED,
     isDeleted: false,
   });
-  const inProcessApplicants = await Applicant.countDocuments({
-    status: applicantEnum.IN_PROCESS,
+  const inProgressApplicants = await Applicant.countDocuments({
+    status: applicantEnum.IN_PROGRESS,
     isDeleted: false,
   });
-  
+  const shortListedApplicants = await Applicant.countDocuments({
+    status: applicantEnum.SHORTLISTED,
+    isDeleted: false,
+  });
+  const onboardedApplicants = await Applicant.countDocuments({
+    status: applicantEnum.ONBOARDED,
+    isDeleted: false,
+  });
+  const leavedApplicants = await Applicant.countDocuments({
+    status: applicantEnum.LEAVED,
+    isDeleted: false,
+  });
+
   return {
     totalApplicants,
     holdApplicants,
-    pendingApplicants,
+    appliedApplicants,
     selectedApplicants,
     rejectedApplicants,
-    inProcessApplicants,
+    inProgressApplicants,
+    shortListedApplicants,
+    onboardedApplicants,
+    leavedApplicants,
   };
-}; 
+};
 
 export const getApplicantsByMonth = async (month, year) => {
   const currentDate = new Date();
-  const selectedMonth = month ? Number(month) : currentDate.getMonth() + 1; 
+  const selectedMonth = month ? Number(month) : currentDate.getMonth() + 1;
   const selectedYear = year ? Number(year) : currentDate.getFullYear();
 
-  const startDate = new Date(selectedYear, selectedMonth - 1, 1); 
+  const startDate = new Date(selectedYear, selectedMonth - 1, 1);
   const endDate = new Date(selectedYear, selectedMonth, 0);
 
   const totalApplicantsInMonth = await Applicant.countDocuments({
-    createdAt: { $gte: startDate, $lte: endDate }
+    createdAt: { $gte: startDate, $lte: endDate },
   });
 
   const totalApplicants = await Applicant.countDocuments();
