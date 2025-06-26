@@ -8,7 +8,9 @@ import {
     applicantCountByAddedBy,
     applicantCountByExperienceRange,
     expectedPackageChart,
-    noticePeriodHistogram
+    noticePeriodHistogram,
+    applicantCountByWorkPreference,
+    applicantCountByStatus
 } from '../../controller/reportsController.js';
 import { authorization } from '../../helpers/userMiddleware.js';
 
@@ -23,6 +25,8 @@ router.get('/experienceRange',authorization, applicantCountByExperienceRange);
 
 router.get('/getApplicationsByDate', authorization, getApplicationsByDate);
 router.get('/expectedPackageChart', authorization, expectedPackageChart);
-router.get('/noticePeriodHistogram', authorization, noticePeriodHistogram);
+router.get('/noticePeriod', authorization, noticePeriodHistogram);
+router.get('/countByWorkPreference', authorization, applicantCountByWorkPreference);
+router.get('/countByStatus', authorization, applicantCountByStatus);
 
 export default router;

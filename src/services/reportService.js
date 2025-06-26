@@ -447,4 +447,76 @@ export const getNoticePeriodHistogram = async () => {
   return formatted;
 };
 
+export const getApplicantCountByWorkPreference = async (startDate, endDate) => {
+  try {
+    const query = { isDeleted: false };
+
+    const result = await Applicant.aggregate([
+      {
+        $match: {
+          ...query,
+          workPreference: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: '$workPreference',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const formatted = result.reduce((acc, curr) => {
+      if (curr._id) {
+        acc[curr._id] = curr.count;
+      }
+      return acc;
+    }, {});
+
+    return formatted;
+  } catch (error) {
+    logger.error(
+      `Failed to fetch applicant count by work Preference: ${error.message}`
+    );
+    throw error;
+  }
+};
+
+export const getApplicantCountByStatus = async (startDate, endDate) => {
+  try {
+    const query = { isDeleted: false };
+
+    const result = await Applicant.aggregate([
+      {
+        $match: {
+          ...query,
+          isActive: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: '$isActive',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const formatted = {
+      true: 0,
+      false: 0
+    };
+
+     result.forEach((curr) => {
+      if (curr._id === true) formatted.true = curr.count;
+      else if (curr._id === false) formatted.false = curr.count;
+    });
+
+    return formatted;
+  } catch (error) {
+    logger.error(
+      `Failed to fetch applicant count by status: ${error.message}`
+    );
+    throw error;
+  }
+};
 

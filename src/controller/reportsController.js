@@ -10,7 +10,9 @@ import {
   getApplicantCountByAddedBy,
   getApplicantCountByExperienceRange,
   getExpectedPackageChartData,
-  getNoticePeriodHistogram
+  getNoticePeriodHistogram,
+  getApplicantCountByWorkPreference,
+  getApplicantCountByStatus
 } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
@@ -307,6 +309,58 @@ export const noticePeriodHistogram = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch notice period histogram`,
+      error
+    );
+  }
+}; 
+
+export const applicantCountByWorkPreference = async (req, res) => {
+  try {
+    const result = await getApplicantCountByWorkPreference();
+
+    logger.info(`Applicant count by work preference ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by work preference ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by work preference: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by work preference`,
+      error
+    );
+  }
+};
+
+export const applicantCountByStatus = async (req, res) => {
+  try {
+    const result = await getApplicantCountByStatus();
+
+    logger.info(`Applicant count by status ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by status ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by status: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by status`,
       error
     );
   }
