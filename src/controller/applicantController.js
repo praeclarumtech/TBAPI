@@ -50,6 +50,7 @@ import { extractMatchingRoleFromResume } from '../services/applicantService.js';
 import { extractSkillsFromResume } from '../services/applicantService.js';
 import { buildApplicantQuery } from '../helpers/commonFunction/filterQuery.js';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
+import { uploadFileToDrive } from '../helpers/googleDriveUploader.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
@@ -338,17 +339,16 @@ export const addApplicant = async (req, res) => {
 
     const applicant = await createApplicant(applicantData);
 
-    const resumeFile = req.files || [];
+    const resumeFile = Array.isArray(req.files) ? req.files : [];
 
     if (resumeFile.length > 0) {
       const attachments = resumeFile.map((file) => ({
         filename: file.originalname || file.filename,
         path: path.join(file.destination, file.filename),
       }))
-
        for (const file of attachments) {
     try {
-      const uploadedFile = await uploadAttachments(
+      const uploadedFile = await uploadFileToDrive(
         file.path,
         file.filename,
         process.env.GDRIVE_FOLDER_ID // this should be your Google Drive folder ID
@@ -359,6 +359,8 @@ export const addApplicant = async (req, res) => {
       logger.error('Failed to upload to Google Drive', err);
     }
   }
+
+  console.log("3333333333333")
       const isExist = await findApplicantByField('email', req.body.email)
       const message = !isExist
         ? `New applicant resume received from ${req.body.job_id ? 'Job Portal' : 'QR Code form'} – ${req.body.name.firstName} ${req.body.name.lastName}.`
