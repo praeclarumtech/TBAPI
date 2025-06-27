@@ -28,7 +28,7 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
-import { uploadCv, uploadResume } from '../helpers/multer.js';
+import { uploadAttachments, uploadCv, uploadResume } from '../helpers/multer.js';
 import fs from 'fs';
 import csvParser from 'csv-parser';
 import path from 'path';
@@ -344,7 +344,21 @@ export const addApplicant = async (req, res) => {
       const attachments = resumeFile.map((file) => ({
         filename: file.originalname || file.filename,
         path: path.join(file.destination, file.filename),
-      }));
+      }))
+
+       for (const file of attachments) {
+    try {
+      const uploadedFile = await uploadAttachments(
+        file.path,
+        file.filename,
+        process.env.GDRIVE_FOLDER_ID // this should be your Google Drive folder ID
+      );
+      console.log("GGGGGG>>>>>>>>>>drive>>>>>>>>>>>")
+      logger.info(`Resume uploaded to Google Drive: ${uploadedFile.webViewLink}`);
+    } catch (err) {
+      logger.error('Failed to upload to Google Drive', err);
+    }
+  }
       const isExist = await findApplicantByField('email', req.body.email)
       const message = !isExist
         ? `New applicant resume received from ${req.body.job_id ? 'Job Portal' : 'QR Code form'} – ${req.body.name.firstName} ${req.body.name.lastName}.`
