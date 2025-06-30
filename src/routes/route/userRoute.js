@@ -30,7 +30,7 @@ router.post('/login', validator.body(loginValidation), login);
 router.get('/listOfUsers', authorization, verifyRoles(['admin']), listOfUsers);
 router.get('/getProfileByToken', authorization, getProfileByToken);
 router.get('/viewProfileByID/:id', authorization, viewProfileById);
-router.put('/updateProfile/:id', authorization, verifyRoles(['admin']), updateProfile);
+router.put('/updateProfile/:id', authorization, updateProfile);
 router.post('/sendEmail', validator.body(sendEmailValidation), sendEmail);
 router.post('/sendEmail/verifyOtp', verifyOtp);
 router.put('/forgotPassword', validator.body(forgotPasswordValidation), forgotPassword);
