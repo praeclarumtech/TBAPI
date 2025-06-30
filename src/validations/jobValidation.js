@@ -10,6 +10,10 @@ export const createJobValidation = Joi.object().keys({
         'string.base': 'Details must be a string',
         'any.required': 'Details are required',
     }),
+    sub_description: Joi.string().required().messages({
+        'string.base': 'Sub description must be a string',
+        'any.required': 'Sub description are required',
+    }),
     job_type: Joi.string()
         .valid(jodTypeEnum.CONTRACT, jodTypeEnum.FREELANCE, jodTypeEnum.FULL_TIME, jodTypeEnum.PART_TIME, jodTypeEnum.INTERNSHIP,)
         .required()

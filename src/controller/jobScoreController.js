@@ -293,13 +293,36 @@ export const fetchAppliedJobs = async (req, res) => {
       );
     }
 
+    const formatted = applications.map(app => {
+      const newApps = app.applications.map(item => {
+        const job = item.job_id;
+        return {
+          job_id: job?.job_id,     
+          _id: job?._id,            
+          job_subject: job?.job_subject || '',
+          score: item.score,
+          status: item.status,
+          applied_Date: item.applied_Date
+        };
+      });
+
+      return {
+        _id: app._id,
+        applicant_Id: app.applicant_Id,
+        user_id: app.user_id,
+        createdAt: app.createdAt,
+        updatedAt: app.updatedAt,
+        applications: newApps
+      };
+    });
+
     logger.info(`All jobs applications ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `All jobs applications ${Message.FETCH_SUCCESSFULLY}`,
-      applications
+      formatted
     );
   } catch (error) {
     logger.error(`Failed to fetch applied job IDs: ${error.message}`);

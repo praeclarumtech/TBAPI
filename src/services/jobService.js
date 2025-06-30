@@ -23,14 +23,19 @@ export const fetchJobService = async (jobId) => {
 }
 
 export const fetchJobsById = async (userId) => {
-    try {
-        if (!mongoose.Types.ObjectId.isValid(userId)) return null;
-        return await jobApplication.find({ user_id: userId })
-    } catch (error) {
-        logger.error('Error while fetch job', error);
-        throw error;
-    }
-}
+  try {
+    if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+    return await jobApplication.find({ user_id: userId }).populate({
+      path: 'applications.job_id',
+      model: 'jobs',
+      select:
+        'job_subject job_id',
+    });
+  } catch (error) {
+    logger.error('Error while fetch job', error);
+    throw error;
+  }
+};
 
 export const updateJobService = async (id, body) => {
     try {

@@ -6,6 +6,7 @@ const jobSchema = new mongoose.Schema(
         job_id: { type: String, unique: true },
         job_subject: { type: String, required: false },
         job_details: { type: String, required: false },
+        sub_description : { type: String, required: false },
         job_type: {
             type: String,
             enum: Object.values(jodTypeEnum),
