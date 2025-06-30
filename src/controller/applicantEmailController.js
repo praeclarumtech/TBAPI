@@ -109,8 +109,8 @@ export const sendEmail = async (req, res) => {
     const storedEmails = finalEmailsToSend.map((email) => ({
       email_to: email,
       email_bcc: email_bcc || [],
-      subject,
-      description, // general description text here
+      subject,              
+      description,
       attachments,
     }));
 
