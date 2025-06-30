@@ -22,6 +22,7 @@ import { HandleResponse } from '../helpers/handleResponse.js';
 import { upload } from '../helpers/multer.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import User from '../models/userModel.js';
+import { Enum } from '../utils/enum.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -38,7 +39,7 @@ export const register = async (req, res, next) => {
       );
     }
     const htmlBlock = approvalRequestTemplate({ userName, email, role })
-    if (role !== 'admin') {
+    if (role !== Enum.ADMIN) {
       await sendingEmail({
         email_to: [process.env.HR_EMAIL],
         subject: 'New User Registration - Approval Required',
