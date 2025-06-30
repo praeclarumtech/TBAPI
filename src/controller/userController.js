@@ -5,6 +5,7 @@ import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
+import { approvalRequestTemplate, accountApprovedTemplate } from '../utils/emailTemplates/emailTemplates.js'
 dotenv.config();
 import {
   createUser,
@@ -21,6 +22,7 @@ import { HandleResponse } from '../helpers/handleResponse.js';
 import { upload } from '../helpers/multer.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import User from '../models/userModel.js';
+import { Enum } from '../utils/enum.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -36,8 +38,17 @@ export const register = async (req, res, next) => {
         `User ${Message.ALREADY_EXIST}`
       );
     }
-
-    await createUser({ userName, email, password, confirmPassword, role });
+    const htmlBlock = approvalRequestTemplate({ userName, email, role })
+    if (role !== Enum.ADMIN) {
+      await sendingEmail({
+        email_to: [process.env.HR_EMAIL],
+        subject: 'New User Registration - Approval Required',
+        description: htmlBlock,
+      });
+      await createUser({ userName, email, password, confirmPassword, role, isActive: false });
+    } else {
+      await createUser({ userName, email, password, confirmPassword, role });
+    }
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
     return HandleResponse(
@@ -71,6 +82,15 @@ export const login = async (req, res) => {
         false,
         StatusCodes.NOT_FOUND,
         `User ${Message.NOT_FOUND}`
+      );
+    }
+
+    if (!user.isActive) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.UNAUTHORIZED,
+        Message.UNDER_APPROVAL
       );
     }
     const isMatch = await bcrypt.compare(password, user.password);
@@ -114,7 +134,7 @@ export const listOfUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
- 
+
     const paginatedData = await pagination({
       Schema: User,
       page,
@@ -122,7 +142,7 @@ export const listOfUsers = async (req, res) => {
       query: { isDeleted: false },
       sort: { createdAt: -1 },
     });
- 
+
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -141,7 +161,7 @@ export const listOfUsers = async (req, res) => {
     );
   }
 };
- 
+
 
 export const getProfileByToken = async (req, res) => {
   try {
@@ -463,9 +483,18 @@ export const updateStatus = async (req, res) => {
   try {
     const userId = req.params.id;
     const { isActive, isDeleted } = req.body;
- 
+    const existingUser = await getUser({ _id: userId })
+    if (!existingUser) {
+      logger.warn(`Profile ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Profile ${Message.NOT_FOUND}`
+      );
+    }
+
     const updatedUser = await updateProfileById(userId, req.body);
- 
     if (!updatedUser) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -475,7 +504,15 @@ export const updateStatus = async (req, res) => {
         `Profile ${Message.NOT_FOUND}`
       );
     }
- 
+
+    if (existingUser.isActive === false && isActive === true) {
+      const htmlBlock = accountApprovedTemplate({ userName: existingUser.userName })
+      await sendingEmail({
+        email_to: [existingUser.email],
+        subject: 'Access Granted - Welcome to TalentBox',
+        description: htmlBlock,
+      });
+    }
     let message;
     if (isActive !== undefined) {
       message =
@@ -487,7 +524,7 @@ export const updateStatus = async (req, res) => {
     } else {
       message = `User ${Message.UPDATED_SUCCESSFULLY}`;
     }
- 
+
     logger.info(message);
     return HandleResponse(res, true, StatusCodes.ACCEPTED, message, undefined);
   } catch (error) {
@@ -500,4 +537,3 @@ export const updateStatus = async (req, res) => {
     );
   }
 };
- 
