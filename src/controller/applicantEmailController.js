@@ -110,7 +110,7 @@ export const sendEmail = async (req, res) => {
       email_to: email,
       email_bcc: email_bcc || [],
       subject,
-      description, // general description text here
+      description,
       attachments,
     }));
 
