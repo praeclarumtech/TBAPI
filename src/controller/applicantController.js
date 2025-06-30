@@ -28,7 +28,11 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import { commonSearch } from '../helpers/commonFunction/search.js';
-import { uploadAttachments, uploadCv, uploadResume } from '../helpers/multer.js';
+import {
+  uploadAttachments,
+  uploadCv,
+  uploadResume,
+} from '../helpers/multer.js';
 import fs from 'fs';
 import csvParser from 'csv-parser';
 import path from 'path';
@@ -50,7 +54,10 @@ import { extractMatchingRoleFromResume } from '../services/applicantService.js';
 import { extractSkillsFromResume } from '../services/applicantService.js';
 import { buildApplicantQuery } from '../helpers/commonFunction/filterQuery.js';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
-import { uploadFileToDrive } from '../helpers/googleDriveUploader.js';
+import {
+  findOrCreateFolder,
+  uploadFileToDrive,
+} from '../helpers/googleDriveUploader.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
@@ -156,15 +163,17 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
       let responseMessage = '';
       if (results.inserted.length > 0) {
-        responseMessage = `${results.inserted.length} applicant${results.inserted.length > 1 ? 's' : ''
-          } added successfully.`;
+        responseMessage = `${results.inserted.length} applicant${
+          results.inserted.length > 1 ? 's' : ''
+        } added successfully.`;
       }
 
       if (results.skipped.length > 0 || results.errors.length > 0) {
         const skippedAndErrorCount =
           results.skipped.length + results.errors.length;
-        responseMessage += `${skippedAndErrorCount} applicant${skippedAndErrorCount > 1 ? 's' : ''
-          } skipped due to duplicate record or resume not parsing `;
+        responseMessage += `${skippedAndErrorCount} applicant${
+          skippedAndErrorCount > 1 ? 's' : ''
+        } skipped due to duplicate record or resume not parsing `;
       }
 
       if (
@@ -324,7 +333,6 @@ export const addApplicant = async (req, res) => {
     }
     const applicationNo = await generateApplicantNo();
 
-
     const applicantData = {
       applicationNo,
       name: { firstName, middleName, lastName },
@@ -345,23 +353,36 @@ export const addApplicant = async (req, res) => {
       const attachments = resumeFile.map((file) => ({
         filename: file.originalname || file.filename,
         path: path.join(file.destination, file.filename),
-      }))
-       for (const file of attachments) {
-    try {
-      const uploadedFile = await uploadFileToDrive(
-        file.path,
-        file.filename,
-        process.env.GDRIVE_FOLDER_ID // this should be your Google Drive folder ID
-      );
-      logger.info(`Resume uploaded to Google Drive: ${uploadedFile.webViewLink}`);
-    } catch (err) {
-      logger.error('Failed to upload to Google Drive', err);
-    }
-  }
-      const isExist = await findApplicantByField('email', req.body.email)
+      }));
+      for (const file of attachments) {
+        try {
+          const roleFolderName = req.body.appliedRole?.trim() || 'Other';
+          const parentFolderId = process.env.GDRIVE_FOLDER_ID;
+          const roleFolderId = await findOrCreateFolder(
+            roleFolderName,
+            parentFolderId
+          );
+
+          const uploadedFile = await uploadFileToDrive(
+            file.path,
+            file.filename,
+            roleFolderId
+          );
+          logger.info(
+            `Resume uploaded to Google Drive: ${uploadedFile.webViewLink}`
+          );
+        } catch (err) {
+          logger.error('Failed to upload to Google Drive', err);
+        }
+      }
+      const isExist = await findApplicantByField('email', req.body.email);
       const message = !isExist
-        ? `New applicant resume received from ${req.body.job_id ? 'Job Portal' : 'QR Code form'} – ${req.body.name.firstName} ${req.body.name.lastName}.`
-        : `Applicant Details Updated:– ${req.body.name.firstName} ${req.body.name.lastName} resume received from ${req.body.job_id ? 'Job Portal' : 'QR Code'}`;
+        ? `New applicant resume received from ${
+            req.body.job_id ? 'Job Portal' : 'QR Code form'
+          } – ${req.body.name.firstName} ${req.body.name.lastName}.`
+        : `Applicant Details Updated:– ${req.body.name.firstName} ${
+            req.body.name.lastName
+          } resume received from ${req.body.job_id ? 'Job Portal' : 'QR Code'}`;
 
       const emailData = {
         email_to: [process.env.HR_EMAIL],
@@ -459,8 +480,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-            ? { $in: validAddedBy }
-            : undefined;
+          ? { $in: validAddedBy }
+          : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -1021,27 +1042,32 @@ export const updateApplicant = async (req, res) => {
         path: path.join(file.destination, file.filename),
       }));
 
-       for (const file of attachments) {
-    try {
-      const uploadedFile = await uploadFileToDrive(
-        file.path,
-        file.filename,
-        process.env.GDRIVE_FOLDER_ID // this should be your Google Drive folder ID
-      );
-      logger.info(`Resume uploaded to Google Drive: ${uploadedFile.webViewLink}`);
-    } catch (err) {
-      logger.error('Failed to upload to Google Drive', err);
-    }
-  }
+      for (const file of attachments) {
+        try {
+          const roleFolderName = req.body.appliedRole?.trim() || 'Other';
+          const parentFolderId = process.env.GDRIVE_FOLDER_ID; // Your master folder
+          const roleFolderId = await findOrCreateFolder(
+            roleFolderName,
+            parentFolderId
+          );
+          const uploadedFile = await uploadFileToDrive(
+            file.path,
+            file.filename,
+            roleFolderId // this should be your Google Drive folder ID
+          );
+          logger.info(
+            `Resume uploaded to Google Drive: ${uploadedFile.webViewLink}`
+          );
+        } catch (err) {
+          logger.error('Failed to upload to Google Drive', err);
+        }
+      }
 
       const firstName =
         req.body?.name?.firstName || existingApplicant.name?.firstName || '';
       const lastName =
         req.body?.name?.lastName || existingApplicant.name?.lastName || '';
-      const role =
-        req.body?.appliedRole ||
-        existingApplicant.appliedRole ||
-        '';
+      const role = req.body?.appliedRole || existingApplicant.appliedRole || '';
 
       const emailData = {
         email_to: [process.env.HR_EMAIL],
@@ -1215,8 +1241,8 @@ export const exportApplicantCsv = async (req, res) => {
 
     const projection = selectedFields
       ? selectedFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {
-        _id: 1,
-      })
+          _id: 1,
+        })
       : undefined;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
@@ -1317,7 +1343,7 @@ export const exportApplicantCsv = async (req, res) => {
                 false,
                 StatusCodes.CONFLICT,
                 `${duplicateApplicants.length} records are duplicates: ` +
-                conflictDetails.join('; ')
+                  conflictDetails.join('; ')
               );
             }
           }
@@ -1521,12 +1547,18 @@ export const exportApplicantCsv = async (req, res) => {
           source === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : source === applicantEnum.CSV
-              ? applicantEnum.CSV
-              : source === applicantEnum.MANUAL
-                ? applicantEnum.MANUAL
-                : source === applicantEnum.GUEST
-                  ? applicantEnum.GUEST
-                  : { $in: [applicantEnum.RESUME, applicantEnum.CSV, applicantEnum.GUEST] };
+            ? applicantEnum.CSV
+            : source === applicantEnum.MANUAL
+            ? applicantEnum.MANUAL
+            : source === applicantEnum.GUEST
+            ? applicantEnum.GUEST
+            : {
+                $in: [
+                  applicantEnum.RESUME,
+                  applicantEnum.CSV,
+                  applicantEnum.GUEST,
+                ],
+              };
       }
 
       if (filtered) {
@@ -1534,8 +1566,8 @@ export const exportApplicantCsv = async (req, res) => {
           filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : filtered === applicantEnum.CSV
-              ? applicantEnum.CSV
-              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+            ? applicantEnum.CSV
+            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1648,7 +1680,10 @@ export const exportApplicantCsv = async (req, res) => {
     }
 
     // If no filters provided, export all from main
-    applicants = await Applicant.find({ isDeleted: false, isActive: true }, projection);
+    applicants = await Applicant.find(
+      { isDeleted: false, isActive: true },
+      projection
+    );
 
     if (!applicants.length) {
       return HandleResponse(res, false, 404, 'No applicants found.');
@@ -1695,8 +1730,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-          ? false
-          : undefined;
+        ? false
+        : undefined;
 
     const user = await User.findById(req.user.id);
 

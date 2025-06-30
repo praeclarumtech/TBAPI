@@ -17,6 +17,35 @@ const auth = new google.auth.GoogleAuth({
 
 const drive = google.drive({ version: 'v3', auth });
 
+export const findOrCreateFolder = async (folderName, parentFolderId) => {
+  const query = `mimeType='application/vnd.google-apps.folder' and trashed=false and name='${folderName}' and '${parentFolderId}' in parents`;
+  const res = await drive.files.list({
+    q: query,
+    fields: 'files(id, name)',
+    spaces: 'drive',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  if (res.data.files.length > 0) {
+    return res.data.files[0].id;
+  }
+
+  const fileMetadata = {
+    name: folderName,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: [parentFolderId],
+  };
+
+  const folder = await drive.files.create({
+    resource: fileMetadata,
+    fields: 'id',
+    supportsAllDrives: true,
+  });
+
+  return folder.data.id;
+};
+
 export const uploadFileToDrive = async (filePath, fileName, folderId) => {
   const fileMetadata = {
     name: fileName,
@@ -34,5 +63,7 @@ export const uploadFileToDrive = async (filePath, fileName, folderId) => {
     supportsAllDrives: true,
     fields: 'id, name, webViewLink',
   });
+
   return response.data;
 };
+
