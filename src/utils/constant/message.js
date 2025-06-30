@@ -46,6 +46,7 @@ export const Message = {
   INACTIVE_SUCCESSFULLY: 'inactive Successfully.',
   MOVED_SUCCESSFULLY: 'Records sucessfully to move applicants.',
   DUPLICATE_RECORDS: 'All records are duplicates.',
-  ADD_TO_FAV: 'successfully add to favorite.'
+  ADD_TO_FAV: 'successfully add to favorite.',
+  ACCESS_DENIED: 'Access denied',
+  UNDER_APPROVAL: 'Your account is under approval, you will be notified once it is activated.'
 };
-
