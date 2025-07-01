@@ -154,12 +154,13 @@ export const listOfUsers = async (req, res) => {
             page,
             limit
           );
-    
+
+        logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
           return HandleResponse(
             res,
             true,
             StatusCodes.OK,
-            `Applicant are ${Message.FETCH_SUCCESSFULLY}`,
+            `All profile are ${Message.FETCH_SUCCESSFULLY}`,
             searchResults
           );
         }
