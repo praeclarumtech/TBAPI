@@ -23,6 +23,7 @@ import { upload } from '../helpers/multer.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import User from '../models/userModel.js';
 import { Enum } from '../utils/enum.js';
+import { commonSearch } from '../helpers/commonFunction/search.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -132,8 +133,37 @@ export const login = async (req, res) => {
 
 export const listOfUsers = async (req, res) => {
   try {
+    const {search} = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
+
+    if (search && typeof search === 'string') {
+          const searchFields = [
+            'userName',
+            'email',
+            'role',
+            'firstName',
+            'lastName',
+          ];
+    
+          const searchResults = await commonSearch(
+            User,
+            searchFields,
+            search,
+            '',
+            page,
+            limit
+          );
+
+        logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
+          return HandleResponse(
+            res,
+            true,
+            StatusCodes.OK,
+            `All profile are ${Message.FETCH_SUCCESSFULLY}`,
+            searchResults
+          );
+        }
 
     const paginatedData = await pagination({
       Schema: User,
