@@ -40,7 +40,7 @@ export const register = async (req, res, next) => {
       );
     }
     const createdByAdmin = req.user?.role === Enum.ADMIN
-    if (createdByAdmin) {
+    if (createdByAdmin || role === Enum.ADMIN) {
       logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
       await createUser({ userName, email, password, confirmPassword, role });
       // const htmlContent = accountCredentialsTemplate({  email, password })
@@ -49,8 +49,6 @@ export const register = async (req, res, next) => {
       //   subject: 'Your TalentBox Account Credentials',
       //   description: htmlContent,
       // });
-    } else if (role === Enum.ADMIN) {
-      await createUser({ userName, email, password, confirmPassword, role });
     } else {
       const htmlBlock = approvalRequestTemplate({ userName, email, role })
       await sendingEmail({
@@ -143,37 +141,37 @@ export const login = async (req, res) => {
 
 export const listOfUsers = async (req, res) => {
   try {
-    const {search} = req.query;
+    const { search } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
 
     if (search && typeof search === 'string') {
-          const searchFields = [
-            'userName',
-            'email',
-            'role',
-            'firstName',
-            'lastName',
-          ];
-    
-          const searchResults = await commonSearch(
-            User,
-            searchFields,
-            search,
-            '',
-            page,
-            limit
-          );
+      const searchFields = [
+        'userName',
+        'email',
+        'role',
+        'firstName',
+        'lastName',
+      ];
 
-        logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
-          return HandleResponse(
-            res,
-            true,
-            StatusCodes.OK,
-            `All profile are ${Message.FETCH_SUCCESSFULLY}`,
-            searchResults
-          );
-        }
+      const searchResults = await commonSearch(
+        User,
+        searchFields,
+        search,
+        '',
+        page,
+        limit
+      );
+
+      logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        `All profile are ${Message.FETCH_SUCCESSFULLY}`,
+        searchResults
+      );
+    }
 
     const paginatedData = await pagination({
       Schema: User,
