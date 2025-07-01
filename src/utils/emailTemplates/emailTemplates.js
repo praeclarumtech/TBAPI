@@ -88,3 +88,47 @@ export const accountApprovedTemplate = ({ userName }) => `
     </div>
   </div>
 `;
+
+export const accountCredentialsTemplate = ({ email, password }) => `
+  <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 30px;">
+
+      <h2 style="color: #2c3e50;">Your TalentBox Account Has Been Created</h2>
+
+      <p style="color: #555; font-size: 15px; line-height: 1.6;">
+        An administrator has created your TalentBox account. Below are your login credentials:
+      </p>
+
+      <ul style="color: #555; font-size: 15px; line-height: 1.6;">
+        <li><strong>Email:</strong> ${email}</li>
+        <li><strong>Password:</strong> ${password}</li>
+      </ul>
+
+      <p style="color: #555; font-size: 15px; line-height: 1.6;">
+        We recommend that you change your password after logging in for the first time.
+      </p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.FRONT_URL}" 
+           style="background-color: #007bff; color: #ffffff; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+          Login to Your Account
+        </a>
+      </div>
+
+      <p style="color: #555; font-size: 14px;">
+        If you have any questions or face issues logging in, feel free to reach out to your administrator or support team.
+      </p>
+
+      <p style="margin-top: 30px; color: #555; font-size: 14px;">
+        Regards,<br/>
+        <strong>The TalentBox Team</strong>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #eee; margin: 40px 0;" />
+
+      <p style="color: #999; font-size: 12px; text-align: center;">
+        This is an automated message. Please do not reply directly to this email.
+      </p>
+    </div>
+  </div>
+`;

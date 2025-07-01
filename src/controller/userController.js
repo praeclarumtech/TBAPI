@@ -5,7 +5,7 @@ import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
-import { approvalRequestTemplate, accountApprovedTemplate } from '../utils/emailTemplates/emailTemplates.js'
+import { approvalRequestTemplate, accountApprovedTemplate, accountCredentialsTemplate } from '../utils/emailTemplates/emailTemplates.js'
 dotenv.config();
 import {
   createUser,
@@ -38,16 +38,26 @@ export const register = async (req, res, next) => {
         `User ${Message.ALREADY_EXIST}`
       );
     }
-    const htmlBlock = approvalRequestTemplate({ userName, email, role })
-    if (role !== Enum.ADMIN) {
+    const createdByAdmin = req.user?.role === Enum.ADMIN
+    if (createdByAdmin) {
+      logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
+      await createUser({ userName, email, password, confirmPassword, role });
+      // const htmlContent = accountCredentialsTemplate({  email, password })
+      // await sendingEmail({
+      //   email_to: [email],
+      //   subject: 'Your TalentBox Account Credentials',
+      //   description: htmlContent,
+      // });
+    } else if (role === Enum.ADMIN) {
+      await createUser({ userName, email, password, confirmPassword, role });
+    } else {
+      const htmlBlock = approvalRequestTemplate({ userName, email, role })
       await sendingEmail({
         email_to: [process.env.HR_EMAIL],
         subject: 'New User Registration - Approval Required',
         description: htmlBlock,
       });
       await createUser({ userName, email, password, confirmPassword, role, isActive: false });
-    } else {
-      await createUser({ userName, email, password, confirmPassword, role });
     }
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
