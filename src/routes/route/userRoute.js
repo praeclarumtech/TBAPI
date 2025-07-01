@@ -24,7 +24,12 @@ import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
 
 const router = express.Router();
 
+//for other role like vendor,hr,guest
 router.post('/register', validator.body(registerValidation), register);
+
+//for admin only to create users
+router.post('/create', authorization, verifyRoles(['admin']), validator.body(registerValidation), register);
+
 router.post('/login', validator.body(loginValidation), login);
 
 router.get('/listOfUsers', authorization, verifyRoles(['admin']), listOfUsers);
