@@ -48,5 +48,6 @@ export const Message = {
   DUPLICATE_RECORDS: 'All records are duplicates.',
   ADD_TO_FAV: 'successfully add to favorite.',
   ACCESS_DENIED: 'Access denied',
-  UNDER_APPROVAL: 'Your account is under approval, you will be notified once it is activated.'
+  UNDER_APPROVAL: 'Your account is under approval, you will be notified once it is activated.',
+  SENT_SUCCESSFULLY: 'sent successfully '
 };
