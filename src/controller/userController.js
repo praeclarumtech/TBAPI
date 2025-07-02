@@ -277,7 +277,7 @@ export const updateProfile = (req, res) => {
 
     try {
       const userId = req.params.id;
-      const {
+      const { 
         firstName,
         lastName,
         userName,
@@ -285,6 +285,8 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
+        isActive,
+        password
       } = req.body;
 
       let updateData = {
@@ -295,7 +297,12 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
+        isActive
       };
+
+       if (password) {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
 
       if (req.file) {
         updateData.profilePicture = req.file.filename;
@@ -322,7 +329,7 @@ export const updateProfile = (req, res) => {
         updatedUser
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} update profile.`);
+      logger.error(`${Message.FAILED_TO} update profile.`,error);
       return HandleResponse(
         res,
         false,
