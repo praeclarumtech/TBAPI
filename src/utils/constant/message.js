@@ -49,5 +49,6 @@ export const Message = {
   ADD_TO_FAV: 'successfully add to favorite.',
   UNSUPPORTED_FILE:'Unsupported file type.',
   RESUME_SCORED_SUCCESSFULLY:'Resume scored successfully.',
+  EMAIL_NOT_VERIFIED:'Google email not verified',
 };
 
