@@ -26,7 +26,7 @@ import { Enum } from '../utils/enum.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
 
 export const register = async (req, res, next) => {
-  let { userName, email, password, confirmPassword, role } = req.body;
+  let { userName, email, password, confirmPassword, role, isActive } = req.body;
   try {
     const existingUser = await getUser({ email });
 
@@ -42,7 +42,7 @@ export const register = async (req, res, next) => {
     const createdByAdmin = req.user?.role === Enum.ADMIN
     if (createdByAdmin || role === Enum.ADMIN) {
       logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
-      await createUser({ userName, email, password, confirmPassword, role });
+      await createUser({ userName, email, password, confirmPassword, role, isActive });
       // const htmlContent = accountCredentialsTemplate({  email, password })
       // await sendingEmail({
       //   email_to: [email],
