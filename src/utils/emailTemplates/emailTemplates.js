@@ -132,3 +132,81 @@ export const accountCredentialsTemplate = ({ email, password }) => `
     </div>
   </div>
 `;
+
+export const passwordResetRequestTemplate = ({ email }) => `
+  <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px;">
+      <h2 style="color: #2c3e50;">Password Reset Requested</h2>
+
+      <p style="color: #444; font-size: 15px; line-height: 1.6;">
+        This is to inform you that a user with the following email has requested to reset their TalentBox password:
+      </p>
+
+      <ul style="color: #444; font-size: 15px;">
+        <li><strong>User Email:</strong> ${email}</li>
+      </ul>
+
+      <p style="color: #444; font-size: 15px; line-height: 1.6;">
+        Please take appropriate action and reset the user's password. You can use the button below to proceed.
+      </p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="https://tb-front.vercel.app/update-password"
+           target="_blank"
+           style="background-color: #007bff; color: #fff; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+          Reset User Password
+        </a>
+      </div>
+
+      <p style="margin-top: 30px; color: #666; font-size: 14px;">
+        Regards,<br/>
+        <strong>TalentBox Automated Notification</strong>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #eee; margin: 40px 0;" />
+
+      <p style="color: #aaa; font-size: 12px; text-align: center;">
+        This message was sent automatically. Do not reply directly to this email.
+      </p>
+    </div>
+  </div>
+`;
+
+export const resetPasswordCredentialsTemplate = ({ email, password }) => `
+  <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px;">
+      <h2 style="color: #2c3e50;">Your Password Has Been Reset</h2>
+
+      <p style="color: #444; font-size: 15px; line-height: 1.6;">
+        Your TalentBox password has been reset by the administrator. Please find your updated credentials below:
+      </p>
+
+      <ul style="color: #444; font-size: 15px;">
+        <li><strong>Email:</strong> ${email}</li>
+        <li><strong>New Password:</strong> ${password}</li>
+      </ul>
+
+      <p style="color: #444; font-size: 15px; line-height: 1.6;">
+        You can now log in using the credentials above. For security reasons, we strongly recommend updating your password after logging in.
+      </p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.FRONT_URL}" 
+           style="background-color: #28a745; color: #ffffff; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+          Login to Your Account
+        </a>
+      </div>
+
+      <p style="margin-top: 30px; color: #666; font-size: 14px;">
+        Regards,<br/>
+        <strong>The TalentBox Team</strong>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #eee; margin: 40px 0;" />
+
+      <p style="color: #aaa; font-size: 12px; text-align: center;">
+        This is an automated email. Do not reply directly to this message.
+      </p>
+    </div>
+  </div>
+`;
