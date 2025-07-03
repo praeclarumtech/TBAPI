@@ -5,7 +5,7 @@ import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
-import { approvalRequestTemplate, accountApprovedTemplate, accountCredentialsTemplate } from '../utils/emailTemplates/emailTemplates.js'
+import { approvalRequestTemplate, accountApprovedTemplate, accountCredentialsTemplate, passwordResetRequestTemplate, resetPasswordCredentialsTemplate } from '../utils/emailTemplates/emailTemplates.js'
 dotenv.config();
 import {
   createUser,
@@ -277,7 +277,7 @@ export const updateProfile = (req, res) => {
 
     try {
       const userId = req.params.id;
-      const {
+      const { 
         firstName,
         lastName,
         userName,
@@ -285,6 +285,8 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
+        isActive,
+        password
       } = req.body;
 
       let updateData = {
@@ -295,7 +297,12 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
+        isActive
       };
+
+       if (password) {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
 
       if (req.file) {
         updateData.profilePicture = req.file.filename;
@@ -322,7 +329,7 @@ export const updateProfile = (req, res) => {
         updatedUser
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} update profile.`);
+      logger.error(`${Message.FAILED_TO} update profile.`,error);
       return HandleResponse(
         res,
         false,
@@ -346,12 +353,15 @@ export const sendEmail = async (req, res) => {
         `User ${Message.NOT_FOUND}`
       );
     }
-    const newOtp = Math.floor(1000 + Math.random() * 9000);
-    const expireOtp = new Date(Date.now() + 2 * 60 * 1000);
+    // const newOtp = Math.floor(1000 + Math.random() * 9000);
+    // const expireOtp = new Date(Date.now() + 2 * 60 * 1000);
 
-    logger.info(`${Message.OTP_SEND} OTP IS:- ${newOtp}`);
+    // logger.info(`${Message.OTP_SEND} OTP IS:- ${newOtp}`);
 
-    const data = await sendingEmail({ email, newOtp });
+    // const data = await sendingEmail({ email, newOtp });
+
+    const htmlContent = passwordResetRequestTemplate({ email })
+    const data = await sendingEmail({ email_to: [process.env.HR_EMAIL], subject: 'Password Reset Request – TalentBox', description: htmlContent });
     if (!data) {
       logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -361,13 +371,13 @@ export const sendEmail = async (req, res) => {
         `User ${Message.NOT_FOUND}`
       );
     }
-    await storeOtp(email, newOtp, expireOtp);
+    // await storeOtp(email, newOtp, expireOtp);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
       Message.MAIL_SENT,
-      `OTP:-${newOtp}, will be expire in:${expireOtp}`
+      // `OTP:-${newOtp}, will be expire in:${expireOtp}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} send mail.`);
@@ -452,6 +462,18 @@ export const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUserById(email, { password: hashedPassword });
 
+    const htmlContent = resetPasswordCredentialsTemplate({ email, password: newPassword })
+    const data = await sendingEmail({ email_to: [email], subject: 'Your TalentBox Password Has Been Reset', description: htmlContent });
+    if (!data) {
+      logger.warn(`${Message.FAILED_TO} send new password to user`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `${Message.FAILED_TO} send new password to user`
+      );
+    }
+    logger.info(`New password ${Message.SENT_SUCCESSFULLY} to user.`)
     logger.info(`Password ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
