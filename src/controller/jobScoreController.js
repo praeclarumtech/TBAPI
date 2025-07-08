@@ -294,7 +294,8 @@ export const fetchAppliedJobs = async (req, res) => {
     }
 
     const formatted = applications.map(app => {
-      const newApps = app.applications.map(item => {
+      const newApps = app.applications.sort((a, b) => new Date(b.applied_Date) - new Date(a.applied_Date))
+      .map(item => {
         const job = item.job_id;
         return {
           job_id: job?.job_id,     

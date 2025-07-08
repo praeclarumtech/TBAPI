@@ -30,7 +30,7 @@ export const fetchJobsById = async (userId) => {
       model: 'jobs',
       select:
         'job_subject job_id',
-    });
+    }).sort({ applied_Date: -1 });
   } catch (error) {
     logger.error('Error while fetch job', error);
     throw error;
