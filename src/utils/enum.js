@@ -38,6 +38,11 @@ export const salaryCurrencyEnum = {
   SGD: 'SGD',
 };
 
+export const applicationsEnum = {
+  SUBMITTED: 'Submitted',
+  INTERVIEW:'Interview',
+};
+
 export const applicantEnum = {
   YES: 'yes',
   NO: 'no',
@@ -120,7 +125,7 @@ export const applicantEnum = {
   MANUAL: 'Manual',
   CSV: 'Csv',
   RESUME: 'Resume',
-  GUEST: 'guest',
+  GUEST: 'guest'
 };
 
 export const candidateTemplateType = {

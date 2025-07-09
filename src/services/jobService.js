@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import logger from '../loggers/logger.js'
 import jobs from '../models/jobModel.js'
+import jobApplication from '../models/jobApplicantionModel.js';
 
 export const createJobService = async (jobData) => {
     try {
@@ -20,6 +21,21 @@ export const fetchJobService = async (jobId) => {
         throw error;
     }
 }
+
+export const fetchJobsById = async (userId) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+    return await jobApplication.find({ user_id: userId }).populate({
+      path: 'applications.job_id',
+      model: 'jobs',
+      select:
+        'job_subject job_id',
+    }).sort({ applied_Date: -1 });
+  } catch (error) {
+    logger.error('Error while fetch job', error);
+    throw error;
+  }
+};
 
 export const updateJobService = async (id, body) => {
     try {
@@ -44,6 +60,23 @@ export const fetchJobsByVendorService = async (vendorId) => {
         return await jobs.find({ addedBy: vendorId });
     } catch (error) {
         logger.error('Error while fetching jobs by vendor', error);
+        throw error;
+    }
+};
+
+export const updateJobApplicantionStatus = async (applicationId, status) => {
+    try {
+        const applicationObjectId = new mongoose.Types.ObjectId(applicationId);
+        return await jobApplication.updateOne({
+            "applications._id": applicationObjectId
+        },
+            {
+                $set: {
+                    "applications.$.status": status
+                }
+            });
+    } catch (error) {
+        logger.error('Error while updating job application status', error);
         throw error;
     }
 };
