@@ -40,7 +40,7 @@ export const register = async (req, res, next) => {
       );
     }
     const createdByAdmin = req.user?.role === Enum.ADMIN
-    if (createdByAdmin || role === Enum.ADMIN) {
+    if (createdByAdmin) {
       logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
       await createUser({ userName, email, password, confirmPassword, role, isActive });
       // const htmlContent = accountCredentialsTemplate({  email, password })
@@ -277,7 +277,7 @@ export const updateProfile = (req, res) => {
 
     try {
       const userId = req.params.id;
-      const { 
+      const {
         firstName,
         lastName,
         userName,
@@ -300,7 +300,7 @@ export const updateProfile = (req, res) => {
         isActive
       };
 
-       if (password) {
+      if (password) {
         updateData.password = await bcrypt.hash(password, 10);
       }
 
@@ -329,7 +329,7 @@ export const updateProfile = (req, res) => {
         updatedUser
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} update profile.`,error);
+      logger.error(`${Message.FAILED_TO} update profile.`, error);
       return HandleResponse(
         res,
         false,
