@@ -3,7 +3,7 @@ export const Enum = {
   HR: 'hr',
   USER: 'user',
   VENDOR: 'vendor',
-  GUEST: 'guest'
+  GUEST: 'guest',
 };
 export const genderEnum = {
   MALE: 'male',
@@ -16,18 +16,18 @@ export const jodTypeEnum = {
   PART_TIME: 'part-time',
   CONTRACT: 'contract',
   INTERNSHIP: 'internship',
-  FREELANCE: 'freelance'
-}
+  FREELANCE: 'freelance',
+};
 export const timeZome = {
   IST: 'IST',
   UTC: 'UTC',
-  EST: 'EST'
-}
+  EST: 'EST',
+};
 export const salaryFrequencyEnum = {
   MONTHLY: 'monthly',
   YEARLY: 'yearly',
-  HOURLY: 'hourly'
-}
+  HOURLY: 'hourly',
+};
 export const salaryCurrencyEnum = {
   INR: 'INR',
   USD: 'USD',
@@ -35,7 +35,7 @@ export const salaryCurrencyEnum = {
   GBP: 'GBP',
   AUD: 'AUD',
   CAD: 'CAD',
-  SGD: 'SGD'
+  SGD: 'SGD',
 };
 
 export const applicationsEnum = {
@@ -49,11 +49,18 @@ export const applicantEnum = {
   REMOTE: 'remote',
   HYBRID: 'hybrid',
   ONSITE: 'onsite',
-  PENDING: 'pending',
+
+  //applicant status
+  APPLIED: 'applied',
+  IN_PROGRESS: 'in progress',
+  SHORTLISTED: 'shortlisted',
   SELECTED: 'selected',
   REJECTED: 'rejected',
-  HOLD: 'hold',
-  IN_PROCESS: 'in-process',
+  ON_HOLD: 'on hold',
+  ONBOARDED: 'onboarded',
+  LEAVED: 'leaved',
+
+  //interview stage
   HR_ROUND: 'hr round',
   TECHNICAL: 'technical',
   FIRST_INTERVIEW_ROUND: 'first interview round',
@@ -66,7 +73,8 @@ export const applicantEnum = {
   FRONTED_DEVLOPER: 'Frontend Developer',
   SENIOR_FRONTED_DEVLOPER: 'Senior Frontend Developer',
   SENIOR_SOFTWARE_ENGINEER: 'Senior Software Engineer',
-  APPLICATION_DEVELOPMENT_MODERNIZATION: 'Application Development Modernization',
+  APPLICATION_DEVELOPMENT_MODERNIZATION:
+    'Application Development Modernization',
   BACKEND_DEVLOPER: 'Backend Developer',
   JUNIOR_SOFTWARE_ENGINEER: 'Junior Software Engineer',
   FULL_STACK_DEVLOPER: 'Full Stack Developer',
@@ -132,4 +140,3 @@ export const candidateTemplateType = {
   ONBOARDING_REMINDER: 'ONBOARDING_REMINDER',
   THANK_YOU_FOR_INTERVIEW: 'THANK_YOU_FOR_INTERVIEW',
 };
-

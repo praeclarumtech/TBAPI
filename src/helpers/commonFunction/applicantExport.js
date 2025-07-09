@@ -262,7 +262,7 @@ const validateAndFillFields = async (data, userRole) => {
       applicantEnum[data['Work Preference']?.toUpperCase()] ||
       null,
     status:
-      applicantEnum[data['Status']?.toUpperCase()] || applicantEnum.PENDING,
+      applicantEnum[data['Status']?.toUpperCase()] || applicantEnum.APPLIED,
     interviewStage:
       applicantEnum[data['Interview Stage']?.trim().toUpperCase()] ||
       applicantEnum.FIRST_INTERVIEW_ROUND,

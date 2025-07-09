@@ -2,7 +2,7 @@ import User from '../models/userModel.js';
 import otpModel from '../models/otpModel.js'
 
 export const getUser = async (body) => {
-  return await User.findOne({ ...body });
+  return await User.findOne({ ...body, isDeleted: false });
 };
 
 export const createUser = async (body) => {

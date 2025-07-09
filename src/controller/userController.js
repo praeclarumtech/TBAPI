@@ -5,6 +5,7 @@ import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
+import { approvalRequestTemplate, accountApprovedTemplate, accountCredentialsTemplate, passwordResetRequestTemplate, resetPasswordCredentialsTemplate } from '../utils/emailTemplates/emailTemplates.js'
 dotenv.config();
 import {
   createUser,
@@ -19,9 +20,13 @@ import {
 } from '../services/userService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { upload } from '../helpers/multer.js';
+import { pagination } from '../helpers/commonFunction/handlePagination.js';
+import User from '../models/userModel.js';
+import { Enum } from '../utils/enum.js';
+import { commonSearch } from '../helpers/commonFunction/search.js';
 
 export const register = async (req, res, next) => {
-  let { userName, email, password, confirmPassword, role } = req.body;
+  let { userName, email, password, confirmPassword, role, isActive } = req.body;
   try {
     const existingUser = await getUser({ email });
 
@@ -34,8 +39,25 @@ export const register = async (req, res, next) => {
         `User ${Message.ALREADY_EXIST}`
       );
     }
-
-    await createUser({ userName, email, password, confirmPassword, role });
+    const createdByAdmin = req.user?.role === Enum.ADMIN
+    if (createdByAdmin) {
+      logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
+      await createUser({ userName, email, password, confirmPassword, role, isActive });
+      // const htmlContent = accountCredentialsTemplate({  email, password })
+      // await sendingEmail({
+      //   email_to: [email],
+      //   subject: 'Your TalentBox Account Credentials',
+      //   description: htmlContent,
+      // });
+    } else {
+      const htmlBlock = approvalRequestTemplate({ userName, email, role })
+      await sendingEmail({
+        email_to: [process.env.HR_EMAIL],
+        subject: 'New User Registration - Approval Required',
+        description: htmlBlock,
+      });
+      await createUser({ userName, email, password, confirmPassword, role, isActive: false });
+    }
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
     return HandleResponse(
@@ -69,6 +91,15 @@ export const login = async (req, res) => {
         false,
         StatusCodes.NOT_FOUND,
         `User ${Message.NOT_FOUND}`
+      );
+    }
+
+    if (!user.isActive) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.UNAUTHORIZED,
+        Message.UNDER_APPROVAL
       );
     }
     const isMatch = await bcrypt.compare(password, user.password);
@@ -108,25 +139,55 @@ export const login = async (req, res) => {
   }
 };
 
-export const viewProfile = async (req, res) => {
+export const listOfUsers = async (req, res) => {
   try {
-    const user = await getAllusers();
-    if (!user) {
-      logger.warn(`Profile ${Message.NOT_FOUND}`);
+    const { search } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+
+    if (search && typeof search === 'string') {
+      const searchFields = [
+        'userName',
+        'email',
+        'role',
+        'firstName',
+        'lastName',
+      ];
+
+      const searchResults = await commonSearch(
+        User,
+        searchFields,
+        search,
+        '',
+        page,
+        limit
+      );
+
+      logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
       return HandleResponse(
         res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Profile ${Message.NOT_FOUND}`
+        true,
+        StatusCodes.OK,
+        `All profile are ${Message.FETCH_SUCCESSFULLY}`,
+        searchResults
       );
     }
+
+    const paginatedData = await pagination({
+      Schema: User,
+      page,
+      limit,
+      query: { isDeleted: false },
+      sort: { createdAt: -1 },
+    });
+
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `All profile are ${Message.FETCH_SUCCESSFULLY}`,
-      user
+      paginatedData
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} view profile.`);
@@ -138,6 +199,7 @@ export const viewProfile = async (req, res) => {
     );
   }
 };
+
 
 export const getProfileByToken = async (req, res) => {
   try {
@@ -223,6 +285,8 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
+        isActive,
+        password
       } = req.body;
 
       let updateData = {
@@ -233,7 +297,12 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
+        isActive
       };
+
+      if (password) {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
 
       if (req.file) {
         updateData.profilePicture = req.file.filename;
@@ -260,7 +329,7 @@ export const updateProfile = (req, res) => {
         updatedUser
       );
     } catch (error) {
-      logger.error(`${Message.FAILED_TO} update profile.`);
+      logger.error(`${Message.FAILED_TO} update profile.`, error);
       return HandleResponse(
         res,
         false,
@@ -284,12 +353,15 @@ export const sendEmail = async (req, res) => {
         `User ${Message.NOT_FOUND}`
       );
     }
-    const newOtp = Math.floor(1000 + Math.random() * 9000);
-    const expireOtp = new Date(Date.now() + 2 * 60 * 1000);
+    // const newOtp = Math.floor(1000 + Math.random() * 9000);
+    // const expireOtp = new Date(Date.now() + 2 * 60 * 1000);
 
-    logger.info(`${Message.OTP_SEND} OTP IS:- ${newOtp}`);
+    // logger.info(`${Message.OTP_SEND} OTP IS:- ${newOtp}`);
 
-    const data = await sendingEmail({ email, newOtp });
+    // const data = await sendingEmail({ email, newOtp });
+
+    const htmlContent = passwordResetRequestTemplate({ email })
+    const data = await sendingEmail({ email_to: [process.env.HR_EMAIL], subject: 'Password Reset Request – TalentBox', description: htmlContent });
     if (!data) {
       logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -299,13 +371,13 @@ export const sendEmail = async (req, res) => {
         `User ${Message.NOT_FOUND}`
       );
     }
-    await storeOtp(email, newOtp, expireOtp);
+    // await storeOtp(email, newOtp, expireOtp);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
       Message.MAIL_SENT,
-      `OTP:-${newOtp}, will be expire in:${expireOtp}`
+      // `OTP:-${newOtp}, will be expire in:${expireOtp}`
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} send mail.`);
@@ -390,6 +462,18 @@ export const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUserById(email, { password: hashedPassword });
 
+    const htmlContent = resetPasswordCredentialsTemplate({ email, password: newPassword })
+    const data = await sendingEmail({ email_to: [email], subject: 'Your TalentBox Password Has Been Reset', description: htmlContent });
+    if (!data) {
+      logger.warn(`${Message.FAILED_TO} send new password to user`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `${Message.FAILED_TO} send new password to user`
+      );
+    }
+    logger.info(`New password ${Message.SENT_SUCCESSFULLY} to user.`)
     logger.info(`Password ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -451,6 +535,65 @@ export const changePassword = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} change password.`
+    );
+  }
+};
+
+export const updateStatus = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { isActive, isDeleted } = req.body;
+    const existingUser = await getUser({ _id: userId })
+    if (!existingUser) {
+      logger.warn(`Profile ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Profile ${Message.NOT_FOUND}`
+      );
+    }
+
+    const updatedUser = await updateProfileById(userId, req.body);
+    if (!updatedUser) {
+      logger.warn(`Profile ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Profile ${Message.NOT_FOUND}`
+      );
+    }
+
+    if (existingUser.isActive === false && isActive === true) {
+      const htmlBlock = accountApprovedTemplate({ userName: existingUser.userName })
+      await sendingEmail({
+        email_to: [existingUser.email],
+        subject: 'Access Granted - Welcome to TalentBox',
+        description: htmlBlock,
+      });
+    }
+    let message;
+    if (isActive !== undefined) {
+      message =
+        isActive === false
+          ? `User ${Message.INACTIVE_SUCCESSFULLY}`
+          : `User ${Message.ACTIVE_SUCCESSFULLY}`;
+    } else if (isDeleted !== undefined) {
+      message = `User ${Message.DELETED_SUCCESSFULLY}`;
+    } else {
+      message = `User ${Message.UPDATED_SUCCESSFULLY}`;
+    }
+
+    logger.info(message);
+    return HandleResponse(res, true, StatusCodes.ACCEPTED, message, undefined);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} update profile.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update profile.`
     );
   }
 };

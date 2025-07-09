@@ -21,6 +21,9 @@ export const registerValidation = Joi.object().keys({
     'string.email': `Email id should be in correct format`,
     'any.required': `Email id is required`,
   }),
+  isActive: Joi.boolean().optional().messages({
+  'boolean.base': `isActive must be true or false`,
+}),
   password: Joi.string()
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`'])[A-Za-z\d@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`']{8,}$/,

@@ -54,13 +54,16 @@ const ApplicantSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        applicantEnum.PENDING,
+        applicantEnum.APPLIED,
+        applicantEnum.IN_PROGRESS,
+        applicantEnum.SHORTLISTED,
         applicantEnum.SELECTED,
         applicantEnum.REJECTED,
-        applicantEnum.HOLD,
-        applicantEnum.IN_PROCESS,
+        applicantEnum.ON_HOLD,
+        applicantEnum.ONBOARDED,
+        applicantEnum.LEAVED
       ],
-      default: applicantEnum.PENDING,
+      default: applicantEnum.APPLIED,
       required: false,
     },
     interviewStage: {

@@ -60,6 +60,7 @@ export const viewJobs = async (req, res) => {
             min_experience,
             work_preference,
             required_skills,
+            job_location
         } = req.query;
         const query = {};
         if (search && typeof search === 'string') {
@@ -98,6 +99,10 @@ export const viewJobs = async (req, res) => {
 
         if (work_preference) {
             query.work_preference = work_preference;
+        }
+
+        if (job_location) {
+            query.job_location = job_location;
         }
 
         if (required_skills) {
