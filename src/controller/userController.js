@@ -56,16 +56,16 @@ export const register = async (req, res, next) => {
       //   description: htmlContent,
       // });
     } else {
-      // const htmlBlock = approvalRequestTemplate({ userName, email, role })
-      // await sendingEmail({
-      //   email_to: [process.env.HR_EMAIL],
-      //   subject: 'New User Registration - Approval Required',
-      //   description: htmlBlock,
-      // });
       const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive: false });
       if (role === Enum.VENDOR) {
         const newVendor = await createVendorData(newUser._id)
         await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
+        const htmlBlock = approvalRequestTemplate({ userName, email, role })
+        await sendingEmail({
+          email_to: [process.env.HR_EMAIL],
+          subject: 'New User Registration - Approval Required',
+          description: htmlBlock,
+        });
       }
     }
 
