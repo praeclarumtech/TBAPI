@@ -117,7 +117,7 @@ const ApplicantSchema = new mongoose.Schema(
     },
     addedBy: {
       type: String,
-      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME],
+      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, Enum.GUEST],
       required: true
     },
     meta: {

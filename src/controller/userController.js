@@ -19,6 +19,8 @@ import {
 } from '../services/userService.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { upload } from '../helpers/multer.js';
+import axios from 'axios';
+import { Enum } from '../utils/enum.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role } = req.body;
@@ -105,6 +107,117 @@ export const login = async (req, res) => {
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} login.`
     );
+  }
+};
+
+export const facebookLogin = async (req, res) => {
+  const { accessToken, userID } = req.body;
+
+  try {
+    const fbGraphUrl = `https://graph.facebook.com/v18.0/${userID}?fields=id,name,email,picture&access_token=${accessToken}`;
+    const { data } = await axios.get(fbGraphUrl);
+
+    const { name, email, picture } = data;
+
+    if (!email) {
+      logger.warn(Message.FACEBOOK_ACC_DOES_NOT_RETURN_EMAIL);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        Message.FACEBOOK_ACC_DOES_NOT_RETURN_EMAIL
+      );
+    }
+
+    const existingUser = await getUser({ email });
+
+    const user = existingUser
+      ? existingUser
+      : await createUser({
+          userName: name,
+          email,
+          profilePicture: picture?.data?.url,
+          role: Enum.GUEST,
+        });
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.EXPIRES_IN }
+    );
+
+    logger.info(Message.USER_LOGGED_IN_SUCCESSFULLY);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.USER_LOGGED_IN_SUCCESSFULLY,
+      { token, user }
+    );
+  } catch (error) {
+    logger.error(`Facebook ${Message.TOKEN_IS_NOT_VALID}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.UNAUTHORIZED,
+      `Facebook ${Message.TOKEN_IS_NOT_VALID}`
+    );
+  }
+};
+
+export const linkedInLogin = async (req, res) => {
+  const { code } = req.query;
+
+  try {
+    // Exchange code for access token
+    const tokenRes = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', null, {
+      params: {
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: process.env.LINKEDIN_REDIRECT_URI,
+        client_id: process.env.LINKEDIN_CLIENT_ID,
+        client_secret: process.env.LINKEDIN_CLIENT_SECRET
+      },
+    });
+
+    const accessToken = tokenRes.data.access_token;
+
+    // Get user profile
+    const [profileRes, emailRes] = await Promise.all([
+      axios.get('https://api.linkedin.com/v2/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }),
+      axios.get('https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+    ]);
+
+    const name = `${profileRes.data.localizedFirstName} ${profileRes.data.localizedLastName}`;
+    const email = emailRes.data.elements[0]['handle~'].emailAddress;
+
+    if (!email) {
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'LinkedIn account does not return email');
+    }
+
+    const existingUser = await getUser({ email });
+
+    const user = existingUser || await createUser({
+      userName: name,
+      email,
+      role: Enum.GUEST,
+      profilePicture: null,
+    });
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.EXPIRES_IN }
+    );
+
+    return HandleResponse(res, true, StatusCodes.OK, 'Logged in with LinkedIn', { token, user });
+
+  } catch (err) {
+    return HandleResponse(res, false, StatusCodes.UNAUTHORIZED, `LinkedIn login failed: ${err.message}`);
   }
 };
 
