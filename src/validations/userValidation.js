@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { Enum } from '../utils/enum.js';
+import { CompanyTypeEnum, Enum, HireResourcesEnum } from '../utils/enum.js';
 
 export const registerValidation = Joi.object().keys({
   userName: Joi.string()
@@ -22,8 +22,8 @@ export const registerValidation = Joi.object().keys({
     'any.required': `Email id is required`,
   }),
   isActive: Joi.boolean().optional().messages({
-  'boolean.base': `isActive must be true or false`,
-}),
+    'boolean.base': `isActive must be true or false`,
+  }),
   password: Joi.string()
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`'])[A-Za-z\d@$!%*?&#'\'()*+,-./:;<=>?@[\]^_`']{8,}$/,
@@ -57,6 +57,90 @@ export const registerValidation = Joi.object().keys({
       'any.required': `Role is a required field`,
     }),
 });
+
+export const vendorValidation = Joi.object().keys({
+  // vendor fields
+  whatsapp_number: Joi.string()
+    .pattern(/^\+?[0-9]{10,15}$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Whatsapp number must be a valid mobile number with country code',
+    }),
+
+  vendor_linkedin_profile: Joi.string()
+    .uri()
+    .required()
+    .messages({
+      'string.uri': 'Vendor LinkedIn profile must be a valid URL',
+    }),
+
+  company_name: Joi.string()
+    .required(),
+
+  company_email: Joi.string()
+    .email()
+    .required()
+    .messages({
+      'string.email': 'Company email should be a valid email address',
+    }),
+
+  company_phone_number: Joi.string()
+    .pattern(/^\+?[0-9]{10,15}$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Company phone number must be a valid mobile number with country code',
+    }),
+
+  company_location: Joi.string()
+    .required(),
+
+  company_type: Joi.string()
+    .valid(
+      CompanyTypeEnum.PRODUCT,
+      CompanyTypeEnum.SERVICE,
+      CompanyTypeEnum.BOTH
+    )
+    .required()
+    .messages({
+      'any.only': `Company type must be one of ${Object.values(CompanyTypeEnum).join(', ')}`,
+    }),
+
+  hire_resources: Joi.string()
+    .valid(
+      HireResourcesEnum.C2C,
+      HireResourcesEnum.C2H,
+      HireResourcesEnum.IN_HOUSE,
+      HireResourcesEnum.ALL
+    )
+    .required()
+    .messages({
+      'any.only': `Hire resources must be one of ${Object.values(HireResourcesEnum).join(', ')}`,
+    }),
+
+  company_strength: Joi.string()
+    .required(),
+
+  company_time: Joi.string()
+    .pattern(/^\d{4}(-\d{2})?$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'Company time should be in YYYY or YYYY-MM format',
+    }),
+
+  company_linkedin_profile: Joi.string()
+    .uri()
+    .required()
+    .messages({
+      'string.uri': 'Company LinkedIn profile must be a valid URL',
+    }),
+
+  company_website: Joi.string()
+    .uri()
+    .required()
+    .messages({
+      'string.uri': 'Company website must be a valid URL',
+    }),
+})
 
 export const loginValidation = Joi.object().keys({
   email: Joi.alternatives()
