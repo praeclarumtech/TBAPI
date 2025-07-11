@@ -40,7 +40,20 @@ export const salaryCurrencyEnum = {
 
 export const applicationsEnum = {
   SUBMITTED: 'Submitted',
-  INTERVIEW:'Interview',
+  INTERVIEW: 'Interview',
+};
+
+export const CompanyTypeEnum = {
+  PRODUCT: 'product',
+  SERVICE: 'service',
+  BOTH: 'both',
+};
+
+export const HireResourcesEnum = {
+  C2C: 'c2c',
+  C2H: 'c2h',
+  IN_HOUSE: 'in-house',
+  ALL: 'all',
 };
 
 export const applicantEnum = {

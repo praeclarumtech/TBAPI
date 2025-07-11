@@ -5,6 +5,7 @@ import {
     deletJobService,
     fetchJobsByVendorService,
     fetchJobService,
+    findVendorByUserId,
     updateJobService,
 } from '../services/jobService.js';
 import { Message } from '../utils/constant/message.js';
@@ -12,10 +13,44 @@ import logger from '../loggers/logger.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import jobs from '../models/jobModel.js';
 import { generateJobId } from '../helpers/generateApplicationNo.js';
+import { getUser } from '../services/userService.js';
+import { Enum } from '../utils/enum.js';
 
 export const createJob = async (req, res) => {
     try {
         const user = req.user.id;
+        const userData = await getUser({ _id: user });
+
+        if (userData.role === Enum.VENDOR) {
+            const vendor = await findVendorByUserId({ userId: user });
+            if (!vendor) {
+                return HandleResponse(
+                    res,
+                    false,
+                    StatusCodes.NOT_FOUND,
+                    `Vendor profile ${Message.NOT_FOUND}`
+                );
+            }
+            const requiredFields = [
+                'company_name',
+                'company_email',
+                'company_phone_number',
+                'company_location',
+                'company_type',
+                'hire_resources',
+                'company_strength',
+                'company_website',
+            ];
+            const missingFields = requiredFields.filter((field) => !vendor[field]);
+            if (missingFields.length > 0) {
+                return HandleResponse(
+                    res,
+                    false,
+                    StatusCodes.BAD_REQUEST,
+                    Message.IN_COMPLETE
+                );
+            }
+        }
         const job_id = await generateJobId();
         const applicationDeadline = new Date();
         applicationDeadline.setDate(applicationDeadline.getDate() + 30);

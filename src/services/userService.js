@@ -1,5 +1,6 @@
 import User from '../models/userModel.js';
 import otpModel from '../models/otpModel.js'
+import mongoose from 'mongoose';
 
 export const getUser = async (body) => {
   return await User.findOne({ ...body, isDeleted: false });
@@ -15,11 +16,28 @@ export const getAllusers = async () => {
 };
 
 export const getUserById = async (id) => {
-  return await User.findById(id);
+  return await User.findById(id).populate({ path: 'vendorProfileId', model: 'Vendor' });
 };
 
 export const updateProfileById = async (id, updateData) => {
-  return User.updateOne({ _id: id }, updateData);
+  // return User.updateOne({ _id: id }, updateData);
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      logger.warn(`Invalid ObjectId provided: ${id}`);
+      throw new Error('Invalid user ID');
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData },
+      { new: true }
+    );
+
+    return updatedUser;
+  } catch (error) {
+    logger.error('Error while updating user profile', error);
+    throw new Error('Failed to update user profile');
+  }
 };
 
 export const updateUserById = async (email, updateData) => {

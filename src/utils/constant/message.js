@@ -47,9 +47,10 @@ export const Message = {
   MOVED_SUCCESSFULLY: 'Records sucessfully to move applicants.',
   DUPLICATE_RECORDS: 'All records are duplicates.',
   ADD_TO_FAV: 'successfully add to favorite.',
-  UNSUPPORTED_FILE:'Unsupported file type.',
-  RESUME_SCORED_SUCCESSFULLY:'Resume scored successfully.',
+  UNSUPPORTED_FILE: 'Unsupported file type.',
+  RESUME_SCORED_SUCCESSFULLY: 'Resume scored successfully.',
   ACCESS_DENIED: 'Access denied',
   UNDER_APPROVAL: 'Your account is under approval, you will be notified once it is activated.',
-  SENT_SUCCESSFULLY: 'sent successfully '
+  SENT_SUCCESSFULLY: 'sent successfully',
+  IN_COMPLETE: 'To continue, please complete your profile first.'
 };

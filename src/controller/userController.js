@@ -24,6 +24,7 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import User from '../models/userModel.js';
 import { Enum } from '../utils/enum.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import { createVendorData, findVendorByUserId, updateVendorData } from '../services/jobService.js';
 
 export const register = async (req, res, next) => {
   let { userName, email, password, confirmPassword, role, isActive } = req.body;
@@ -39,24 +40,33 @@ export const register = async (req, res, next) => {
         `User ${Message.ALREADY_EXIST}`
       );
     }
+
     const createdByAdmin = req.user?.role === Enum.ADMIN
-    if (createdByAdmin) {
+    if (createdByAdmin || role === Enum.GUEST) {
       logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
-      await createUser({ userName, email, password, confirmPassword, role, isActive });
-      // const htmlContent = accountCredentialsTemplate({  email, password })
+      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive });
+      if (role === Enum.VENDOR) {
+        const newVendor = await createVendorData(newUser._id, req.body)
+        await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
+      }
+      // const htmlContent = accountCredentialsTemplate({ email, password })
       // await sendingEmail({
       //   email_to: [email],
       //   subject: 'Your TalentBox Account Credentials',
       //   description: htmlContent,
       // });
     } else {
-      const htmlBlock = approvalRequestTemplate({ userName, email, role })
-      await sendingEmail({
-        email_to: [process.env.HR_EMAIL],
-        subject: 'New User Registration - Approval Required',
-        description: htmlBlock,
-      });
-      await createUser({ userName, email, password, confirmPassword, role, isActive: false });
+      // const htmlBlock = approvalRequestTemplate({ userName, email, role })
+      // await sendingEmail({
+      //   email_to: [process.env.HR_EMAIL],
+      //   subject: 'New User Registration - Approval Required',
+      //   description: htmlBlock,
+      // });
+      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive: false });
+      if (role === Enum.VENDOR) {
+        const newVendor = await createVendorData(newUser._id)
+        await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
+      }
     }
 
     logger.info(Message.REGISTERED_SUCCESSFULLY);
@@ -141,7 +151,7 @@ export const login = async (req, res) => {
 
 export const listOfUsers = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, role } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
 
@@ -173,11 +183,16 @@ export const listOfUsers = async (req, res) => {
       );
     }
 
+    const query = { isDeleted: false }
+    if (role && Object.values(Enum).includes(role)) {
+      query.role = role;
+    }
+
     const paginatedData = await pagination({
       Schema: User,
       page,
       limit,
-      query: { isDeleted: false },
+      query,
       sort: { createdAt: -1 },
     });
 
@@ -286,7 +301,21 @@ export const updateProfile = (req, res) => {
         dateOfBirth,
         designation,
         isActive,
-        password
+        password,
+
+        //vendor details
+        whatsapp_number,
+        vendor_linkedin_profile,
+        company_name,
+        company_email,
+        company_phone_number,
+        company_location,
+        company_type,
+        hire_resources,
+        company_strength,
+        company_time,
+        company_linkedin_profile,
+        company_website,
       } = req.body;
 
       let updateData = {
@@ -309,7 +338,6 @@ export const updateProfile = (req, res) => {
       }
 
       const updatedUser = await updateProfileById(userId, updateData);
-
       if (!updatedUser) {
         logger.warn(`Profile ${Message.NOT_FOUND}`);
         return HandleResponse(
@@ -320,13 +348,46 @@ export const updateProfile = (req, res) => {
         );
       }
 
+      const vendorUpdateData = {
+        whatsapp_number,
+        vendor_linkedin_profile,
+        company_name,
+        company_email,
+        company_phone_number,
+        company_location,
+        company_type,
+        hire_resources,
+        company_strength,
+        company_time,
+        company_linkedin_profile,
+        company_website,
+      };
+
+      Object.keys(vendorUpdateData).forEach(
+        (key) => (vendorUpdateData[key] === undefined || vendorUpdateData[key] === null) && delete vendorUpdateData[key]
+      );
+      let updatedVendor = null;
+
+      if (Object.keys(vendorUpdateData).length > 0) {
+        const existingVendor = await findVendorByUserId({ userId: updatedUser._id })
+        if (existingVendor) {
+          updatedVendor = await updateVendorData(updatedUser._id, vendorUpdateData)
+        } else {
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.NOT_FOUND,
+            `Profile ${Message.NOT_FOUND}`
+          );
+        }
+      }
+
       logger.info(`Profile ${Message.UPDATED_SUCCESSFULLY}`);
       return HandleResponse(
         res,
         true,
         StatusCodes.OK,
         `Profile ${Message.UPDATED_SUCCESSFULLY}`,
-        updatedUser
       );
     } catch (error) {
       logger.error(`${Message.FAILED_TO} update profile.`, error);
@@ -563,6 +624,11 @@ export const updateStatus = async (req, res) => {
         StatusCodes.NOT_FOUND,
         `Profile ${Message.NOT_FOUND}`
       );
+    }
+
+    const isVendor = await findVendorByUserId({ userId: existingUser._id })
+    if (isVendor) {
+      await updateVendorData(userId, req.body);
     }
 
     if (existingUser.isActive === false && isActive === true) {
