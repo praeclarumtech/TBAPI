@@ -21,8 +21,12 @@ import {
 } from '../services/applicantService.js';
 import fs from 'fs';
 import {
+  deleteApplications,
   fetchJobsById,
+  getApplicantionById,
+  getJobApplicationsByvendor,
   updateJobApplicantionStatus,
+  updateStatusAndInterviewstage,
 } from '../services/jobService.js';
 import { applicantEnum, Enum } from '../utils/enum.js';
 
@@ -142,67 +146,38 @@ export const addJobApplication = async (req, res) => {
     const matchedSkills = await extractSkillsFromResume(resumeText);
     const role = await extractMatchingRoleFromResume(resumeText);
 
-    const existingApplicant = await Applicant.findOne({
+    const existingApplicant = await jobApplication.findOne({
       $or: [
         { email: applicantData.email },
         { 'phone.phoneNumber': applicantData.phone.phoneNumber },
       ],
+      job_id: job._id,
     });
 
-    const applicant =
-      existingApplicant ||
-      new Applicant({
-        ...applicantData,
-        otherSkills: matchedSkills,
-        appliedRole: role,
-        isActive: true,
-        resumeUrl: '',
-        addedBy: applicantEnum.GUEST,
-      });
-
-    if (!existingApplicant) {
-      await applicant.save();
-    }
-
-    let application = await jobApplication.findOne({
-      applicant_Id: applicant._id,
-    });
-
-    if (!application) {
-      application = new jobApplication({
-        applicant_Id: applicant._id,
-        applications: [
-          {
-            job_id: job._id,
-            score: calculateJobScore(resumeText, jdText),
-            appliedDate: new Date(),
-          },
-        ],
-        user_id: req.user.id,
-      });
-    } else {
-      const existingAppIndex = application.applications.findIndex(
-        (app) => app.job_id.toString() === job._id.toString()
+    if (existingApplicant) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        'Applicant already applied for this job.'
       );
-
-      if (existingAppIndex >= 0) {
-        application.applications[existingAppIndex] = {
-          ...application.applications[existingAppIndex],
-          job_id: job._id,
-          score: calculateJobScore(resumeText, jdText),
-          appliedDate: new Date(),
-        };
-      } else {
-        application.applications.push({
-          job_id: job._id,
-          score: calculateJobScore(resumeText, jdText),
-          appliedDate: new Date(),
-        });
-      }
     }
+
+    const applicant = new jobApplication({
+      ...applicantData,
+      job_id: job._id,
+      vendor_id: job.addedBy,
+      otherSkills: matchedSkills,
+      appliedRole: role,
+      isActive: true,
+      resumeUrl: '',
+      addedBy: applicantEnum.GUEST,
+      user_id: req.user?.id,
+      score: calculateJobScore(resumeText, jdText),
+    });
 
     if (resumeFile) fs.unlinkSync(resumeFile.path);
-    await application.save();
+    await applicant.save();
 
     logger.info(`Application ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
@@ -211,13 +186,10 @@ export const addJobApplication = async (req, res) => {
       StatusCodes.CREATED,
       `Application ${Message.ADDED_SUCCESSFULLY}`,
       {
-        applicant_Id: applicant._id,
-        applicationId: application._id,
-        score: calculateJobScore(resumeText, jdText),
+        applicant,
       }
     );
   } catch (error) {
-    console.log('from catch block>>>>>>>>>>>>>', error);
     logger.error(`${Message.FAILED_TO} add application.${error}`);
     return HandleResponse(
       res,
@@ -227,7 +199,6 @@ export const addJobApplication = async (req, res) => {
     );
   }
 };
-
 export const updateApplicantionStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -281,7 +252,14 @@ export const fetchAppliedJobs = async (req, res) => {
         `User ${Message.NOT_FOUND}`
       );
     }
-    const applications = await fetchJobsById(userId);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const { applications, pagination } = await fetchJobsById(
+      userId,
+      page,
+      limit
+    );
 
     if (!applications || applications.length === 0) {
       logger.error(`Applied jobs for this user ${Message.NOT_FOUND}`);
@@ -293,45 +271,301 @@ export const fetchAppliedJobs = async (req, res) => {
       );
     }
 
-    const formatted = applications.map(app => {
-      const newApps = app.applications.sort((a, b) => new Date(b.applied_Date) - new Date(a.applied_Date))
-      .map(item => {
-        const job = item.job_id;
-        return {
-          job_id: job?.job_id,     
-          _id: job?._id,            
-          job_subject: job?.job_subject || '',
-          score: item.score,
-          status: item.status,
-          applied_Date: item.applied_Date
-        };
-      });
-
-      return {
-        _id: app._id,
-        applicant_Id: app.applicant_Id,
-        user_id: app.user_id,
-        createdAt: app.createdAt,
-        updatedAt: app.updatedAt,
-        applications: newApps
-      };
-    });
-
     logger.info(`All jobs applications ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `All jobs applications ${Message.FETCH_SUCCESSFULLY}`,
-      formatted
+      { applications, pagination }
     );
   } catch (error) {
-    logger.error(`Failed to fetch applied job IDs: ${error.message}`);
+    logger.error(`Failed to fetch applied job IDs: ${error.message}`, error);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch applied job IDs.`
+    );
+  }
+};
+
+export const viewJobApplicantionsByVendor = async (req, res) => {
+  try {
+    const vendorId = req.user?.id;
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!vendorId) {
+      logger.error('Vendor ID not found');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Vendor ID missing'
+      );
+    }
+
+    const { applications, pagination } = await getJobApplicationsByvendor(
+      vendorId,
+      page,
+      limit
+    );
+
+    logger.info(`All Job applications ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `All Job applications ${Message.FETCH_SUCCESSFULLY}`,
+      { applications, pagination }
+    );
+  } catch (error) {
+    logger.error(`Failed to fetch Job applicantions`, error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicantions.`
+    );
+  }
+};
+
+export const viewApplicantionsById = async (req, res) => {
+  try {
+    const applicationId = req.params.applicationId;
+    if (!applicationId) {
+      logger.warn('Application ID not provided');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Application ID is required'
+      );
+    }
+
+    const applicant = await getApplicantionById(applicationId);
+
+    if (!applicant) {
+      logger.warn(`Applicant ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Applicant ${Message.NOT_FOUND}`
+      );
+    }
+    logger.info(`Job application ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Job applications ${Message.FETCH_SUCCESSFULLY}`,
+      applicant
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch Job applicantion by id`, error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicantion by id.`
+    );
+  }
+};
+
+export const deleteApplicant = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'No applicant ID(s) provided' });
+    }
+
+    const deleteApplicant = await deleteApplications(ids);
+    logger.info(`Applicantion ${Message.DELETED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicantion ${Message.DELETED_SUCCESSFULLY}`,
+      deleteApplicant
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} delete applicantion.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} delete applicantion.`
+    );
+  }
+};
+
+export const updateApplicantStatus = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+    const { interviewStage, status } = req.body;
+
+    const update = await updateStatusAndInterviewstage(applicantId, {
+      interviewStage,
+      status,
+    });
+
+    logger.info(`Applicant status ${Message.UPDATED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.ACCEPTED,
+      `Applicant status ${Message.UPDATED_SUCCESSFULLY}`,
+      update
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} update applicant status.`, error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} update applicant status.`
+    );
+  }
+};
+
+export const getVendorJobApplicantReport = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const result = await jobs.aggregate([
+      {
+        $group: {
+          _id: '$addedBy', // vendor_id
+          totalJobs: { $sum: 1 },
+          jobIds: { $push: '$_id' },
+          jobs: {
+            $push: {
+              job_id: '$_id',
+              job_subject: '$job_subject',
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'jobapplications',
+          let: { jobIds: '$jobIds', vendorId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ['$job_id', '$$jobIds'] },
+                    { $eq: ['$vendor_id', '$$vendorId'] },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: '$job_id',
+                count: { $sum: 1 },
+              },
+            },
+          ],
+          as: 'applicantsPerJob',
+        },
+      },
+      {
+        $addFields: {
+          totalApplicants: { $sum: '$applicantsPerJob.count' },
+          jobs: {
+            $map: {
+              input: '$jobs',
+              as: 'job',
+              in: {
+                $mergeObjects: [
+                  '$$job',
+                  {
+                    applicantCount: {
+                      $let: {
+                        vars: {
+                          matched: {
+                            $first: {
+                              $filter: {
+                                input: '$applicantsPerJob',
+                                as: 'a',
+                                cond: { $eq: ['$$a._id', '$$job.job_id'] },
+                              },
+                            },
+                          },
+                        },
+                        in: { $ifNull: ['$$matched.count', 0] },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'vendorDetails',
+        },
+      },
+      { $unwind: { path: '$vendorDetails', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          vendor_id: '$_id',
+          vendorName: {
+            $concat: [
+              '$vendorDetails.firstName',
+              ' ',
+              '$vendorDetails.lastName',
+            ],
+          },
+          // vendorName: "$vendorDetails.userName",
+          totalJobs: 1,
+          totalApplicants: 1,
+          jobs: 1,
+        },
+      },
+      {
+        $facet: {
+          metadata: [{ $count: 'total' }],
+          data: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ]);
+
+    const totalVendors = result[0].metadata[0]?.total || 0;
+    const totalPages = Math.ceil(totalVendors / limit);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      'Vendor job-applicant report generated successfully',
+      {
+        totalVendors,
+        totalPages,
+        currentPage: page,
+        data: result[0].data,
+      }
+    );
+  } catch (error) {
+    logger.error('Failed to generate vendor report', error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to generate vendor report'
     );
   }
 };

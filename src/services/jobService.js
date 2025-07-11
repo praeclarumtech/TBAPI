@@ -22,15 +22,41 @@ export const fetchJobService = async (jobId) => {
     }
 }
 
-export const fetchJobsById = async (userId) => {
+export const fetchJobsById = async (userId, page = 1, limit = 10) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(userId)) return null;
-    return await jobApplication.find({ user_id: userId }).populate({
-      path: 'applications.job_id',
-      model: 'jobs',
-      select:
-        'job_subject job_id',
-    }).sort({ applied_Date: -1 });
+
+     const skip = (page - 1) * limit;
+     const totalCount = await jobApplication.countDocuments({ user_id: userId });
+
+     const applications = await jobApplication
+      .find({ user_id: userId })
+      .select('score job_id status')
+      .populate({
+        path: 'job_id',
+        model: 'jobs',
+        select: 'job_subject job_id',
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+       const transformed = applications.map((app) => ({
+      _id: app._id,
+      status: app.status,
+      job_id: app.job_id?._id || null,
+      job_subject: app.job_id?.job_subject || null,
+      score: app.score,
+    }));
+
+    return {
+      applications: transformed,
+      pagination: {
+        totalCount,
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        limit,
+      }}
   } catch (error) {
     logger.error('Error while fetch job', error);
     throw error;
@@ -55,9 +81,24 @@ export const deletJobService = async (ids) => {
     }
 };
 
-export const fetchJobsByVendorService = async (vendorId) => {
+export const fetchJobsByVendorService = async (vendorId, page = 1, limit = 10) => {
     try {
-        return await jobs.find({ addedBy: vendorId });
+        const skip = (page - 1) * limit;
+        const totalCount = await jobs.countDocuments({ addedBy: vendorId });
+        const vendorJobs = await jobs
+          .find({ addedBy: vendorId })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit);
+
+      return{
+        vendorJobs,
+        pagination: {
+        totalCount,
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        limit,
+      }}
     } catch (error) {
         logger.error('Error while fetching jobs by vendor', error);
         throw error;
@@ -80,3 +121,69 @@ export const updateJobApplicantionStatus = async (applicationId, status) => {
         throw error;
     }
 };
+
+export const getJobApplicationsByvendor = async (vendorId ,page = 1,limit = 50) => {
+  try {
+    const skip = (page - 1) * limit;
+
+    const totalCount = await jobApplication.countDocuments({
+     vendor_id:vendorId
+    });
+
+    const applications = await jobApplication
+      .find({ vendor_id:vendorId})
+      .populate({
+        path: 'job_id',
+        model: 'jobs',
+        select: 'job_id job_subject',
+      })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    return {
+      applications,
+      pagination: {
+        totalCount,
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        limit,
+      },
+    };
+  } catch (error) {
+    logger.error('Error while fetch Job applicantions', error);
+    throw error;
+  }
+};
+
+export const getApplicantionById = async (applicationId) =>{
+  try {
+   const applicant = await jobApplication.findById(applicationId).populate({
+        path: 'job_id',
+        model: 'jobs',
+        select: 'job_id job_subject',
+      })
+   return applicant
+  } catch (error) {
+    logger.error('Error while fetch Job applicantions by id', error);
+    throw error;
+  }
+}
+
+export const deleteApplications = async (ids) =>{
+  try {
+    return await jobApplication.deleteMany({ _id:{$in:ids}})
+  } catch (error) {
+    logger.error('Error while deleting applications', error);
+    throw error;
+  }
+}
+
+export const updateStatusAndInterviewstage = async(applicantId,updateData) =>{
+  try {
+    return await jobApplication.updateOne({ _id:applicantId }, { $set: updateData })
+  } catch (error) {
+    logger.error('Error while updating status and interview stage', error);
+    throw error;
+  }
+}
