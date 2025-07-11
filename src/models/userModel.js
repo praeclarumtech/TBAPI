@@ -44,13 +44,17 @@ const userSchema = new mongoose.Schema(
     designation: {
       type: String,
     },
-     isActive: {
+    isActive: {
       type: Boolean,
       default: true,
     },
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+    vendorProfileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Vendor',
     },
   },
   { timestamps: true }
