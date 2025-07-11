@@ -1,37 +1,162 @@
 import mongoose from 'mongoose';
-import { applicationsEnum } from '../utils/enum.js';
+import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
 
-const jobApplicationSchema = new mongoose.Schema({
-  applicant_Id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Applicant',
-    required: true
-  },
-  applications: [{
-    job_id: {
+const jobApplicationSchema = new mongoose.Schema(
+  {
+    user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Job',  // Reference to Job model if you have one
-      required: true
+      ref: 'user',
+      required: false,
     },
-    applied_Date: {
-      type: Date,
-      default: Date.now
+    name: {
+      firstName: { type: String, required: true },
+      middleName: { type: String },
+      lastName: { type: String, required: false },
     },
-    score: { type: Number, required: true },
+    phone: {
+      whatsappNumber: { type: String, required: false },
+      phoneNumber: { type: String, required: true },
+    },
+    email: { type: String, required: true },
+    gender: {
+      type: String,
+      enum: [genderEnum.MALE, genderEnum.FEMALE, genderEnum.OTHER, ''],
+      required: false,
+    },
+    dateOfBirth: { type: Date, required: false },
+    qualification: { type: String, required: false },
+    specialization: { type: String, required: false },
+    passingYear: { type: Number, required: false },
+    currentAddress: { type: String, required: false },
+    state: { type: String, required: false },
+    country: { type: String },
+    currentPincode: { type: Number, required: false },
+    currentCity: { type: String, required: false },
+    appliedSkills: { type: [String], required: false },
+    anyHandOnOffers: { type: Boolean, default: false },
+    resume: { type: String, required: false },
+    totalExperience: { type: Number },
+    relevantSkillExperience: { type: Number, required: false },
+    communicationSkill: { type: Number, required: false },
+    otherSkills: { type: String },
+    rating: { type: Number, required: false },
+    currentPkg: { type: Number },
+    expectedPkg: { type: Number },
+    noticePeriod: { type: Number },
+    negotiation: { type: String, required: false },
+    workPreference: {
+      type: String,
+      enum: [
+        applicantEnum.REMOTE,
+        applicantEnum.HYBRID,
+        applicantEnum.ONSITE,
+        '',
+      ],
+      required: false,
+    },
+    comment: { type: String },
+    feedback: { type: String },
     status: {
       type: String,
-      enum: [applicationsEnum.SUBMITTED, applicationsEnum.INTERVIEW],
-      default: applicationsEnum.SUBMITTED
-    }
-  }],
-   user_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: false,
-      }
-}, { 
-  timestamps: true,
-});
+      enum: [
+        applicantEnum.APPLIED,
+        applicantEnum.IN_PROGRESS,
+        applicantEnum.SHORTLISTED,
+        applicantEnum.SELECTED,
+        applicantEnum.REJECTED,
+        applicantEnum.ON_HOLD,
+        applicantEnum.ONBOARDED,
+        applicantEnum.LEAVED,
+      ],
+      default: applicantEnum.APPLIED,
+      required: false,
+    },
+    interviewStage: {
+      type: String,
+      enum: [
+        applicantEnum.HR_ROUND,
+        applicantEnum.TECHNICAL,
+        applicantEnum.FIRST_INTERVIEW_ROUND,
+        applicantEnum.PRACTICAL,
+        applicantEnum.CLIENT,
+      ],
+      default: applicantEnum.FIRST_INTERVIEW_ROUND,
+      required: false,
+    },
+    currentCompanyDesignation: {
+      type: String,
+      required: false,
+    },
+    appliedRole: {
+      type: String,
+      required: false,
+    },
+    practicalUrl: { type: String },
+    practicalFeedback: { type: String },
+    portfolioUrl: { type: String },
+    referral: { type: String },
+    resumeUrl: { type: String, required: false },
+    gitHubUrl: { type: String, required: false },
+    preferredLocations: { type: String },
+    currentCompanyName: { type: String },
+    maritalStatus: {
+      type: String,
+      enum: [applicantEnum.SINGLE, applicantEnum.MARRIED, ''],
+    },
+    lastFollowUpDate: { type: Date },
+    permanentAddress: { type: String, required: false },
+    collegeName: { type: String },
+    cgpa: { type: Number },
+    linkedinUrl: { type: String },
+    clientCvUrl: { type: String },
+    clientFeedback: { type: String },
+    isDeleted: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
+    createdBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+    },
+    updatedBy: {
+      type: String,
+      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+    },
+    addedBy: {
+      type: String,
+      enum: [
+        applicantEnum.MANUAL,
+        applicantEnum.CSV,
+        applicantEnum.RESUME,
+        applicantEnum.GUEST,
+      ],
+      required: true,
+    },
+    meta: {
+      type: Object,
+      default: {},
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+      required: true,
+    },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+    },
+    job_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'jobs',
+      required: true,
+    },
+     vendor_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+      required: true,
+    },
+    score: { type: Number, required: true },
+  },
+  { timestamps: true }
+);
 
 const jobApplication = mongoose.model('jobApplication', jobApplicationSchema);
 export default jobApplication;

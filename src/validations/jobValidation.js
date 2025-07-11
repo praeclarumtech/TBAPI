@@ -91,12 +91,35 @@ export const createJobValidation = Joi.object().keys({
 
 export const jobApplicationStatusValidation = Joi.object({
   status: Joi.string()
-    .valid(applicationsEnum.SUBMITTED, applicationsEnum.INTERVIEW)
-    .required()
-    .messages({
-      'any.only': 'Invalid application status value.',
-      'any.required': 'Status is required.',
-    }),
+      .valid(
+        applicantEnum.APPLIED,
+        applicantEnum.IN_PROGRESS,
+        applicantEnum.SHORTLISTED,
+        applicantEnum.SELECTED,
+        applicantEnum.REJECTED,
+        applicantEnum.ON_HOLD,
+        applicantEnum.ONBOARDED,
+        applicantEnum.LEAVED
+      )
+      .default(applicantEnum.APPLIED)
+      .messages({
+        'any.only': 'Invalid status value.',
+        'any.required': 'Status is required.',
+      }),
+  
+    interviewStage: Joi.string()
+      .valid(
+        applicantEnum.HR_ROUND,
+        applicantEnum.TECHNICAL,
+        applicantEnum.FIRST_INTERVIEW_ROUND,
+        applicantEnum.CLIENT,
+        applicantEnum.PRACTICAL
+      )
+      .default(applicantEnum.FIRST_INTERVIEW_ROUND)
+      .messages({
+        'any.only': 'Invalid interview stage value.',
+        'any.required': 'Interview stage is required.',
+      })
 });
 
 export const jobApplicationIdParamValidation = Joi.object({
