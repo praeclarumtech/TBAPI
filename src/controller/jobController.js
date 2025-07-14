@@ -3,7 +3,6 @@ import { HandleResponse } from '../helpers/handleResponse.js';
 import {
     createJobService,
     deletJobService,
-    fetchJobsByVendorService,
     fetchJobService,
     findVendorByUserId,
   updateJobService,
@@ -98,6 +97,13 @@ export const viewJobs = async (req, res) => {
       job_location,
     } = req.query;
     const query = {};
+
+    const user = req.user || {};
+
+     if (user?.role === Enum.VENDOR ) {
+      query.addedBy = user.id;
+    }
+
     if (search && typeof search === 'string') {
       const cleanSearch = search.replace(/[^a-zA-Z0-9]/g, '');
       const flexiblePattern = cleanSearch.split('').join('[-_\\s]*');
@@ -176,7 +182,7 @@ export const viewJobs = async (req, res) => {
     logger.info(`All jobs ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(res, true, StatusCodes.OK, undefined, result);
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch job`);
+    logger.error(`${Message.FAILED_TO} fetch job`,error);
     return HandleResponse(
       res,
       false,
@@ -279,35 +285,6 @@ export const deleteJob = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} delete jobs.`
-    );
-  }
-};
-
-export const viewJobsByVendorId = async (req, res) => {
-  try {
-    const vendorId = req.user.id;
-
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-
-    const { vendorJobs, pagination } = await fetchJobsByVendorService(
-      vendorId,
-      page,
-      limit
-    );
-
-    logger.info(`Job ${Message.FETCH_SUCCESSFULLY}`);
-    return HandleResponse(res, true, StatusCodes.OK, undefined, {
-      vendorJobs,
-      pagination,
-    });
-  } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch job`);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} fetch job`
     );
   }
 };
