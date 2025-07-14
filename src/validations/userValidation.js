@@ -61,43 +61,31 @@ export const registerValidation = Joi.object().keys({
 export const vendorValidation = Joi.object().keys({
   whatsapp_number: Joi.string()
     .pattern(/^\+?[0-9]{10,15}$/)
-    .optional()
-    .allow('', null)
+    .required()
     .messages({
-      'string.pattern.base': 'Whatsapp number must be a valid mobile number with country code',
+      'string.pattern.base':
+        'Whatsapp number must be a valid mobile number with country code',
     }),
 
-  vendor_linkedin_profile: Joi.string()
-    .uri()
-    .optional()
-    .allow('', null)
-    .messages({
-      'string.uri': 'Vendor LinkedIn profile must be a valid URL',
-    }),
+  vendor_linkedin_profile: Joi.string().uri().required().messages({
+    'string.uri': 'Vendor LinkedIn profile must be a valid URL',
+  }),
 
-  company_name: Joi.string()
-    .optional()
-    .allow('', null),
+  company_name: Joi.string().required(),
 
-  company_email: Joi.string()
-    .email()
-    .optional()
-    .allow('', null)
-    .messages({
-      'string.email': 'Company email should be a valid email address',
-    }),
+  company_email: Joi.string().email().required().messages({
+    'string.email': 'Company email should be a valid email address',
+  }),
 
   company_phone_number: Joi.string()
     .pattern(/^\+?[0-9]{10,15}$/)
-    .optional()
-    .allow('', null)
+    .required()
     .messages({
-      'string.pattern.base': 'Company phone number must be a valid mobile number with country code',
+      'string.pattern.base':
+        'Company phone number must be a valid mobile number with country code',
     }),
 
-  company_location: Joi.string()
-    .optional()
-    .allow('', null),
+  company_location: Joi.string().required(),
 
   company_type: Joi.string()
     .valid(
@@ -105,10 +93,11 @@ export const vendorValidation = Joi.object().keys({
       CompanyTypeEnum.SERVICE,
       CompanyTypeEnum.BOTH
     )
-    .optional()
-    .allow('', null)
+    .required()
     .messages({
-      'any.only': `Company type must be one of ${Object.values(CompanyTypeEnum).join(', ')}`,
+      'any.only': `Company type must be one of ${Object.values(
+        CompanyTypeEnum
+      ).join(', ')}`,
     }),
 
   hire_resources: Joi.string()
@@ -118,40 +107,24 @@ export const vendorValidation = Joi.object().keys({
       HireResourcesEnum.IN_HOUSE,
       HireResourcesEnum.ALL
     )
-    .optional()
-    .allow('', null)
+    .required()
     .messages({
-      'any.only': `Hire resources must be one of ${Object.values(HireResourcesEnum).join(', ')}`,
+      'any.only': `Hire resources must be one of ${Object.values(
+        HireResourcesEnum
+      ).join(', ')}`,
     }),
 
-  company_strength: Joi.string()
-    .optional()
-    .allow('', null),
+  company_strength: Joi.string().required(),
 
-  company_time: Joi.string()
-    .pattern(/^\d{4}(-\d{2})?$/)
-    .optional()
-    .allow('', null)
-    .messages({
-      'string.pattern.base': 'Company time should be in YYYY or YYYY-MM format',
-    }),
+  company_linkedin_profile: Joi.string().uri().required().messages({
+    'string.uri': 'Company LinkedIn profile must be a valid URL',
+  }),
 
-  company_linkedin_profile: Joi.string()
-    .uri()
-    .optional()
-    .allow('', null)
-    .messages({
-      'string.uri': 'Company LinkedIn profile must be a valid URL',
-    }),
-
-  company_website: Joi.string()
-    .uri()
-    .optional()
-    .allow('', null)
-    .messages({
-      'string.uri': 'Company website must be a valid URL',
-    }),
+  company_website: Joi.string().uri().required().messages({
+    'string.uri': 'Company website must be a valid URL',
+  }),
 });
+
 
 export const loginValidation = Joi.object().keys({
   email: Joi.alternatives()
