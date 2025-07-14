@@ -48,10 +48,10 @@ const vendorSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    company_time: {
-      type: String,
-      required: false,
-    },
+    // company_time: {
+    //   type: String,
+    //   required: false,
+    // },
     company_linkedin_profile: {
       type: String,
       required: false,
