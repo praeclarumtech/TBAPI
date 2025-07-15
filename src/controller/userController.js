@@ -154,7 +154,10 @@ export const listOfUsers = async (req, res) => {
     const { search, role } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
-
+    const additionalFilter = {};
+    if (role && Object.values(Enum).includes(role)) {
+      additionalFilter.role = role;
+    }
     if (search && typeof search === 'string') {
       const searchFields = [
         'userName',
@@ -163,16 +166,16 @@ export const listOfUsers = async (req, res) => {
         'firstName',
         'lastName',
       ];
-
       const searchResults = await commonSearch(
         User,
         searchFields,
         search,
         '',
         page,
-        limit
+        limit,
+        { createdAt: -1 },
+        additionalFilter
       );
-
       logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
       return HandleResponse(
         res,
@@ -183,11 +186,7 @@ export const listOfUsers = async (req, res) => {
       );
     }
 
-    const query = { isDeleted: false }
-    if (role && Object.values(Enum).includes(role)) {
-      query.role = role;
-    }
-
+    const query = { isDeleted: false, ...additionalFilter };
     const paginatedData = await pagination({
       Schema: User,
       page,
@@ -195,7 +194,6 @@ export const listOfUsers = async (req, res) => {
       query,
       sort: { createdAt: -1 },
     });
-
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -214,7 +212,6 @@ export const listOfUsers = async (req, res) => {
     );
   }
 };
-
 
 export const getProfileByToken = async (req, res) => {
   try {
