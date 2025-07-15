@@ -82,30 +82,6 @@ export const deletJobService = async (ids) => {
     }
 };
 
-export const fetchJobsByVendorService = async (vendorId, page = 1, limit = 10) => {
-    try {
-        const skip = (page - 1) * limit;
-        const totalCount = await jobs.countDocuments({ addedBy: vendorId });
-        const vendorJobs = await jobs
-          .find({ addedBy: vendorId })
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit);
-
-      return{
-        vendorJobs,
-        pagination: {
-        totalCount,
-        currentPage: page,
-        totalPages: Math.ceil(totalCount / limit),
-        limit,
-      }}
-    } catch (error) {
-        logger.error('Error while fetching jobs by vendor', error);
-        throw error;
-    }
-};
-
 export const updateJobApplicantionStatus = async (applicationId, status) => {
     try {
         const applicationObjectId = new mongoose.Types.ObjectId(applicationId);
