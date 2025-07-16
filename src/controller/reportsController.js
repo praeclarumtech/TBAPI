@@ -4,23 +4,19 @@ import { Message } from '../utils/constant/message.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { StatusCodes } from 'http-status-codes';
 import {
-  getReport,
   getApplicantSkillCounts,
   getApplicantCountCityAndState,
   getApplicantCountByAddedBy,
+  getInterviewStageCount,
 } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
   const { calendarType, startDate, endDate } = req.query;
+  const user =req.user;
 
   try {
-    const {
-      hrRoundApplicants,
-      firstInterviewRoundApplicants,
-      clientInterviewApplicants,
-      technicalRoundApplicants,
-      practicalRoundApplicants,
-    } = await getReport(calendarType, startDate, endDate);
+    const interviewStageCount = await getInterviewStageCount(calendarType, startDate, endDate, user.role,user.id);
+    console.log("datatatatatata>>",interviewStageCount)
 
     logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}`);
 
@@ -29,57 +25,7 @@ export const applicationOnProcessCount = async (req, res) => {
       true,
       StatusCodes.OK,
       `Report data ${Message.FETCH_SUCCESSFULLY}`,
-      {
-        hrRoundApplicants,
-        firstInterviewRoundApplicants,
-        clientInterviewApplicants,
-        technicalRoundApplicants,
-        practicalRoundApplicants,
-      }
-    );
-  } catch (error) {
-    logger.error(`${Message.FAILED_TO} Fetching Report.`);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} Fetching Report.`,
-      error
-    );
-  }
-};
-
-export const statusByPercentage = async (req, res) => {
-  try {
-    const { calendarType, startDate, endDate } = req.query;
-
-    const {
-      holdApplicants,
-      appliedApplicants,
-      selectedApplicants,
-      rejectedApplicants,
-      inProgressApplicants,
-      shortListedApplicants,
-      onboardedApplicants,
-      leavedApplicants,
-    } = await getReport(calendarType, startDate, endDate);
-
-    logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}.`);
-    return HandleResponse(
-      res,
-      true,
-      StatusCodes.OK,
-      `Report data ${Message.FETCH_SUCCESSFULLY}.`,
-      {
-        holdApplicants,
-        appliedApplicants,
-        selectedApplicants,
-        rejectedApplicants,
-        inProgressApplicants,
-        shortListedApplicants,
-        onboardedApplicants,
-        leavedApplicants,
-      }
+      interviewStageCount
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} Fetching Report.`);
@@ -132,8 +78,9 @@ export const getApplicationsByDate = async (req, res) => {
 export const applicantSkillStatistics = async (req, res) => {
   try {
     const { skillIds } = req.body;
+    const user = req.user;
 
-    const skillCounts = await getApplicantSkillCounts(skillIds);
+    const skillCounts = await getApplicantSkillCounts(skillIds,user);
 
     logger.info(`Applicant Skill Statistics ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -159,23 +106,9 @@ export const applicantSkillStatistics = async (req, res) => {
 
 export const applicantCountByCityAndState = async (req, res) => {
   try {
-    let { type } = req.query;
+    const { type } = req.query;
 
-    if (!type) {
-      type = 'city';
-    }
-
-    if (!['city', 'state'].includes(type)) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        `Invalid type. Only 'city' or 'state' allowed.`,
-        null
-      );
-    }
-
-    const result = await getApplicantCountCityAndState(type);
+    const result = await getApplicantCountCityAndState(type,req.user);
 
     logger.info(`Applicant count by ${type} ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(

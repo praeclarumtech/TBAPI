@@ -193,16 +193,30 @@ export const updateVendorData = async (userId, updatedData) => {
         throw new Error('Failed to update vendor data');
     }
 } 
-export const getJobApplicationsByvendor = async (vendorId ,page = 1,limit = 50) => {
+export const getJobApplicationsByvendor = async (vendorId ,page = 1,limit = 50,appliedSkills) => {
   try {
     const skip = (page - 1) * limit;
+    const query = {
+      vendor_id: vendorId,
+    };
 
-    const totalCount = await jobApplication.countDocuments({
-     vendor_id:vendorId
-    });
+     if (appliedSkills) {
+      const skillsArray = appliedSkills
+        .split(',')
+        .map(skill =>
+          new RegExp(
+            `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+            'i'
+          )
+        );
+
+      query.appliedSkills = { $all: skillsArray };
+    }
+
+    const totalCount = await jobApplication.countDocuments(query);
 
     const applications = await jobApplication
-      .find({ vendor_id:vendorId})
+      .find(query)
       .populate({
         path: 'job_id',
         model: 'jobs',

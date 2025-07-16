@@ -296,6 +296,7 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const appliedSkills = req.query.appliedSkills || null; 
 
     if (!vendorId) {
       logger.error('Vendor ID not found');
@@ -310,7 +311,8 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
     const { applications, pagination } = await getJobApplicationsByvendor(
       vendorId,
       page,
-      limit
+      limit,
+      appliedSkills
     );
 
     logger.info(`All Job applications ${Message.FETCH_SUCCESSFULLY}`);

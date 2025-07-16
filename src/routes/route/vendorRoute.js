@@ -6,7 +6,7 @@ import { validator } from '../../helpers/validator.js';
 const router = express.Router();
 
 router.get('/myApplications', authorization, fetchAppliedJobs)
-router.get('/viewApplications', authorization, verifyRoles(['vendor']), viewJobApplicantionsByVendor)
+router.get('/viewApplications', authorization, viewJobApplicantionsByVendor)
 router.get('/viewApplicantionsById/:applicationId', authorization, viewApplicantionsById)
 router.delete('/deleteApplicant', authorization, verifyRoles(['vendor']), deleteApplicant)
 router.put('/updateApplicantStatus/:id', authorization, verifyRoles(['vendor']), validator.body(jobApplicationStatusValidation), updateApplicantStatus)
