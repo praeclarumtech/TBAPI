@@ -14,8 +14,11 @@ import designationRouter from './route/designationRoute.js'
 import duplicateRecordRouter from './route/duplicateRecordRoute.js'
 import jobsRouter from './route/jobRoute.js'
 import vendorRoute from './route/vendorRoute.js'
+import { runSampleCronTask } from '../helpers/cron.js';
 
 const router = express.Router();
+
+router.get('/cron', runSampleCronTask);
 
 router.use('/year', yearRoute);
 router.use('/user', userRouter);
