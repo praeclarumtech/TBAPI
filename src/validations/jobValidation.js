@@ -48,11 +48,11 @@ export const createJobValidation = Joi.object().keys({
     'string.base': 'End Time must be a string',
     'any.required': 'End Time is required',
   }),
-  min_salary: Joi.number().required().messages({
+  min_salary: Joi.number().optional().allow('', null).messages({
     'number.base': 'Min Salary must be a number',
     'any.required': 'Min Salary is required',
   }),
-  max_salary: Joi.number().greater(Joi.ref('min_salary')).required().messages({
+  max_salary: Joi.number().greater(Joi.ref('min_salary')).optional().allow('', null).messages({
     'number.base': 'Max Salary must be a number',
     'number.greater': 'Max Salary must be greater than Min Salary',
     'any.required': 'Max Salary is required',
@@ -84,42 +84,42 @@ export const createJobValidation = Joi.object().keys({
   required_skills: Joi.array().items(Joi.string()).optional().messages({
     'array.base': 'Required Skills must be an array of strings',
   }),
-  job_location: Joi.string().optional().messages({
+  job_location: Joi.string().optional().allow('', null).messages({
     'string.base': 'Job location must be a string',
   }),
 });
 
 export const jobApplicationStatusValidation = Joi.object({
   status: Joi.string()
-      .valid(
-        applicantEnum.APPLIED,
-        applicantEnum.IN_PROGRESS,
-        applicantEnum.SHORTLISTED,
-        applicantEnum.SELECTED,
-        applicantEnum.REJECTED,
-        applicantEnum.ON_HOLD,
-        applicantEnum.ONBOARDED,
-        applicantEnum.LEAVED
-      )
-      .default(applicantEnum.APPLIED)
-      .messages({
-        'any.only': 'Invalid status value.',
-        'any.required': 'Status is required.',
-      }),
-  
-    interviewStage: Joi.string()
-      .valid(
-        applicantEnum.HR_ROUND,
-        applicantEnum.TECHNICAL,
-        applicantEnum.FIRST_INTERVIEW_ROUND,
-        applicantEnum.CLIENT,
-        applicantEnum.PRACTICAL
-      )
-      .default(applicantEnum.FIRST_INTERVIEW_ROUND)
-      .messages({
-        'any.only': 'Invalid interview stage value.',
-        'any.required': 'Interview stage is required.',
-      })
+    .valid(
+      applicantEnum.APPLIED,
+      applicantEnum.IN_PROGRESS,
+      applicantEnum.SHORTLISTED,
+      applicantEnum.SELECTED,
+      applicantEnum.REJECTED,
+      applicantEnum.ON_HOLD,
+      applicantEnum.ONBOARDED,
+      applicantEnum.LEAVED
+    )
+    .default(applicantEnum.APPLIED)
+    .messages({
+      'any.only': 'Invalid status value.',
+      'any.required': 'Status is required.',
+    }),
+
+  interviewStage: Joi.string()
+    .valid(
+      applicantEnum.HR_ROUND,
+      applicantEnum.TECHNICAL,
+      applicantEnum.FIRST_INTERVIEW_ROUND,
+      applicantEnum.CLIENT,
+      applicantEnum.PRACTICAL
+    )
+    .default(applicantEnum.FIRST_INTERVIEW_ROUND)
+    .messages({
+      'any.only': 'Invalid interview stage value.',
+      'any.required': 'Interview stage is required.',
+    })
 });
 
 export const jobApplicationIdParamValidation = Joi.object({
