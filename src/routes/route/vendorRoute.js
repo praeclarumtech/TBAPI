@@ -8,8 +8,8 @@ const router = express.Router();
 router.get('/myApplications', authorization, fetchAppliedJobs)
 router.get('/viewApplications', authorization, viewJobApplicantionsByVendor)
 router.get('/viewApplicantionsById/:applicationId', authorization, viewApplicantionsById)
-router.delete('/deleteApplicant', authorization, verifyRoles(['vendor']), deleteApplicant)
-router.put('/updateApplicantStatus/:id', authorization, verifyRoles(['vendor']), validator.body(jobApplicationStatusValidation), updateApplicantStatus)
+router.delete('/deleteApplicant', authorization, deleteApplicant)
+router.put('/updateApplicantStatus/:id', authorization, validator.body(jobApplicationStatusValidation), updateApplicantStatus)
 router.get('/job-applicant-report', authorization, verifyRoles(['admin', 'hr']), getVendorJobApplicantReport);
 
 export default router;

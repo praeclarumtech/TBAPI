@@ -292,44 +292,74 @@ export const fetchAppliedJobs = async (req, res) => {
 
 export const viewJobApplicantionsByVendor = async (req, res) => {
   try {
-    const vendorId = req.user?.id;
+    const user = req.user || {};
+    const {appliedSkills} = req.query
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const appliedSkills = req.query.appliedSkills || null; 
+    const skip = (page - 1) * limit;
 
-    if (!vendorId) {
-      logger.error('Vendor ID not found');
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        'Vendor ID missing'
-      );
+    const query = {isDeleted: false};
+
+    if (user.role === Enum.VENDOR) {
+      query.vendor_id = user.id;
     }
 
-    const { applications, pagination } = await getJobApplicationsByvendor(
-      vendorId,
-      page,
-      limit,
-      appliedSkills
-    );
+    if (appliedSkills) {
+      const skillsArray = appliedSkills
+        .split(',')
+        .map(
+          (skill) =>
+            new RegExp(
+              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            )
+        );
 
-    logger.info(`All Job applications ${Message.FETCH_SUCCESSFULLY}`);
+      query.appliedSkills = { $all: skillsArray };
+    }
+    
+    const totalCount = await jobApplication.countDocuments(query);
+
+    const applications = await jobApplication
+      .find(query)
+      .populate({
+        path: 'job_id',
+        model: 'jobs',
+        select: 'job_id job_subject addedBy',
+        populate: {
+          path: 'addedBy',
+          model: 'user',
+          select: 'firstName lastName role',
+        },
+      })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    logger.info(`Job applications ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `All Job applications ${Message.FETCH_SUCCESSFULLY}`,
-      { applications, pagination }
+      `Job applications ${Message.FETCH_SUCCESSFULLY}`,
+      {
+        applications,
+        pagination: {
+          totalCount,
+          currentPage: page,
+          totalPages: Math.ceil(totalCount / limit),
+          limit,
+        },
+      }
     );
   } catch (error) {
-    logger.error(`Failed to fetch Job applicantions`, error);
+    logger.error(`${Message.FAILED_TO} fetch applications.`, error);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} fetch applicantions.`
+      `${Message.FAILED_TO} fetch applications.`
     );
   }
 };
@@ -385,7 +415,7 @@ export const deleteApplicant = async (req, res) => {
       return res.status(400).json({ message: 'No applicant ID(s) provided' });
     }
 
-    const deleteApplicant = await deleteApplications(ids);
+    const deleteApplicant = await deleteApplications(ids,{isDeleted: true,});
     logger.info(`Applicantion ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -443,7 +473,7 @@ export const getVendorJobApplicantReport = async (req, res) => {
     const result = await jobs.aggregate([
       {
         $group: {
-          _id: '$addedBy', // vendor_id
+          _id: '$addedBy',
           totalJobs: { $sum: 1 },
           jobIds: { $push: '$_id' },
           jobs: {

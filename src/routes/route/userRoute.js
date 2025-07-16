@@ -21,6 +21,7 @@ import {
   changePasswordValidation,
 } from '../../validations/userValidation.js';
 import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
+import { validateUserRegistration  } from '../../validations/authValidation.js';
 
 const router = express.Router();
 
@@ -28,7 +29,7 @@ const router = express.Router();
 router.post('/register', validator.body(registerValidation), register);
 
 //for admin only to create users
-router.post('/create', authorization, verifyRoles(['admin']), validator.body(registerValidation), register);
+router.post('/create', authorization, verifyRoles(['admin']), validateUserRegistration , register);
 
 router.post('/login', validator.body(loginValidation), login);
 
