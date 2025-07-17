@@ -95,7 +95,6 @@ export const viewJobs = async (req, res) => {
       work_preference,
       required_skills,
       job_location,
-      isActive,
     } = req.query;
     const query = { isDeleted: false };
 
@@ -146,8 +145,6 @@ export const viewJobs = async (req, res) => {
     if (job_location) {
       query.job_location = job_location;
     }
-
-    query.isActive = isActive === 'true' ? true : false
 
     if (required_skills) {
       const skillsArray = required_skills

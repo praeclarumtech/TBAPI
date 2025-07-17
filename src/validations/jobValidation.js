@@ -57,9 +57,8 @@ export const createJobValidation = Joi.object().keys({
     'number.greater': 'Max Salary must be greater than Min Salary',
     'any.required': 'Max Salary is required',
   }),
-  contract_duration: Joi.string().required().messages({
+  contract_duration: Joi.string().optional().allow('', null).messages({
     'string.base': 'Contract Duration must be a string',
-    'any.required': 'Contract Duration is required',
   }),
   salary_currency: Joi.string().default('INR').messages({
     'string.base': 'Salary Currency must be a string',
