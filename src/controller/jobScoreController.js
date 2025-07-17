@@ -298,7 +298,7 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const query = {};
+    const query = {isDeleted: false};
 
     if (user.role === Enum.VENDOR) {
       query.vendor_id = user.id;
@@ -395,7 +395,7 @@ export const deleteApplicant = async (req, res) => {
       return res.status(400).json({ message: 'No applicant ID(s) provided' });
     }
 
-    const deleteApplicant = await deleteApplications(ids);
+    const deleteApplicant = await deleteApplications(ids,{isDeleted: true,});
     logger.info(`Applicantion ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,

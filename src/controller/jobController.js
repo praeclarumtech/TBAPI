@@ -253,8 +253,6 @@ export const updateJob = async (req, res) => {
 export const deleteJob = async (req, res) => {
   try {
     const { ids } = req.body;
-    console.log("ids", req.body)
-    console.log("ids>>>>>>>>>>>>>", ids)
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       logger.error(`Job ${Message.NOT_FOUND}`);
       return HandleResponse(

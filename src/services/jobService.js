@@ -223,7 +223,7 @@ export const getApplicantionById = async (applicationId) => {
 
 export const deleteApplications = async (ids) => {
   try {
-    return await jobApplication.deleteMany({ _id: { $in: ids } })
+    return await jobApplication.updateMany({ _id: {$in:ids} }, { $set: { isDeleted: true } });
   } catch (error) {
     logger.error('Error while deleting applications', error);
     throw error;
