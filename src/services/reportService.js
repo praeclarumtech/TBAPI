@@ -59,8 +59,6 @@ export const getInterviewStageCount = async(calendarType,customStartDate,customE
     }
   ]);
 
-  console.log("statusCounts",statusCounts)
-
     const defaultCounts = {
       hrRoundApplicants: 0,
       firstInterviewRoundApplicants: 0,

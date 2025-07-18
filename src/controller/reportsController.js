@@ -16,7 +16,6 @@ export const applicationOnProcessCount = async (req, res) => {
 
   try {
     const interviewStageCount = await getInterviewStageCount(calendarType, startDate, endDate, user.role,user.id);
-    console.log("datatatatatata>>",interviewStageCount)
 
     logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}`);
 
