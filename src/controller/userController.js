@@ -27,7 +27,7 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 import { createVendorData, findVendorByUserId, updateVendorData } from '../services/jobService.js';
 
 export const register = async (req, res, next) => {
-  let { userName, email, password, confirmPassword, role, isActive } = req.body;
+  let { userName, email, password, confirmPassword, role, isActive, lastName, firstName } = req.body;
   try {
     const existingUser = await getUser({ email });
 
@@ -44,7 +44,7 @@ export const register = async (req, res, next) => {
     const createdByAdmin = req.user?.role === Enum.ADMIN
     if (createdByAdmin || role === Enum.GUEST) {
       logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
-      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive });
+      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive, lastName, firstName  });
       if (role === Enum.VENDOR) {
         const newVendor = await createVendorData(newUser._id, req.body)
         await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
@@ -56,7 +56,7 @@ export const register = async (req, res, next) => {
       //   description: htmlContent,
       // });
     } else {
-      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive: false });
+      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive: false, lastName, firstName  });
       if (role === Enum.VENDOR) {
         const newVendor = await createVendorData(newUser._id)
         await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
