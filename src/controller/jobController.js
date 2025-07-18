@@ -1,10 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import {
-    createJobService,
-    deletJobService,
-    fetchJobService,
-    findVendorByUserId,
+  createJobService,
+  deletJobService,
+  fetchJobService,
+  findVendorByUserId,
   updateJobService,
 } from '../services/jobService.js';
 import { Message } from '../utils/constant/message.js';
@@ -16,68 +16,68 @@ import { getUser } from '../services/userService.js';
 import { Enum } from '../utils/enum.js';
 
 export const createJob = async (req, res) => {
-    try {
-        const user = req.user.id;
-        const userData = await getUser({ _id: user });
+  try {
+    const user = req.user.id;
+    const userData = await getUser({ _id: user });
 
-        if (userData.role === Enum.VENDOR) {
-            const vendor = await findVendorByUserId({ userId: user });
-            if (!vendor) {
-                return HandleResponse(
-                    res,
-                    false,
-                    StatusCodes.NOT_FOUND,
-                    `Vendor profile ${Message.NOT_FOUND}`
-                );
-            }
-            const requiredFields = [
-                'company_name',
-                'company_email',
-                'company_phone_number',
-                'company_location',
-                'company_type',
-                'hire_resources',
-                'company_strength',
-                'company_website',
-            ];
-            const missingFields = requiredFields.filter((field) => !vendor[field]);
-            if (missingFields.length > 0) {
-                return HandleResponse(
-                    res,
-                    false,
-                    StatusCodes.BAD_REQUEST,
-                    Message.IN_COMPLETE
-                );
-            }
-        }
-        const job_id = await generateJobId();
-        const applicationDeadline = new Date();
-        applicationDeadline.setDate(applicationDeadline.getDate() + 30);
-        const finalDate = applicationDeadline.toLocaleDateString('en-CA');
-        const jobData = {
-            job_id,
-            addedBy: user,
-            application_deadline: finalDate,
-            ...req.body,
-        };
-        await createJobService(jobData);
-        logger.info(`job ${Message.ADDED_SUCCESSFULLY}`);
+    if (userData.role === Enum.VENDOR) {
+      const vendor = await findVendorByUserId({ userId: user });
+      if (!vendor) {
         return HandleResponse(
-            res,
-            true,
-            StatusCodes.CREATED,
-            `job ${Message.ADDED_SUCCESSFULLY}`,
-            jobData
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          `Vendor profile ${Message.NOT_FOUND}`
         );
-    } catch (error) {
-        logger.error(`${Message.FAILED_TO} add job`, error);
+      }
+      const requiredFields = [
+        'company_name',
+        'company_email',
+        'company_phone_number',
+        'company_location',
+        'company_type',
+        'hire_resources',
+        'company_strength',
+        'company_website',
+      ];
+      const missingFields = requiredFields.filter((field) => !vendor[field]);
+      if (missingFields.length > 0) {
         return HandleResponse(
-            res,
-            false,
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `${Message.FAILED_TO} add job`
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          Message.IN_COMPLETE
         );
+      }
     }
+    const job_id = await generateJobId();
+    const applicationDeadline = new Date();
+    applicationDeadline.setDate(applicationDeadline.getDate() + 30);
+    const finalDate = applicationDeadline.toLocaleDateString('en-CA');
+    const jobData = {
+      job_id,
+      addedBy: user,
+      application_deadline: finalDate,
+      ...req.body,
+    };
+    await createJobService(jobData);
+    logger.info(`job ${Message.ADDED_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.CREATED,
+      `job ${Message.ADDED_SUCCESSFULLY}`,
+      jobData
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} add job`, error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} add job`
+    );
+  }
 };
 
 export const viewJobs = async (req, res) => {
@@ -96,11 +96,11 @@ export const viewJobs = async (req, res) => {
       required_skills,
       job_location,
     } = req.query;
-    const query = {};
+    const query = { isDeleted: false };
 
     const user = req.user || {};
 
-     if (user?.role === Enum.VENDOR ) {
+    if (user?.role === Enum.VENDOR) {
       query.addedBy = user.id;
     }
 
@@ -182,7 +182,7 @@ export const viewJobs = async (req, res) => {
     logger.info(`All jobs ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(res, true, StatusCodes.OK, undefined, result);
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch job`,error);
+    logger.error(`${Message.FAILED_TO} fetch job`, error);
     return HandleResponse(
       res,
       false,
@@ -263,7 +263,7 @@ export const deleteJob = async (req, res) => {
       );
     }
     const removeJob = await deletJobService(ids);
-    if (removeJob.deletedCount === 0) {
+    if (removeJob.modifiedCount === 0) {
       logger.error(`Job  ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
@@ -273,9 +273,9 @@ export const deleteJob = async (req, res) => {
       );
     }
     const message =
-      removeJob.deletedCount > 1
-        ? `${removeJob.deletedCount} jobs ${Message.DELETED_SUCCESSFULLY}`
-        : `${removeJob.deletedCount} Job ${Message.DELETED_SUCCESSFULLY}`;
+      removeJob.modifiedCount > 1
+        ? `${removeJob.modifiedCount} jobs ${Message.DELETED_SUCCESSFULLY}`
+        : `${removeJob.modifiedCount} Job ${Message.DELETED_SUCCESSFULLY}`;
     logger.info(message);
     return HandleResponse(res, true, StatusCodes.OK, message, removeJob);
   } catch (error) {

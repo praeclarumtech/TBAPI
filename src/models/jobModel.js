@@ -6,7 +6,7 @@ const jobSchema = new mongoose.Schema(
         job_id: { type: String, unique: true },
         job_subject: { type: String, required: false },
         job_details: { type: String, required: false },
-        sub_description : { type: String, required: false },
+        sub_description: { type: String, required: false },
         job_type: {
             type: String,
             enum: Object.values(jodTypeEnum),
@@ -44,13 +44,17 @@ const jobSchema = new mongoose.Schema(
             type: String,
             required: false
         },
-        isActive: { type: Boolean, default: true },
+        isActive: { type: Boolean, default: false },
         start_time: { type: String, required: false },
         end_time: { type: String, required: false },
         min_salary: { type: Number, required: false },
         max_salary: { type: Number, required: false },
         contract_duration: { type: String, required: false },
-        addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+        addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        isDeleted: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );
