@@ -972,9 +972,7 @@ export const updateApplicant = async (req, res) => {
   try {
     const applicantId = req.params.id;
     const { email_to, ...body } = req.body;
-    let updateData = {
-      ...body,
-    };
+
 
     const existingApplicant = await getApplicantById(applicantId);
     if (!existingApplicant) {
@@ -987,6 +985,17 @@ export const updateApplicant = async (req, res) => {
       );
     }
 
+    const isActive = body.isActive ?? existingApplicant.isActive;
+    const isFavorite = body.isFavorite ?? existingApplicant.isFavorite;
+
+    if ((isActive === 'false' || isActive === false) && (isFavorite === 'true' || isFavorite === true)) {
+      console.log('Auto-setting isActive to true because isFavorite is true');
+      body.isActive = true;
+    }
+
+    let updateData = {
+      ...body,
+    };
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
