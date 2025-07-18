@@ -293,6 +293,7 @@ export const fetchAppliedJobs = async (req, res) => {
 export const viewJobApplicantionsByVendor = async (req, res) => {
   try {
     const user = req.user || {};
+    const {appliedSkills} = req.query
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -304,6 +305,20 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
       query.vendor_id = user.id;
     }
 
+    if (appliedSkills) {
+      const skillsArray = appliedSkills
+        .split(',')
+        .map(
+          (skill) =>
+            new RegExp(
+              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            )
+        );
+
+      query.appliedSkills = { $all: skillsArray };
+    }
+    
     const totalCount = await jobApplication.countDocuments(query);
 
     const applications = await jobApplication

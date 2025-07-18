@@ -1,53 +1,70 @@
+import mongoose from 'mongoose';
 import Applicant from '../models/applicantModel.js';
-import { applicantEnum } from '../utils/enum.js';
+import jobApplication from '../models/jobApplicantionModel.js';
+import { applicantEnum, Enum } from '../utils/enum.js';
 
-export const getDashboard = async () => {
-  const totalApplicants = await Applicant.countDocuments({ isDeleted: false });
+export const getDashboardCounts = async (role,userId) => {
+  const Model = (role === Enum.VENDOR) ? jobApplication : Applicant;
 
-  const holdApplicants = await Applicant.countDocuments({
-    status: applicantEnum.ON_HOLD,
-    isDeleted: false,
-  });
-  const appliedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.APPLIED,
-    isDeleted: false,
-  });
-  const selectedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.SELECTED,
-    isDeleted: false,
-  });
-  const rejectedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.REJECTED,
-    isDeleted: false,
-  });
-  const inProgressApplicants = await Applicant.countDocuments({
-    status: applicantEnum.IN_PROGRESS,
-    isDeleted: false,
-  });
-  const shortListedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.SHORTLISTED,
-    isDeleted: false,
-  });
-  const onboardedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.ONBOARDED,
-    isDeleted: false,
-  });
-  const leavedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.LEAVED,
-    isDeleted: false,
-  });
+  const matchCondition = { isDeleted: false };
+  
+  if (role === Enum.VENDOR) {
+    matchCondition.vendor_id = new mongoose.Types.ObjectId(userId);
+  }
 
-  return {
-    totalApplicants,
-    holdApplicants,
-    appliedApplicants,
-    selectedApplicants,
-    rejectedApplicants,
-    inProgressApplicants,
-    shortListedApplicants,
-    onboardedApplicants,
-    leavedApplicants,
+  const statusCounts = await Model.aggregate([
+    { $match: matchCondition },
+    {
+      $group: {
+        _id: '$status',
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const defaultCounts = {
+    totalApplicants: 0,
+    appliedApplicants: 0,
+    holdApplicants: 0,
+    selectedApplicants: 0,
+    rejectedApplicants: 0,
+    inProgressApplicants: 0,
+    shortListedApplicants: 0,
+    onboardedApplicants: 0,
+    leavedApplicants: 0
   };
+
+  statusCounts.forEach(stat => {
+    defaultCounts.totalApplicants += stat.count;
+    switch (stat._id) {
+      case applicantEnum.APPLIED:
+        defaultCounts.appliedApplicants = stat.count;
+        break;
+      case applicantEnum.ON_HOLD:
+        defaultCounts.holdApplicants = stat.count;
+        break;
+      case applicantEnum.SELECTED:
+        defaultCounts.selectedApplicants = stat.count;
+        break;
+      case applicantEnum.REJECTED:
+        defaultCounts.rejectedApplicants = stat.count;
+        break;
+      case applicantEnum.IN_PROGRESS:
+        defaultCounts.inProgressApplicants = stat.count;
+        break;
+      case applicantEnum.SHORTLISTED:
+        defaultCounts.shortListedApplicants = stat.count;
+        break;
+      case applicantEnum.ONBOARDED:
+        defaultCounts.onboardedApplicants = stat.count;
+        break;
+      case applicantEnum.LEAVED:
+        defaultCounts.leavedApplicants = stat.count;
+        break;
+    }
+  });
+
+  return defaultCounts;
 };
 
 export const getApplicantsByMonth = async (month, year) => {

@@ -1,5 +1,5 @@
 import Applicant from '../models/applicantModel.js';
-import { applicantEnum } from '../utils/enum.js';
+import { applicantEnum, Enum } from '../utils/enum.js';
 import { getDateRange } from '../helpers/commonFunction/moment.js';
 import moment from 'moment';
 import Skills from '../models/skillsModel.js';
@@ -7,6 +7,8 @@ import city from '../models/citymodel.js';
 import states from '../models/stateModel.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
+import jobApplication from '../models/jobApplicantionModel.js';
+import mongoose from 'mongoose';
 
 export const getApplicationCount = async (
   calendarType,
@@ -30,121 +32,76 @@ export const getApplicationCount = async (
   return await Applicant.countDocuments(query);
 };
 
-export const getReport = async (
-  calendarType,
-  customStartDate,
-  customEndDate
-) => {
-  const { startDate, endDate } = getDateRange(
+export const getInterviewStageCount = async(calendarType,customStartDate,customEndDate,role,userId) =>{
+  try {
+     const { startDate, endDate } = getDateRange(
     calendarType,
     customStartDate,
     customEndDate
   );
+  const model = (role === Enum.VENDOR) ? jobApplication : Applicant;
 
-  let dateFilter = {};
+  const matchCondition = { isDeleted: false };
   if (startDate && endDate) {
-    dateFilter.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
+    matchCondition.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
   }
+  if (role === Enum.VENDOR) {
+      matchCondition.vendor_id = new mongoose.Types.ObjectId(userId);
+    }
 
-  const totalApplicants = await Applicant.countDocuments({
-    isDeleted: false,
-    ...dateFilter,
-  });
+    const statusCounts = await model.aggregate([
+    { $match: matchCondition },
+    {
+      $group: {
+        _id: '$interviewStage',
+        count: { $sum: 1 }
+      }
+    }
+  ]);
 
-  const holdApplicants = await Applicant.countDocuments({
-    status: applicantEnum.ON_HOLD,
-    isDeleted: false,
-    ...dateFilter,
-  });
-  const appliedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.APPLIED,
-    isDeleted: false,
-    ...dateFilter,
-  });
-  const selectedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.SELECTED,
-    isDeleted: false,
-    ...dateFilter,
-  });
-  const rejectedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.REJECTED,
-    isDeleted: false,
-    ...dateFilter,
-  });
-  const inProgressApplicants = await Applicant.countDocuments({
-    status: applicantEnum.IN_PROGRESS,
-    isDeleted: false,
-    ...dateFilter,
-  });
-  const shortListedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.SHORTLISTED,
-    isDeleted: false,
-    ...dateFilter,
-  });
-  const onboardedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.ONBOARDED,
-    isDeleted: false,
-    ...dateFilter,
-  });
-  const leavedApplicants = await Applicant.countDocuments({
-    status: applicantEnum.LEAVED,
-    isDeleted: false,
-    ...dateFilter,
-  });
+    const defaultCounts = {
+      hrRoundApplicants: 0,
+      firstInterviewRoundApplicants: 0,
+      clientInterviewApplicants: 0,
+      technicalRoundApplicants: 0,
+      practicalRoundApplicants: 0,
+    };
+  
+    statusCounts.forEach(stat => {
+      switch (stat._id) {
+        case applicantEnum.HR_ROUND:
+          defaultCounts.hrRoundApplicants = stat.count;
+          break;
+        case applicantEnum.TECHNICAL:
+          defaultCounts.technicalRoundApplicants = stat.count;
+          break;
+        case applicantEnum.FIRST_INTERVIEW_ROUND:
+          defaultCounts.firstInterviewRoundApplicants = stat.count;
+          break;
+        case applicantEnum.PRACTICAL:
+          defaultCounts.practicalRoundApplicants = stat.count;
+          break;
+        case applicantEnum.CLIENT:
+          defaultCounts.clientInterviewApplicants = stat.count;
+          break;
+      }
+    });
+  
+    return defaultCounts;
+    
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} count interview stage: ${error.message}`);
+    throw error;
+  }
+}
 
-  const hrRoundApplicants = await Applicant.countDocuments({
-    interviewStage: applicantEnum.HR_ROUND,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const firstInterviewRoundApplicants = await Applicant.countDocuments({
-    interviewStage: applicantEnum.FIRST_INTERVIEW_ROUND,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const clientInterviewApplicants = await Applicant.countDocuments({
-    interviewStage: applicantEnum.CLIENT,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const technicalRoundApplicants = await Applicant.countDocuments({
-    interviewStage: applicantEnum.TECHNICAL,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  const practicalRoundApplicants = await Applicant.countDocuments({
-    interviewStage: applicantEnum.PRACTICAL,
-    isDeleted: false,
-    ...dateFilter,
-  });
-
-  return {
-    hrRoundApplicants,
-    firstInterviewRoundApplicants,
-    clientInterviewApplicants,
-    technicalRoundApplicants,
-    practicalRoundApplicants,
-
-    holdApplicants,
-    appliedApplicants,
-    selectedApplicants,
-    rejectedApplicants,
-    inProgressApplicants,
-    shortListedApplicants,
-    onboardedApplicants,
-    leavedApplicants,
-  };
-};
-
-export const getApplicantSkillCounts = async (skillIds = []) => {
+export const getApplicantSkillCounts = async (skillIds = [],user) => {
   try {
     let skillCounts = [];
-
     let skills = [];
+
+     const isVendor = user?.role === Enum.VENDOR;
+    const model = isVendor ? jobApplication : Applicant;
 
     if (skillIds.length > 0) {
       skills = await Skills.find({
@@ -152,8 +109,12 @@ export const getApplicantSkillCounts = async (skillIds = []) => {
         isDeleted: false,
       });
     } else {
-      const skillCountsAggregation = await Applicant.aggregate([
-        { $match: { isDeleted: false } },
+      const matchCondition = { isDeleted: false };
+      if (isVendor) {
+        matchCondition.vendor_id = user.id;
+      }
+      const skillCountsAggregation = await model.aggregate([
+        { $match: matchCondition },
         { $unwind: '$appliedSkills' },
         {
           $group: {
@@ -184,10 +145,17 @@ export const getApplicantSkillCounts = async (skillIds = []) => {
           /[-\/\\^$*+?.()|[\]{}]/g,
           '\\$&'
         );
-        const count = await Applicant.countDocuments({
+
+         const query = {
           appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
           isDeleted: false,
-        });
+        };
+
+        if (isVendor) {
+          query.vendor_id = user.id;
+        }
+
+        const count = await model.countDocuments(query);
         return { skill: skillName, count };
       })
     );
@@ -205,55 +173,54 @@ export const getApplicantSkillCounts = async (skillIds = []) => {
   }
 };
 
-export const getApplicantCountCityAndState = async (type = 'city') => {
+export const getApplicantCountCityAndState = async (type = 'city', user) => {
   try {
-    const result = {};
+    const isVendor = user?.role === Enum.VENDOR;
 
-    if (type === 'city') {
-      const cities = await city.find({ isDeleted: { $ne: true } }).lean();
-
-      await Promise.all(
-        cities.map(async (cityDoc) => {
-          const cityName = cityDoc.city_name;
-          const escapedCity = cityName.replace(
-            /[-\/\\^$*+?.()|[\]{}]/g,
-            '\\$&'
-          );
-
-          const count = await Applicant.countDocuments({
-            currentCity: { $regex: new RegExp(`^${escapedCity}$`, 'i') },
-            isDeleted: false,
-          });
-
-          if (count > 0) {
-            result[cityName] = count;
-          }
-        })
-      );
-    } else if (type === 'state') {
-      const state = await states.find({ isDeleted: { $ne: true } }).lean();
-
-      await Promise.all(
-        state.map(async (stateDoc) => {
-          const stateName = stateDoc.state_name;
-          const escapedState = stateName.replace(
-            /[-\/\\^$*+?.()|[\]{}]/g,
-            '\\$&'
-          );
-
-          const count = await Applicant.countDocuments({
-            state: { $regex: new RegExp(`^${escapedState}$`, 'i') },
-            isDeleted: false,
-          });
-
-          if (count > 0) {
-            result[stateName] = count;
-          }
-        })
-      );
+    const model = isVendor ? jobApplication : Applicant;
+    const matchStage = { isDeleted: false };
+    if (isVendor) {
+      matchStage.vendor_id = user.id;
     }
 
-    return result;
+    const groupField = type === 'city' ? '$currentCity' : '$state';
+
+    const aggregation = [
+      { $match: matchStage },
+      {
+        $group: {
+          _id: { $ifNull: [groupField, null] },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $match: {
+          _id: { $ne: null }
+        }
+      }
+    ];
+
+    const resultArr = await model.aggregate(aggregation);
+
+    let validNames = [];
+    if (type === 'city') {
+      validNames = await city.find({ isDeleted: { $ne: true } }, 'city_name').lean();
+    } else {
+      validNames = await states.find({ isDeleted: { $ne: true } }, 'state_name').lean();
+    }
+    const validNameSet = new Set(
+      validNames.map((item) => (type === 'city' ? item.city_name : item.state_name).toLowerCase())
+    );
+
+    const finalResult = {};
+    for (const row of resultArr) {
+      const name = row._id?.trim();
+      if (name && validNameSet.has(name.toLowerCase())) {
+        finalResult[name] = row.count;
+      }
+    }
+
+    return finalResult;
   } catch (error) {
     logger.error(
       `${Message.FAILED_TO} count applicants by ${type}: ${error.message}`
@@ -261,6 +228,7 @@ export const getApplicantCountCityAndState = async (type = 'city') => {
     throw error;
   }
 };
+
 
 export const getApplicantCountByAddedBy = async (startDate, endDate) => {
   try {

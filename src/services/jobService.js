@@ -166,23 +166,38 @@ export const updateVendorData = async (userId, updatedData) => {
     if (result.modifiedCount === 0) {
       logger.warn(`No vendor data was updated for userId: ${userId}`);
     }
-
     return result;
   } catch (error) {
     logger.error('Error while updating vendor data', error);
     throw new Error('Failed to update vendor data');
   }
 }
-export const getJobApplicationsByvendor = async (vendorId, page = 1, limit = 50) => {
+
+export const getJobApplicationsByvendor = async (vendorId, page = 1, limit = 50,appliedSkills) => {
   try {
     const skip = (page - 1) * limit;
 
-    const totalCount = await jobApplication.countDocuments({
-      vendor_id: vendorId
-    });
+     const query = {
+      vendor_id: vendorId,
+    };
+
+    if (appliedSkills) {
+      const skillsArray = appliedSkills
+        .split(',')
+        .map(skill =>
+          new RegExp(
+            `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+            'i'
+          )
+        );
+
+      query.appliedSkills = { $all: skillsArray };
+    }
+
+    const totalCount = await jobApplication.countDocuments(query);
 
     const applications = await jobApplication
-      .find({ vendor_id: vendorId })
+      .find(query)
       .populate({
         path: 'job_id',
         model: 'jobs',
