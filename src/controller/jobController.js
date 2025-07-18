@@ -14,6 +14,7 @@ import jobs from '../models/jobModel.js';
 import { generateJobId } from '../helpers/generateApplicationNo.js';
 import { getUser } from '../services/userService.js';
 import { Enum } from '../utils/enum.js';
+import User from '../models/userModel.js';
 
 export const createJob = async (req, res) => {
     try {
@@ -95,12 +96,17 @@ export const viewJobs = async (req, res) => {
       work_preference,
       required_skills,
       job_location,
+      posted_by_role 
     } = req.query;
     const query = {};
 
     const user = req.user || {};
 
-     if (user?.role === Enum.VENDOR ) {
+      if (posted_by_role) {
+      const usersWithRole = await User.find({ role: posted_by_role }, '_id').lean();
+      const userIds = usersWithRole.map((u) => u._id);
+      query.addedBy = { $in: userIds };
+    } else if (user?.role === Enum.VENDOR) {
       query.addedBy = user.id;
     }
 
@@ -178,7 +184,6 @@ export const viewJobs = async (req, res) => {
         `Jobs ${Message.NOT_FOUND}`
       );
     }
-
     logger.info(`All jobs ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(res, true, StatusCodes.OK, undefined, result);
   } catch (error) {

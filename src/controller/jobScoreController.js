@@ -312,6 +312,11 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
         path: 'job_id',
         model: 'jobs',
         select: 'job_id job_subject addedBy',
+        populate: {
+          path: 'addedBy',
+          model: 'user',
+          select: 'firstName lastName role',
+        },
       })
       .skip(skip)
       .limit(limit)
