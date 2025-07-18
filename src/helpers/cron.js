@@ -10,7 +10,7 @@ export const runSampleCronTask = async (req, res) => {
 };
 
 // Auto cron scheduler
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('*/3 * * * *', async () => {
   await runSampleCronTask();
 });
 

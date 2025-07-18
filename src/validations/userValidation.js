@@ -2,19 +2,14 @@ import Joi from 'joi';
 import { CompanyTypeEnum, Enum, HireResourcesEnum } from '../utils/enum.js';
 
 export const registerValidation = Joi.object().keys({
-  userName: Joi.string()
-    .alphanum()
-    .min(3)
-    .max(30)
-    .required()
-    .messages({
-      'string.base': `Username should be a type of 'text'`,
-      'string.empty': `Username cannot be an empty field`,
-      'string.alphanum': `Username must only contain letters and numbers`,
-      'string.min': `Username must be at least 3 characters`,
-      'string.max': `Username must be at most 30 characters`,
-      'any.required': `Username is a required field`,
-    }),
+  userName: Joi.string().alphanum().min(3).max(30).required().messages({
+    'string.base': `Username should be a type of 'text'`,
+    'string.empty': `Username cannot be an empty field`,
+    'string.alphanum': `Username must only contain letters and numbers`,
+    'string.min': `Username must be at least 3 characters`,
+    'string.max': `Username must be at most 30 characters`,
+    'any.required': `Username is a required field`,
+  }),
   email: Joi.string().required().email().messages({
     'string.base': `Email id should be a type of 'text'`,
     'string.empty': `Email id cannot be an empty field`,
@@ -45,6 +40,16 @@ export const registerValidation = Joi.object().keys({
     // 'any.required': `Confirm Password is Required`,
     'any.only': `Password and confirm password should be same`,
     'string.pattern.name': `Confirm Password must contain a capital letter, a special character and a digit. Password length must be minimum 8 characters.`,
+  }),
+  firstName: Joi.string().allow(null, '').messages({
+    'string.base': 'First name must be a string.',
+    'string.empty': 'First name cannot be empty.',
+    'any.required': 'First name is required.',
+  }),
+  lastName: Joi.string().allow(null, '').messages({
+    'string.base': 'Last name must be a string.',
+    'string.empty': 'Last name cannot be empty.',
+    'any.required': 'Last name is required.',
   }),
 
   role: Joi.string()
