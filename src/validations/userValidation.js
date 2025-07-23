@@ -54,10 +54,10 @@ export const registerValidation = Joi.object().keys({
 
   role: Joi.string()
     .required()
-    .valid(Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.GUEST)
+    .valid(Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.GUEST,Enum.CLIENT)
     .messages({
       'string.base': `Role should be number`,
-      'any.only': `Role must be a ${Enum.ADMIN},${Enum.VENDOR},${Enum.HR} or ${Enum.GUEST}`,
+      'any.only': `Role must be a ${Enum.ADMIN},${Enum.VENDOR},${Enum.HR},${Enum.CLIENT}, or ${Enum.GUEST}`,
       'string.empty': `Role cannot be an empty field`,
       'any.required': `Role is a required field`,
     }),

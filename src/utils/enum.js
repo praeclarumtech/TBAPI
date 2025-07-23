@@ -4,6 +4,7 @@ export const Enum = {
   USER: 'user',
   VENDOR: 'vendor',
   GUEST: 'guest',
+  CLIENT: 'client'
 };
 export const genderEnum = {
   MALE: 'male',

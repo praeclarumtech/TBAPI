@@ -7,19 +7,20 @@ import {
   deleteDesignation,
   deleteManyDesignation
 } from '../../controller/designationController.js';
-import { authorization } from '../../helpers/userMiddleware.js';
+import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
 
 const router = express.Router();
 
-router.post('/adddesignations', authorization, adddesignations);
-router.get('/viewDesignation', getDesignation);
+router.post('/adddesignations',authorization, verifyRoles(['admin', 'hr']),adddesignations);
+router.get('/viewDesignation',authorization,verifyRoles(['admin', 'hr']), getDesignation);
 router.get(
   '/getDesignationsById/:designationId',
   authorization,
+  verifyRoles(['admin', 'hr']),
   getDesignationsById
 );
-router.put('/update/:designationId', authorization, updateDesignations);
-router.delete('/deleteDesignation/:id', authorization, deleteDesignation);
-router.delete('/deleteManyDesignation', authorization, deleteManyDesignation);
+router.put('/update/:designationId', verifyRoles(['admin']), authorization, updateDesignations);
+router.delete('/deleteDesignation/:id', authorization, verifyRoles(['admin']), deleteDesignation);
+router.delete('/deleteManyDesignation', authorization, verifyRoles(['admin']), deleteManyDesignation);
 
 export default router;

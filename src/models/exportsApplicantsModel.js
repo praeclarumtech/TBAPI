@@ -114,11 +114,11 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     createdBy: {
       type: String,
-      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+      enum: Object.values(Enum),
     },
     updatedBy: {
       type: String,
-      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+      enum: Object.values(Enum),
     },
     addedBy: {
       type: String,

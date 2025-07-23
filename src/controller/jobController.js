@@ -21,7 +21,7 @@ export const createJob = async (req, res) => {
     const user = req.user.id;
     const userData = await getUser({ _id: user });
 
-    if (userData.role === Enum.VENDOR) {
+    if (userData.role === Enum.VENDOR || userData.role === Enum.CLIENT) {
       const vendor = await findVendorByUserId({ userId: user });
       if (!vendor) {
         return HandleResponse(
@@ -108,6 +108,8 @@ export const viewJobs = async (req, res) => {
       query.addedBy = { $in: userIds };
     } else if (user?.role === Enum.VENDOR) {
       query.addedBy = user.id;
+    } else if(user?.role === Enum.CLIENT){
+      query.addedBy = user.id
     }
 
 
