@@ -429,6 +429,8 @@ export const viewAllApplicant = async (req, res) => {
       appliedSkillsOR,
       appliedRole,
       isFavorite,
+      updatedStartDate,
+      updatedEndDate
     } = req.query;
 
     const pageNum = parseInt(page) || 1;
@@ -510,6 +512,22 @@ export const viewAllApplicant = async (req, res) => {
       if (startDate)
         query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
       if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+
+    if (updatedStartDate || updatedEndDate) {
+      const start = updatedStartDate ? new Date(updatedStartDate) : null
+      const end = updatedEndDate ? new Date(updatedEndDate) : null
+
+      if (start && end && start > end) {
+        // throw new Error('Updated Start Date must be before or equal to Updated End Date');
+        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'Updated Start Date must be before or equal to Updated End Date')
+      }
+
+      query.updatedAt = {};
+      if (updatedStartDate)
+        query.updatedAt.$gte = new Date(updatedStartDate + 'T00:00:00.000Z');
+      if (updatedEndDate)
+        query.updatedAt.$lte = new Date(updatedEndDate + 'T23:59:59.999Z');
     }
 
     if (currentCity && typeof currentCity === 'string') {

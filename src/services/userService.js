@@ -1,6 +1,7 @@
 import User from '../models/userModel.js';
 import otpModel from '../models/otpModel.js'
 import mongoose from 'mongoose';
+import logger from '../loggers/logger.js';
 
 export const getUser = async (body) => {
   return await User.findOne({ ...body, isDeleted: false });

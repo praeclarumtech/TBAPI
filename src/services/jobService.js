@@ -103,39 +103,8 @@ export const updateJobApplicantionStatus = async (applicationId, status) => {
   }
 };
 
-export const createVendorData = async (userId, data = {}) => {
+export const createVendorData = async (vendorData  = {}) => {
   try {
-    const {
-      whatsapp_number,
-      vendor_linkedin_profile,
-      company_name,
-      company_email,
-      company_phone_number,
-      company_location,
-      company_type,
-      hire_resources,
-      company_strength,
-      company_time,
-      company_linkedin_profile,
-      company_website
-    } = data;
-
-    const vendorData = {
-      userId,
-      whatsapp_number,
-      vendor_linkedin_profile,
-      company_name,
-      company_email,
-      company_phone_number,
-      company_location,
-      company_type,
-      hire_resources,
-      company_strength,
-      company_time,
-      company_linkedin_profile,
-      company_website
-    };
-
     Object.keys(vendorData).forEach(
       key => (vendorData[key] === undefined || vendorData[key] === null) && delete vendorData[key]
     );
@@ -173,11 +142,11 @@ export const updateVendorData = async (userId, updatedData) => {
   }
 }
 
-export const getJobApplicationsByvendor = async (vendorId, page = 1, limit = 50,appliedSkills) => {
+export const getJobApplicationsByvendor = async (vendorId, page = 1, limit = 50, appliedSkills) => {
   try {
     const skip = (page - 1) * limit;
 
-     const query = {
+    const query = {
       vendor_id: vendorId,
     };
 
@@ -238,7 +207,7 @@ export const getApplicantionById = async (applicationId) => {
 
 export const deleteApplications = async (ids) => {
   try {
-    return await jobApplication.updateMany({ _id: {$in:ids} }, { $set: { isDeleted: true } });
+    return await jobApplication.updateMany({ _id: { $in: ids } }, { $set: { isDeleted: true } });
   } catch (error) {
     logger.error('Error while deleting applications', error);
     throw error;

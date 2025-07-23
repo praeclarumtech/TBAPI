@@ -98,15 +98,11 @@ export const addJobApplication = async (req, res) => {
       );
     }
 
-    const jdText = `jobsubject: ${
-      job.job_subject
-    }, jobdetails: ${job.job_details.replace(/<[^>]*>/g, '')}, jobtype: ${
-      job.job_type
-    }, job location: ${job.job_location}, ${job.job_type}, min experience: ${
-      job.min_experience
-    }, contractduration: ${job.contract_duration}, ${
-      job.required_skills
-    }, work preference :${job.work_preference}`;
+    const jdText = `jobsubject: ${job.job_subject
+      }, jobdetails: ${job.job_details.replace(/<[^>]*>/g, '')}, jobtype: ${job.job_type
+      }, job location: ${job.job_location}, ${job.job_type}, min experience: ${job.min_experience
+      }, contractduration: ${job.contract_duration}, ${job.required_skills
+      }, work preference :${job.work_preference}`;
 
     let resumeText;
     try {
@@ -293,16 +289,21 @@ export const fetchAppliedJobs = async (req, res) => {
 export const viewJobApplicantionsByVendor = async (req, res) => {
   try {
     const user = req.user || {};
-    const {appliedSkills} = req.query
-
+    const { appliedSkills } = req.query
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const query = {isDeleted: false};
+    const query = { isDeleted: false };
 
     if (user.role === Enum.VENDOR) {
       query.vendor_id = user.id;
+    }
+
+    if (user.role === Enum.CLIENT) {
+      const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
+      const jobIdList = jobIds.map(job => job._id);
+      query.job_id = { $in: jobIdList };
     }
 
     if (appliedSkills) {
@@ -318,7 +319,7 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
 
       query.appliedSkills = { $all: skillsArray };
     }
-    
+
     const totalCount = await jobApplication.countDocuments(query);
 
     const applications = await jobApplication
@@ -415,7 +416,7 @@ export const deleteApplicant = async (req, res) => {
       return res.status(400).json({ message: 'No applicant ID(s) provided' });
     }
 
-    const deleteApplicant = await deleteApplications(ids,{isDeleted: true,});
+    const deleteApplicant = await deleteApplications(ids, { isDeleted: true, });
     logger.info(`Applicantion ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
