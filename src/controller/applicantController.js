@@ -519,7 +519,6 @@ export const viewAllApplicant = async (req, res) => {
       const end = updatedEndDate ? new Date(updatedEndDate) : null
 
       if (start && end && start > end) {
-        // throw new Error('Updated Start Date must be before or equal to Updated End Date');
         return HandleResponse(res, false, StatusCodes.BAD_REQUEST, 'Updated Start Date must be before or equal to Updated End Date')
       }
 
