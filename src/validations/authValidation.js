@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 
 export const validateUserRegistration = (req, res, next) => {
     const isAdminCreateVendor = req.user
-        ? req.user.role === Enum.ADMIN && req.body.role === Enum.VENDOR
+        ? req.user.role === Enum.ADMIN && req.body.role === Enum.VENDOR || req.body.role === Enum.CLIENT
         : false;
     const schema = isAdminCreateVendor ? combinedValidation : registerValidation;
 
