@@ -299,30 +299,15 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
     const query = { isDeleted: false };
 
     if (user.role === Enum.VENDOR) {
-      console.log("Vendor ID:", user.id);
-      console.log("Vendor role value:", user.role);
-      console.log("Enum.VENDOR value:", Enum.VENDOR);
-      const vendorApps = await jobApplication.find({ vendor_id: user.id }).lean();
-      console.log("Applications found for vendor:", vendorApps.length);
+      // const vendorApps = await jobApplication.find({ vendor_id: user.id }).lean();
       query.vendor_id = user.id;
     }
-    console.log("user>>>>", user)
     if (user.role === Enum.CLIENT) {
-      console.log("user role", user.role)
-      console.log("came insed client")
       const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
       const jobIdList = jobIds.map(job => job._id);
       query.job_id = { $in: jobIdList };
     }
 
-    // if (user.role === Enum.VENDOR) {
-    //   query.vendor_id = user.id;
-    // } else if (user.role === Enum.CLIENT) {
-    //   const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
-    //   query.job_id = { $in: jobIds.map(job => job._id) };
-    // }
-
-    // Admin filtering
     if (user.role === Enum.ADMIN && filterBy) {
       if (filterBy === Enum.VENDOR) {
         const vendorUsers = await getAllusers({ role: Enum.VENDOR }, { _id: 1 });

@@ -171,32 +171,6 @@ export const viewJobs = async (req, res) => {
       }
     }
 
-    // if (user.role === Enum.ADMIN && filterBy === Enum.VENDOR) {
-    //   const vendorUsers = await getAllusers({ role: Enum.VENDOR }, { _id: 1 });
-
-    //   const vendorIds = vendorUsers.map(v => v._id)
-
-    //   const findJobs = await jobs.find({ addedBy: { $in: vendorIds } })
-
-    //   console.log(findJobs)
-    //   if (!findJobs.length > 0) {
-    //      return HandleResponse(
-    //       res,
-    //       true,
-    //       StatusCodes.NOT_FOUND,
-    //       `jobs ${Message.NOT_FOUND} for vendors`,
-    //       []
-    //     );
-    //   } else {
-    //     return HandleResponse(
-    //       res,
-    //       true,
-    //       StatusCodes.NOT_FOUND,
-    //       `jobs ${Message.NOT_FOUND} for vendors`,
-    //       []
-    //     );
-    //   }
-    // }
     if (user.role === Enum.ADMIN && filterBy === Enum.VENDOR) {
       const vendorUsers = await getAllusers({ role: Enum.VENDOR }, { _id: 1 });
       const vendorIds = vendorUsers.map(v => v._id);
