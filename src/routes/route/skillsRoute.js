@@ -2,17 +2,17 @@ import express from 'express';
 import { addSkills, getSkills, updateSkills, deleteSkills, getSkillsById, importSkillsCsv } from '../../controller/skillsController.js';
 import { skillsValidation } from '../../validations/skillsValidation.js';
 import { validator } from '../../helpers/validator.js';
-import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
+import { authorization } from '../../helpers/userMiddleware.js';
 
 const router = express.Router();
 
-router.post('/addSkills', authorization, verifyRoles(['admin', 'hr']), validator.body(skillsValidation), addSkills);
-router.get('/viewSkills', authorization, verifyRoles(['admin', 'hr', 'client','vendor','guest']), getSkills);
+router.post('/addSkills', authorization, validator.body(skillsValidation), addSkills);
+router.get('/viewSkills', authorization, getSkills);
 // for dashboard
 router.get('/dashboard/viewSkills', getSkills);
-router.get('/viewById/:skillId', authorization, verifyRoles(['admin', 'hr']), getSkillsById);
-router.put('/update/:skillId', authorization, verifyRoles(['admin']), validator.body(skillsValidation), updateSkills);
-router.delete('/delete/:skillId', authorization, verifyRoles(['admin']), deleteSkills);
+router.get('/viewById/:skillId', authorization, getSkillsById);
+router.put('/update/:skillId', authorization, validator.body(skillsValidation), updateSkills);
+router.delete('/delete/:skillId', authorization, deleteSkills);
 
 // import csv
 router.post('/importCsv', authorization, importSkillsCsv);
