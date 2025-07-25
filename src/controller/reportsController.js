@@ -106,10 +106,7 @@ export const applicantSkillStatistics = async (req, res) => {
 export const applicantCountByCityAndState = async (req, res) => {
   try {
     const { type } = req.query;
-    console.log("type", type)
     const result = await getApplicantCountCityAndState(type, req.user);
-    console.log("result>>>>>>>>>>", result)
-    console.log("req.user>>>>>>>>>", req.user)
     logger.info(`Applicant count by ${type} ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -120,14 +117,16 @@ export const applicantCountByCityAndState = async (req, res) => {
     );
   } catch (error) {
     logger.error(
-      `${Message.FAILED_TO} fetch applicant count by ${req.query.type || 'city'
+      `${Message.FAILED_TO} fetch applicant count by ${
+        req.query.type || 'city'
       }: ${error.message}`
     );
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} fetch applicant count by ${req.query.type || 'city'
+      `${Message.FAILED_TO} fetch applicant count by ${
+        req.query.type || 'city'
       }.`,
       error
     );

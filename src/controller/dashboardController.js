@@ -14,7 +14,6 @@ export const dashboard = async (req, res) => {
     const user = req.user;
 
     if (![Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.CLIENT].includes(user.role)) {
-      console.log("inside if>>>>>>")
       return res.status(403).json({ message: 'Unauthorized role' });
     }
 
