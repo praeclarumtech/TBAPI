@@ -29,6 +29,8 @@ import {
   updateStatusAndInterviewstage,
 } from '../services/jobService.js';
 import { applicantEnum, Enum } from '../utils/enum.js';
+import User from '../models/userModel.js';
+import { getAllusers } from '../services/userService.js';
 
 export const scoreResume = async (req, res) => {
   try {
@@ -289,7 +291,7 @@ export const fetchAppliedJobs = async (req, res) => {
 export const viewJobApplicantionsByVendor = async (req, res) => {
   try {
     const user = req.user || {};
-    const { appliedSkills } = req.query
+    const { appliedSkills, filterBy } = req.query
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -297,13 +299,31 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
     const query = { isDeleted: false };
 
     if (user.role === Enum.VENDOR) {
+      // const vendorApps = await jobApplication.find({ vendor_id: user.id }).lean();
       query.vendor_id = user.id;
     }
-
     if (user.role === Enum.CLIENT) {
       const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
       const jobIdList = jobIds.map(job => job._id);
       query.job_id = { $in: jobIdList };
+    }
+
+    if (user.role === Enum.ADMIN && filterBy) {
+      if (filterBy === Enum.VENDOR) {
+        const vendorUsers = await getAllusers({ role: Enum.VENDOR }, { _id: 1 });
+        const vendorJobIds = await jobs.find(
+          { addedBy: { $in: vendorUsers.map(u => u._id) } },
+          { _id: 1 }
+        ).lean();
+        query.job_id = { $in: vendorJobIds.map(job => job._id) };
+      } else if (filterBy === Enum.CLIENT) {
+        const clientUsers = await getAllusers({ role: Enum.CLIENT }, { _id: 1 });
+        const clientJobIds = await jobs.find(
+          { addedBy: { $in: clientUsers.map(u => u._id) } },
+          { _id: 1 }
+        ).lean();
+        query.job_id = { $in: clientJobIds.map(job => job._id) };
+      }
     }
 
     if (appliedSkills) {
@@ -364,6 +384,7 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
     );
   }
 };
+
 
 export const viewApplicantionsById = async (req, res) => {
   try {

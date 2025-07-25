@@ -3,12 +3,12 @@ import Applicant from '../models/applicantModel.js';
 import jobApplication from '../models/jobApplicantionModel.js';
 import { applicantEnum, Enum } from '../utils/enum.js';
 
-export const getDashboardCounts = async (role,userId) => {
-  const Model = (role === Enum.VENDOR) ? jobApplication : Applicant;
+export const getDashboardCounts = async (role, userId) => {
+  const Model = (role === Enum.VENDOR || role === Enum.CLIENT) ? jobApplication : Applicant;
 
   const matchCondition = { isDeleted: false };
-  
-  if (role === Enum.VENDOR) {
+
+  if (role === Enum.VENDOR || role === Enum.CLIENT) {
     matchCondition.vendor_id = new mongoose.Types.ObjectId(userId);
   }
 
