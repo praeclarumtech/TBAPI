@@ -13,11 +13,12 @@ export const dashboard = async (req, res) => {
   try {
     const user = req.user;
 
-    if (![Enum.ADMIN, Enum.HR, Enum.VENDOR].includes(user.role)) {
+    if (![Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.CLIENT].includes(user.role)) {
+      console.log("inside if>>>>>>")
       return res.status(403).json({ message: 'Unauthorized role' });
     }
 
-    const dashboardData = await getDashboardCounts(user.role,user.id);
+    const dashboardData = await getDashboardCounts(user.role, user.id);
     logger.info(`Dashboard data ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -27,7 +28,7 @@ export const dashboard = async (req, res) => {
       dashboardData
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch dashboard data`,error);
+    logger.error(`${Message.FAILED_TO} fetch dashboard data`, error);
     return HandleResponse(
       res,
       false,

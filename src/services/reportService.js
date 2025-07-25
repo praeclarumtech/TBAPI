@@ -32,32 +32,32 @@ export const getApplicationCount = async (
   return await Applicant.countDocuments(query);
 };
 
-export const getInterviewStageCount = async(calendarType,customStartDate,customEndDate,role,userId) =>{
+export const getInterviewStageCount = async (calendarType, customStartDate, customEndDate, role, userId) => {
   try {
-     const { startDate, endDate } = getDateRange(
-    calendarType,
-    customStartDate,
-    customEndDate
-  );
-  const model = (role === Enum.VENDOR) ? jobApplication : Applicant;
+    const { startDate, endDate } = getDateRange(
+      calendarType,
+      customStartDate,
+      customEndDate
+    );
+    const model = (role === Enum.VENDOR || role === Enum.CLIENT) ? jobApplication : Applicant;
 
-  const matchCondition = { isDeleted: false };
-  if (startDate && endDate) {
-    matchCondition.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
-  }
-  if (role === Enum.VENDOR) {
+    const matchCondition = { isDeleted: false };
+    if (startDate && endDate) {
+      matchCondition.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
+    }
+    if (role === Enum.VENDOR || role === Enum.CLIENT) {
       matchCondition.vendor_id = new mongoose.Types.ObjectId(userId);
     }
 
     const statusCounts = await model.aggregate([
-    { $match: matchCondition },
-    {
-      $group: {
-        _id: '$interviewStage',
-        count: { $sum: 1 }
+      { $match: matchCondition },
+      {
+        $group: {
+          _id: '$interviewStage',
+          count: { $sum: 1 }
+        }
       }
-    }
-  ]);
+    ]);
 
     const defaultCounts = {
       hrRoundApplicants: 0,
@@ -66,7 +66,7 @@ export const getInterviewStageCount = async(calendarType,customStartDate,customE
       technicalRoundApplicants: 0,
       practicalRoundApplicants: 0,
     };
-  
+
     statusCounts.forEach(stat => {
       switch (stat._id) {
         case applicantEnum.HR_ROUND:
@@ -86,21 +86,21 @@ export const getInterviewStageCount = async(calendarType,customStartDate,customE
           break;
       }
     });
-  
+
     return defaultCounts;
-    
+
   } catch (error) {
     logger.error(`${Message.FAILED_TO} count interview stage: ${error.message}`);
     throw error;
   }
 }
 
-export const getApplicantSkillCounts = async (skillIds = [],user) => {
+export const getApplicantSkillCounts = async (skillIds = [], user) => {
   try {
     let skillCounts = [];
     let skills = [];
 
-     const isVendor = user?.role === Enum.VENDOR;
+    const isVendor = user?.role === Enum.VENDOR;
     const model = isVendor ? jobApplication : Applicant;
 
     if (skillIds.length > 0) {
@@ -146,7 +146,7 @@ export const getApplicantSkillCounts = async (skillIds = [],user) => {
           '\\$&'
         );
 
-         const query = {
+        const query = {
           appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
           isDeleted: false,
         };
@@ -175,15 +175,19 @@ export const getApplicantSkillCounts = async (skillIds = [],user) => {
 
 export const getApplicantCountCityAndState = async (type = 'city', user) => {
   try {
+    console.log("inside =============report ========== service")
     const isVendor = user?.role === Enum.VENDOR;
 
     const model = isVendor ? jobApplication : Applicant;
     const matchStage = { isDeleted: false };
     if (isVendor) {
+      console.log("inside isVendor")
       matchStage.vendor_id = user.id;
+      console.log("isVendor", isVendor)
     }
 
     const groupField = type === 'city' ? '$currentCity' : '$state';
+    console.log("groupField>>>>", groupField)
 
     const aggregation = [
       { $match: matchStage },
@@ -201,17 +205,20 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
     ];
 
     const resultArr = await model.aggregate(aggregation);
+    console.log("resultArr", resultArr)
 
     let validNames = [];
     if (type === 'city') {
+      console.log("inside type city")
       validNames = await city.find({ isDeleted: { $ne: true } }, 'city_name').lean();
+      console.log("validNames>>>>>>>>>.",validNames)
     } else {
       validNames = await states.find({ isDeleted: { $ne: true } }, 'state_name').lean();
     }
     const validNameSet = new Set(
       validNames.map((item) => (type === 'city' ? item.city_name : item.state_name).toLowerCase())
     );
-
+    console.log("validNames>>>>>>", validNames)
     const finalResult = {};
     for (const row of resultArr) {
       const name = row._id?.trim();
