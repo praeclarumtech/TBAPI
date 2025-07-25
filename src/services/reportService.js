@@ -9,6 +9,7 @@ import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 import jobApplication from '../models/jobApplicantionModel.js';
 import mongoose from 'mongoose';
+import jobs from '../models/jobModel.js';
 
 export const getApplicationCount = async (
   calendarType,
@@ -175,19 +176,20 @@ export const getApplicantSkillCounts = async (skillIds = [], user) => {
 
 export const getApplicantCountCityAndState = async (type = 'city', user) => {
   try {
-    console.log("inside =============report ========== service")
     const isVendor = user?.role === Enum.VENDOR;
-
-    const model = isVendor ? jobApplication : Applicant;
+    const isClient = user?.role === Enum.CLIENT;
+    const model = (isVendor || isClient) ? jobApplication : Applicant;
     const matchStage = { isDeleted: false };
-    if (isVendor) {
-      console.log("inside isVendor")
+    if (isVendor || isClient) {
       matchStage.vendor_id = user.id;
-      console.log("isVendor", isVendor)
     }
 
+    if (isClient) {
+      const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
+      const jobIdList = jobIds.map((job) => job._id);
+      matchStage.job_id = { $in: jobIdList };
+    }
     const groupField = type === 'city' ? '$currentCity' : '$state';
-    console.log("groupField>>>>", groupField)
 
     const aggregation = [
       { $match: matchStage },
@@ -205,20 +207,17 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
     ];
 
     const resultArr = await model.aggregate(aggregation);
-    console.log("resultArr", resultArr)
 
     let validNames = [];
     if (type === 'city') {
-      console.log("inside type city")
       validNames = await city.find({ isDeleted: { $ne: true } }, 'city_name').lean();
-      console.log("validNames>>>>>>>>>.",validNames)
     } else {
       validNames = await states.find({ isDeleted: { $ne: true } }, 'state_name').lean();
     }
     const validNameSet = new Set(
       validNames.map((item) => (type === 'city' ? item.city_name : item.state_name).toLowerCase())
     );
-    console.log("validNames>>>>>>", validNames)
+
     const finalResult = {};
     for (const row of resultArr) {
       const name = row._id?.trim();
