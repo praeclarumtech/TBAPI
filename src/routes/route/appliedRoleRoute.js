@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.post('/addAppliedRoleAndSkills', authorization, verifyRoles(['admin', 'hr']), addAppliedRoleAndSkills);
 router.get('/viewSkillsByAppliedRole', viewSkillsByAppliedRole);
-router.get('/ViewAllSkillAndAppliedRole', authorization, verifyRoles(['admin', 'hr']), ViewAllSkillAndAppliedRole);
+router.get('/ViewAllSkillAndAppliedRole', ViewAllSkillAndAppliedRole);
 router.get('/viewskillAndAppliedRoleById/:id', authorization, verifyRoles(['admin', 'hr']), getSkillsById);
 router.put('/updateAppliedRoleAndSkill/:id', authorization, verifyRoles(['admin']), updateAppliedRoleAndSkill);
 router.delete('/deleteAppliedRoleAndSkill/:id', authorization, verifyRoles(['admin']), deleteAppliedRoleAndSkill);

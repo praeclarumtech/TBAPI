@@ -7,7 +7,7 @@ import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
 const router = express.Router();
 
 router.post('/addSkills', authorization, verifyRoles(['admin', 'hr']), validator.body(skillsValidation), addSkills);
-router.get('/viewSkills', authorization, verifyRoles(['admin', 'hr', 'client','vendor','guest']), getSkills);
+router.get('/viewSkills', getSkills);
 // for dashboard
 router.get('/dashboard/viewSkills', getSkills);
 router.get('/viewById/:skillId', authorization, verifyRoles(['admin', 'hr']), getSkillsById);

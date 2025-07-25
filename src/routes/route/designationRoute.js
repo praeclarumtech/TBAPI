@@ -12,7 +12,7 @@ import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
 const router = express.Router();
 
 router.post('/adddesignations',authorization, verifyRoles(['admin', 'hr']),adddesignations);
-router.get('/viewDesignation',authorization,verifyRoles(['admin', 'hr']), getDesignation);
+router.get('/viewDesignation', getDesignation);
 router.get(
   '/getDesignationsById/:designationId',
   authorization,
