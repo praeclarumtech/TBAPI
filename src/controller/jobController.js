@@ -137,7 +137,7 @@ export const viewJobs = async (req, res) => {
     }
 
     if (min_salary) {
-      query.min_salary = { $gte: parseInt(min_salary) };
+      query.min_salary = { $lte: parseInt(min_salary) };
     }
 
     if (max_salary) {
