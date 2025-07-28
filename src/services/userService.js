@@ -12,8 +12,8 @@ export const createUser = async (body) => {
   return await user.save();
 };
 
-export const getAllusers = async () => {
-  return await User.find();
+export const getAllusers = async (filter = {}, projection = {}, options = {}) => {
+  return await User.find(filter, projection, options).lean();
 };
 
 export const getUserById = async (id) => {

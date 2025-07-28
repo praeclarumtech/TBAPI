@@ -9,6 +9,7 @@ import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 import jobApplication from '../models/jobApplicantionModel.js';
 import mongoose from 'mongoose';
+import jobs from '../models/jobModel.js';
 
 export const getApplicationCount = async (
   calendarType,
@@ -32,32 +33,32 @@ export const getApplicationCount = async (
   return await Applicant.countDocuments(query);
 };
 
-export const getInterviewStageCount = async(calendarType,customStartDate,customEndDate,role,userId) =>{
+export const getInterviewStageCount = async (calendarType, customStartDate, customEndDate, role, userId) => {
   try {
-     const { startDate, endDate } = getDateRange(
-    calendarType,
-    customStartDate,
-    customEndDate
-  );
-  const model = (role === Enum.VENDOR) ? jobApplication : Applicant;
+    const { startDate, endDate } = getDateRange(
+      calendarType,
+      customStartDate,
+      customEndDate
+    );
+    const model = (role === Enum.VENDOR || role === Enum.CLIENT) ? jobApplication : Applicant;
 
-  const matchCondition = { isDeleted: false };
-  if (startDate && endDate) {
-    matchCondition.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
-  }
-  if (role === Enum.VENDOR) {
+    const matchCondition = { isDeleted: false };
+    if (startDate && endDate) {
+      matchCondition.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
+    }
+    if (role === Enum.VENDOR || role === Enum.CLIENT) {
       matchCondition.vendor_id = new mongoose.Types.ObjectId(userId);
     }
 
     const statusCounts = await model.aggregate([
-    { $match: matchCondition },
-    {
-      $group: {
-        _id: '$interviewStage',
-        count: { $sum: 1 }
+      { $match: matchCondition },
+      {
+        $group: {
+          _id: '$interviewStage',
+          count: { $sum: 1 }
+        }
       }
-    }
-  ]);
+    ]);
 
     const defaultCounts = {
       hrRoundApplicants: 0,
@@ -66,7 +67,7 @@ export const getInterviewStageCount = async(calendarType,customStartDate,customE
       technicalRoundApplicants: 0,
       practicalRoundApplicants: 0,
     };
-  
+
     statusCounts.forEach(stat => {
       switch (stat._id) {
         case applicantEnum.HR_ROUND:
@@ -86,21 +87,21 @@ export const getInterviewStageCount = async(calendarType,customStartDate,customE
           break;
       }
     });
-  
+
     return defaultCounts;
-    
+
   } catch (error) {
     logger.error(`${Message.FAILED_TO} count interview stage: ${error.message}`);
     throw error;
   }
 }
 
-export const getApplicantSkillCounts = async (skillIds = [],user) => {
+export const getApplicantSkillCounts = async (skillIds = [], user) => {
   try {
     let skillCounts = [];
     let skills = [];
 
-     const isVendor = user?.role === Enum.VENDOR;
+    const isVendor = user?.role === Enum.VENDOR;
     const model = isVendor ? jobApplication : Applicant;
 
     if (skillIds.length > 0) {
@@ -146,7 +147,7 @@ export const getApplicantSkillCounts = async (skillIds = [],user) => {
           '\\$&'
         );
 
-         const query = {
+        const query = {
           appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
           isDeleted: false,
         };
@@ -176,13 +177,18 @@ export const getApplicantSkillCounts = async (skillIds = [],user) => {
 export const getApplicantCountCityAndState = async (type = 'city', user) => {
   try {
     const isVendor = user?.role === Enum.VENDOR;
-
-    const model = isVendor ? jobApplication : Applicant;
+    const isClient = user?.role === Enum.CLIENT;
+    const model = (isVendor || isClient) ? jobApplication : Applicant;
     const matchStage = { isDeleted: false };
-    if (isVendor) {
+    if (isVendor || isClient) {
       matchStage.vendor_id = user.id;
     }
 
+    if (isClient) {
+      const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
+      const jobIdList = jobIds.map((job) => job._id);
+      matchStage.job_id = { $in: jobIdList };
+    }
     const groupField = type === 'city' ? '$currentCity' : '$state';
 
     const aggregation = [

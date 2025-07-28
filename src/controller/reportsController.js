@@ -12,10 +12,10 @@ import {
 
 export const applicationOnProcessCount = async (req, res) => {
   const { calendarType, startDate, endDate } = req.query;
-  const user =req.user;
+  const user = req.user;
 
   try {
-    const interviewStageCount = await getInterviewStageCount(calendarType, startDate, endDate, user.role,user.id);
+    const interviewStageCount = await getInterviewStageCount(calendarType, startDate, endDate, user.role, user.id);
 
     logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}`);
 
@@ -79,7 +79,7 @@ export const applicantSkillStatistics = async (req, res) => {
     const { skillIds } = req.body;
     const user = req.user;
 
-    const skillCounts = await getApplicantSkillCounts(skillIds,user);
+    const skillCounts = await getApplicantSkillCounts(skillIds, user);
 
     logger.info(`Applicant Skill Statistics ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -106,9 +106,7 @@ export const applicantSkillStatistics = async (req, res) => {
 export const applicantCountByCityAndState = async (req, res) => {
   try {
     const { type } = req.query;
-
-    const result = await getApplicantCountCityAndState(type,req.user);
-
+    const result = await getApplicantCountCityAndState(type, req.user);
     logger.info(`Applicant count by ${type} ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,

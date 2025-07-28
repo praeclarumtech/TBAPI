@@ -12,7 +12,7 @@ import logger from '../loggers/logger.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import jobs from '../models/jobModel.js';
 import { generateJobId } from '../helpers/generateApplicationNo.js';
-import { getUser } from '../services/userService.js';
+import { getAllusers, getUser } from '../services/userService.js';
 import { Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
 
@@ -96,19 +96,20 @@ export const viewJobs = async (req, res) => {
       work_preference,
       required_skills,
       job_location,
-      posted_by_role 
+      posted_by_role,
+      filterBy
     } = req.query;
     const query = { isDeleted: false };
 
     const user = req.user || {};
 
-     if (posted_by_role) {
+    if (posted_by_role) {
       const usersWithRole = await User.find({ role: posted_by_role }, '_id').lean();
       const userIds = usersWithRole.map((u) => u._id);
       query.addedBy = { $in: userIds };
     } else if (user?.role === Enum.VENDOR) {
       query.addedBy = user.id;
-    } else if(user?.role === Enum.CLIENT){
+    } else if (user?.role === Enum.CLIENT) {
       query.addedBy = user.id
     }
 
@@ -170,6 +171,16 @@ export const viewJobs = async (req, res) => {
       }
     }
 
+    if (user.role === Enum.ADMIN && filterBy === Enum.VENDOR) {
+      const vendorUsers = await getAllusers({ role: Enum.VENDOR }, { _id: 1 });
+      const vendorIds = vendorUsers.map(v => v._id);
+      query.addedBy = { $in: vendorIds };
+    } else if (user.role === Enum.ADMIN && filterBy === Enum.CLIENT) {
+      const clientUsers = await getAllusers({ role: Enum.CLIENT }, { _id: 1 });
+      const clientIds = clientUsers.map(v => v._id);
+      query.addedBy = { $in: clientIds };
+    }
+
     const result = await pagination({
       Schema: jobs,
       page: parseInt(page),
@@ -177,7 +188,6 @@ export const viewJobs = async (req, res) => {
       query,
       sort: { createdAt: -1 },
     });
-
     if (!result || result?.length === 0) {
       logger.error(`Jobs ${Message.NOT_FOUND}`);
       return HandleResponse(
