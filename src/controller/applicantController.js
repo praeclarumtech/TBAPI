@@ -1006,7 +1006,6 @@ export const updateApplicant = async (req, res) => {
     const isFavorite = body.isFavorite ?? existingApplicant.isFavorite;
 
     if ((isActive === 'false' || isActive === false) && (isFavorite === 'true' || isFavorite === true)) {
-      console.log('Auto-setting isActive to true because isFavorite is true');
       body.isActive = true;
     }
 
