@@ -28,9 +28,15 @@ import {
   updateJobApplicantionStatus,
   updateStatusAndInterviewstage,
 } from '../services/jobService.js';
-import { applicantEnum, Enum } from '../utils/enum.js';
+import { applicantEnum, CompanyTypeEnum, Enum, HireResourcesEnum } from '../utils/enum.js';
 import User from '../models/userModel.js';
 import { getAllusers } from '../services/userService.js';
+import path from 'path';
+import csvParser from 'csv-parser';
+import Vendor from '../models/vendorModel.js';
+import { uploadCv } from '../helpers/multer.js';
+import xlsx from 'xlsx';
+import bcrypt from 'bcryptjs';
 
 export const scoreResume = async (req, res) => {
   try {
@@ -620,6 +626,297 @@ export const getVendorJobApplicantReport = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       'Failed to generate vendor report'
+    );
+  }
+};
+
+export const importVendors = async (req, res) => {
+  try {
+    const updateFlag = req.query.updateFlag === 'true';
+
+    uploadCv(req, res, async function (uploadErr) {
+      try {
+        if (uploadErr) {
+          logger.error(`${Message.FAILED_TO} upload file`);
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.BAD_REQUEST,
+            `${Message.FAILED_TO} upload file`
+          );
+        }
+
+        if (!req.file) {
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.BAD_REQUEST,
+            `File ${Message.FIELD_REQUIRED} (CSV, XLSX, or XLS)`
+          );
+        }
+        const filePath = path.join(process.cwd(), req.file.path);
+        const fileExt = path.extname(req.file.originalname).toLowerCase();
+        const vendors = [];
+        try {
+          if (fileExt === '.csv') {
+            // Process CSV
+            fs.createReadStream(filePath)
+              .pipe(csvParser())
+              .on('data', (row) => {
+                vendors.push(row);
+              })
+              .on('end', () => processVendors(vendors, filePath));
+          } else if (fileExt === '.xlsx' || fileExt === '.xls') {
+            // Process Excel
+            const workbook = xlsx.readFile(filePath);
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = xlsx.utils.sheet_to_json(worksheet);
+            vendors.push(...jsonData);
+            processVendors(vendors, filePath);
+          } else {
+            fs.unlinkSync(filePath);
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.BAD_REQUEST,
+              Message.INVALID_FORMAT
+            );
+          }
+        } catch (parseErr) {
+          fs.unlinkSync(filePath);
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `${Message.FAILED_TO} parse file`,
+            parseErr.message
+          );
+        }
+
+        async function processVendors(vendors, filePath) {
+          try {
+            const errorDetails = vendors
+              .map((data, index) => {
+                index += 1
+                const messages = [];
+                if (!data.userName) messages.push('Username is required');
+                if (!data.email) messages.push('Email is required');
+                if (!data.password) {
+                  messages.push('Password is required');
+                } else if (data.password !== data.confirmPassword) {
+                  messages.push('Password and Confirm Password must be match');
+                }
+                if (!data.confirmPassword)
+                  messages.push('Confirm Password is required');
+                if (!data.role) messages.push('Role is required');
+                if (!data.company_email)
+                  messages.push('Company Email is required');
+                if (!data.company_phone_number)
+                  messages.push('Company Phone Number is required');
+
+                if (
+                  !Object.values(CompanyTypeEnum).includes(data.company_type)
+                ) {
+                  messages.push(
+                    `company_type: ${data.company_type
+                    } should be one of ${Object.values(CompanyTypeEnum).join(
+                      ', '
+                    )}`
+                  );
+                }
+                if (
+                  !Object.values(HireResourcesEnum).includes(
+                    data.hire_resources
+                  )
+                ) {
+                  messages.push(
+                    `hire_resources: ${data.hire_resources
+                    } should be one of ${Object.values(
+                      HireResourcesEnum
+                    ).join(', ')}`
+                  );
+                }
+
+                return messages.length
+                  ? `Invalid data at index ${index}: ${messages.join(', ')}`
+                  : null;
+              })
+              .filter(Boolean);
+
+            if (errorDetails.length > 0) {
+              fs.unlinkSync(filePath);
+              return HandleResponse(
+                res,
+                false,
+                StatusCodes.BAD_REQUEST,
+                'Validation error',
+                errorDetails
+              );
+            }
+
+            const userFields = [
+              'userName',
+              'email',
+              'password',
+              'confirmPassword',
+              'role',
+              'isActive',
+              'lastName',
+              'firstName',
+            ];
+
+            const vendorUserPairs = vendors.map((row) => {
+              const userData = {},
+                vendorData = {};
+              for (const [key, value] of Object.entries(row)) {
+                if (userFields.includes(key)) userData[key] = value;
+                else vendorData[key] = value;
+              }
+              if (userData.role) vendorData.type = userData.role;
+              return { userData, vendorData };
+            });
+
+            const emails = vendorUserPairs
+              .map((v) => v.userData.email?.toLowerCase())
+              .filter(Boolean);
+            const userNames = vendorUserPairs
+              .map((v) => v.userData.userName?.trim())
+              .filter(Boolean);
+            const vendorEmails = vendorUserPairs.map(
+              (v) => v.vendorData.company_email
+            );
+            const vendorPhones = vendorUserPairs.map(
+              (v) => v.vendorData.company_phone_number
+            );
+
+            const existingUsers = await User.find({
+              $or: [
+                { email: { $in: emails } },
+                { userName: { $in: userNames } },
+              ],
+            });
+            const existingVendors = await Vendor.find({
+              $or: [
+                { company_email: { $in: vendorEmails } },
+                { company_phone_number: { $in: vendorPhones } },
+              ],
+            });
+
+            const existingUserEmailMap = Object.fromEntries(
+              existingUsers.map((u) => [u.email, u])
+            );
+            const existingVendorEmailMap = Object.fromEntries(
+              existingVendors.map((v) => [v.company_email, v])
+            );
+
+            let insertedUsers = [],
+              insertedVendors = [],
+              updatedUsers = [],
+              updatedVendors = [];
+
+            for (const pair of vendorUserPairs) {
+              const email = pair.userData.email.toLowerCase();
+              const vendorEmail = pair.vendorData.company_email;
+
+              // If already exist
+              if (
+                existingUserEmailMap[email] &&
+                existingVendorEmailMap[vendorEmail]
+              ) {
+                if (updateFlag) {
+                  // Update vendor
+                  await Vendor.updateOne(
+                    { company_email: vendorEmail },
+                    { $set: { ...pair.vendorData } }
+                  );
+                  const hashed = await bcrypt.hash(
+                    pair.userData.password,
+                    10
+                  );
+                  await User.updateOne(
+                    { email: email },
+                    { $set: { ...pair.userData, password: hashed } }
+                  );
+                  updatedVendors.push(vendorEmail);
+                  updatedUsers.push(email);
+                }
+                continue;
+              }
+
+              //new data
+              const newVendor = await Vendor.create(pair.vendorData);
+              const hashedPassword = await bcrypt.hash(
+                pair.userData.password,
+                10
+              );
+              const newUser = await User.create({
+                ...pair.userData,
+                password: hashedPassword,
+                vendorProfileId: newVendor._id,
+              });
+
+              insertedVendors.push(newVendor);
+              insertedUsers.push(newUser);
+            }
+
+            fs.unlinkSync(filePath);
+
+            const responseMsg = updateFlag
+              ? `Data ${Message.UPDATED_SUCCESSFULLY}`
+              : insertedUsers.length || insertedVendors.length
+                ? `${fileExt.replace(/\./g, '').toUpperCase()} ${Message.IMPORTED} with inserted data.`
+                : `Duplicate records found ${Message.WANT_UPDATED}`;
+            const responseStatusCode = updateFlag
+              ? StatusCodes.OK
+              : insertedUsers.length || insertedVendors.length
+                ? StatusCodes.CREATED
+                : StatusCodes.CONFLICT;
+
+            const success = Boolean(updateFlag || insertedUsers.length || insertedVendors.length);
+            return HandleResponse(res, success, responseStatusCode, responseMsg, {
+              vendorsInserted: insertedVendors.length,
+              usersInserted: insertedUsers.length,
+              vendorsUpdated: updatedVendors.length,
+              usersUpdated: updatedUsers.length,
+              duplicates: {
+                vendors: vendorEmails.filter(
+                  (email) => existingVendorEmailMap[email]
+                ),
+                users: emails.filter((email) => existingUserEmailMap[email]),
+              },
+            });
+          } catch (err) {
+            fs.unlinkSync(filePath);
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              `${Message.ERROR} processing data`,
+              err.message
+            );
+          }
+        }
+      } catch (innerErr) {
+        if (req.file && req.file.path) {
+          fs.unlinkSync(path.join(process.cwd(), req.file.path));
+        }
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          `${Message.INTERNAL_SERVER_ERROR}`,
+          innerErr.message
+        );
+      }
+    });
+  } catch (outerErr) {
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.INTERNAL_SERVER_ERROR}`,
+      outerErr.message
     );
   }
 };

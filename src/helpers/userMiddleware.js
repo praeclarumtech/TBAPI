@@ -9,7 +9,7 @@ export const authorization = (req, res, next) => {
 
     if (!token) {
       logger.error(Message.NO_TOKEN);
-      res.status(StatusCodes.UNAUTHORIZED).json({
+      return res.status(StatusCodes.UNAUTHORIZED).json({
         success: false,
         statusCode: StatusCodes.UNAUTHORIZED,
         message: Message.NO_TOKEN,
@@ -21,7 +21,7 @@ export const authorization = (req, res, next) => {
     next();
   } catch (error) {
     logger.error(Message.TOKEN_IS_NOT_VALID);
-    res.status(StatusCodes.UNAUTHORIZED).json({
+    return res.status(StatusCodes.UNAUTHORIZED).json({
       success: false,
       statusCode: StatusCodes.UNAUTHORIZED,
       message: Message.TOKEN_IS_NOT_VALID,

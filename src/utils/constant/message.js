@@ -41,7 +41,7 @@ export const Message = {
   FORGOT_SUCCESSFULLY: 'forgot successfully.',
   ENTER_CALENDAR_TYPE: 'Provide a calendarType (week, month, year) or both startDate and endDate.',
   DONWLOADED: 'File downloaded successfully.',
-  IMPORTED: 'File imported successfully.',
+  IMPORTED: 'File imported successfully',
   ACTIVE_SUCCESSFULLY: 'active Successfully.',
   INACTIVE_SUCCESSFULLY: 'inactive Successfully.',
   MOVED_SUCCESSFULLY: 'Records sucessfully to move applicants.',
@@ -52,5 +52,7 @@ export const Message = {
   ACCESS_DENIED: 'Access denied',
   UNDER_APPROVAL: 'Your account is under approval, you will be notified once it is activated.',
   SENT_SUCCESSFULLY: 'sent successfully',
-  IN_COMPLETE: 'To continue, please complete your profile first.'
+  IN_COMPLETE: 'To continue, please complete your profile first.',
+  WANT_UPDATED: 'do you want to update?',
+  INVALID_FORMAT: 'Invalid file format. Only CSV, XLSX, or XLS files are allowed'
 };

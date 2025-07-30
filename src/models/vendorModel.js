@@ -21,13 +21,14 @@ const vendorSchema = new mongoose.Schema(
     },
     company_email: {
       type: String,
-      required: false,
-      lowercase: true,
+      required: true,
+      unique: true,
       match: [/\S+@\S+\.\S+/, 'Invalid company email'],
     },
     company_phone_number: {
       type: String,
-      required: false,
+      required: true,
+      unique: true,
       match: [/^\d{10}$/, 'Invalid company contact number'],
     },
     company_location: {
@@ -65,7 +66,7 @@ const vendorSchema = new mongoose.Schema(
       required: false,
     },
     userId: {
-      type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true
+      type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false
     },
     isDeleted: {
       type: Boolean,
