@@ -195,6 +195,9 @@ export const listOfUsers = async (req, res) => {
       limit,
       query,
       sort: { createdAt: -1 },
+      populate: {
+        path: 'vendorProfileId',
+      }
     });
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
