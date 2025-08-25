@@ -39,7 +39,7 @@ export const getRoleById = async (req, res) => {
   }
 };
 
-// ---------------- UPDATE ----------------
+
 export const updateRole = async (req, res) => {
   try {
 
