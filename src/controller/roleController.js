@@ -1,5 +1,8 @@
+import { StatusCodes } from "http-status-codes";
 import Role from "../models/roleModel.js";
-import logger from "../loggers/logger.js";  
+import logger from "../loggers/logger.js";
+import { HandleResponse } from "../helpers/handleResponse.js";
+import {Message} from "../utils/constant/message.js";
 
 export const createRole = async (req, res) => {
   try {
@@ -7,10 +10,25 @@ export const createRole = async (req, res) => {
     await newRole.save();
 
     logger.info(`Role created: ${newRole._id}`);
-    res.status(201).json(newRole);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.CREATED,
+      Message.CREATED_SUCCESS,
+      newRole
+    );
   } catch (error) {
     logger.error(`Create role failed: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ message: "Server error" });
+
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      null,
+      null,
+      error.message
+    );
   }
 };
 
@@ -18,10 +36,25 @@ export const createRole = async (req, res) => {
 export const getRoles = async (req, res) => {
   try {
     const roles = await Role.find();
-    res.status(200).json(roles);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.FETCH_SUCCESS,
+      roles
+    );
   } catch (error) {
     logger.error(`Get roles failed: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ message: "Server error" });
+
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      null,
+      null,
+      error.message
+    );
   }
 };
 
@@ -30,46 +63,100 @@ export const getRoleById = async (req, res) => {
     const role = await Role.findById(req.params.id);
     if (!role) {
       logger.warn(`Role not found: ${req.params.id}`);
-      return res.status(404).json({ message: "Role not found" });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        Message.NOT_FOUND
+      );
     }
-    res.status(200).json(role);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.FETCH_SUCCESS,
+      role
+    );
   } catch (error) {
     logger.error(`Get role by ID failed: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ message: "Server error" });
+
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      null,
+      null,
+      error.message
+    );
   }
 };
-
 
 export const updateRole = async (req, res) => {
   try {
-
-    const role = await Role.findByIdAndUpdate(req.params.id, { new: true });
+    const role = await Role.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!role) {
       logger.warn(`Update failed - Role not found: ${req.params.id}`);
-      return res.status(404).json({ message: "Role not found" });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        Message.NOT_FOUND
+      );
     }
 
     logger.info(`Role updated: ${role._id}`);
-    res.status(200).json(role);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.UPDATE_SUCCESS,
+      role
+    );
   } catch (error) {
     logger.error(`Update role failed: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ message: "Server error" });
+
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      null,
+      null,
+      error.message
+    );
   }
 };
-
 
 export const deleteRole = async (req, res) => {
   try {
     const role = await Role.findByIdAndDelete(req.params.id);
     if (!role) {
       logger.warn(`Delete failed - Role not found: ${req.params.id}`);
-      return res.status(404).json({ message: "Role not found" });
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        Message.NOT_FOUND
+      );
     }
 
     logger.info(`Role deleted: ${role._id}`);
-    res.status(200).json({ message: "Role deleted successfully" });
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.DELETE_SUCCESS
+    );
   } catch (error) {
     logger.error(`Delete role failed: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ message: "Server error" });
+
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      null,
+      null,
+      error.message
+    );
   }
 };

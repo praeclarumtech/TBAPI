@@ -9,10 +9,10 @@ import {
 
 const router = express.Router();
 
-router.post("/create", createRole);
-router.get("/list", getRoles);
-router.get("/view/:id", getRoleById);
-router.put("/update/:id", updateRole);
-router.delete("/delete/:id", deleteRole);
+router.post('/create', createRole);
+router.get('/list', getRoles);
+router.get('/view/:id', getRoleById);
+router.put('/update/:id', updateRole);
+router.delete('/delete/:id', deleteRole);
 
 export default router;
