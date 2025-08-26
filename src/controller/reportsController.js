@@ -135,9 +135,9 @@ export const applicantCountByCityAndState = async (req, res) => {
 
 export const applicantCountByAddedBy = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, currentCompanyDesignation } = req.query;
 
-    const result = await getApplicantCountByAddedBy(startDate, endDate);
+    const result = await getApplicantCountByAddedBy(startDate, endDate, currentCompanyDesignation);
 
     logger.info(`Applicant count by addedBy ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(

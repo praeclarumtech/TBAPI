@@ -236,7 +236,7 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
 };
 
 
-export const getApplicantCountByAddedBy = async (startDate, endDate) => {
+export const getApplicantCountByAddedBy = async (startDate, endDate,currentCompanyDesignation) => {
   try {
     const query = { isDeleted: false };
 
@@ -252,11 +252,26 @@ export const getApplicantCountByAddedBy = async (startDate, endDate) => {
       query.createdAt = { $gte: start, $lte: end };
     }
 
+
+    if (currentCompanyDesignation) {
+      query.currentCompanyDesignation = currentCompanyDesignation;
+    }
+
+  
+    if (currentCompanyDesignation) {
+      const count = await Applicant.countDocuments({
+        ...query,
+        addedBy: { $nin: [null, ""] },
+      });
+      return count; 
+    }
+
+
     const result = await Applicant.aggregate([
       {
         $match: {
           ...query,
-          addedBy: { $ne: null },
+          addedBy: { $ne: [null,""] },
         },
       },
       {
