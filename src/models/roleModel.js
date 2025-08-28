@@ -12,6 +12,12 @@ const roleSchema = new mongoose.Schema(
     accessModules: {
       type: [String],
       default: [],
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: ['active', 'inactive'],
+      default: 'active'
     }
   },
   { timestamps: true }
