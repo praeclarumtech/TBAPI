@@ -9,10 +9,6 @@ const roleSchema = new mongoose.Schema(
       trim: true,
       enum: ['admin', 'hr', 'vendor', 'client', 'guest']
     },
-    accessModules: {
-      type: [String],
-      default: [],
-    },
     status: {
       type: String,
       required: true,
