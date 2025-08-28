@@ -10,6 +10,7 @@ import {
   getInterviewStageCount,
 } from '../services/reportService.js';
 
+
 export const applicationOnProcessCount = async (req, res) => {
   const { calendarType, startDate, endDate } = req.query;
   const user = req.user;
