@@ -140,6 +140,9 @@ export const updateRole = async (req, res) => {
   }
 };
 
+
+
+
 export const deleteRole = async (req, res) => {
   try {
     const role = await Role.findOneAndUpdate(
