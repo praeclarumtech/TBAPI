@@ -197,6 +197,7 @@ export const addJobApplication = async (req, res) => {
     );
   }
 };
+
 export const updateApplicantionStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;
