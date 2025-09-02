@@ -141,6 +141,7 @@ export const login = async (req, res) => {
         Message.UNDER_APPROVAL
       );
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       logger.info(Message.INVALID_CREDENTIALS);
@@ -152,8 +153,15 @@ export const login = async (req, res) => {
       );
     }
 
+    // ✅ Populate role before creating token
+    const userWithRole = await User.findById(user._id).populate("roleId");
+
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      {
+        id: userWithRole._id,
+        role: userWithRole.roleId?.name || "N/A",
+        accessModules: userWithRole.roleId?.accessModules || [],
+      },
       process.env.JWT_SECRET,
       { expiresIn: process.env.EXPIRES_IN }
     );
@@ -165,10 +173,10 @@ export const login = async (req, res) => {
       true,
       StatusCodes.OK,
       Message.USER_LOGGED_IN_SUCCESSFULLY,
-      token
+      { token, user: userWithRole } // send token + user profile
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} login.`);
+    logger.error(`${Message.FAILED_TO} login.`, error);
     return HandleResponse(
       res,
       false,
@@ -270,7 +278,7 @@ export const getProfileByToken = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role || 'N/A',
+      role: user.roleId?.name || 'N/A',
       roleId: user.roleId?._id || 'N/A',
       roleStatus: user.roleId?.status || 'inactive',
       accessModules: user.roleId?.accessModules || [],
@@ -278,8 +286,7 @@ export const getProfileByToken = async (req, res) => {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
-    console.log('RoleId populated:', user.roleId);
-    console.log('AccessModules:', user.roleId?.accessModules);
+    console.log('Populated roleId:', JSON.stringify(user.roleId, null, 2));
 
     logger.info(`User profile ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(

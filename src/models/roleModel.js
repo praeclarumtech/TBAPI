@@ -11,6 +11,7 @@ const roleSchema = new mongoose.Schema(
     },
     accessModules: {
       type: [String],
+      required: true,
       default: ['dashboard'],
     },
     status: {
