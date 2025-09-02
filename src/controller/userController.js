@@ -212,111 +212,76 @@ export const getProfileByToken = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Fetch user and populate roleId
     const user = await User.findById(userId)
       .populate({
-        path: "roleId",                // use roleId
+        path: "roleId",
         select: "name accessModules status"
       });
 
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Profile ${Message.NOT_FOUND}`
-      );
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Profile ${Message.NOT_FOUND}`);
     }
 
-    // Prepare safe response
     const responseData = {
       _id: user._id,
       userName: user.userName,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role,                                      // string role
-      roleStatus: user.roleId?.status || "inactive",       // safe access
-      accessModules: user.roleId?.accessModules || [],     // safe access
+      role: user.role || "N/A",
+      roleStatus: user.roleId?.status || "inactive",
+      accessModules: user.roleId?.accessModules || [],
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     };
 
     logger.info(`User profile ${Message.FETCH_SUCCESSFULLY}`);
-    return HandleResponse(
-      res,
-      true,
-      StatusCodes.OK,
-      `User profile ${Message.FETCH_SUCCESSFULLY}`,
-      responseData
-    );
+    return HandleResponse(res, true, StatusCodes.OK, `User profile ${Message.FETCH_SUCCESSFULLY}`, responseData);
 
   } catch (error) {
     logger.error(`${Message.FAILED_TO} fetch user profile.`, error);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} fetch user profile.`
-    );
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} fetch user profile.`);
   }
 };
+
 
 export const viewProfileById = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    // Fetch user and populate roleId
     const user = await User.findById(userId)
       .populate({
-        path: "roleId",                // use roleId
+        path: "roleId",
         select: "name accessModules status"
       });
 
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Profile ${Message.NOT_FOUND}`
-      );
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Profile ${Message.NOT_FOUND}`);
     }
 
-    // Prepare safe response
     const responseData = {
       _id: user._id,
       userName: user.userName,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role,
-      roleStatus: user.roleId?.status || "inactive",       // safe access
-      accessModules: user.roleId?.accessModules || [],     // safe access
+      role: user.role || "N/A",
+      roleStatus: user.roleId?.status || "inactive",
+      accessModules: user.roleId?.accessModules || [],
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     };
 
     logger.info(`Profile ${Message.FETCH_BY_ID}`);
-    return HandleResponse(
-      res,
-      true,
-      StatusCodes.OK,
-      `Profile ${Message.FETCH_BY_ID}`,
-      responseData
-    );
+    return HandleResponse(res, true, StatusCodes.OK, `Profile ${Message.FETCH_BY_ID}`, responseData);
 
   } catch (error) {
     logger.error(`${Message.FAILED_TO} view profile by Id.`, error);
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} view profile by Id.`
-    );
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} view profile by Id.`);
   }
 };
 
