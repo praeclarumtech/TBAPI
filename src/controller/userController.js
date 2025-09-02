@@ -5,7 +5,13 @@ import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
-import { approvalRequestTemplate, accountApprovedTemplate, accountCredentialsTemplate, passwordResetRequestTemplate, resetPasswordCredentialsTemplate } from '../utils/emailTemplates/emailTemplates.js'
+import {
+  approvalRequestTemplate,
+  accountApprovedTemplate,
+  accountCredentialsTemplate,
+  passwordResetRequestTemplate,
+  resetPasswordCredentialsTemplate,
+} from '../utils/emailTemplates/emailTemplates.js';
 dotenv.config();
 import {
   createUser,
@@ -24,39 +30,62 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import User from '../models/userModel.js';
 import { Enum } from '../utils/enum.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
-import { createVendorData, findVendorByUserId, updateVendorData } from '../services/jobService.js';
+import {
+  createVendorData,
+  findVendorByUserId,
+  updateVendorData,
+} from '../services/jobService.js';
 import Role from '../models/roleModel.js';
 
 export const register = async (req, res) => {
-  let { userName, email, password, confirmPassword, role, isActive, lastName, firstName } = req.body;
+  let {
+    userName,
+    email,
+    password,
+    confirmPassword,
+    role,
+    isActive,
+    lastName,
+    firstName,
+  } = req.body;
 
   try {
     const existingUser = await getUser({ email });
     if (existingUser) {
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `User already exists`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `User already exists`
+      );
     }
 
     // Get the Role document from role string
     const roleDoc = await Role.findOne({ name: role });
     if (!roleDoc) {
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `Invalid role`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Invalid role`
+      );
     }
 
-    const createdByAdmin = req.user?.role === "ADMIN";
+    const createdByAdmin = req.user?.role === 'ADMIN';
 
     const newUser = await createUser({
       userName,
       email,
       password,
       confirmPassword,
-      role,           // store string
+      role, // store string
       roleId: roleDoc._id, // store ObjectId
       isActive: createdByAdmin ? isActive : false,
       lastName,
       firstName,
     });
 
-    if (role === "VENDOR" || role === "CLIENT") {
+    if (role === 'VENDOR' || role === 'CLIENT') {
       const vendorData = { userId: newUser._id, type: role };
       const newVendor = await createVendorData(vendorData);
       await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
@@ -65,24 +94,32 @@ export const register = async (req, res) => {
         const htmlBlock = approvalRequestTemplate({ userName, email, role });
         await sendingEmail({
           email_to: [process.env.HR_EMAIL],
-          subject: "New User Registration - Approval Required",
+          subject: 'New User Registration - Approval Required',
           description: htmlBlock,
         });
       }
     }
 
-    return HandleResponse(res, true, StatusCodes.CREATED, "User registered successfully");
-
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.CREATED,
+      'User registered successfully'
+    );
   } catch (error) {
     console.error(error);
-    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Failed to register");
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to register'
+    );
   }
 };
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-
     const isEmail = /\S+@\S+\.\S+/.test(email);
     const user = await getUser(isEmail ? { email } : { userName: email });
 
@@ -187,7 +224,7 @@ export const listOfUsers = async (req, res) => {
       sort: { createdAt: -1 },
       populate: {
         path: 'vendorProfileId',
-      }
+      },
     });
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -212,15 +249,19 @@ export const getProfileByToken = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId)
-      .populate({
-        path: "roleId",
-        select: "name accessModules status"
-      });
+    const user = await User.findById(userId).populate({
+      path: 'roleId',
+      select: 'name accessModules status',
+    });
 
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
-      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Profile ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Profile ${Message.NOT_FOUND}`
+      );
     }
 
     const responseData = {
@@ -229,37 +270,52 @@ export const getProfileByToken = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role || "N/A",
-      roleStatus: user.roleId?.status || "inactive",
+      role: user.role || 'N/A',
+      roleStatus: user.roleId?.status || 'inactive',
       accessModules: user.roleId?.accessModules || [],
       isActive: user.isActive,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      updatedAt: user.updatedAt,
     };
+    console.log('RoleId populated:', user.roleId);
+    console.log('AccessModules:', user.roleId?.accessModules);
 
     logger.info(`User profile ${Message.FETCH_SUCCESSFULLY}`);
-    return HandleResponse(res, true, StatusCodes.OK, `User profile ${Message.FETCH_SUCCESSFULLY}`, responseData);
-
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `User profile ${Message.FETCH_SUCCESSFULLY}`,
+      responseData
+    );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} fetch user profile.`, error);
-    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} fetch user profile.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch user profile.`
+    );
   }
 };
-
 
 export const viewProfileById = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    const user = await User.findById(userId)
-      .populate({
-        path: "roleId",
-        select: "name accessModules status"
-      });
+    const user = await User.findById(userId).populate({
+      path: 'roleId',
+      select: 'name accessModules status',
+    });
 
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
-      return HandleResponse(res, false, StatusCodes.NOT_FOUND, `Profile ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Profile ${Message.NOT_FOUND}`
+      );
     }
 
     const responseData = {
@@ -268,28 +324,43 @@ export const viewProfileById = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role || "N/A",
-      roleStatus: user.roleId?.status || "inactive",
+      role: user.role || 'N/A',
+      roleStatus: user.roleId?.status || 'inactive',
       accessModules: user.roleId?.accessModules || [],
       isActive: user.isActive,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      updatedAt: user.updatedAt,
     };
 
     logger.info(`Profile ${Message.FETCH_BY_ID}`);
-    return HandleResponse(res, true, StatusCodes.OK, `Profile ${Message.FETCH_BY_ID}`, responseData);
-
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Profile ${Message.FETCH_BY_ID}`,
+      responseData
+    );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} view profile by Id.`, error);
-    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, `${Message.FAILED_TO} view profile by Id.`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} view profile by Id.`
+    );
   }
 };
 
 export const updateProfile = (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      logger.info(Message.INVALID_FILE_TYPE)
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, Message.INVALID_FILE_TYPE);
+      logger.info(Message.INVALID_FILE_TYPE);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        Message.INVALID_FILE_TYPE
+      );
     }
 
     try {
@@ -328,7 +399,7 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
-        isActive
+        isActive,
       };
 
       if (password) {
@@ -366,14 +437,22 @@ export const updateProfile = (req, res) => {
       };
 
       Object.keys(vendorUpdateData).forEach(
-        (key) => (vendorUpdateData[key] === undefined || vendorUpdateData[key] === null) && delete vendorUpdateData[key]
+        (key) =>
+          (vendorUpdateData[key] === undefined ||
+            vendorUpdateData[key] === null) &&
+          delete vendorUpdateData[key]
       );
       let updatedVendor = null;
 
       if (Object.keys(vendorUpdateData).length > 0) {
-        const existingVendor = await findVendorByUserId({ userId: updatedUser._id })
+        const existingVendor = await findVendorByUserId({
+          userId: updatedUser._id,
+        });
         if (existingVendor) {
-          updatedVendor = await updateVendorData(updatedUser._id, vendorUpdateData)
+          updatedVendor = await updateVendorData(
+            updatedUser._id,
+            vendorUpdateData
+          );
         } else {
           return HandleResponse(
             res,
@@ -389,7 +468,7 @@ export const updateProfile = (req, res) => {
         res,
         true,
         StatusCodes.OK,
-        `Profile ${Message.UPDATED_SUCCESSFULLY}`,
+        `Profile ${Message.UPDATED_SUCCESSFULLY}`
       );
     } catch (error) {
       logger.error(`${Message.FAILED_TO} update profile.`, error);
@@ -423,8 +502,12 @@ export const sendEmail = async (req, res) => {
 
     // const data = await sendingEmail({ email, newOtp });
 
-    const htmlContent = passwordResetRequestTemplate({ email })
-    const data = await sendingEmail({ email_to: [process.env.HR_EMAIL], subject: 'Password Reset Request – TalentBox', description: htmlContent });
+    const htmlContent = passwordResetRequestTemplate({ email });
+    const data = await sendingEmail({
+      email_to: [process.env.HR_EMAIL],
+      subject: 'Password Reset Request – TalentBox',
+      description: htmlContent,
+    });
     if (!data) {
       logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -439,7 +522,7 @@ export const sendEmail = async (req, res) => {
       res,
       true,
       StatusCodes.CREATED,
-      Message.MAIL_SENT,
+      Message.MAIL_SENT
       // `OTP:-${newOtp}, will be expire in:${expireOtp}`
     );
   } catch (error) {
@@ -525,8 +608,15 @@ export const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUserById(email, { password: hashedPassword });
 
-    const htmlContent = resetPasswordCredentialsTemplate({ email, password: newPassword })
-    const data = await sendingEmail({ email_to: [email], subject: 'Your TalentBox Password Has Been Reset', description: htmlContent });
+    const htmlContent = resetPasswordCredentialsTemplate({
+      email,
+      password: newPassword,
+    });
+    const data = await sendingEmail({
+      email_to: [email],
+      subject: 'Your TalentBox Password Has Been Reset',
+      description: htmlContent,
+    });
     if (!data) {
       logger.warn(`${Message.FAILED_TO} send new password to user`);
       return HandleResponse(
@@ -536,7 +626,7 @@ export const forgotPassword = async (req, res) => {
         `${Message.FAILED_TO} send new password to user`
       );
     }
-    logger.info(`New password ${Message.SENT_SUCCESSFULLY} to user.`)
+    logger.info(`New password ${Message.SENT_SUCCESSFULLY} to user.`);
     logger.info(`Password ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -606,7 +696,7 @@ export const updateStatus = async (req, res) => {
   try {
     const userId = req.params.id;
     const { isActive, isDeleted } = req.body;
-    const existingUser = await getUser({ _id: userId })
+    const existingUser = await getUser({ _id: userId });
     if (!existingUser) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -628,13 +718,15 @@ export const updateStatus = async (req, res) => {
       );
     }
 
-    const isVendor = await findVendorByUserId({ userId: existingUser._id })
+    const isVendor = await findVendorByUserId({ userId: existingUser._id });
     if (isVendor) {
       await updateVendorData(userId, req.body);
     }
 
     if (existingUser.isActive === false && isActive === true) {
-      const htmlBlock = accountApprovedTemplate({ userName: existingUser.userName })
+      const htmlBlock = accountApprovedTemplate({
+        userName: existingUser.userName,
+      });
       await sendingEmail({
         email_to: [existingUser.email],
         subject: 'Access Granted - Welcome to TalentBox',
