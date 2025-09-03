@@ -147,7 +147,7 @@ export const jobCreatedTemplate = ({ createdBy, role, jobTitle, startDate, endDa
       <table style="width:100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
         <tr>
           <td style="padding: 8px; border: 1px solid #eee;"><strong>Created By</strong></td>
-          <td style="padding: 8px; border: 1px solid #eee;">${createdBy} </td>
+          <td style="padding: 8px; border: 1px solid #eee;">${createdBy} (${role})</td>
         </tr>
         <tr>
           <td style="padding: 8px; border: 1px solid #eee;"><strong>Job Title</strong></td>
