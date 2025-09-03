@@ -46,7 +46,6 @@ export const approvalRequestTemplate = ({ userName, email, role }) => `
 `;
 
 
-
 export const accountApprovedTemplate = ({ userName }) => `
   <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
     <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 30px;">
@@ -132,6 +131,57 @@ export const accountCredentialsTemplate = ({ email, password }) => `
     </div>
   </div>
 `;
+
+export const jobCreatedTemplate = ({ createdBy, role, jobTitle, startDate, endDate, createdAt }) => `
+  <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+    <div style="max-width: 650px; margin: auto; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px;">
+      
+      <h2 style="color: #2c3e50; margin-bottom: 20px;">📢 New Job Created</h2>
+
+      <p style="color: #444; font-size: 15px;">Dear Admin,</p>
+
+      <p style="color: #444; font-size: 15px; line-height: 1.6;">
+        A new job has been created on the TalentBox platform. Below are the details:
+      </p>
+
+      <table style="width:100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+        <tr>
+          <td style="padding: 8px; border: 1px solid #eee;"><strong>Created By</strong></td>
+          <td style="padding: 8px; border: 1px solid #eee;">${createdBy} </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #eee;"><strong>Job Title</strong></td>
+          <td style="padding: 8px; border: 1px solid #eee;">${jobTitle}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #eee;"><strong>Start Date</strong></td>
+          <td style="padding: 8px; border: 1px solid #eee;">${startDate || "-"}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #eee;"><strong>End Date</strong></td>
+          <td style="padding: 8px; border: 1px solid #eee;">${endDate || "-"}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #eee;"><strong>Created At</strong></td>
+          <td style="padding: 8px; border: 1px solid #eee;">${createdAt}</td>
+        </tr>
+      </table>
+
+      <p style="margin-top: 30px; color: #666; font-size: 14px;">
+        Regards,<br/>
+        <strong>The TalentBox Team</strong>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #eee; margin: 40px 0;" />
+
+      <p style="color: #aaa; font-size: 12px; text-align: center;">
+        This is an automated notification. Please do not reply directly to this email.
+      </p>
+    </div>
+  </div>
+`;
+
+
 
 export const passwordResetRequestTemplate = ({ email }) => `
   <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">

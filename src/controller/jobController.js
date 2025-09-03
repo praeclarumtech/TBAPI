@@ -15,12 +15,15 @@ import { generateJobId } from '../helpers/generateApplicationNo.js';
 import { getAllusers, getUser } from '../services/userService.js';
 import { Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
+import { sendingEmail } from "../utils/email.js";
+import {jobCreatedTemplate} from "../utils/emailTemplates/emailTemplates.js"
 
 export const createJob = async (req, res) => {
   try {
     const user = req.user.id;
     const userData = await getUser({ _id: user });
 
+    // ✅ Vendor/Client validation
     if (userData.role === Enum.VENDOR || userData.role === Enum.CLIENT) {
       const vendor = await findVendorByUserId({ userId: user });
       if (!vendor) {
@@ -51,25 +54,54 @@ export const createJob = async (req, res) => {
         );
       }
     }
+
+    // ✅ Job creation
     const job_id = await generateJobId();
     const applicationDeadline = new Date();
     applicationDeadline.setDate(applicationDeadline.getDate() + 30);
     const finalDate = applicationDeadline.toLocaleDateString('en-CA');
+
     const jobData = {
       job_id,
       addedBy: user,
       application_deadline: finalDate,
       ...req.body,
     };
+
     await createJobService(jobData);
     logger.info(`job ${Message.ADDED_SUCCESSFULLY}`);
+
+    // ✅ Send Email after job creation
+    let emailStatus = {};
+    try {
+      const htmlBlock = jobCreatedTemplate({
+        jobId: job_id,
+        jobTitle: req.body.job_subject,
+        startDate: req.body.start_time,
+        endDate: req.body.end_time,
+        createdBy: `${userData.firstName} ${userData.lastName}`,
+        createdAt: new Date().toLocaleString(),
+      });
+
+      emailStatus = await sendingEmail({
+        email_to: [process.env.HR_EMAIL],
+        subject: "New Job Created",
+        description: htmlBlock, // ✅ Use template instead of hardcoded HTML
+      });
+    } catch (err) {
+      logger.error("Email failed:", err);
+      emailStatus = { success: false, error: err.message };
+    }
+
+    // ✅ Response in Postman will include email status
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
       `job ${Message.ADDED_SUCCESSFULLY}`,
-      jobData
+      { jobData, emailStatus }
     );
+
   } catch (error) {
     logger.error(`${Message.FAILED_TO} add job`, error);
     return HandleResponse(
