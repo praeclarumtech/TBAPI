@@ -344,7 +344,7 @@ export const viewProfileById = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role || 'N/A',
+      role: user.roleId?.name || 'N/A',
       roleId: user.roleId?._id || 'N/A',
       roleStatus: user.roleId?.status || 'inactive',
       accessModules: user.roleId?.accessModules || [],
