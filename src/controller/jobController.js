@@ -15,12 +15,14 @@ import { generateJobId } from '../helpers/generateApplicationNo.js';
 import { getAllusers, getUser } from '../services/userService.js';
 import { Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
+import { jobCreatedTemplate } from "../utils/emailTemplates/emailTemplates.js";
 
 export const createJob = async (req, res) => {
   try {
     const user = req.user.id;
     const userData = await getUser({ _id: user });
 
+    // validate vendor/client
     if (userData.role === Enum.VENDOR || userData.role === Enum.CLIENT) {
       const vendor = await findVendorByUserId({ userId: user });
       if (!vendor) {
@@ -31,6 +33,7 @@ export const createJob = async (req, res) => {
           `Vendor profile ${Message.NOT_FOUND}`
         );
       }
+
       const requiredFields = [
         'company_name',
         'company_email',
@@ -41,6 +44,7 @@ export const createJob = async (req, res) => {
         'company_strength',
         'company_website',
       ];
+
       const missingFields = requiredFields.filter((field) => !vendor[field]);
       if (missingFields.length > 0) {
         return HandleResponse(
@@ -51,9 +55,12 @@ export const createJob = async (req, res) => {
         );
       }
     }
+
+    // job data
     const job_id = await generateJobId();
     const applicationDeadline = new Date();
     applicationDeadline.setDate(applicationDeadline.getDate() + 30);
+
     const finalDate = applicationDeadline.toLocaleDateString('en-CA');
     const jobData = {
       job_id,
@@ -61,8 +68,29 @@ export const createJob = async (req, res) => {
       application_deadline: finalDate,
       ...req.body,
     };
+
+    // save job
     await createJobService(jobData);
     logger.info(`job ${Message.ADDED_SUCCESSFULLY}`);
+
+    // ✅ send email to admin
+    const mailOptions = {
+      from: process.env.ADMIN_EMAIL,
+      to: process.env.ADMIN_EMAIL,
+      subject: `New Job Created: ${req.body.job_title}`,
+      html: jobCreatedTemplate({
+        createdBy: userData?.name || "Unknown",
+        role: userData?.role,
+        jobTitle: req.body.job_title,
+        startDate: req.body.start_date,
+        endDate: req.body.end_date,
+        createdAt: new Date().toLocaleString(),
+        applicationDeadline: finalDate,
+      }),
+    };
+
+    await transporter.sendMail(mailOptions);
+
     return HandleResponse(
       res,
       true,
