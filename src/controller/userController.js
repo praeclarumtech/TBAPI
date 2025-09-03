@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
-import { StatusCodes } from 'http-status-codes';
+// import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 import {
   approvalRequestTemplate,
@@ -37,19 +37,23 @@ import {
 } from '../services/jobService.js';
 import Role from '../models/roleModel.js';
 
+import { StatusCodes } from "http-status-codes";
+
+
 export const register = async (req, res) => {
   let {
     userName,
     email,
     password,
     confirmPassword,
-    role,
+    role,  // string from request body
     isActive,
     lastName,
     firstName,
   } = req.body;
 
   try {
+    // ✅ Check if user exists
     const existingUser = await getUser({ email });
     if (existingUser) {
       return HandleResponse(
@@ -60,8 +64,8 @@ export const register = async (req, res) => {
       );
     }
 
-    // Get the Role document from role string
-    const roleDoc = await Role.findOne({ name: role });
+    // ✅ Get the Role document from role string
+    const roleDoc = await Role.findOne({ name: role.toLowerCase() }); 
     if (!roleDoc) {
       return HandleResponse(
         res,
@@ -71,30 +75,38 @@ export const register = async (req, res) => {
       );
     }
 
-    const createdByAdmin = req.user?.role === 'ADMIN';
+    const createdByAdmin = req.user?.role === "admin"; // lowercase check
 
+    // ✅ Create new user with only roleId
     const newUser = await createUser({
       userName,
       email,
       password,
       confirmPassword,
-      role, // store string
-      roleId: roleDoc._id, // store ObjectId
+      roleId: roleDoc._id, // store only ObjectId
       isActive: createdByAdmin ? isActive : false,
       lastName,
       firstName,
     });
 
-    if (role === 'VENDOR' || role === 'CLIENT') {
-      const vendorData = { userId: newUser._id, type: role };
+    // ✅ If role is vendor/client → create Vendor profile
+    if (role.toLowerCase() === "vendor" || role.toLowerCase() === "client") {
+      const vendorData = { userId: newUser._id, type: role.toLowerCase() };
       const newVendor = await createVendorData(vendorData);
+
       await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
 
+      // Notify HR if not admin
       if (!createdByAdmin) {
-        const htmlBlock = approvalRequestTemplate({ userName, email, role });
+        const htmlBlock = approvalRequestTemplate({
+          userName,
+          email,
+          role: role.toLowerCase(),
+        });
+
         await sendingEmail({
           email_to: [process.env.HR_EMAIL],
-          subject: 'New User Registration - Approval Required',
+          subject: "New User Registration - Approval Required",
           description: htmlBlock,
         });
       }
@@ -104,7 +116,7 @@ export const register = async (req, res) => {
       res,
       true,
       StatusCodes.CREATED,
-      'User registered successfully'
+      "User registered successfully"
     );
   } catch (error) {
     console.error(error);
@@ -112,7 +124,7 @@ export const register = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Failed to register'
+      "Failed to register"
     );
   }
 };
