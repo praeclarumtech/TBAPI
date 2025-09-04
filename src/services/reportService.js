@@ -33,18 +33,28 @@ export const getApplicationCount = async (
   return await Applicant.countDocuments(query);
 };
 
-export const getInterviewStageCount = async (calendarType, customStartDate, customEndDate, role, userId) => {
+export const getInterviewStageCount = async (
+  calendarType,
+  customStartDate,
+  customEndDate,
+  role,
+  userId
+) => {
   try {
     const { startDate, endDate } = getDateRange(
       calendarType,
       customStartDate,
       customEndDate
     );
-    const model = (role === Enum.VENDOR || role === Enum.CLIENT) ? jobApplication : Applicant;
+    const model =
+      role === Enum.VENDOR || role === Enum.CLIENT ? jobApplication : Applicant;
 
     const matchCondition = { isDeleted: false };
     if (startDate && endDate) {
-      matchCondition.createdAt = { $gte: startDate.toDate(), $lte: endDate.toDate() };
+      matchCondition.createdAt = {
+        $gte: startDate.toDate(),
+        $lte: endDate.toDate(),
+      };
     }
     if (role === Enum.VENDOR || role === Enum.CLIENT) {
       matchCondition.vendor_id = new mongoose.Types.ObjectId(userId);
@@ -55,9 +65,9 @@ export const getInterviewStageCount = async (calendarType, customStartDate, cust
       {
         $group: {
           _id: '$interviewStage',
-          count: { $sum: 1 }
-        }
-      }
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
     const defaultCounts = {
@@ -68,7 +78,7 @@ export const getInterviewStageCount = async (calendarType, customStartDate, cust
       practicalRoundApplicants: 0,
     };
 
-    statusCounts.forEach(stat => {
+    statusCounts.forEach((stat) => {
       switch (stat._id) {
         case applicantEnum.HR_ROUND:
           defaultCounts.hrRoundApplicants = stat.count;
@@ -89,12 +99,13 @@ export const getInterviewStageCount = async (calendarType, customStartDate, cust
     });
 
     return defaultCounts;
-
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} count interview stage: ${error.message}`);
+    logger.error(
+      `${Message.FAILED_TO} count interview stage: ${error.message}`
+    );
     throw error;
   }
-}
+};
 
 export const getApplicantSkillCounts = async (skillIds = [], user) => {
   try {
@@ -178,7 +189,7 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
   try {
     const isVendor = user?.role === Enum.VENDOR;
     const isClient = user?.role === Enum.CLIENT;
-    const model = (isVendor || isClient) ? jobApplication : Applicant;
+    const model = isVendor || isClient ? jobApplication : Applicant;
     const matchStage = { isDeleted: false };
     if (isVendor || isClient) {
       matchStage.vendor_id = user.id;
@@ -196,26 +207,32 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
       {
         $group: {
           _id: { $ifNull: [groupField, null] },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       {
         $match: {
-          _id: { $ne: null }
-        }
-      }
+          _id: { $ne: null },
+        },
+      },
     ];
 
     const resultArr = await model.aggregate(aggregation);
 
     let validNames = [];
     if (type === 'city') {
-      validNames = await city.find({ isDeleted: { $ne: true } }, 'city_name').lean();
+      validNames = await city
+        .find({ isDeleted: { $ne: true } }, 'city_name')
+        .lean();
     } else {
-      validNames = await states.find({ isDeleted: { $ne: true } }, 'state_name').lean();
+      validNames = await states
+        .find({ isDeleted: { $ne: true } }, 'state_name')
+        .lean();
     }
     const validNameSet = new Set(
-      validNames.map((item) => (type === 'city' ? item.city_name : item.state_name).toLowerCase())
+      validNames.map((item) =>
+        (type === 'city' ? item.city_name : item.state_name).toLowerCase()
+      )
     );
 
     const finalResult = {};
@@ -235,8 +252,11 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
   }
 };
 
-
-export const getApplicantCountByAddedBy = async (startDate, endDate) => {
+export const getApplicantCountByAddedBy = async (
+  startDate,
+  endDate,
+  currentCompanyDesignation
+) => {
   try {
     const query = { isDeleted: false };
 
@@ -251,12 +271,27 @@ export const getApplicantCountByAddedBy = async (startDate, endDate) => {
 
       query.createdAt = { $gte: start, $lte: end };
     }
+    
+    if (currentCompanyDesignation) {
+      const designations = currentCompanyDesignation
+        .split(',')
+        .map((d) => d.trim());
+      query.currentCompanyDesignation = { $in: designations };
+    }
+
+    if (currentCompanyDesignation) {
+      const count = await Applicant.countDocuments({
+        ...query,
+        addedBy: { $nin: [null, ''] },
+      });
+      return count;
+    }
 
     const result = await Applicant.aggregate([
       {
         $match: {
           ...query,
-          addedBy: { $ne: null },
+          addedBy: { $ne: [null, ''] },
         },
       },
       {
@@ -281,4 +316,84 @@ export const getApplicantCountByAddedBy = async (startDate, endDate) => {
     );
     throw error;
   }
+};
+
+
+
+
+export const getApplicantByGenderWorkNotice = async (filters) => {
+  const { gender, workPreference, noticePeriod } = filters;
+  const match = {};
+
+  // If user adds query → apply filters
+  if (gender) {
+    match.gender = { $in: gender.split(",").map((g) => g.trim()) };
+  }
+  if (workPreference) {
+    match.workPreference = { $in: workPreference.split(",").map((w) => w.trim()) };
+  }
+  if (noticePeriod) {
+    match.noticePeriod = { $in: noticePeriod.split(",").map((n) => Number(n.trim())) };
+  }
+
+  // Aggregation
+  const pipeline = [
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        gender: { $push: "$gender" },
+        workPreference: { $push: "$workPreference" },
+        noticePeriod: { $push: "$noticePeriod" },
+      },
+    },
+  ];
+
+  const result = await Applicant.aggregate(pipeline);
+
+  if (!result.length) {
+    return {
+      genderCounts: {},
+      workPreferenceCounts: {},
+      noticePeriodCounts: {},
+    };
+  }
+
+  const data = result[0];
+
+  // Helper to count values
+  const countValues = (arr, allOptions) => {
+    const counts = {};
+    allOptions.forEach((val) => {
+      counts[val] = arr.filter((x) => x === val).length;
+    });
+    return counts;
+  };
+
+  // Options
+  const genderOptions = ["male", "female", "other"];
+  const workPrefOptions = ["onsite", "remote", "hybrid"];
+  const noticeOptions = [15, 30, 60, 90];
+
+  // Case 1: no filters → return all
+  if (!gender && !workPreference && !noticePeriod) {
+    return {
+      genderCounts: countValues(data.gender, genderOptions),
+      workPreferenceCounts: countValues(data.workPreference, workPrefOptions),
+      noticePeriodCounts: countValues(data.noticePeriod, noticeOptions),
+    };
+  }
+
+  // Case 2: filters applied → return only filtered
+  return {
+    genderCounts: gender
+      ? countValues(data.gender, gender.split(",").map((g) => g.trim()))
+      : {},
+    workPreferenceCounts: workPreference
+      ? countValues(data.workPreference, workPreference.split(",").map((w) => w.trim()))
+      : {},
+    noticePeriodCounts: noticePeriod
+      ? countValues(data.noticePeriod, noticePeriod.split(",").map((n) => n.trim()))
+      : {},
+  };
 };

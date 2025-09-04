@@ -12,7 +12,7 @@ export const createRole = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        'Role already exists'
+        'Role already exist'
       );
     }
 
@@ -68,7 +68,7 @@ export const getRoles = async (req, res) => {
 
 export const getRoleById = async (req, res) => {
   try {
-    const role = await Role.findOne({ _id: req.params.id, status: 'active' });
+    const role = await Role.findById({ _id: req.params.id, status: 'active' });
     if (!role) {
       logger.warn(`Role not found or inactive: ${req.params.id}`);
       return HandleResponse(
