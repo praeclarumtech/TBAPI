@@ -4,19 +4,30 @@ export const pagination = async ({
   limit,
   query = {},
   sort = {},
+  populate = null,
 }) => {
   const skip = (page - 1) * limit;
 
   const totalRecords = await Schema.countDocuments(query);
 
-  const getItem = await Schema.find(query).sort(sort).skip(skip).limit(limit);
+  let getItem = await Schema.find(query).sort(sort).skip(skip).limit(limit);
+
+  if (populate != null) {
+    getItem = await Schema.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .populate(populate);
+  } else {
+    getItem = await Schema.find(query).sort(sort).skip(skip).limit(limit);
+  }
 
   const totalPages =
     totalRecords && limit > 0 ? Math.ceil(totalRecords / limit) : 0;
 
   return {
     item: getItem,
-    totalRecords, 
+    totalRecords,
     currentPage: page,
     totalPages,
     limit,

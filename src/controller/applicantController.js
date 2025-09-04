@@ -466,7 +466,6 @@ export const viewAllApplicant = async (req, res) => {
               'i'
             )
         );
-
       query.appliedSkills = { $all: skillsArray };
     }
 
