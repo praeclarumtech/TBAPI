@@ -12,7 +12,7 @@ export const createRole = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        'Role already exists'
+        'Role already exist'
       );
     }
 
