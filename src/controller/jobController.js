@@ -15,14 +15,17 @@ import { generateJobId } from '../helpers/generateApplicationNo.js';
 import { getAllusers, getUser } from '../services/userService.js';
 import { Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
-import { jobCreatedTemplate } from "../utils/emailTemplates/emailTemplates.js";
+import { sendingEmail } from "../utils/email.js";
+import {jobCreatedTemplate} from "../utils/emailTemplates/emailTemplates.js"
 
 export const createJob = async (req, res) => {
   try {
     const user = req.user.id;
-    const userData = await getUser({ _id: user });
 
-    // validate vendor/client
+    // ✅ Fetch user with role populated
+    const userData = await User.findById(user).populate("roleId", "name");
+
+    // ✅ Vendor/Client validation
     if (userData.role === Enum.VENDOR || userData.role === Enum.CLIENT) {
       const vendor = await findVendorByUserId({ userId: user });
       if (!vendor) {
@@ -33,18 +36,16 @@ export const createJob = async (req, res) => {
           `Vendor profile ${Message.NOT_FOUND}`
         );
       }
-
       const requiredFields = [
-        'company_name',
-        'company_email',
-        'company_phone_number',
-        'company_location',
-        'company_type',
-        'hire_resources',
-        'company_strength',
-        'company_website',
+        "company_name",
+        "company_email",
+        "company_phone_number",
+        "company_location",
+        "company_type",
+        "hire_resources",
+        "company_strength",
+        "company_website",
       ];
-
       const missingFields = requiredFields.filter((field) => !vendor[field]);
       if (missingFields.length > 0) {
         return HandleResponse(
@@ -56,12 +57,12 @@ export const createJob = async (req, res) => {
       }
     }
 
-    // job data
+    // ✅ Job creation
     const job_id = await generateJobId();
     const applicationDeadline = new Date();
     applicationDeadline.setDate(applicationDeadline.getDate() + 30);
+    const finalDate = applicationDeadline.toLocaleDateString("en-CA");
 
-    const finalDate = applicationDeadline.toLocaleDateString('en-CA');
     const jobData = {
       job_id,
       addedBy: user,
@@ -69,34 +70,39 @@ export const createJob = async (req, res) => {
       ...req.body,
     };
 
-    // save job
     await createJobService(jobData);
     logger.info(`job ${Message.ADDED_SUCCESSFULLY}`);
 
-    // ✅ send email to admin
-    const mailOptions = {
-      from: process.env.ADMIN_EMAIL,
-      to: process.env.ADMIN_EMAIL,
-      subject: `New Job Created: ${req.body.job_title}`,
-      html: jobCreatedTemplate({
-        createdBy: userData?.name || "Unknown",
-        role: userData?.role,
-        jobTitle: req.body.job_title,
-        startDate: req.body.start_date,
-        endDate: req.body.end_date,
+    // ✅ Send Email after job creation
+    let emailStatus = {};
+    try {
+      const htmlBlock = jobCreatedTemplate({
+        jobId: job_id,
+        role: userData.roleId?.name || userData.role || "N/A", // ✅ fixed
+        jobTitle: req.body.job_subject,
+        startDate: req.body.start_time,
+        endDate: req.body.end_time,
+        createdBy: `${userData.firstName} ${userData.lastName}`,
         createdAt: new Date().toLocaleString(),
-        applicationDeadline: finalDate,
-      }),
-    };
+      });
 
-    await transporter.sendMail(mailOptions);
+      emailStatus = await sendingEmail({
+        email_to: [process.env.HR_EMAIL],
+        subject: "New Job Created",
+        description: htmlBlock,
+      });
+    } catch (err) {
+      logger.error("Email failed:", err);
+      emailStatus = { success: false, error: err.message };
+    }
 
+    // ✅ Response in Postman will include email status
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
       `job ${Message.ADDED_SUCCESSFULLY}`,
-      jobData
+      { jobData, emailStatus }
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} add job`, error);

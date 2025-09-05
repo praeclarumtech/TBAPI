@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { Enum } from '../utils/enum.js';
+// import { Enum } from '../utils/enum.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -23,10 +23,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    role: {
-      type: String,
-      enum: Object.values(Enum),
-      default: Enum.ADMIN,
+    // role: { type: String, required: true }, // Role string
+    roleId: {
+      // Role ObjectId
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
+      required: true,
     },
     phoneNumber: {
       type: Number,

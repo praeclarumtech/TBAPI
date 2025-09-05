@@ -41,7 +41,7 @@ export const uploadCv = multer({
       'application/vnd.ms-excel', // .xls
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
       'application/vnd.ms-excel.sheet.macroEnabled.12', // .xlsm
-      'application/vnd.ms-excel.sheet.binary.macroEnabled.12', 
+      'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.template'
     ];
     if (allowedTypes.includes(file.mimetype)) {
@@ -64,12 +64,12 @@ const attachmentStorage = multer.diskStorage({
     cb(null, uploadAttachmentsDir);
   },
   filename: (req, file, cb) => {
-    cb(null,file.originalname);
+    cb(null, file.originalname);
   },
 });
 
 export const uploadAttachments = multer({
-  storage:attachmentStorage,
+  storage: attachmentStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // up to 10MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
@@ -167,7 +167,7 @@ export const uploadResume = multer({
     files: UPLOAD_CONFIG.MAX_FILES
   },
   fileFilter: resumeFileFilter
-}).array('resume', UPLOAD_CONFIG.MAX_FILES); 
+}).array('resume', UPLOAD_CONFIG.MAX_FILES);
 
 const jobScoreDir = 'src/uploads/jobScore';
 if (!fs.existsSync(jobScoreDir)) {
@@ -183,21 +183,34 @@ const jobScorestorage = multer.diskStorage({
   },
 });
 
-export const jobScoreResume = multer({
-  storage: jobScorestorage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error(Message.INVALID_FILE_TYPE));
+export const jobScoreResume = (req, res, next) => {
+  multer({
+    storage: jobScorestorage,
+    limits: { fileSize: 100 * 1024 * 1024 }, 
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      cb(allowedTypes.includes(file.mimetype) ? null : new Error(Message.INVALID_FILE_TYPE), true);
     }
-  },
-}).fields([
-  { name: 'resume', maxCount: 1 },
-  { name: 'jobDescriptionFile', maxCount: 1 }
-])
+  }).fields([
+    { name: 'resume', maxCount: 1 },
+    { name: 'jobDescriptionFile', maxCount: 1 }
+  ])(req, res, err => {
+    const exceeded = [];
+    const maxSize = 5 * 1024 * 1024; 
 
+    if (req.files?.resume?.[0]?.size > maxSize) exceeded.push('resume');
+    if (req.files?.jobDescriptionFile?.[0]?.size > maxSize) exceeded.push('jobDescriptionFile');
+
+    if (exceeded.length) {
+      req.fileValidationError = `${exceeded.join(', ')} size exceeded for Limit is 5MB.`;
+    } else if (err) {
+      req.fileValidationError = err.message;
+    }
+
+    next();
+  });
+};
