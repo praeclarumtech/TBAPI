@@ -7,6 +7,7 @@ import city from '../models/citymodel.js';
 import states from '../models/stateModel.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
+import User from '../models/userModel.js';
 import jobApplication from '../models/jobApplicantionModel.js';
 import mongoose from 'mongoose';
 import jobs from '../models/jobModel.js';
@@ -271,7 +272,7 @@ export const getApplicantCountByAddedBy = async (
 
       query.createdAt = { $gte: start, $lte: end };
     }
-    
+
     if (currentCompanyDesignation) {
       const designations = currentCompanyDesignation
         .split(',')
@@ -318,82 +319,37 @@ export const getApplicantCountByAddedBy = async (
   }
 };
 
-
-
-
-export const getApplicantByGenderWorkNotice = async (filters) => {
-  const { gender, workPreference, noticePeriod } = filters;
-  const match = {};
-
-  // If user adds query → apply filters
-  if (gender) {
-    match.gender = { $in: gender.split(",").map((g) => g.trim()) };
-  }
-  if (workPreference) {
-    match.workPreference = { $in: workPreference.split(",").map((w) => w.trim()) };
-  }
-  if (noticePeriod) {
-    match.noticePeriod = { $in: noticePeriod.split(",").map((n) => Number(n.trim())) };
-  }
-
-  // Aggregation
-  const pipeline = [
-    { $match: match },
+export const applicantCountByRoleService = async () => {
+  const result = await User.aggregate([
     {
-      $group: {
-        _id: null,
-        gender: { $push: "$gender" },
-        workPreference: { $push: "$workPreference" },
-        noticePeriod: { $push: "$noticePeriod" },
+      $lookup: {
+        from: 'roles',
+        localField: 'roleId',
+        foreignField: '_id',
+        as: 'role',
       },
     },
-  ];
+    { $unwind: { path: '$role', preserveNullAndEmptyArrays: true } },
+    {
+      $group: {
+        _id: '$role.name',
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        role: { $ifNull: ['$_id', 'N/A'] },
+        count: 1,
+        _id: 0,
+      },
+    },
+  ]);
 
-  const result = await Applicant.aggregate(pipeline);
+  // Convert array → object
+  const roleCounts = result.reduce((acc, item) => {
+    acc[item.role] = item.count;
+    return acc;
+  }, {});
 
-  if (!result.length) {
-    return {
-      genderCounts: {},
-      workPreferenceCounts: {},
-      noticePeriodCounts: {},
-    };
-  }
-
-  const data = result[0];
-
-  // Helper to count values
-  const countValues = (arr, allOptions) => {
-    const counts = {};
-    allOptions.forEach((val) => {
-      counts[val] = arr.filter((x) => x === val).length;
-    });
-    return counts;
-  };
-
-  // Options
-  const genderOptions = ["male", "female", "other"];
-  const workPrefOptions = ["onsite", "remote", "hybrid"];
-  const noticeOptions = [15, 30, 60, 90];
-
-  // Case 1: no filters → return all
-  if (!gender && !workPreference && !noticePeriod) {
-    return {
-      genderCounts: countValues(data.gender, genderOptions),
-      workPreferenceCounts: countValues(data.workPreference, workPrefOptions),
-      noticePeriodCounts: countValues(data.noticePeriod, noticeOptions),
-    };
-  }
-
-  // Case 2: filters applied → return only filtered
-  return {
-    genderCounts: gender
-      ? countValues(data.gender, gender.split(",").map((g) => g.trim()))
-      : {},
-    workPreferenceCounts: workPreference
-      ? countValues(data.workPreference, workPreference.split(",").map((w) => w.trim()))
-      : {},
-    noticePeriodCounts: noticePeriod
-      ? countValues(data.noticePeriod, noticePeriod.split(",").map((n) => n.trim()))
-      : {},
-  };
+  return roleCounts;
 };

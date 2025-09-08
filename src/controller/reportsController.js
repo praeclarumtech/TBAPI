@@ -8,16 +8,22 @@ import {
   getApplicantCountCityAndState,
   getApplicantCountByAddedBy,
   getInterviewStageCount,
-  getApplicantByGenderWorkNotice
+  getApplicationCount,
+  applicantCountByRoleService,
 } from '../services/reportService.js';
-
 
 export const applicationOnProcessCount = async (req, res) => {
   const { calendarType, startDate, endDate } = req.query;
   const user = req.user;
 
   try {
-    const interviewStageCount = await getInterviewStageCount(calendarType, startDate, endDate, user.role, user.id);
+    const interviewStageCount = await getInterviewStageCount(
+      calendarType,
+      startDate,
+      endDate,
+      user.role,
+      user.id
+    );
 
     logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}`);
 
@@ -139,7 +145,11 @@ export const applicantCountByAddedBy = async (req, res) => {
   try {
     const { startDate, endDate, currentCompanyDesignation } = req.query;
 
-    const result = await getApplicantCountByAddedBy(startDate, endDate, currentCompanyDesignation);
+    const result = await getApplicantCountByAddedBy(
+      startDate,
+      endDate,
+      currentCompanyDesignation
+    );
 
     logger.info(`Applicant count by addedBy ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -163,28 +173,30 @@ export const applicantCountByAddedBy = async (req, res) => {
   }
 };
 
-
-
-export const getApplicationsByGenderWorkNotice = async (req, res) => {
+export const applicantCountByRole = async (req, res) => {
   try {
-    const { gender, workPreference, noticePeriod } = req.query;
+    const { role } = req.query;
 
-    const count = await getApplicantByGenderWorkNotice({
-      gender,
-      workPreference,
-      noticePeriod,
-    });
+    const result = await applicantCountByRoleService(role);
 
-    return res.status(200).json({
-      success: true,
-      count,
-      // filters: { gender, workPreference, noticePeriod },
-    });
+    logger.info(`Applicant count by role ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by role ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Error fetching applicant data",
-      error: error.message,
-    });
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by role`,
+      error
+    );
   }
 };
