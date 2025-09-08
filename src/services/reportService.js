@@ -7,6 +7,7 @@ import city from '../models/citymodel.js';
 import states from '../models/stateModel.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
+import User from '../models/userModel.js';
 import jobApplication from '../models/jobApplicantionModel.js';
 import mongoose from 'mongoose';
 import jobs from '../models/jobModel.js';
@@ -271,7 +272,7 @@ export const getApplicantCountByAddedBy = async (
 
       query.createdAt = { $gte: start, $lte: end };
     }
-    
+
     if (currentCompanyDesignation) {
       const designations = currentCompanyDesignation
         .split(',')
@@ -318,52 +319,23 @@ export const getApplicantCountByAddedBy = async (
   }
 };
 
-
-
-export const getApplicantCountByRole = async (role, user) => {
-  try {
-    if (!role) {
-      throw new Error('Role parameter is required');
-    }
-    const isVendor = user?.role === Enum.VENDOR;
-    const isClient = user?.role === Enum.CLIENT;
-    const model = isVendor || isClient ? jobApplication : Applicant;
-    const matchStage = { isDeleted: false, role: role };
-
-    const result = await model.aggregate([
-      { $match: matchStage },
-      {
-        $group: {
-          _id: null,
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    return result[0]?.count || 0;
-  } catch (error) {
-    logger.error(
-      `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
-    );
-    throw error;
-  }
-};  
-
-
-
 export const getApplicantByGenderWorkNotice = async (filters) => {
   const { gender, workPreference, noticePeriod } = filters;
   const match = {};
 
   // If user adds query → apply filters
   if (gender) {
-    match.gender = { $in: gender.split(",").map((g) => g.trim()) };
+    match.gender = { $in: gender.split(',').map((g) => g.trim()) };
   }
   if (workPreference) {
-    match.workPreference = { $in: workPreference.split(",").map((w) => w.trim()) };
+    match.workPreference = {
+      $in: workPreference.split(',').map((w) => w.trim()),
+    };
   }
   if (noticePeriod) {
-    match.noticePeriod = { $in: noticePeriod.split(",").map((n) => Number(n.trim())) };
+    match.noticePeriod = {
+      $in: noticePeriod.split(',').map((n) => Number(n.trim())),
+    };
   }
 
   // Aggregation
@@ -372,9 +344,9 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     {
       $group: {
         _id: null,
-        gender: { $push: "$gender" },
-        workPreference: { $push: "$workPreference" },
-        noticePeriod: { $push: "$noticePeriod" },
+        gender: { $push: '$gender' },
+        workPreference: { $push: '$workPreference' },
+        noticePeriod: { $push: '$noticePeriod' },
       },
     },
   ];
@@ -401,8 +373,8 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   };
 
   // Options
-  const genderOptions = ["male", "female", "other"];
-  const workPrefOptions = ["onsite", "remote", "hybrid"];
+  const genderOptions = ['male', 'female', 'other'];
+  const workPrefOptions = ['onsite', 'remote', 'hybrid'];
   const noticeOptions = [15, 30, 60, 90];
 
   // Case 1: no filters → return all
@@ -417,13 +389,57 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   // Case 2: filters applied → return only filtered
   return {
     genderCounts: gender
-      ? countValues(data.gender, gender.split(",").map((g) => g.trim()))
+      ? countValues(
+          data.gender,
+          gender.split(',').map((g) => g.trim())
+        )
       : {},
     workPreferenceCounts: workPreference
-      ? countValues(data.workPreference, workPreference.split(",").map((w) => w.trim()))
+      ? countValues(
+          data.workPreference,
+          workPreference.split(',').map((w) => w.trim())
+        )
       : {},
     noticePeriodCounts: noticePeriod
-      ? countValues(data.noticePeriod, noticePeriod.split(",").map((n) => n.trim()))
+      ? countValues(
+          data.noticePeriod,
+          noticePeriod.split(',').map((n) => n.trim())
+        )
       : {},
   };
+};
+
+export const applicantCountByRoleService = async () => {
+  const result = await User.aggregate([
+    {
+      $lookup: {
+        from: 'roles',
+        localField: 'roleId',
+        foreignField: '_id',
+        as: 'role',
+      },
+    },
+    { $unwind: { path: '$role', preserveNullAndEmptyArrays: true } },
+    {
+      $group: {
+        _id: '$role.name',
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        role: { $ifNull: ['$_id', 'N/A'] },
+        count: 1,
+        _id: 0,
+      },
+    },
+  ]);
+
+  // Convert array → object
+  const roleCounts = result.reduce((acc, item) => {
+    acc[item.role] = item.count;
+    return acc;
+  }, {});
+
+  return roleCounts;
 };
