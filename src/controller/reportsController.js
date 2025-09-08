@@ -169,22 +169,37 @@ export const getApplicationsByGenderWorkNotice = async (req, res) => {
   try {
     const { gender, workPreference, noticePeriod } = req.query;
 
-    const count = await getApplicantByGenderWorkNotice({
+    const applicants = await getApplicantByGenderWorkNotice({
       gender,
       workPreference,
       noticePeriod,
     });
 
-    return res.status(200).json({
-      success: true,
-      count,
-      // filters: { gender, workPreference, noticePeriod },
-    });
+    if (!applicants) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        "No applicants found",
+      );
+    }
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      "Applicants fetched successfully",
+      {
+        data: applicants
+      }
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Error fetching applicant data",
-      error: error.message,
-    });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching applicant data",
+      { error: error.message }
+    );
   }
 };

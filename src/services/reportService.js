@@ -353,9 +353,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   const result = await Applicant.aggregate(pipeline);
 
   if (!result.length) {
-    return {
-      message: 'No applicants found for the given criteria.',
-    };
+    return null; 
   }
 
   const data = result[0];
@@ -368,12 +366,11 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     return counts;
   };
 
-  // Options
   const genderOptions = ['male', 'female', 'other'];
   const workPrefOptions = ['onsite', 'remote', 'hybrid'];
   const noticeOptions = [15, 30, 60, 90];
 
-  // Case 1: no filters → return all
+  // Case 1: no filters → return all counts
   if (!gender && !workPreference && !noticePeriod) {
     return {
       genderCounts: countValues(data.gender, genderOptions),
@@ -382,25 +379,16 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     };
   }
 
-  // Case 2: filters applied → return only filtered
+  // Case 2: filters applied → return only filtered counts
   return {
     genderCounts: gender
-      ? countValues(
-          data.gender,
-          gender.split(',').map((g) => g.trim())
-        )
+      ? countValues(data.gender, gender.split(',').map((g) => g.trim()))
       : {},
     workPreferenceCounts: workPreference
-      ? countValues(
-          data.workPreference,
-          workPreference.split(',').map((w) => w.trim())
-        )
+      ? countValues(data.workPreference, workPreference.split(',').map((w) => w.trim()))
       : {},
     noticePeriodCounts: noticePeriod
-      ? countValues(
-          data.noticePeriod,
-          noticePeriod.split(',').map((n) => n.trim())
-        )
+      ? countValues(data.noticePeriod, noticePeriod.split(',').map((n) => Number(n.trim())))
       : {},
   };
 };
