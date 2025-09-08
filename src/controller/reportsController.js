@@ -9,7 +9,8 @@ import {
   getApplicantCountByAddedBy,
   getInterviewStageCount,
   getApplicationCount,
-  applicantCountByRoleService,
+  applicantCountByRole,
+  getApplicantByGenderWorkNotice,
 } from '../services/reportService.js';
 
 export const applicationOnProcessCount = async (req, res) => {
@@ -105,7 +106,7 @@ export const applicantSkillStatistics = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `Failed to fetch skill statistics`,
+      'Failed to fetch skill statistics',
       error
     );
   }
@@ -173,30 +174,39 @@ export const applicantCountByAddedBy = async (req, res) => {
   }
 };
 
-export const applicantCountByRole = async (req, res) => {
+export const getApplicationsByGenderWorkNotice = async (req, res) => {
   try {
-    const { role } = req.query;
+    const { gender, workPreference, noticePeriod } = req.query;
 
-    const result = await applicantCountByRoleService(role);
+    const applicants = await getApplicantByGenderWorkNotice({
+      gender,
+      workPreference,
+      noticePeriod,
+    });
 
-    logger.info(`Applicant count by role ${Message.FETCH_SUCCESSFULLY}`);
+    if (!applicants) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'No applicants found'
+      );
+    }
+
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      `Applicant count by role ${Message.FETCH_SUCCESSFULLY}`,
-      result
+      'Applicants fetched successfully',
+      { applicants }
     );
   } catch (error) {
-    logger.error(
-      `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
-    );
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} fetch applicant count by role`,
-      error
+      'Error fetching applicant data',
+      { error: error.message }
     );
   }
 };

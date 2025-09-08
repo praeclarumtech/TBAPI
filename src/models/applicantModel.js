@@ -42,11 +42,19 @@ const ApplicantSchema = new mongoose.Schema(
     rating: { type: Number, required: false },
     currentPkg: { type: Number },
     expectedPkg: { type: Number },
-    noticePeriod: { type: Number },
+    noticePeriod: {
+          type: Number,
+          required: true,
+    },
     negotiation: { type: String, required: false },
     workPreference: {
       type: String,
-      enum: [applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, ''],
+      enum: [
+        applicantEnum.REMOTE,
+        applicantEnum.HYBRID,
+        applicantEnum.ONSITE,
+        '',
+      ],
       required: false,
     },
     comment: { type: String },
@@ -61,7 +69,7 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.REJECTED,
         applicantEnum.ON_HOLD,
         applicantEnum.ONBOARDED,
-        applicantEnum.LEAVED
+        applicantEnum.LEAVED,
       ],
       default: applicantEnum.APPLIED,
       required: false,
@@ -80,10 +88,11 @@ const ApplicantSchema = new mongoose.Schema(
     },
     currentCompanyDesignation: {
       type: String,
-      required: false
+      required: false,
     },
     appliedRole: {
-      type: String, required: false,
+      type: String,
+      required: false,
     },
     practicalUrl: { type: String },
     practicalFeedback: { type: String },
@@ -91,15 +100,11 @@ const ApplicantSchema = new mongoose.Schema(
     referral: { type: String },
     resumeUrl: { type: String, required: false },
     gitHubUrl: { type: String, required: false },
-    preferredLocations: { type: String, },
-    currentCompanyName: { type: String, },
+    preferredLocations: { type: String },
+    currentCompanyName: { type: String },
     maritalStatus: {
       type: String,
-      enum: [
-        applicantEnum.SINGLE,
-        applicantEnum.MARRIED,
-        '',
-      ],
+      enum: [applicantEnum.SINGLE, applicantEnum.MARRIED, ''],
     },
     lastFollowUpDate: { type: Date },
     permanentAddress: { type: String, required: false },
@@ -112,25 +117,30 @@ const ApplicantSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     createdBy: {
       type: String,
-      enum: Object.values(Enum)
+      enum: Object.values(Enum),
     },
     updatedBy: {
       type: String,
-      enum: Object.values(Enum)
+      enum: Object.values(Enum),
     },
     addedBy: {
       type: String,
-      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, applicantEnum.GUEST],
-      required: true
+      enum: [
+        applicantEnum.MANUAL,
+        applicantEnum.CSV,
+        applicantEnum.RESUME,
+        applicantEnum.GUEST,
+      ],
+      required: true,
     },
     meta: {
       type: Object,
-      default: {}
+      default: {},
     },
     isActive: {
       type: Boolean,
       default: true,
-      required: true
+      required: true,
     },
     isFavorite: {
       type: Boolean,
@@ -138,7 +148,7 @@ const ApplicantSchema = new mongoose.Schema(
     },
     job_id: {
       type: String,
-    }
+    },
   },
   { timestamps: true }
 );

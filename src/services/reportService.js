@@ -7,7 +7,6 @@ import city from '../models/citymodel.js';
 import states from '../models/stateModel.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
-import User from '../models/userModel.js';
 import jobApplication from '../models/jobApplicantionModel.js';
 import mongoose from 'mongoose';
 import jobs from '../models/jobModel.js';
@@ -319,37 +318,73 @@ export const getApplicantCountByAddedBy = async (
   }
 };
 
-export const applicantCountByRoleService = async () => {
-  const result = await User.aggregate([
-    {
-      $lookup: {
-        from: 'roles',
-        localField: 'roleId',
-        foreignField: '_id',
-        as: 'role',
-      },
-    },
-    { $unwind: { path: '$role', preserveNullAndEmptyArrays: true } },
+export const getApplicantByGenderWorkNotice = async (filters) => {
+  const { gender, workPreference, noticePeriod } = filters;
+  const match = {};
+
+  if (gender) {
+    match.gender = { $in: gender.split(',').map((g) => g.trim()) };
+  }
+  if (workPreference) {
+    match.workPreference = {
+      $in: workPreference.split(',').map((w) => w.trim()),
+    };
+  }
+  if (noticePeriod) {
+    match.noticePeriod = {
+      $in: noticePeriod.split(',').map((n) => Number(n.trim())),
+    };
+  }
+
+  const pipeline = [
+    { $match: match },
     {
       $group: {
-        _id: '$role.name',
-        count: { $sum: 1 },
+        _id: null,
+        gender: { $push: '$gender' },
+        workPreference: { $push: '$workPreference' },
+        noticePeriod: { $push: '$noticePeriod' },
       },
     },
-    {
-      $project: {
-        role: { $ifNull: ['$_id', 'N/A'] },
-        count: 1,
-        _id: 0,
-      },
-    },
-  ]);
+  ];
 
-  // Convert array → object
-  const roleCounts = result.reduce((acc, item) => {
-    acc[item.role] = item.count;
-    return acc;
-  }, {});
+  const result = await Applicant.aggregate(pipeline);
 
-  return roleCounts;
+  if (!result.length) {
+    return null; 
+  }
+
+  const data = result[0];
+
+  const countValues = (arr, allOptions) => {
+    const counts = {};
+    allOptions.forEach((val) => {
+      counts[val] = arr.filter((x) => x === val).length;
+    });
+    return counts;
+  };
+
+  const genderOptions = ['male', 'female', 'other'];
+  const workPrefOptions = ['onsite', 'remote', 'hybrid'];
+  const noticeOptions = [15, 30, 60, 90];
+
+  if (!gender && !workPreference && !noticePeriod) {
+    return {
+      genderCounts: countValues(data.gender, genderOptions),
+      workPreferenceCounts: countValues(data.workPreference, workPrefOptions),
+      noticePeriodCounts: countValues(data.noticePeriod, noticeOptions),
+    };
+  }
+
+  return {
+    genderCounts: gender
+      ? countValues(data.gender, gender.split(',').map((g) => g.trim()))
+      : {},
+    workPreferenceCounts: workPreference
+      ? countValues(data.workPreference, workPreference.split(',').map((w) => w.trim()))
+      : {},
+    noticePeriodCounts: noticePeriod
+      ? countValues(data.noticePeriod, noticePeriod.split(',').map((n) => Number(n.trim())))
+      : {},
+  };
 };
