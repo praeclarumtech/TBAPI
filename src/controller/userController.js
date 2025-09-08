@@ -3,9 +3,15 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
-import { StatusCodes } from 'http-status-codes';
+// import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
-import { approvalRequestTemplate, accountApprovedTemplate, accountCredentialsTemplate, passwordResetRequestTemplate, resetPasswordCredentialsTemplate } from '../utils/emailTemplates/emailTemplates.js'
+import {
+  approvalRequestTemplate,
+  accountApprovedTemplate,
+  accountCredentialsTemplate,
+  passwordResetRequestTemplate,
+  resetPasswordCredentialsTemplate,
+} from '../utils/emailTemplates/emailTemplates.js';
 dotenv.config();
 import {
   createUser,
@@ -24,67 +30,101 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import User from '../models/userModel.js';
 import { Enum } from '../utils/enum.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
-import { createVendorData, findVendorByUserId, updateVendorData } from '../services/jobService.js';
+import {
+  createVendorData,
+  findVendorByUserId,
+  updateVendorData,
+} from '../services/jobService.js';
+import Role from '../models/roleModel.js';
 
-export const register = async (req, res, next) => {
-  let { userName, email, password, confirmPassword, role, isActive, lastName, firstName } = req.body;
+import { StatusCodes } from "http-status-codes";
+
+
+export const register = async (req, res) => {
+  let {
+    userName,
+    email,
+    password,
+    confirmPassword,
+    role,  // string from request body
+    isActive,
+    lastName,
+    firstName,
+  } = req.body;
+
   try {
+    // ✅ Check if user exists
     const existingUser = await getUser({ email });
-
     if (existingUser) {
-      logger.warn(`User ${Message.ALREADY_EXIST}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `User ${Message.ALREADY_EXIST}`
+        `User already exists`
       );
     }
 
-    const createdByAdmin = req.user?.role === Enum.ADMIN
-    if (createdByAdmin || role === Enum.GUEST) {
-      logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
-      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive, lastName, firstName });
-      if (role === Enum.VENDOR || role === Enum.CLIENT) {
-        const vendorData = { userId: newUser._id, ...req.body, type: newUser.role }
-        const newVendor = await createVendorData(vendorData)
-        await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
-      }
-      // const htmlContent = accountCredentialsTemplate({ email, password })
-      // await sendingEmail({
-      //   email_to: [email],
-      //   subject: 'Your TalentBox Account Credentials',
-      //   description: htmlContent,
-      // });
-    } else {
-      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive: false, lastName, firstName });
-      if (role === Enum.VENDOR || role === Enum.CLIENT) {
-        const vendorData = { userId: newUser._id, type: newUser.role }
-        const newVendor = await createVendorData(vendorData)
-        await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
-        const htmlBlock = approvalRequestTemplate({ userName, email, role })
+    // ✅ Get the Role document from role string
+    const roleDoc = await Role.findOne({ name: role.toLowerCase() }); 
+    if (!roleDoc) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Invalid role`
+      );
+    }
+
+    const createdByAdmin = req.user?.role === "admin"; // lowercase check
+
+    // ✅ Create new user with only roleId
+    const newUser = await createUser({
+      userName,
+      email,
+      password,
+      confirmPassword,
+      roleId: roleDoc._id, // store only ObjectId
+      isActive: createdByAdmin ? isActive : false,
+      lastName,
+      firstName,
+    });
+
+    // ✅ If role is vendor/client → create Vendor profile
+    if (role.toLowerCase() === "vendor" || role.toLowerCase() === "client") {
+      const vendorData = { userId: newUser._id, type: role.toLowerCase() };
+      const newVendor = await createVendorData(vendorData);
+
+      await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
+
+      // Notify HR if not admin
+      if (!createdByAdmin) {
+        const htmlBlock = approvalRequestTemplate({
+          userName,
+          email,
+          role: role.toLowerCase(),
+        });
+
         await sendingEmail({
           email_to: [process.env.HR_EMAIL],
-          subject: 'New User Registration - Approval Required',
+          subject: "New User Registration - Approval Required",
           description: htmlBlock,
         });
       }
     }
 
-    logger.info(Message.REGISTERED_SUCCESSFULLY);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      Message.REGISTERED_SUCCESSFULLY
+      "User registered successfully"
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} register.`);
+    console.error(error);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} register.`
+      "Failed to register"
     );
   }
 };
@@ -92,7 +132,6 @@ export const register = async (req, res, next) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-
     const isEmail = /\S+@\S+\.\S+/.test(email);
     const user = await getUser(isEmail ? { email } : { userName: email });
 
@@ -114,6 +153,7 @@ export const login = async (req, res) => {
         Message.UNDER_APPROVAL
       );
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       logger.info(Message.INVALID_CREDENTIALS);
@@ -125,8 +165,15 @@ export const login = async (req, res) => {
       );
     }
 
+    // ✅ Populate role before creating token
+    const userWithRole = await User.findById(user._id).populate("roleId");
+
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      {
+        id: userWithRole._id,
+        role: userWithRole.roleId?.name || "N/A",
+        accessModules: userWithRole.roleId?.accessModules || [],
+      },
       process.env.JWT_SECRET,
       { expiresIn: process.env.EXPIRES_IN }
     );
@@ -138,10 +185,10 @@ export const login = async (req, res) => {
       true,
       StatusCodes.OK,
       Message.USER_LOGGED_IN_SUCCESSFULLY,
-      token
+      { token, user: userWithRole } // send token + user profile
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} login.`);
+    logger.error(`${Message.FAILED_TO} login.`, error);
     return HandleResponse(
       res,
       false,
@@ -197,7 +244,7 @@ export const listOfUsers = async (req, res) => {
       sort: { createdAt: -1 },
       populate: {
         path: 'vendorProfileId',
-      }
+      },
     });
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -222,7 +269,11 @@ export const getProfileByToken = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await getUserById(userId);
+    const user = await User.findById(userId).populate({
+      path: 'roleId',
+      select: 'name accessModules status',
+    });
+
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -233,16 +284,32 @@ export const getProfileByToken = async (req, res) => {
       );
     }
 
+    const responseData = {
+      _id: user._id,
+      userName: user.userName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.roleId?.name || 'N/A',
+      roleId: user.roleId?._id || 'N/A',
+      roleStatus: user.roleId?.status || 'inactive',
+      accessModules: user.roleId?.accessModules || [],
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+    console.log('Populated roleId:', JSON.stringify(user.roleId, null, 2));
+
     logger.info(`User profile ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `User profile ${Message.FETCH_SUCCESSFULLY}`,
-      user
+      responseData
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch user profile.`);
+    logger.error(`${Message.FAILED_TO} fetch user profile.`, error);
     return HandleResponse(
       res,
       false,
@@ -255,7 +322,12 @@ export const getProfileByToken = async (req, res) => {
 export const viewProfileById = async (req, res) => {
   try {
     const userId = req.params.id;
-    const user = await getUserById(userId);
+
+    const user = await User.findById(userId).populate({
+      path: 'roleId',
+      select: 'name accessModules status',
+    });
+
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -266,21 +338,36 @@ export const viewProfileById = async (req, res) => {
       );
     }
 
+    const responseData = {
+      _id: user._id,
+      userName: user.userName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.roleId?.name || 'N/A',
+      roleId: user.roleId?._id || 'N/A',
+      roleStatus: user.roleId?.status || 'inactive',
+      accessModules: user.roleId?.accessModules || [],
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
     logger.info(`Profile ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `Profile ${Message.FETCH_BY_ID}`,
-      user
+      responseData
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} view prfofile by Id.`);
+    logger.error(`${Message.FAILED_TO} view profile by Id.`, error);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} view prfofile by Id.`
+      `${Message.FAILED_TO} view profile by Id.`
     );
   }
 };
@@ -288,8 +375,13 @@ export const viewProfileById = async (req, res) => {
 export const updateProfile = (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      logger.info(Message.INVALID_FILE_TYPE)
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, Message.INVALID_FILE_TYPE);
+      logger.info(Message.INVALID_FILE_TYPE);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        Message.INVALID_FILE_TYPE
+      );
     }
 
     try {
@@ -328,7 +420,7 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
-        isActive
+        isActive,
       };
 
       if (password) {
@@ -366,14 +458,22 @@ export const updateProfile = (req, res) => {
       };
 
       Object.keys(vendorUpdateData).forEach(
-        (key) => (vendorUpdateData[key] === undefined || vendorUpdateData[key] === null) && delete vendorUpdateData[key]
+        (key) =>
+          (vendorUpdateData[key] === undefined ||
+            vendorUpdateData[key] === null) &&
+          delete vendorUpdateData[key]
       );
       let updatedVendor = null;
 
       if (Object.keys(vendorUpdateData).length > 0) {
-        const existingVendor = await findVendorByUserId({ userId: updatedUser._id })
+        const existingVendor = await findVendorByUserId({
+          userId: updatedUser._id,
+        });
         if (existingVendor) {
-          updatedVendor = await updateVendorData(updatedUser._id, vendorUpdateData)
+          updatedVendor = await updateVendorData(
+            updatedUser._id,
+            vendorUpdateData
+          );
         } else {
           return HandleResponse(
             res,
@@ -389,7 +489,7 @@ export const updateProfile = (req, res) => {
         res,
         true,
         StatusCodes.OK,
-        `Profile ${Message.UPDATED_SUCCESSFULLY}`,
+        `Profile ${Message.UPDATED_SUCCESSFULLY}`
       );
     } catch (error) {
       logger.error(`${Message.FAILED_TO} update profile.`, error);
@@ -423,8 +523,12 @@ export const sendEmail = async (req, res) => {
 
     // const data = await sendingEmail({ email, newOtp });
 
-    const htmlContent = passwordResetRequestTemplate({ email })
-    const data = await sendingEmail({ email_to: [process.env.HR_EMAIL], subject: 'Password Reset Request – TalentBox', description: htmlContent });
+    const htmlContent = passwordResetRequestTemplate({ email });
+    const data = await sendingEmail({
+      email_to: [process.env.HR_EMAIL],
+      subject: 'Password Reset Request – TalentBox',
+      description: htmlContent,
+    });
     if (!data) {
       logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -439,7 +543,7 @@ export const sendEmail = async (req, res) => {
       res,
       true,
       StatusCodes.CREATED,
-      Message.MAIL_SENT,
+      Message.MAIL_SENT
       // `OTP:-${newOtp}, will be expire in:${expireOtp}`
     );
   } catch (error) {
@@ -525,8 +629,15 @@ export const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUserById(email, { password: hashedPassword });
 
-    const htmlContent = resetPasswordCredentialsTemplate({ email, password: newPassword })
-    const data = await sendingEmail({ email_to: [email], subject: 'Your TalentBox Password Has Been Reset', description: htmlContent });
+    const htmlContent = resetPasswordCredentialsTemplate({
+      email,
+      password: newPassword,
+    });
+    const data = await sendingEmail({
+      email_to: [email],
+      subject: 'Your TalentBox Password Has Been Reset',
+      description: htmlContent,
+    });
     if (!data) {
       logger.warn(`${Message.FAILED_TO} send new password to user`);
       return HandleResponse(
@@ -536,7 +647,7 @@ export const forgotPassword = async (req, res) => {
         `${Message.FAILED_TO} send new password to user`
       );
     }
-    logger.info(`New password ${Message.SENT_SUCCESSFULLY} to user.`)
+    logger.info(`New password ${Message.SENT_SUCCESSFULLY} to user.`);
     logger.info(`Password ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -606,7 +717,7 @@ export const updateStatus = async (req, res) => {
   try {
     const userId = req.params.id;
     const { isActive, isDeleted } = req.body;
-    const existingUser = await getUser({ _id: userId })
+    const existingUser = await getUser({ _id: userId });
     if (!existingUser) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -628,13 +739,15 @@ export const updateStatus = async (req, res) => {
       );
     }
 
-    const isVendor = await findVendorByUserId({ userId: existingUser._id })
+    const isVendor = await findVendorByUserId({ userId: existingUser._id });
     if (isVendor) {
       await updateVendorData(userId, req.body);
     }
 
     if (existingUser.isActive === false && isActive === true) {
-      const htmlBlock = accountApprovedTemplate({ userName: existingUser.userName })
+      const htmlBlock = accountApprovedTemplate({
+        userName: existingUser.userName,
+      });
       await sendingEmail({
         email_to: [existingUser.email],
         subject: 'Access Granted - Welcome to TalentBox',

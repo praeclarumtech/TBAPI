@@ -8,7 +8,6 @@ import {
   getApplicantCountCityAndState,
   getApplicantCountByAddedBy,
   getInterviewStageCount,
-  getApplicantCountByRole
 } from '../services/reportService.js';
 
 
@@ -160,6 +159,32 @@ export const applicantCountByAddedBy = async (req, res) => {
       `${Message.FAILED_TO} fetch applicant count by addedBy`,
       error
     );
+  }
+};
+
+
+
+export const getApplicationsByGenderWorkNotice = async (req, res) => {
+  try {
+    const { gender, workPreference, noticePeriod } = req.query;
+
+    const count = await getApplicantByGenderWorkNotice({
+      gender,
+      workPreference,
+      noticePeriod,
+    });
+
+    return res.status(200).json({
+      success: true,
+      count,
+      // filters: { gender, workPreference, noticePeriod },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching applicant data",
+      error: error.message,
+    });
   }
 };
 

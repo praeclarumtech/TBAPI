@@ -34,6 +34,9 @@ import { getAllusers } from '../services/userService.js';
 
 export const scoreResume = async (req, res) => {
   try {
+    if (req.fileValidationError) {
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, req.fileValidationError);
+    }
     if (!req.files || (!req.files.resume && !req.files.jobDescriptionFile)) {
       logger.warn(Message.UPLOAD_FAILED);
       return HandleResponse(
@@ -197,6 +200,7 @@ export const addJobApplication = async (req, res) => {
     );
   }
 };
+
 export const updateApplicantionStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;

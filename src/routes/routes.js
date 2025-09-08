@@ -9,6 +9,7 @@ import dashboardRouter from './route/dashboardRoute.js';
 import countryRouter from './route/commonRoute.js';
 import reportsRouter from './route/reportsRoute.js';
 import appliedRoleRouter from './route/appliedRoleRoute.js'
+import RoleRouter from './route/roleRoutes.js'
 import applicantEmailTempletRouter from './route/emailTemplateRoute.js'
 import designationRouter from './route/designationRoute.js'
 import duplicateRecordRouter from './route/duplicateRecordRoute.js'
@@ -28,6 +29,7 @@ router.use('/degree', degreeRoute);
 router.use('/applicants', applicantRouter);
 router.use('/job', jobsRouter);
 router.use('/vendor', vendorRoute);
+router.use('/role', RoleRouter);
 router.use('/dashboard/applicant', dashboardRouter);
 router.use('/reports/applicants', reportsRouter);
 router.use('/appliedRole', appliedRoleRouter);

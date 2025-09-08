@@ -5,7 +5,8 @@ import {
     applicantSkillStatistics,
     applicantCountByCityAndState,
     applicantCountByAddedBy,
-    applicantCountByRole
+    applicantCountByRole,
+    getApplicationsByGenderWorkNotice
 } from '../../controller/reportsController.js';
 import { authorization } from '../../helpers/userMiddleware.js';
 
@@ -17,6 +18,8 @@ router.get('/applicantCountByCityAndState',authorization, applicantCountByCityAn
 router.get('/applicantCountByAddedBy',authorization, applicantCountByAddedBy);
 
 router.get('/getApplicationsByDate', authorization, getApplicationsByDate);
+router.get('/getApplicationsByGenderWorkNotice', authorization, getApplicationsByGenderWorkNotice);
+
 
 router.get('/applicantCountByRole', authorization, applicantCountByRole);
 
