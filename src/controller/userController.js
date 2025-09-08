@@ -45,7 +45,7 @@ export const register = async (req, res, next) => {
     if (createdByAdmin || role === Enum.GUEST) {
       logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
       const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive, lastName, firstName });
-      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+      if ([Enum.VENDOR , Enum.CLIENT].includes(role)) {
         const vendorData = { userId: newUser._id, ...req.body, type: newUser.role }
         const newVendor = await createVendorData(vendorData)
         await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
@@ -58,7 +58,7 @@ export const register = async (req, res, next) => {
       // });
     } else {
       const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive: false, lastName, firstName });
-      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+      if ([Enum.VENDOR , Enum.CLIENT].includes(role)) {
         const vendorData = { userId: newUser._id, type: newUser.role }
         const newVendor = await createVendorData(vendorData)
         await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
