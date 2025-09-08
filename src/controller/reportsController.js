@@ -189,9 +189,7 @@ export const getApplicationsByGenderWorkNotice = async (req, res) => {
       true,
       StatusCodes.OK,
       "Applicants fetched successfully",
-      {
-        data: applicants
-      }
+      {applicants}
     );
   } catch (error) {
     return HandleResponse(
