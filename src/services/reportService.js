@@ -317,3 +317,33 @@ export const getApplicantCountByAddedBy = async (
     throw error;
   }
 };
+
+
+export const getApplicantCountByRole = async (role, user) => {
+  try {
+    if (!role) {
+      throw new Error('Role parameter is required');
+    }
+    const isVendor = user?.role === Enum.VENDOR;
+    const isClient = user?.role === Enum.CLIENT;
+    const model = isVendor || isClient ? jobApplication : Applicant;
+    const matchStage = { isDeleted: false, role: role };
+
+    const result = await model.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: null,
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return result[0]?.count || 0;
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
+    );
+    throw error;
+  }
+};  

@@ -8,6 +8,7 @@ import {
   getApplicantCountCityAndState,
   getApplicantCountByAddedBy,
   getInterviewStageCount,
+  getApplicantCountByRole
 } from '../services/reportService.js';
 
 
@@ -157,6 +158,33 @@ export const applicantCountByAddedBy = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch applicant count by addedBy`,
+      error
+    );
+  }
+};
+
+
+export const applicantCountByRole = async (req, res) => {
+  try{
+    const {role}=req.query;
+    const result = await getApplicantCountByRole(role, req.user);
+    logger.info(`Applicant count by role ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by role ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by role`,
       error
     );
   }
