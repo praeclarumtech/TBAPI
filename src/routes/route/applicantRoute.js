@@ -28,8 +28,9 @@ import {
   updateManyApplicantsValidation,
 } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
-import { authorization } from '../../helpers/userMiddleware.js'
+import { authorization, verifyRoles } from '../../helpers/userMiddleware.js'
 import { uploadAttachments } from '../../helpers/multer.js';
+import {Enum} from '../../utils/enum.js';
 const router = express.Router();
 
 router.post('/addApplicant', authorization, validator.body(applicantValidation), addApplicant);
@@ -58,7 +59,7 @@ router.delete('/deleteApplicant/:id', authorization, deleteApplicant);
 router.post('/upload-resume', authorization, validator.body(updateApplicantValidation), uploadResumeAndCreateApplicant);
 
 // import export applicant
-router.post('/exportCsv', authorization, exportApplicantCsv);
+router.post('/exportCsv', authorization, verifyRoles([Enum.ADMIN]), exportApplicantCsv);
 router.post('/importCsv', authorization, importApplicantCsv);
 router.delete('/deleteManyApplicants', authorization, deleteManyApplicants);
 
