@@ -9,7 +9,6 @@ import {
   getApplicantCountByAddedBy,
   getInterviewStageCount,
   getApplicationCount,
-  applicantCountByRole,
   getApplicantByGenderWorkNotice,
 } from '../services/reportService.js';
 
