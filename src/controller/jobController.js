@@ -16,7 +16,7 @@ import { getAllusers, getUser } from '../services/userService.js';
 import { Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
 import { sendingEmail } from "../utils/email.js";
-import {jobCreatedTemplate} from "../utils/emailTemplates/emailTemplates.js"
+import {jobCreatedTemplate} from "../utils/emailTemplates/emailTemplates.js";
 
 export const createJob = async (req, res) => {
   try {
