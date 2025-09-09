@@ -30,7 +30,7 @@ const router = express.Router();
 router.post('/register', validator.body(registerValidation), register);
 
 //for admin only to create users
-router.post('/create', authorization, verifyRoles([Enum.ROLES.ADMIN]), validateUserRegistration , register);
+router.post('/create', authorization, verifyRoles([Enum.ADMIN]), validateUserRegistration , register);
 
 router.post('/login', validator.body(loginValidation), login);
 
