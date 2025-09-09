@@ -271,21 +271,6 @@ export const getApplicantCountByAddedBy = async (
 
       query.createdAt = { $gte: start, $lte: end };
     }
-    
-    if (currentCompanyDesignation) {
-      const designations = currentCompanyDesignation
-        .split(',')
-        .map((d) => d.trim());
-      query.currentCompanyDesignation = { $in: designations };
-    }
-
-    if (currentCompanyDesignation) {
-      const count = await Applicant.countDocuments({
-        ...query,
-        addedBy: { $nin: [null, ''] },
-      });
-      return count;
-    }
 
     if (currentCompanyDesignation) {
       const designations = currentCompanyDesignation
@@ -337,7 +322,6 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   const { gender, workPreference, noticePeriod } = filters;
   const match = {};
 
-  // If user adds query → apply filters
   if (gender) {
     match.gender = { $in: gender.split(',').map((g) => g.trim()) };
   }
@@ -352,7 +336,6 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     };
   }
 
-  // Aggregation
   const pipeline = [
     { $match: match },
     {
@@ -385,7 +368,6 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   const workPrefOptions = ['onsite', 'remote', 'hybrid'];
   const noticeOptions = [15, 30, 60, 90];
 
-  // Case 1: no filters → return all counts
   if (!gender && !workPreference && !noticePeriod) {
     return {
       genderCounts: countValues(data.gender, genderOptions),
@@ -394,7 +376,6 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     };
   }
 
-  // Case 2: filters applied → return only filtered counts
   return {
     genderCounts: gender
       ? countValues(data.gender, gender.split(',').map((g) => g.trim()))

@@ -52,9 +52,9 @@ export const register = async (req, res, next) => {
       }
       // const htmlContent = accountCredentialsTemplate({ email, password })
       // await sendingEmail({
-      //   email_to: [email],
-      //   subject: 'Your TalentBox Account Credentials',
-      //   description: htmlContent,
+      //   email_to: [email],
+      //   subject: 'Your TalentBox Account Credentials',
+      //   description: htmlContent,
       // });
     } else {
       const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive: false, lastName, firstName });
