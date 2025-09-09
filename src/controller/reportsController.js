@@ -8,16 +8,23 @@ import {
   getApplicantCountCityAndState,
   getApplicantCountByAddedBy,
   getInterviewStageCount,
-  getApplicantByGenderWorkNotice
+  getApplicationCount,
+  applicantCountByRole,
+  getApplicantByGenderWorkNotice,
 } from '../services/reportService.js';
-
 
 export const applicationOnProcessCount = async (req, res) => {
   const { calendarType, startDate, endDate } = req.query;
   const user = req.user;
 
   try {
-    const interviewStageCount = await getInterviewStageCount(calendarType, startDate, endDate, user.role, user.id);
+    const interviewStageCount = await getInterviewStageCount(
+      calendarType,
+      startDate,
+      endDate,
+      user.role,
+      user.id
+    );
 
     logger.info(`Report data ${Message.FETCH_SUCCESSFULLY}`);
 
@@ -99,7 +106,7 @@ export const applicantSkillStatistics = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `Failed to fetch skill statistics`,
+      'Failed to fetch skill statistics',
       error
     );
   }
@@ -139,7 +146,11 @@ export const applicantCountByAddedBy = async (req, res) => {
   try {
     const { startDate, endDate, currentCompanyDesignation } = req.query;
 
-    const result = await getApplicantCountByAddedBy(startDate, endDate, currentCompanyDesignation);
+    const result = await getApplicantCountByAddedBy(
+      startDate,
+      endDate,
+      currentCompanyDesignation
+    );
 
     logger.info(`Applicant count by addedBy ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -163,8 +174,6 @@ export const applicantCountByAddedBy = async (req, res) => {
   }
 };
 
-
-
 export const getApplicationsByGenderWorkNotice = async (req, res) => {
   try {
     const { gender, workPreference, noticePeriod } = req.query;
@@ -180,7 +189,7 @@ export const getApplicationsByGenderWorkNotice = async (req, res) => {
         res,
         false,
         StatusCodes.NOT_FOUND,
-        "No applicants found",
+        'No applicants found'
       );
     }
 
@@ -188,15 +197,15 @@ export const getApplicationsByGenderWorkNotice = async (req, res) => {
       res,
       true,
       StatusCodes.OK,
-      "Applicants fetched successfully",
-      {applicants}
+      'Applicants fetched successfully',
+      { applicants }
     );
   } catch (error) {
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      "Error fetching applicant data",
+      'Error fetching applicant data',
       { error: error.message }
     );
   }
