@@ -271,6 +271,21 @@ export const getApplicantCountByAddedBy = async (
 
       query.createdAt = { $gte: start, $lte: end };
     }
+    
+    if (currentCompanyDesignation) {
+      const designations = currentCompanyDesignation
+        .split(',')
+        .map((d) => d.trim());
+      query.currentCompanyDesignation = { $in: designations };
+    }
+
+    if (currentCompanyDesignation) {
+      const count = await Applicant.countDocuments({
+        ...query,
+        addedBy: { $nin: [null, ''] },
+      });
+      return count;
+    }
 
     if (currentCompanyDesignation) {
       const designations = currentCompanyDesignation
