@@ -271,7 +271,7 @@ export const getApplicantCountByAddedBy = async (
 
       query.createdAt = { $gte: start, $lte: end };
     }
-    
+
     if (currentCompanyDesignation) {
       const designations = currentCompanyDesignation
         .split(',')
@@ -318,33 +318,32 @@ export const getApplicantCountByAddedBy = async (
   }
 };
 
-
-
-
 export const getApplicantByGenderWorkNotice = async (filters) => {
   const { gender, workPreference, noticePeriod } = filters;
   const match = {};
 
-  // If user adds query → apply filters
   if (gender) {
-    match.gender = { $in: gender.split(",").map((g) => g.trim()) };
+    match.gender = { $in: gender.split(',').map((g) => g.trim()) };
   }
   if (workPreference) {
-    match.workPreference = { $in: workPreference.split(",").map((w) => w.trim()) };
+    match.workPreference = {
+      $in: workPreference.split(',').map((w) => w.trim()),
+    };
   }
   if (noticePeriod) {
-    match.noticePeriod = { $in: noticePeriod.split(",").map((n) => Number(n.trim())) };
+    match.noticePeriod = {
+      $in: noticePeriod.split(',').map((n) => Number(n.trim())),
+    };
   }
 
-  // Aggregation
   const pipeline = [
     { $match: match },
     {
       $group: {
         _id: null,
-        gender: { $push: "$gender" },
-        workPreference: { $push: "$workPreference" },
-        noticePeriod: { $push: "$noticePeriod" },
+        gender: { $push: '$gender' },
+        workPreference: { $push: '$workPreference' },
+        noticePeriod: { $push: '$noticePeriod' },
       },
     },
   ];
@@ -352,16 +351,11 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   const result = await Applicant.aggregate(pipeline);
 
   if (!result.length) {
-    return {
-      genderCounts: {},
-      workPreferenceCounts: {},
-      noticePeriodCounts: {},
-    };
+    return null; 
   }
 
   const data = result[0];
 
-  // Helper to count values
   const countValues = (arr, allOptions) => {
     const counts = {};
     allOptions.forEach((val) => {
@@ -370,12 +364,10 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     return counts;
   };
 
-  // Options
-  const genderOptions = ["male", "female", "other"];
-  const workPrefOptions = ["onsite", "remote", "hybrid"];
+  const genderOptions = ['male', 'female', 'other'];
+  const workPrefOptions = ['onsite', 'remote', 'hybrid'];
   const noticeOptions = [15, 30, 60, 90];
 
-  // Case 1: no filters → return all
   if (!gender && !workPreference && !noticePeriod) {
     return {
       genderCounts: countValues(data.gender, genderOptions),
@@ -384,16 +376,15 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     };
   }
 
-  // Case 2: filters applied → return only filtered
   return {
     genderCounts: gender
-      ? countValues(data.gender, gender.split(",").map((g) => g.trim()))
+      ? countValues(data.gender, gender.split(',').map((g) => g.trim()))
       : {},
     workPreferenceCounts: workPreference
-      ? countValues(data.workPreference, workPreference.split(",").map((w) => w.trim()))
+      ? countValues(data.workPreference, workPreference.split(',').map((w) => w.trim()))
       : {},
     noticePeriodCounts: noticePeriod
-      ? countValues(data.noticePeriod, noticePeriod.split(",").map((n) => n.trim()))
+      ? countValues(data.noticePeriod, noticePeriod.split(',').map((n) => Number(n.trim())))
       : {},
   };
 };

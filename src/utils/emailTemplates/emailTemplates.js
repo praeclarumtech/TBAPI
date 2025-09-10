@@ -88,6 +88,7 @@ export const accountApprovedTemplate = ({ userName }) => `
   </div>
 `;
 
+
 export const accountCredentialsTemplate = ({ email, password }) => `
   <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
     <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 30px;">
