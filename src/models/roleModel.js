@@ -15,10 +15,12 @@ const roleSchema = new mongoose.Schema(
       default: ['dashboard'],
     },
     status: {
-      type: String,
-      required: true,
-      enum: ['active', 'inactive'],
-      default: 'active'
+      type:Boolean,
+      default:true
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }
