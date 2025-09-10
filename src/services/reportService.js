@@ -393,7 +393,7 @@ export const getApplicantCountByRole = async (role) => {
   try {
     const matchStage = { isActive: true };
 
-    if (role) {
+    if (role && role !== 'all') {
       matchStage.createdBy = role;
     } 
 
