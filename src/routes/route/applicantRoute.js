@@ -20,7 +20,9 @@ import {
   hardDeleteImportedApplicant,
   updateStatusImportApplicant,
   activeApplicant,
-  inActiveApplicant
+  inActiveApplicant,
+  saveUserFilter,
+  getUserFilter,
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
@@ -39,6 +41,10 @@ router.post('/applicant-add-qr-code', uploadAttachments, addApplicant);
 router.put('/applicant-edit-qr-code/:id',uploadAttachments, updateApplicant);
 
 router.get('/viewAllApplicant', viewAllApplicant);
+
+router.post('/userFilter', saveUserFilter);
+router.get('/userFilter/:userId', getUserFilter);
+
 router.get('/viewApplicant/:id', viewApplicant);
 router.get('/viewResumeAndCsvApplicant', authorization, getResumeAndCsvApplicants);
 router.put('/updateApplicant/:id', authorization, validator.body(updateApplicantValidation), updateApplicant);

@@ -16,3 +16,4 @@ router.put('/update/:id', updateRole);
 router.delete('/delete/:id', deleteRole);
 
 export default router;
+
