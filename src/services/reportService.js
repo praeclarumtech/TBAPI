@@ -398,8 +398,6 @@ export const getApplicantCountByRole = async (role) => {
     } 
 
     const result = await Applicant.countDocuments(matchStage);
-
-    console.log("---------------------", result);
  
     return result || 0;
   } catch (error) {
