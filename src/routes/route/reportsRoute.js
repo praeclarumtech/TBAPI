@@ -16,7 +16,7 @@ router.get('/applicationOnProcessCount', authorization, applicationOnProcessCoun
 router.post('/applicantSkillStatistics', authorization, applicantSkillStatistics);
 router.get('/applicantCountByCityAndState',authorization, applicantCountByCityAndState);
 router.get('/applicantCountByAddedBy',authorization, applicantCountByAddedBy);
-router.get('/applicantCountByRole', authorization, applicantCountByRole);
+router.get('/applicantCountByRole', applicantCountByRole);
 router.get('/getApplicationsByDate', authorization, getApplicationsByDate);
 router.get('/getApplicationsByGenderWorkNotice', authorization, getApplicationsByGenderWorkNotice);
 

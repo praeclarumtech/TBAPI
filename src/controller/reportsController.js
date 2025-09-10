@@ -177,7 +177,7 @@ export const applicantCountByAddedBy = async (req, res) => {
 export const applicantCountByRole = async (req, res) => {
   try{
     const {role}=req.query;
-    const result = await getApplicantCountByRole(role, req.user);
+    const result = await getApplicantCountByRole(role);
     logger.info(`Applicant count by role ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,

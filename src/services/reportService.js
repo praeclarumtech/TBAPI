@@ -389,27 +389,19 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   };
 };
 
-export const getApplicantCountByRole = async (role, user) => {
+export const getApplicantCountByRole = async (role) => {
   try {
-    if (!role) {
-      throw new Error('Role parameter is required');
-    }
-    const isVendor = user?.role === Enum.VENDOR;
-    const isClient = user?.role === Enum.CLIENT;
-    const model = isVendor || isClient ? jobApplication : Applicant;
-    const matchStage = { isDeleted: false, role: role };
+    const matchStage = { isActive: true };
+
+    if (role) {
+      matchStage.createdBy = role;
+    } 
+
+    const result = await Applicant.countDocuments(matchStage);
+
+    console.log("---------------------", result);
  
-    const result = await model.aggregate([
-      { $match: matchStage },
-      {
-        $group: {
-          _id: null,
-          count: { $sum: 1 },
-        },
-      },
-    ]);
- 
-    return result[0]?.count || 0;
+    return result || 0;
   } catch (error) {
     logger.error(
       `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
