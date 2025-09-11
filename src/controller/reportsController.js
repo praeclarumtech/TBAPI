@@ -9,6 +9,7 @@ import {
   getApplicantCountByAddedBy,
   getInterviewStageCount,
   getApplicationCount,
+  getApplicantCountByDesignationCounts,
   getApplicantByGenderWorkNotice,
 } from '../services/reportService.js';
 
@@ -172,6 +173,37 @@ export const applicantCountByAddedBy = async (req, res) => {
     );
   }
 };
+
+export const applicantCountByDesignation = async (req, res) => {
+  try {
+    const { designation } = req.query; // optional query param
+    const user = req.user;
+
+    const result = await getApplicantCountByDesignationCounts(designation, user);
+
+    logger.info(`Applicant count by designation ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by designation ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by designation: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by designation`,
+      error
+    );
+  }
+};
+
+
 
 export const getApplicationsByGenderWorkNotice = async (req, res) => {
   try {
