@@ -5,7 +5,13 @@ import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
-import { approvalRequestTemplate, accountApprovedTemplate, accountCredentialsTemplate, passwordResetRequestTemplate, resetPasswordCredentialsTemplate } from '../utils/emailTemplates/emailTemplates.js'
+import {
+  approvalRequestTemplate,
+  accountApprovedTemplate,
+  accountCredentialsTemplate,
+  passwordResetRequestTemplate,
+  resetPasswordCredentialsTemplate,
+} from '../utils/emailTemplates/emailTemplates.js';
 dotenv.config();
 import {
   createUser,
@@ -24,10 +30,23 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import User from '../models/userModel.js';
 import { Enum } from '../utils/enum.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
-import { createVendorData, findVendorByUserId, updateVendorData } from '../services/jobService.js';
+import {
+  createVendorData,
+  findVendorByUserId,
+  updateVendorData,
+} from '../services/jobService.js';
 
 export const register = async (req, res, next) => {
-  let { userName, email, password, confirmPassword, role, isActive, lastName, firstName } = req.body;
+  let {
+    userName,
+    email,
+    password,
+    confirmPassword,
+    role,
+    isActive,
+    lastName,
+    firstName,
+  } = req.body;
   try {
     const existingUser = await getUser({ email });
 
@@ -41,28 +60,54 @@ export const register = async (req, res, next) => {
       );
     }
 
-    const createdByAdmin = req.user?.role === Enum.ADMIN
+    const createdByAdmin = req.user?.role === Enum.ADMIN;
     if (createdByAdmin || role === Enum.GUEST) {
-      logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`)
-      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive, lastName, firstName });
-      if ([Enum.VENDOR , Enum.CLIENT].includes(role)) {
-        const vendorData = { userId: newUser._id, ...req.body, type: newUser.role }
-        const newVendor = await createVendorData(vendorData)
-        await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
+      logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`);
+      const newUser = await createUser({
+        userName,
+        email,
+        password,
+        confirmPassword,
+        role,
+        isActive,
+        lastName,
+        firstName,
+      });
+      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+        const vendorData = {
+          userId: newUser._id,
+          ...req.body,
+          type: newUser.role,
+        };
+        const newVendor = await createVendorData(vendorData);
+        await updateProfileById(newUser._id, {
+          vendorProfileId: newVendor._id,
+        });
       }
       // const htmlContent = accountCredentialsTemplate({ email, password })
       // await sendingEmail({
-      //   email_to: [email],
-      //   subject: 'Your TalentBox Account Credentials',
-      //   description: htmlContent,
+      //   email_to: [email],
+      //   subject: 'Your TalentBox Account Credentials',
+      //   description: htmlContent,
       // });
     } else {
-      const newUser = await createUser({ userName, email, password, confirmPassword, role, isActive: false, lastName, firstName });
-      if ([Enum.VENDOR , Enum.CLIENT].includes(role)) {
-        const vendorData = { userId: newUser._id, type: newUser.role }
-        const newVendor = await createVendorData(vendorData)
-        await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
-        const htmlBlock = approvalRequestTemplate({ userName, email, role })
+      const newUser = await createUser({
+        userName,
+        email,
+        password,
+        confirmPassword,
+        role,
+        isActive: false,
+        lastName,
+        firstName,
+      });
+      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+        const vendorData = { userId: newUser._id, type: newUser.role };
+        const newVendor = await createVendorData(vendorData);
+        await updateProfileById(newUser._id, {
+          vendorProfileId: newVendor._id,
+        });
+        const htmlBlock = approvalRequestTemplate({ userName, email, role });
         await sendingEmail({
           email_to: [process.env.HR_EMAIL],
           subject: 'New User Registration - Approval Required',
@@ -157,6 +202,7 @@ export const login = async (req, res) => {
     );
   }
 };
+
 export const listOfUsers = async (req, res) => {
   try {
     const { search, role } = req.query;
@@ -203,7 +249,7 @@ export const listOfUsers = async (req, res) => {
       sort: { createdAt: -1 },
       populate: {
         path: 'vendorProfileId',
-      }
+      },
     });
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -294,8 +340,13 @@ export const viewProfileById = async (req, res) => {
 export const updateProfile = (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      logger.info(Message.INVALID_FILE_TYPE)
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, Message.INVALID_FILE_TYPE);
+      logger.info(Message.INVALID_FILE_TYPE);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        Message.INVALID_FILE_TYPE
+      );
     }
 
     try {
@@ -334,7 +385,7 @@ export const updateProfile = (req, res) => {
         phoneNumber,
         dateOfBirth,
         designation,
-        isActive
+        isActive,
       };
 
       if (password) {
@@ -372,14 +423,22 @@ export const updateProfile = (req, res) => {
       };
 
       Object.keys(vendorUpdateData).forEach(
-        (key) => (vendorUpdateData[key] === undefined || vendorUpdateData[key] === null) && delete vendorUpdateData[key]
+        (key) =>
+          (vendorUpdateData[key] === undefined ||
+            vendorUpdateData[key] === null) &&
+          delete vendorUpdateData[key]
       );
       let updatedVendor = null;
 
       if (Object.keys(vendorUpdateData).length > 0) {
-        const existingVendor = await findVendorByUserId({ userId: updatedUser._id })
+        const existingVendor = await findVendorByUserId({
+          userId: updatedUser._id,
+        });
         if (existingVendor) {
-          updatedVendor = await updateVendorData(updatedUser._id, vendorUpdateData)
+          updatedVendor = await updateVendorData(
+            updatedUser._id,
+            vendorUpdateData
+          );
         } else {
           return HandleResponse(
             res,
@@ -395,7 +454,7 @@ export const updateProfile = (req, res) => {
         res,
         true,
         StatusCodes.OK,
-        `Profile ${Message.UPDATED_SUCCESSFULLY}`,
+        `Profile ${Message.UPDATED_SUCCESSFULLY}`
       );
     } catch (error) {
       logger.error(`${Message.FAILED_TO} update profile.`, error);
@@ -429,8 +488,12 @@ export const sendEmail = async (req, res) => {
 
     // const data = await sendingEmail({ email, newOtp });
 
-    const htmlContent = passwordResetRequestTemplate({ email })
-    const data = await sendingEmail({ email_to: [process.env.HR_EMAIL], subject: 'Password Reset Request – TalentBox', description: htmlContent });
+    const htmlContent = passwordResetRequestTemplate({ email });
+    const data = await sendingEmail({
+      email_to: [process.env.HR_EMAIL],
+      subject: 'Password Reset Request – TalentBox',
+      description: htmlContent,
+    });
     if (!data) {
       logger.warn(`User ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -445,7 +508,7 @@ export const sendEmail = async (req, res) => {
       res,
       true,
       StatusCodes.CREATED,
-      Message.MAIL_SENT,
+      Message.MAIL_SENT
       // `OTP:-${newOtp}, will be expire in:${expireOtp}`
     );
   } catch (error) {
@@ -531,8 +594,15 @@ export const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await updateUserById(email, { password: hashedPassword });
 
-    const htmlContent = resetPasswordCredentialsTemplate({ email, password: newPassword })
-    const data = await sendingEmail({ email_to: [email], subject: 'Your TalentBox Password Has Been Reset', description: htmlContent });
+    const htmlContent = resetPasswordCredentialsTemplate({
+      email,
+      password: newPassword,
+    });
+    const data = await sendingEmail({
+      email_to: [email],
+      subject: 'Your TalentBox Password Has Been Reset',
+      description: htmlContent,
+    });
     if (!data) {
       logger.warn(`${Message.FAILED_TO} send new password to user`);
       return HandleResponse(
@@ -542,7 +612,7 @@ export const forgotPassword = async (req, res) => {
         `${Message.FAILED_TO} send new password to user`
       );
     }
-    logger.info(`New password ${Message.SENT_SUCCESSFULLY} to user.`)
+    logger.info(`New password ${Message.SENT_SUCCESSFULLY} to user.`);
     logger.info(`Password ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -612,7 +682,7 @@ export const updateStatus = async (req, res) => {
   try {
     const userId = req.params.id;
     const { isActive, isDeleted } = req.body;
-    const existingUser = await getUser({ _id: userId })
+    const existingUser = await getUser({ _id: userId });
     if (!existingUser) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -634,13 +704,15 @@ export const updateStatus = async (req, res) => {
       );
     }
 
-    const isVendor = await findVendorByUserId({ userId: existingUser._id })
+    const isVendor = await findVendorByUserId({ userId: existingUser._id });
     if (isVendor) {
       await updateVendorData(userId, req.body);
     }
 
     if (existingUser.isActive === false && isActive === true) {
-      const htmlBlock = accountApprovedTemplate({ userName: existingUser.userName })
+      const htmlBlock = accountApprovedTemplate({
+        userName: existingUser.userName,
+      });
       await sendingEmail({
         email_to: [existingUser.email],
         subject: 'Access Granted - Welcome to TalentBox',
