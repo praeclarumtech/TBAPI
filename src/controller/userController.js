@@ -75,35 +75,54 @@ export const register = async (req, res) => {
       );
     }
 
-    const createdByAdmin = req.user?.role === "admin"; // lowercase check
-
-    // ✅ Create new user with only roleId
-    const newUser = await createUser({
-      userName,
-      email,
-      password,
-      confirmPassword,
-      roleId: roleDoc._id, // store only ObjectId
-      isActive: createdByAdmin ? isActive : false,
-      lastName,
-      firstName,
-    });
-
-    // ✅ If role is vendor/client → create Vendor profile
-    if (role.toLowerCase() === "vendor" || role.toLowerCase() === "client") {
-      const vendorData = { userId: newUser._id, type: role.toLowerCase() };
-      const newVendor = await createVendorData(vendorData);
-
-      await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
-
-      // Notify HR if not admin
-      if (!createdByAdmin) {
-        const htmlBlock = approvalRequestTemplate({
-          userName,
-          email,
-          role: role.toLowerCase(),
+    const createdByAdmin = req.user?.role === Enum.ADMIN;
+    if (createdByAdmin || role === Enum.GUEST) {
+      logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`);
+      const newUser = await createUser({
+        userName,
+        email,
+        password,
+        confirmPassword,
+        role,
+        isActive,
+        lastName,
+        firstName,
+      });
+      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+        const vendorData = {
+          userId: newUser._id,
+          ...req.body,
+          type: newUser.role,
+        };
+        const newVendor = await createVendorData(vendorData);
+        await updateProfileById(newUser._id, {
+          vendorProfileId: newVendor._id,
         });
-
+      }
+      // const htmlContent = accountCredentialsTemplate({ email, password })
+      // await sendingEmail({
+      //   email_to: [email],
+      //   subject: 'Your TalentBox Account Credentials',
+      //   description: htmlContent,
+      // });
+    } else {
+      const newUser = await createUser({
+        userName,
+        email,
+        password,
+        confirmPassword,
+        role,
+        isActive: false,
+        lastName,
+        firstName,
+      });
+      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+        const vendorData = { userId: newUser._id, type: newUser.role };
+        const newVendor = await createVendorData(vendorData);
+        await updateProfileById(newUser._id, {
+          vendorProfileId: newVendor._id,
+        });
+        const htmlBlock = approvalRequestTemplate({ userName, email, role });
         await sendingEmail({
           email_to: [process.env.HR_EMAIL],
           subject: "New User Registration - Approval Required",
@@ -185,7 +204,7 @@ export const login = async (req, res) => {
       true,
       StatusCodes.OK,
       Message.USER_LOGGED_IN_SUCCESSFULLY,
-      { token, user: userWithRole } // send token + user profile
+      { token } // send token + user profile
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} login.`, error);
@@ -269,11 +288,7 @@ export const getProfileByToken = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).populate({
-      path: 'roleId',
-      select: 'name accessModules status',
-    });
-
+    const user = await User.findById(userId).populate("roleId");
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
