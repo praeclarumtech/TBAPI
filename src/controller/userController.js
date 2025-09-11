@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
-// import { StatusCodes } from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 import {
   approvalRequestTemplate,
@@ -35,85 +35,79 @@ import {
   findVendorByUserId,
   updateVendorData,
 } from '../services/jobService.js';
-import Role from '../models/roleModel.js';
 
-import { StatusCodes } from "http-status-codes";
-
-
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
   let {
     userName,
     email,
     password,
     confirmPassword,
-    role,  // string from request body
+    role,
     isActive,
     lastName,
     firstName,
   } = req.body;
-
   try {
-    // ✅ Check if user exists
     const existingUser = await getUser({ email });
+
     if (existingUser) {
+      logger.warn(`User ${Message.ALREADY_EXIST}`);
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'User already exists'
+        `User ${Message.ALREADY_EXIST}`
       );
     }
 
-    // ✅ Password confirmation check
-    if (password !== confirmPassword) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        'Passwords do not match'
-      );
-    }
-
-    // ✅ Find role by name (case-insensitive)
-    const roleDoc = await Role.findOne({ name: new RegExp(`^${role}$`, 'i') });
-    if (!roleDoc) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        'Invalid role'
-      );
-    }
-
-    const createdByAdmin = req.user?.role?.toLowerCase() === 'admin';
-
-    // ✅ Create new user with roleId
-    const newUser = await createUser({
-      userName,
-      email,
-      password,
-      confirmPassword,
-      roleId: roleDoc._id, // store only ObjectId
-      isActive: createdByAdmin ? isActive : false,
-      lastName,
-      firstName,
-    });
-
-    // ✅ If role is vendor/client → create Vendor profile
-    if (['vendor', 'client'].includes(role.toLowerCase())) {
-      const vendorData = { userId: newUser._id, type: role.toLowerCase() };
-      const newVendor = await createVendorData(vendorData);
-
-      await updateProfileById(newUser._id, { vendorProfileId: newVendor._id });
-
-      // Notify HR if not created by admin
-      if (!createdByAdmin) {
-        const htmlBlock = approvalRequestTemplate({
-          userName,
-          email,
-          role: role.toLowerCase(),
+    const createdByAdmin = req.user?.role === Enum.ADMIN;
+    if (createdByAdmin || role === Enum.GUEST) {
+      logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`);
+      const newUser = await createUser({
+        userName,
+        email,
+        password,
+        confirmPassword,
+        role,
+        isActive,
+        lastName,
+        firstName,
+      });
+      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+        const vendorData = {
+          userId: newUser._id,
+          ...req.body,
+          type: newUser.role,
+        };
+        const newVendor = await createVendorData(vendorData);
+        await updateProfileById(newUser._id, {
+          vendorProfileId: newVendor._id,
         });
-
+      }
+      // const htmlContent = accountCredentialsTemplate({ email, password })
+      // await sendingEmail({
+      //   email_to: [email],
+      //   subject: 'Your TalentBox Account Credentials',
+      //   description: htmlContent,
+      // });
+    } else {
+      const newUser = await createUser({
+        userName,
+        email,
+        password,
+        confirmPassword,
+        role,
+        isActive: false,
+        lastName,
+        firstName,
+      });
+      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+        const vendorData = { userId: newUser._id, type: newUser.role };
+        const newVendor = await createVendorData(vendorData);
+        await updateProfileById(newUser._id, {
+          vendorProfileId: newVendor._id,
+        });
+        const htmlBlock = approvalRequestTemplate({ userName, email, role });
         await sendingEmail({
           email_to: [process.env.HR_EMAIL],
           subject: 'New User Registration - Approval Required',
@@ -122,24 +116,23 @@ export const register = async (req, res) => {
       }
     }
 
+    logger.info(Message.REGISTERED_SUCCESSFULLY);
     return HandleResponse(
       res,
       true,
       StatusCodes.CREATED,
-      'User registered successfully',
-      newUser
+      Message.REGISTERED_SUCCESSFULLY
     );
   } catch (error) {
-    console.error(error);
+    logger.error(`${Message.FAILED_TO} register.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Failed to register'
+      `${Message.FAILED_TO} register.`
     );
   }
 };
-
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -178,12 +171,12 @@ export const login = async (req, res) => {
     }
 
     // ✅ Populate role before creating token
-    const userWithRole = await User.findById(user._id).populate("roleId");
+    const userWithRole = await User.findById(user._id).populate('roleId');
 
     const token = jwt.sign(
       {
         id: userWithRole._id,
-        role: userWithRole.roleId?.name || "N/A",
+        role: userWithRole.roleId?.name || 'N/A',
         accessModules: userWithRole.roleId?.accessModules || [],
       },
       process.env.JWT_SECRET,
@@ -281,11 +274,7 @@ export const getProfileByToken = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).populate({
-      path: 'roleId',
-      select: 'name accessModules status',
-    });
-
+    const user = await getUserById(userId);
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -296,32 +285,16 @@ export const getProfileByToken = async (req, res) => {
       );
     }
 
-    const responseData = {
-      _id: user._id,
-      userName: user.userName,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.roleId?.name || 'N/A',
-      roleId: user.roleId?._id || 'N/A',
-      roleStatus: user.roleId?.status || 'inactive',
-      accessModules: user.roleId?.accessModules || [],
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
-    console.log('Populated roleId:', JSON.stringify(user.roleId, null, 2));
-
     logger.info(`User profile ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `User profile ${Message.FETCH_SUCCESSFULLY}`,
-      responseData
+      user
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch user profile.`, error);
+    logger.error(`${Message.FAILED_TO} fetch user profile.`);
     return HandleResponse(
       res,
       false,
@@ -334,12 +307,7 @@ export const getProfileByToken = async (req, res) => {
 export const viewProfileById = async (req, res) => {
   try {
     const userId = req.params.id;
-
-    const user = await User.findById(userId).populate({
-      path: 'roleId',
-      select: 'name accessModules status',
-    });
-
+    const user = await getUserById(userId);
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
@@ -350,36 +318,21 @@ export const viewProfileById = async (req, res) => {
       );
     }
 
-    const responseData = {
-      _id: user._id,
-      userName: user.userName,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.roleId?.name || 'N/A',
-      roleId: user.roleId?._id || 'N/A',
-      roleStatus: user.roleId?.status || 'inactive',
-      accessModules: user.roleId?.accessModules || [],
-      isActive: user.isActive,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
-
     logger.info(`Profile ${Message.FETCH_BY_ID}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `Profile ${Message.FETCH_BY_ID}`,
-      responseData
+      user
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} view profile by Id.`, error);
+    logger.error(`${Message.FAILED_TO} view prfofile by Id.`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} view profile by Id.`
+      `${Message.FAILED_TO} view prfofile by Id.`
     );
   }
 };

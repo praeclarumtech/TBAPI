@@ -173,6 +173,32 @@ export const applicantCountByAddedBy = async (req, res) => {
   }
 };
 
+export const applicantCountByRole = async (req, res) => {
+  try{
+    const {role}=req.query;
+    const result = await getApplicantCountByRole(role);
+    logger.info(`Applicant count by role ${Message.FETCH_SUCCESSFULLY}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Applicant count by role ${Message.FETCH_SUCCESSFULLY}`,
+      result
+    );
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch applicant count by role`,
+      error
+    );
+  }
+};
+
 export const getApplicationsByGenderWorkNotice = async (req, res) => {
   try {
     const { gender, workPreference, noticePeriod } = req.query;
