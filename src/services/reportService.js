@@ -404,19 +404,24 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
     const isVendor = user?.role === Enum.VENDOR;
     const model = isVendor ? jobApplication : Applicant;
 
-    let designationCounts = [];
-
-    // If designation filter is given
+    // If designations are passed
     if (designation) {
-      const regex = new RegExp(`^${designation}$`, "i");
+      const designations = designation.split(",").map((d) => d.trim());
+      const counts = {};
 
-      const count = await model.countDocuments({
-        currentCompanyDesignation: { $regex: regex },
-        isDeleted: false,
-        ...(isVendor && { vendor_id: user.id }),
-      });
+      for (const des of designations) {
+        const regex = new RegExp(`^${des}$`, "i");
 
-      return { [designation]: count };
+        const count = await model.countDocuments({
+          currentCompanyDesignation: { $regex: regex },
+          isDeleted: false,
+          ...(isVendor && { vendor_id: user.id }),
+        });
+
+        counts[des] = count;
+      }
+
+      return counts; // { "software engineer": 5, "backend engineer": 3 }
     }
 
     // Otherwise → return top 10 designations
@@ -438,14 +443,8 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
       { $limit: 10 },
     ]);
 
-    designationCounts = aggregation.map((item) => ({
-      designation: item._id,
-      count: item.count,
-    }));
-
-    // Convert into { designation: count } object
-    return designationCounts.reduce((acc, { designation, count }) => {
-      acc[designation] = count;
+    return aggregation.reduce((acc, item) => {
+      acc[item._id] = item.count;
       return acc;
     }, {});
   } catch (error) {
@@ -455,6 +454,7 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
     return {};
   }
 };
+
 
 
 
