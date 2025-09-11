@@ -92,7 +92,6 @@ export const register = async (req, res, next) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-
     const isEmail = /\S+@\S+\.\S+/.test(email);
     const user = await getUser(isEmail ? { email } : { userName: email });
 
@@ -114,6 +113,7 @@ export const login = async (req, res) => {
         Message.UNDER_APPROVAL
       );
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       logger.info(Message.INVALID_CREDENTIALS);
@@ -125,8 +125,15 @@ export const login = async (req, res) => {
       );
     }
 
+    // ✅ Populate role before creating token
+    const userWithRole = await User.findById(user._id).populate('roleId');
+
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      {
+        id: userWithRole._id,
+        role: userWithRole.roleId?.name || 'N/A',
+        accessModules: userWithRole.roleId?.accessModules || [],
+      },
       process.env.JWT_SECRET,
       { expiresIn: process.env.EXPIRES_IN }
     );
@@ -138,10 +145,10 @@ export const login = async (req, res) => {
       true,
       StatusCodes.OK,
       Message.USER_LOGGED_IN_SUCCESSFULLY,
-      token
+      { token, user: userWithRole } // send token + user profile
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} login.`);
+    logger.error(`${Message.FAILED_TO} login.`, error);
     return HandleResponse(
       res,
       false,
@@ -150,7 +157,6 @@ export const login = async (req, res) => {
     );
   }
 };
-
 export const listOfUsers = async (req, res) => {
   try {
     const { search, role } = req.query;
