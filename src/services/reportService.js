@@ -5,6 +5,7 @@ import moment from 'moment';
 import Skills from '../models/skillsModel.js';
 import city from '../models/citymodel.js';
 import states from '../models/stateModel.js';
+import Designations from '../models/designationModel.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 import jobApplication from '../models/jobApplicantionModel.js';
@@ -351,7 +352,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   const result = await Applicant.aggregate(pipeline);
 
   if (!result.length) {
-    return null; 
+    return null;
   }
 
   const data = result[0];
@@ -378,32 +379,61 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
 
   return {
     genderCounts: gender
-      ? countValues(data.gender, gender.split(',').map((g) => g.trim()))
+      ? countValues(
+          data.gender,
+          gender.split(',').map((g) => g.trim())
+        )
       : {},
     workPreferenceCounts: workPreference
-      ? countValues(data.workPreference, workPreference.split(',').map((w) => w.trim()))
+      ? countValues(
+          data.workPreference,
+          workPreference.split(',').map((w) => w.trim())
+        )
       : {},
     noticePeriodCounts: noticePeriod
-      ? countValues(data.noticePeriod, noticePeriod.split(',').map((n) => Number(n.trim())))
+      ? countValues(
+          data.noticePeriod,
+          noticePeriod.split(',').map((n) => Number(n.trim()))
+        )
       : {},
   };
 };
 
-export const getApplicantCountByRole = async (role) => {
+export const getApplicantCountByDesignation = async (designation) => {
   try {
-    const matchStage = { isActive: true };
+    const matchCondition = {};
 
-    if (role && role !== 'all') {
-      matchStage.createdBy = role;
-    } 
+    // Only add designation filter if provided
+    if (designation) {
+      matchCondition.currentCompanyDesignation = {
+        $regex: new RegExp(`^${designation}$`, "i"), // case-insensitive
+      };
+    }
 
-    const result = await Applicant.countDocuments(matchStage);
- 
-    return result || 0;
+    const aggregation = await Applicant.aggregate([
+      { $match: matchCondition }, // no isDeleted/isActive check for now
+      {
+        $group: {
+          _id: "$currentCompanyDesignation",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    return aggregation.reduce((acc, item) => {
+      if (item._id) {
+        acc[item._id] = item.count;
+      }
+      return acc;
+    }, {});
   } catch (error) {
     logger.error(
-      `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
+      `${Message.FAILED_TO} count applicants by designation: ${error.message}`
     );
-    throw error;
+    return {};
   }
-};  
+};
+
+
+
