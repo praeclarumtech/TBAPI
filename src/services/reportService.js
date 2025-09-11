@@ -388,3 +388,22 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
       : {},
   };
 };
+
+export const getApplicantCountByRole = async (role) => {
+  try {
+    const matchStage = { isActive: true };
+
+    if (role && role !== 'all') {
+      matchStage.createdBy = role;
+    } 
+
+    const result = await Applicant.countDocuments(matchStage);
+ 
+    return result || 0;
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} fetch applicant count by role: ${error.message}`
+    );
+    throw error;
+  }
+};  
