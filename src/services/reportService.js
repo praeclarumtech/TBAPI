@@ -399,32 +399,53 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   };
 };
 
-export const getApplicantCountByDesignation = async (designation) => {
+export const getApplicantCountByDesignationCounts = async (designation, user) => {
   try {
-    const matchCondition = {};
+    const isVendor = user?.role === Enum.VENDOR;
+    const model = isVendor ? jobApplication : Applicant;
 
-    // Only add designation filter if provided
+    let designationCounts = [];
+
+    // If designation filter is given
     if (designation) {
-      matchCondition.currentCompanyDesignation = {
-        $regex: new RegExp(`^${designation}$`, "i"), // case-insensitive
-      };
+      const regex = new RegExp(`^${designation}$`, "i");
+
+      const count = await model.countDocuments({
+        currentCompanyDesignation: { $regex: regex },
+        isDeleted: false,
+        ...(isVendor && { vendor_id: user.id }),
+      });
+
+      return { [designation]: count };
     }
 
-    const aggregation = await Applicant.aggregate([
-      { $match: matchCondition }, // no isDeleted/isActive check for now
+    // Otherwise → return top 10 designations
+    const aggregation = await model.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+          currentCompanyDesignation: { $nin: [null, ""] },
+          ...(isVendor && { vendor_id: user.id }),
+        },
+      },
       {
         $group: {
-          _id: "$currentCompanyDesignation",
+          _id: { $toLower: "$currentCompanyDesignation" },
           count: { $sum: 1 },
         },
       },
       { $sort: { count: -1 } },
+      { $limit: 10 },
     ]);
 
-    return aggregation.reduce((acc, item) => {
-      if (item._id) {
-        acc[item._id] = item.count;
-      }
+    designationCounts = aggregation.map((item) => ({
+      designation: item._id,
+      count: item.count,
+    }));
+
+    // Convert into { designation: count } object
+    return designationCounts.reduce((acc, { designation, count }) => {
+      acc[designation] = count;
       return acc;
     }, {});
   } catch (error) {
@@ -434,6 +455,7 @@ export const getApplicantCountByDesignation = async (designation) => {
     return {};
   }
 };
+
 
 
 

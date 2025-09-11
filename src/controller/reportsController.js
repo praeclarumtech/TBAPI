@@ -9,7 +9,7 @@ import {
   getApplicantCountByAddedBy,
   getInterviewStageCount,
   getApplicationCount,
-  getApplicantCountByDesignation,
+  getApplicantCountByDesignationCounts,
   getApplicantByGenderWorkNotice,
 } from '../services/reportService.js';
 
@@ -177,7 +177,9 @@ export const applicantCountByAddedBy = async (req, res) => {
 export const applicantCountByDesignation = async (req, res) => {
   try {
     const { designation } = req.query; // optional query param
-    const result = await getApplicantCountByDesignation(designation, req.user);
+    const user = req.user;
+
+    const result = await getApplicantCountByDesignationCounts(designation, user);
 
     logger.info(`Applicant count by designation ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
