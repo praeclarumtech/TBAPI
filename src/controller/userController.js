@@ -190,7 +190,7 @@ export const login = async (req, res) => {
       true,
       StatusCodes.OK,
       Message.USER_LOGGED_IN_SUCCESSFULLY,
-      { token, user: userWithRole } // send token + user profile
+      { token } // send token + user profile
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} login.`, error);
@@ -274,7 +274,7 @@ export const getProfileByToken = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await getUserById(userId);
+    const user = await User.findById(userId).populate("roleId");
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
