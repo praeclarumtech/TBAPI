@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const roleSchema = new mongoose.Schema(
   {
@@ -26,4 +26,4 @@ const roleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("Role", roleSchema);
+export default mongoose.model('Role', roleSchema);

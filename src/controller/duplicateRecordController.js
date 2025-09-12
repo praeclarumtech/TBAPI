@@ -11,7 +11,7 @@ export const viewAllDuplicateRecord = async (req, res) => {
     try {
         let page = Math.max(1, parseInt(req.query.page)) || 1;
         let limit = Math.min(1000, Math.max(1, parseInt(req.query.limit)));
-        let search = req.query.search || "";
+        let search = req.query.search || '';
 
         let item;
         let totalRecords;
@@ -118,7 +118,7 @@ export const exportDuplicateRecords = async (req, res) => {
     const csv = json2csvParser.parse(formattedRecords);
 
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="duplicateRecords.csv"');
+    res.setHeader('Content-Disposition', 'attachment; filename="duplicateRecords.csv" ');
     return res.status(200).end(csv);
   } catch (error) {
     logger.error(`${Message.FAILED_TO} export duplicate records`)

@@ -17,7 +17,7 @@ import { uploadCv } from '../helpers/multer.js';
 
 export const addSkills = async (req, res) => {
   const { skills } = req.body;
-  if (!skills || typeof skills !== "string") {
+  if (!skills || typeof skills !== 'string') {
     logger.warn(`skills ${Message.NOT_FOUND}`);
     return HandleResponse(
       res,
@@ -67,7 +67,7 @@ export const getSkills = async (req, res) => {
   try {
     let page = Math.max(1, parseInt(req.query.page)) || 1;
     let limit = Math.min(1000, Math.max(1, parseInt(req.query.limit))) || 10;
-    let search = req.query.search || "";
+    let search = req.query.search || '';
 
     let data;
     let totalRecords;
@@ -257,7 +257,7 @@ export const importSkillsCsv = async (req, res) => {
             });
           } catch (dbError) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Failed to import skills.");
+            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to import skills.');
           }
         })
         .on('error', (error) => {
