@@ -319,91 +319,11 @@ export const getApplicantCountByAddedBy = async (
   }
 };
 
-export const getApplicantByGenderWorkNotice = async (filters) => {
-  const { gender, workPreference, noticePeriod } = filters;
-  const match = {};
-
-  if (gender) {
-    match.gender = { $in: gender.split(',').map((g) => g.trim()) };
-  }
-  if (workPreference) {
-    match.workPreference = {
-      $in: workPreference.split(',').map((w) => w.trim()),
-    };
-  }
-  if (noticePeriod) {
-    match.noticePeriod = {
-      $in: noticePeriod.split(',').map((n) => Number(n.trim())),
-    };
-  }
-
-  const pipeline = [
-    { $match: match },
-    {
-      $group: {
-        _id: null,
-        gender: { $push: '$gender' },
-        workPreference: { $push: '$workPreference' },
-        noticePeriod: { $push: '$noticePeriod' },
-      },
-    },
-  ];
-
-  const result = await Applicant.aggregate(pipeline);
-
-  if (!result.length) {
-    return null;
-  }
-
-  const data = result[0];
-
-  const countValues = (arr, allOptions) => {
-    const counts = {};
-    allOptions.forEach((val) => {
-      counts[val] = arr.filter((x) => x === val).length;
-    });
-    return counts;
-  };
-
-  const genderOptions = ['male', 'female', 'other'];
-  const workPrefOptions = ['onsite', 'remote', 'hybrid'];
-  const noticeOptions = [15, 30, 60, 90];
-
-  if (!gender && !workPreference && !noticePeriod) {
-    return {
-      genderCounts: countValues(data.gender, genderOptions),
-      workPreferenceCounts: countValues(data.workPreference, workPrefOptions),
-      noticePeriodCounts: countValues(data.noticePeriod, noticeOptions),
-    };
-  }
-
-  return {
-    genderCounts: gender
-      ? countValues(
-          data.gender,
-          gender.split(',').map((g) => g.trim())
-        )
-      : {},
-    workPreferenceCounts: workPreference
-      ? countValues(
-          data.workPreference,
-          workPreference.split(',').map((w) => w.trim())
-        )
-      : {},
-    noticePeriodCounts: noticePeriod
-      ? countValues(
-          data.noticePeriod,
-          noticePeriod.split(',').map((n) => Number(n.trim()))
-        )
-      : {},
-  };
-};
-
 export const getApplicantCountByDesignationCounts = async (designation, user) => {
   try {
     const isVendor = user?.role === Enum.VENDOR;
     const model = isVendor ? jobApplication : Applicant;
-
+    
     // If designations are passed
     if (designation) {
       const designations = designation.split(",").map((d) => d.trim());
@@ -455,7 +375,132 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
   }
 };
 
+export const getApplicantByGenderWorkNotice = async (filters) => {
+  const { gender, workPreference, noticePeriod, createdBy, isActive, isFavorite } = filters;
+  const match = {};
 
+  if (gender) {
+    match.gender = { $in: gender.split(',').map((g) => g.trim().toLowerCase()) };
+  }
+  if (workPreference) {
+    match.workPreference = {
+      $in: workPreference.split(',').map((w) => w.trim().toLowerCase()),
+    };
+  }
+  if (noticePeriod) {
+    match.noticePeriod = {
+      $in: noticePeriod.split(',').map((n) => Number(n.trim())),
+    };
+  }
+  if (createdBy) {
+    match.createdBy = {
+      $in: createdBy.split(',').map((r) => r.trim().toLowerCase()),
+    };
+  }
+  if (isActive !== undefined) {
+    match.isActive = {
+      $in: isActive.split(',').map((a) => a.trim() === 'true'),
+    };
+  }
+  if (isFavorite !== undefined) {
+    match.isFavorite = {
+      $in: isFavorite.split(',').map((f) => f.trim() === 'true'),
+    };
+  }
 
+  const pipeline = [
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        gender: { $push: '$gender' },
+        workPreference: { $push: '$workPreference' },
+        noticePeriod: { $push: '$noticePeriod' },
+        createdBy: { $push: '$createdBy' },
+        isActive: { $push: '$isActive' },
+        isFavorite: { $push: '$isFavorite' },
+      },
+    },
+  ];
 
+  const result = await Applicant.aggregate(pipeline);
 
+  if (!result.length) {
+    return null;
+  }
+
+  const data = result[0];
+
+  // helper functions
+  const normalizeValue = (val, type = 'string') => {
+    if (type === 'number') {
+      return typeof val === 'number' ? val : null;
+    }
+    if (typeof val === 'boolean') {
+      return val;
+    }
+    return val && val.toString().trim() ? val.toString().toLowerCase() : 'other';
+  };
+
+  const countValues = (arr, allOptions, type = 'string') => {
+    const counts = {};
+    allOptions.forEach((val) => {
+      counts[val] = arr.filter((x) => normalizeValue(x, type) === val).length;
+    });
+    return counts;
+  };
+
+  // predefined options
+  const genderOptions = ['male', 'female', 'other'];
+  const workPrefOptions = ['onsite', 'remote', 'hybrid'];
+  const noticeOptions = [15, 30, 60, 90];
+  const roleOptions = ['admin', 'vendor', 'client', 'hr', 'guest'];
+
+  return {
+    gender: gender
+      ? countValues(
+          data.gender,
+          gender.split(',').map((g) => g.trim().toLowerCase())
+        )
+      : countValues(data.gender, genderOptions),
+
+    workPreference: workPreference
+      ? countValues(
+          data.workPreference,
+          workPreference.split(',').map((w) => w.trim().toLowerCase())
+        )
+      : countValues(data.workPreference, workPrefOptions),
+
+    noticePeriod: noticePeriod
+      ? countValues(
+          data.noticePeriod,
+          noticePeriod.split(',').map((n) => Number(n.trim())),
+          'number'
+        )
+      : countValues(data.noticePeriod, noticeOptions, 'number'),
+
+    role: createdBy
+      ? countValues(
+          data.createdBy,
+          createdBy.split(',').map((r) => r.trim().toLowerCase())
+        )
+      : countValues(data.createdBy, roleOptions),
+
+    active: isActive
+      ? countValues(
+          data.isActive,
+          isActive.split(',').map((a) => a.trim() === 'true'),
+          'boolean'
+        )
+      : countValues(data.isActive, [true, false], 'boolean'),
+
+    favorite: isFavorite
+      ? countValues(
+          data.isFavorite,
+          isFavorite.split(',').map((f) => f.trim() === 'true'),
+          'boolean'
+        )
+      : countValues(data.isFavorite, [true, false], 'boolean'),
+
+  };
+};
