@@ -1,24 +1,18 @@
 import { StatusCodes } from 'http-status-codes';
-import Role from '../models/roleModel.js';
 import logger from '../loggers/logger.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { Message } from '../utils/constant/message.js';
+import {
+  createRoleService,
+  getRolesService,
+  getRoleByIdService,
+  updateRoleService,
+  deleteRoleService,
+} from '../services/roleService.js';
 
 export const createRole = async (req, res) => {
   try {
-    const exists = await Role.findOne({ name: req.body.name});
-    if (exists) {
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.CONFLICT,
-        'Role already exists'
-      );
-    }
-
-    const newRole = new Role(req.body);
-    await newRole.save();
-
+    const newRole = await createRoleService(req.body);
     logger.info(`Role created: ${newRole._id}`);
     return HandleResponse(
       res,
@@ -31,23 +25,17 @@ export const createRole = async (req, res) => {
     logger.error(`Create role failed: ${error.message}`, {
       stack: error.stack,
     });
-    return HandleResponse(
-      res,
-      false,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      null,
-      null,
-      error.message
-    );
+    const status =
+      error.message === 'Role already exists'
+        ? StatusCodes.CONFLICT
+        : StatusCodes.INTERNAL_SERVER_ERROR;
+    return HandleResponse(res, false, status, error.message);
   }
 };
 
 export const getRoles = async (req, res) => {
   try {
-    const roles = await Role.find({
-      $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }],
-    });
-
+    const roles = await getRolesService();
     return HandleResponse(
       res,
       true,
@@ -61,8 +49,6 @@ export const getRoles = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      null,
-      null,
       error.message
     );
   }
@@ -70,9 +56,8 @@ export const getRoles = async (req, res) => {
 
 export const getRoleById = async (req, res) => {
   try {
-    const role = await Role.findOne({ _id: req.params.id, isDeleted: false });
+    const role = await getRoleByIdService(req.params.id);
     if (!role) {
-      logger.warn(`Role not found or inactive: ${req.params.id}`);
       return HandleResponse(
         res,
         false,
@@ -80,7 +65,6 @@ export const getRoleById = async (req, res) => {
         Message.NOT_FOUND
       );
     }
-
     return HandleResponse(
       res,
       true,
@@ -96,8 +80,6 @@ export const getRoleById = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      null,
-      null,
       error.message
     );
   }
@@ -105,30 +87,8 @@ export const getRoleById = async (req, res) => {
 
 export const updateRole = async (req, res) => {
   try {
-    const updates = req.body;
-
-    // validate status if included
-    if (updates.hasOwnProperty('status')) {
-      if (typeof updates.status === 'string') {
-        updates.status = updates.status.toLowerCase() === 'true';
-      } else if (typeof updates.status !== 'boolean') {
-        return HandleResponse(
-          res,
-          false,
-          StatusCodes.BAD_REQUEST,
-          'Invalid status value. Must be true (active) or false (inactive).'
-        );
-      }
-    }
-
-    const role = await Role.findOneAndUpdate(
-      { _id: req.params.id, isDeleted: false }, // only non-deleted roles
-      updates,
-      { new: true }
-    );
-
+    const role = await updateRoleService(req.params.id, req.body);
     if (!role) {
-      logger.warn(`Update failed - Role not found: ${req.params.id}`);
       return HandleResponse(
         res,
         false,
@@ -136,17 +96,13 @@ export const updateRole = async (req, res) => {
         Message.NOT_FOUND
       );
     }
-
-    logger.info(`Role updated: ${role._id}`);
-
-    // custom message if status was updated
-    const message = updates.hasOwnProperty('status')
-      ? `Role status updated to ${
-          updates.status ? 'active' : 'inactive'
-        } successfully`
-      : Message.UPDATE_SUCCESS;
-
-    return HandleResponse(res, true, StatusCodes.OK, message, role);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      Message.UPDATE_SUCCESS,
+      role
+    );
   } catch (error) {
     logger.error(`Update role failed: ${error.message}`, {
       stack: error.stack,
@@ -155,8 +111,6 @@ export const updateRole = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      null,
-      null,
       error.message
     );
   }
@@ -164,14 +118,8 @@ export const updateRole = async (req, res) => {
 
 export const deleteRole = async (req, res) => {
   try {
-    const role = await Role.findByIdAndUpdate(
-      req.params.id,
-      { isDeleted: true }, // only mark deleted
-      { new: true }
-    );
-
+    const role = await deleteRoleService(req.params.id);
     if (!role) {
-      logger.warn(`Delete failed - Role not found: ${req.params.id}`);
       return HandleResponse(
         res,
         false,
@@ -179,8 +127,6 @@ export const deleteRole = async (req, res) => {
         Message.NOT_FOUND
       );
     }
-
-    logger.info(`Role deleted: ${role._id}`);
     return HandleResponse(
       res,
       true,
@@ -196,8 +142,6 @@ export const deleteRole = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      null,
-      null,
       error.message
     );
   }

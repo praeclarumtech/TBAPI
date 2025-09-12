@@ -588,7 +588,6 @@ export const getVendorJobApplicantReport = async (req, res) => {
               '$vendorDetails.lastName',
             ],
           },
-          // vendorName: "$vendorDetails.userName",
           totalJobs: 1,
           totalApplicants: 1,
           jobs: 1,

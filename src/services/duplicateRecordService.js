@@ -1,4 +1,4 @@
-import duplicateRecord from "../models/duplicateRecordModel.js";
+import duplicateRecord from '../models/duplicateRecordModel.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import logger from '../loggers/logger.js';
 

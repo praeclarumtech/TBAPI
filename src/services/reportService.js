@@ -326,11 +326,11 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
     
     // If designations are passed
     if (designation) {
-      const designations = designation.split(",").map((d) => d.trim());
+      const designations = designation.split(',').map((d) => d.trim());
       const counts = {};
 
       for (const des of designations) {
-        const regex = new RegExp(`^${des}$`, "i");
+        const regex = new RegExp(`^${des}$`, 'i');
 
         const count = await model.countDocuments({
           currentCompanyDesignation: { $regex: regex },
@@ -341,21 +341,20 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
         counts[des] = count;
       }
 
-      return counts; // { "software engineer": 5, "backend engineer": 3 }
+      return counts; 
     }
 
-    // Otherwise → return top 10 designations
     const aggregation = await model.aggregate([
       {
         $match: {
           isDeleted: false,
-          currentCompanyDesignation: { $nin: [null, ""] },
+          currentCompanyDesignation: { $nin: [null, ''] },
           ...(isVendor && { vendor_id: user.id }),
         },
       },
       {
         $group: {
-          _id: { $toLower: "$currentCompanyDesignation" },
+          _id: { $toLower: '$currentCompanyDesignation' },
           count: { $sum: 1 },
         },
       },
