@@ -6,7 +6,7 @@ export const sendEmailValidation = Joi.object().keys({
       .email()
       .required()
       .messages({
-        "string.email": "Email_to should be in a valid email format",
+        'string.email': 'Email_to should be in a valid email format',
       }),
     Joi.array()
       .items(
@@ -17,8 +17,8 @@ export const sendEmailValidation = Joi.object().keys({
       .min(1)
       .required()
       .messages({
-        "array.min": "At least one recipient email is required",
-        "string.email": "Each email in the list should be valid",
+        'array.min': 'At least one recipient email is required',
+        'string.email': 'Each email in the list should be valid',
       })
   ),
     email_bcc: Joi.array()
@@ -28,7 +28,7 @@ export const sendEmailValidation = Joi.object().keys({
     )
     .optional()
     .messages({
-      'array.base': `"email_bcc" must be an array`,
+      'array.base': `'email_bcc' must be an array`,
     }),
     subject: Joi.string().required(),
   description: Joi.string().allow('').optional(),

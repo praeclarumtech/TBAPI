@@ -284,7 +284,7 @@ export const getProfileByToken = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).populate("roleId");
+    const user = await User.findById(userId).populate('roleId');
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(
