@@ -319,11 +319,14 @@ export const getApplicantCountByAddedBy = async (
   }
 };
 
-export const getApplicantCountByDesignationCounts = async (designation, user) => {
+export const getApplicantCountByDesignationCounts = async (
+  designation,
+  user
+) => {
   try {
     const isVendor = user?.role === Enum.VENDOR;
     const model = isVendor ? jobApplication : Applicant;
-    
+
     // If designations are passed
     if (designation) {
       const designations = designation.split(',').map((d) => d.trim());
@@ -341,7 +344,7 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
         counts[des] = count;
       }
 
-      return counts; 
+      return counts;
     }
 
     const aggregation = await model.aggregate([
@@ -375,11 +378,20 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
 };
 
 export const getApplicantByGenderWorkNotice = async (filters) => {
-  const { gender, workPreference, noticePeriod, createdBy, isActive, isFavorite } = filters;
+  const {
+    gender,
+    workPreference,
+    noticePeriod,
+    createdBy,
+    isActive,
+    isFavorite,
+  } = filters;
   const match = {};
 
   if (gender) {
-    match.gender = { $in: gender.split(',').map((g) => g.trim().toLowerCase()) };
+    match.gender = {
+      $in: gender.split(',').map((g) => g.trim().toLowerCase()),
+    };
   }
   if (workPreference) {
     match.workPreference = {
@@ -412,7 +424,20 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     {
       $group: {
         _id: null,
-        gender: { $push: '$gender' },
+        gender: {
+          $push: {
+            $cond: [
+              {
+                $or: [
+                  { $eq: [{ $ifNull: ['$gender', ''] }, ''] }, // null or missing
+                  { $eq: ['$gender', ''] }, // empty string
+                ],
+              },
+              'other',
+              { $toLower: '$gender' },
+            ],
+          },
+        },
         workPreference: { $push: '$workPreference' },
         noticePeriod: { $push: '$noticePeriod' },
         createdBy: { $push: '$createdBy' },
@@ -438,7 +463,9 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     if (typeof val === 'boolean') {
       return val;
     }
-    return val && val.toString().trim() ? val.toString().toLowerCase() : 'other';
+    return val && val.toString().trim()
+      ? val.toString().toLowerCase()
+      : 'other';
   };
 
   const countValues = (arr, allOptions, type = 'string') => {
@@ -500,6 +527,5 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
           'boolean'
         )
       : countValues(data.isFavorite, [true, false], 'boolean'),
-
   };
 };
