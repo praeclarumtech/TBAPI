@@ -15,15 +15,15 @@ import { generateJobId } from '../helpers/generateApplicationNo.js';
 import { getAllusers, getUser } from '../services/userService.js';
 import { Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
-import { sendingEmail } from '../utils/email.js';
-import { jobCreatedTemplate } from '../utils/emailTemplates/emailTemplates.js';
+import { sendingEmail } from "../utils/email.js";
+import {jobCreatedTemplate} from "../utils/emailTemplates/emailTemplates.js";
 
 export const createJob = async (req, res) => {
   try {
     const user = req.user.id;
 
     // ✅ Fetch user with role populated
-    const userData = await User.findById(user).populate('roleId', 'name');
+    const userData = await User.findById(user).populate("roleId", "name");
 
     // ✅ Vendor/Client validation
     if (userData.role === Enum.VENDOR || userData.role === Enum.CLIENT) {
@@ -37,14 +37,14 @@ export const createJob = async (req, res) => {
         );
       }
       const requiredFields = [
-        'company_name',
-        'company_email',
-        'company_phone_number',
-        'company_location',
-        'company_type',
-        'hire_resources',
-        'company_strength',
-        'company_website',
+        "company_name",
+        "company_email",
+        "company_phone_number",
+        "company_location",
+        "company_type",
+        "hire_resources",
+        "company_strength",
+        "company_website",
       ];
       const missingFields = requiredFields.filter((field) => !vendor[field]);
       if (missingFields.length > 0) {
@@ -61,7 +61,7 @@ export const createJob = async (req, res) => {
     const job_id = await generateJobId();
     const applicationDeadline = new Date();
     applicationDeadline.setDate(applicationDeadline.getDate() + 30);
-    const finalDate = applicationDeadline.toLocaleDateString('en-CA');
+    const finalDate = applicationDeadline.toLocaleDateString("en-CA");
 
     const jobData = {
       job_id,
@@ -78,7 +78,7 @@ export const createJob = async (req, res) => {
     try {
       const htmlBlock = jobCreatedTemplate({
         jobId: job_id,
-        role: userData.roleId?.name || userData.role || 'N/A', // ✅ fixed
+        role: userData.roleId?.name || userData.role || "N/A", // ✅ fixed
         jobTitle: req.body.job_subject,
         startDate: req.body.start_time,
         endDate: req.body.end_time,
@@ -88,11 +88,11 @@ export const createJob = async (req, res) => {
 
       emailStatus = await sendingEmail({
         email_to: [process.env.HR_EMAIL],
-        subject: 'New Job Created',
+        subject: "New Job Created",
         description: htmlBlock,
       });
     } catch (err) {
-      logger.error('Email failed:', err);
+      logger.error("Email failed:", err);
       emailStatus = { success: false, error: err.message };
     }
 
@@ -146,6 +146,7 @@ export const viewJobs = async (req, res) => {
     } else if (user?.role === Enum.CLIENT) {
       query.addedBy = user.id
     }
+
 
     if (search && typeof search === 'string') {
       const cleanSearch = search.replace(/[^a-zA-Z0-9]/g, '');
@@ -315,7 +316,7 @@ export const deleteJob = async (req, res) => {
     }
     const removeJob = await deletJobService(ids);
     if (removeJob.modifiedCount === 0) {
-      logger.error(`Job ${Message.NOT_FOUND}`);
+      logger.error(`Job  ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,

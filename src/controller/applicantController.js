@@ -1204,6 +1204,10 @@ export const updateStatusImportApplicant = async (req, res) => {
 };
 export const exportApplicantCsv = async (req, res) => {
   try {
+    if (req.user?.role !== Enum.ADMIN) {
+      throw new Error('Non-admin users cannot export applicants');
+    }
+
     const { filtered, source } = req.query;
     const { ids, fields, main, flag } = req.body;
     let applicants = [];
