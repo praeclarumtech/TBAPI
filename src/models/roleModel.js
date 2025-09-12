@@ -1,4 +1,4 @@
-import mongoose from 'mongoos';
+import mongoose from 'mongoose';
 
 const roleSchema = new mongoose.Schema(
   {
