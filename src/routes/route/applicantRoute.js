@@ -20,12 +20,16 @@ import {
   hardDeleteImportedApplicant,
   updateStatusImportApplicant,
   activeApplicant,
-  inActiveApplicant
+  inActiveApplicant,
+  saveUserFilter,
+  getUserFilter,
 } from '../../controller/applicantController.js';
 import {
   applicantValidation,
   updateApplicantValidation,
   updateManyApplicantsValidation,
+  saveUserFilterValidation,
+  getUserFilterValidation
 } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
 import { authorization, verifyRoles } from '../../helpers/userMiddleware.js'
@@ -40,7 +44,11 @@ router.post('/applicant-add-qr-code', uploadAttachments, addApplicant);
 router.put('/applicant-edit-qr-code/:id', uploadAttachments, updateApplicant);
 
 router.get('/viewAllApplicant', viewAllApplicant);
-router.get('/viewApplicant/:id', authorization, verifyRoles(Enum.ADMIN), viewApplicant);
+
+router.post('/userFilter',validator.body(saveUserFilterValidation), saveUserFilter);
+router.get('/userFilter/:userId',validator.params(getUserFilterValidation), getUserFilter);
+
+router.get('/viewApplicant/:id', viewApplicant);
 router.get('/viewResumeAndCsvApplicant', authorization, getResumeAndCsvApplicants);
 router.put('/updateApplicant/:id', authorization, verifyRoles(Enum.ADMIN), validator.body(updateApplicantValidation), updateApplicant);
 

@@ -6,7 +6,7 @@ import { applicantEnum, Enum } from '../utils/enum.js';
 export const getDashboardCounts = async (role, userId) => {
   const Model = (role === Enum.VENDOR || role === Enum.CLIENT) ? jobApplication : Applicant;
 
-  const matchCondition = { isDeleted: false };
+  const matchCondition = { isDeleted: false, isActive: true };
 
   if (role === Enum.VENDOR || role === Enum.CLIENT) {
     matchCondition.vendor_id = new mongoose.Types.ObjectId(userId);
