@@ -18,6 +18,7 @@ import User from '../models/userModel.js';
 import { sendingEmail } from "../utils/email.js";
 import {jobCreatedTemplate} from "../utils/emailTemplates/emailTemplates.js";
 
+
 export const createJob = async (req, res) => {
   try {
     const user = req.user.id;
@@ -144,7 +145,7 @@ export const viewJobs = async (req, res) => {
     } else if (user?.role === Enum.VENDOR) {
       query.addedBy = user.id;
     } else if (user?.role === Enum.CLIENT) {
-      query.addedBy = user.id
+      query.addedBy = user.id;
     }
 
 

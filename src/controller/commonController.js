@@ -27,11 +27,11 @@ import { HandleResponse } from '../helpers/handleResponse.js';
 
 export const viewCountry = async (req, res) => {
   try {
-    const { page = 1, limit , search = ""} = req.query;
+    const { page = 1, limit , search = ''} = req.query;
     const query = {};
 
      if (search) {
-      query.country_name = { $regex: search, $options: "i" };
+      query.country_name = { $regex: search, $options: 'i' };
     }
 
      const countries = await pagination({
@@ -253,13 +253,13 @@ export const viewCountryById = async (req, res) => {
 
 export const viewState = async (req, res) => {
   try {
-    const { country_id, page = 1, limit, search = "" } = req.query;
+    const { country_id, page = 1, limit, search = '' } = req.query;
     const query ={}
 
     if (country_id) query.country_id = country_id;
 
      if (search) {
-      query.state_name = { $regex: search, $options: "i" };
+      query.state_name = { $regex: search, $options: 'i' };
     }
 
     const state = await pagination({
@@ -510,12 +510,12 @@ export const deleteManyStates = async (req, res) => {
 
 export const viewCity = async (req, res) => {
   try {
-    const { state_id ,page = 1, limit, search = ""} = req.query;
+    const { state_id ,page = 1, limit, search = ''} = req.query;
      const query = {};
     if (state_id) query.state_id = state_id;
 
      if (search) {
-      query.city_name = { $regex: search, $options: "i" };
+      query.city_name = { $regex: search, $options: 'i' };
     }
 
      const citys = await pagination({

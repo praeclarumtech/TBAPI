@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const roleSchema = new mongoose.Schema(
   {
@@ -15,13 +15,15 @@ const roleSchema = new mongoose.Schema(
       default: ['dashboard'],
     },
     status: {
-      type: String,
-      required: true,
-      enum: ['active', 'inactive'],
-      default: 'active'
+      type:Boolean,
+      default:true
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Role", roleSchema);
+export default mongoose.model('Role', roleSchema);

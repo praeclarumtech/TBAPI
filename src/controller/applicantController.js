@@ -1755,7 +1755,7 @@ export const exportApplicantCsv = async (req, res) => {
           ?.split('.')
           .pop() || 'unknown';
       const duplicateValue =
-        error.errmsg?.match(/dup key: {.*?: "(.*?)"/)?.[1] || 'unknown';
+        error.errmsg?.match(/dup key: {.*?: '(.*?)'/)?.[1] || 'unknown';
 
       return HandleResponse(
         res,

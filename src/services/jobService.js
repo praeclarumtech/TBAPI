@@ -90,11 +90,11 @@ export const updateJobApplicantionStatus = async (applicationId, status) => {
   try {
     const applicationObjectId = new mongoose.Types.ObjectId(applicationId);
     return await jobApplication.updateOne({
-      "applications._id": applicationObjectId
+      'applications._id': applicationObjectId
     },
       {
         $set: {
-          "applications.$.status": status
+          'applications.$.status': status
         }
       });
   } catch (error) {
@@ -120,7 +120,7 @@ export const findVendorByUserId = async (query) => {
   try {
     return await Vendor.findOne(query)
   } catch (error) {
-    logger.error("Error while find vendor by userId", error)
+    logger.error('Error while find vendor by userId', error)
     throw error;
   }
 }

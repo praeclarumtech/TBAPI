@@ -35,6 +35,7 @@ import {
   findVendorByUserId,
   updateVendorData,
 } from '../services/jobService.js';
+import roleModel from '../models/roleModel.js';
 
 export const register = async (req, res, next) => {
   let {
@@ -60,6 +61,22 @@ export const register = async (req, res, next) => {
       );
     }
 
+    let roleId = null;
+
+    const existingRole = await roleModel.findOne({name:role});
+
+    if (!existingRole) {
+      logger.warn(`Role ${Message.NOT_FOUND}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Role ${Message.NOT_FOUND}`
+      );  
+    }
+
+    roleId = existingRole._id;
+
     const createdByAdmin = req.user?.role === Enum.ADMIN;
     if (createdByAdmin || role === Enum.GUEST) {
       logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`);
@@ -68,12 +85,12 @@ export const register = async (req, res, next) => {
         email,
         password,
         confirmPassword,
-        role,
+        roleId,
         isActive,
         lastName,
         firstName,
       });
-      if (role === Enum.VENDOR || role === Enum.CLIENT) {
+      if (roleId === Enum.VENDOR || roleId === Enum.CLIENT) {
         const vendorData = {
           userId: newUser._id,
           ...req.body,
@@ -84,19 +101,13 @@ export const register = async (req, res, next) => {
           vendorProfileId: newVendor._id,
         });
       }
-      // const htmlContent = accountCredentialsTemplate({ email, password })
-      // await sendingEmail({
-      //   email_to: [email],
-      //   subject: 'Your TalentBox Account Credentials',
-      //   description: htmlContent,
-      // });
     } else {
       const newUser = await createUser({
         userName,
         email,
         password,
         confirmPassword,
-        role,
+        roleId,
         isActive: false,
         lastName,
         firstName,
@@ -123,8 +134,7 @@ export const register = async (req, res, next) => {
       StatusCodes.CREATED,
       Message.REGISTERED_SUCCESSFULLY
     );
-  } catch (error) {
-    logger.error(`${Message.FAILED_TO} register.`);
+  } catch (error) {    logger.error(`${Message.FAILED_TO} register.`);
     return HandleResponse(
       res,
       false,
@@ -274,7 +284,7 @@ export const getProfileByToken = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).populate("roleId");
+    const user = await User.findById(userId).populate('roleId');
     if (!user) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
       return HandleResponse(

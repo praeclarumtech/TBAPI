@@ -5,6 +5,7 @@ import moment from 'moment';
 import Skills from '../models/skillsModel.js';
 import city from '../models/citymodel.js';
 import states from '../models/stateModel.js';
+import Designations from '../models/designationModel.js';
 import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 import jobApplication from '../models/jobApplicantionModel.js';
@@ -351,7 +352,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   const result = await Applicant.aggregate(pipeline);
 
   if (!result.length) {
-    return null; 
+    return null;
   }
 
   const data = result[0];
@@ -378,13 +379,79 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
 
   return {
     genderCounts: gender
-      ? countValues(data.gender, gender.split(',').map((g) => g.trim()))
+      ? countValues(
+          data.gender,
+          gender.split(',').map((g) => g.trim())
+        )
       : {},
     workPreferenceCounts: workPreference
-      ? countValues(data.workPreference, workPreference.split(',').map((w) => w.trim()))
+      ? countValues(
+          data.workPreference,
+          workPreference.split(',').map((w) => w.trim())
+        )
       : {},
     noticePeriodCounts: noticePeriod
-      ? countValues(data.noticePeriod, noticePeriod.split(',').map((n) => Number(n.trim())))
+      ? countValues(
+          data.noticePeriod,
+          noticePeriod.split(',').map((n) => Number(n.trim()))
+        )
       : {},
   };
 };
+
+export const getApplicantCountByDesignationCounts = async (designation, user) => {
+  try {
+    const isVendor = user?.role === Enum.VENDOR;
+    const model = isVendor ? jobApplication : Applicant;
+
+    // If designations are passed
+    if (designation) {
+      const designations = designation.split(',').map((d) => d.trim());
+      const counts = {};
+
+      for (const des of designations) {
+        const regex = new RegExp(`^${des}$`, 'i');
+
+        const count = await model.countDocuments({
+          currentCompanyDesignation: { $regex: regex },
+          isDeleted: false,
+          ...(isVendor && { vendor_id: user.id }),
+        });
+
+        counts[des] = count;
+      }
+
+      return counts; 
+    }
+
+    const aggregation = await model.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+          currentCompanyDesignation: { $nin: [null, ''] },
+          ...(isVendor && { vendor_id: user.id }),
+        },
+      },
+      {
+        $group: {
+          _id: { $toLower: '$currentCompanyDesignation' },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]);
+
+    return aggregation.reduce((acc, item) => {
+      acc[item._id] = item.count;
+      return acc;
+    }, {});
+  } catch (error) {
+    logger.error(
+      `${Message.FAILED_TO} count applicants by designation: ${error.message}`
+    );
+    return {};
+  }
+};
+
+
