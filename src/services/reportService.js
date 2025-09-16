@@ -11,6 +11,7 @@ import { Message } from '../utils/constant/message.js';
 import jobApplication from '../models/jobApplicantionModel.js';
 import mongoose from 'mongoose';
 import jobs from '../models/jobModel.js';
+import { TOO_MANY_REQUESTS } from 'http-status-codes';
 
 export const getApplicationCount = async (
   calendarType,
@@ -50,7 +51,7 @@ export const getInterviewStageCount = async (
     const model =
       role === Enum.VENDOR || role === Enum.CLIENT ? jobApplication : Applicant;
 
-    const matchCondition = { isDeleted: false };
+    const matchCondition = { isDeleted: false, isActive: true };
     if (startDate && endDate) {
       matchCondition.createdAt = {
         $gte: startDate.toDate(),
@@ -191,7 +192,7 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
     const isVendor = user?.role === Enum.VENDOR;
     const isClient = user?.role === Enum.CLIENT;
     const model = isVendor || isClient ? jobApplication : Applicant;
-    const matchStage = { isDeleted: false };
+    const matchStage = { isDeleted: false, isActive: true };
     if (isVendor || isClient) {
       matchStage.vendor_id = user.id;
     }
@@ -351,13 +352,14 @@ export const getApplicantCountByDesignationCounts = async (
       {
         $match: {
           isDeleted: false,
+          isActive: true,
           currentCompanyDesignation: { $nin: [null, ''] },
           ...(isVendor && { vendor_id: user.id }),
         },
       },
       {
         $group: {
-          _id: { $toLower: '$currentCompanyDesignation' },
+          _id: '$currentCompanyDesignation',
           count: { $sum: 1 },
         },
       },
@@ -386,7 +388,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     isActive,
     isFavorite,
   } = filters;
-  const match = {};
+  const match = {isActive:true};
 
   if (gender) {
     match.gender = {
@@ -406,11 +408,6 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   if (createdBy) {
     match.createdBy = {
       $in: createdBy.split(',').map((r) => r.trim().toLowerCase()),
-    };
-  }
-  if (isActive !== undefined) {
-    match.isActive = {
-      $in: isActive.split(',').map((a) => a.trim() === 'true'),
     };
   }
   if (isFavorite !== undefined) {
@@ -441,7 +438,6 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
         workPreference: { $push: '$workPreference' },
         noticePeriod: { $push: '$noticePeriod' },
         createdBy: { $push: '$createdBy' },
-        isActive: { $push: '$isActive' },
         isFavorite: { $push: '$isFavorite' },
       },
     },
@@ -482,6 +478,11 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   const noticeOptions = [15, 30, 60, 90];
   const roleOptions = ['admin', 'vendor', 'client', 'hr', 'guest'];
 
+  const [activeCount, inactiveCount] = await Promise.all([
+    Applicant.countDocuments({ isActive: true }),
+    Applicant.countDocuments({ isActive: false }),
+  ]);
+
   return {
     gender: gender
       ? countValues(
@@ -512,13 +513,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
         )
       : countValues(data.createdBy, roleOptions),
 
-    active: isActive
-      ? countValues(
-          data.isActive,
-          isActive.split(',').map((a) => a.trim() === 'true'),
-          'boolean'
-        )
-      : countValues(data.isActive, [true, false], 'boolean'),
+    active: { true: activeCount, false: inactiveCount },
 
     favorite: isFavorite
       ? countValues(
