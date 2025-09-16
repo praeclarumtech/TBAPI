@@ -19,6 +19,7 @@ import {
   inActivateApplicant,
   activateApplicant,
 } from '../services/applicantService.js';
+import mongoose from 'mongoose';
 import duplicateRecord from '../models/duplicateRecordModel.js';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
@@ -46,6 +47,7 @@ import {
   extractTextFromDoc,
 } from '../helpers/importResume.js';
 import ExportsApplicants from '../models/exportsApplicantsModel.js';
+import UserFilter from '../models/userFilter.js';
 import { extractMatchingRoleFromResume } from '../services/applicantService.js';
 import { extractSkillsFromResume } from '../services/applicantService.js';
 import { buildApplicantQuery } from '../helpers/commonFunction/filterQuery.js';
@@ -401,6 +403,65 @@ export const addApplicant = async (req, res) => {
         `${Message.FAILED_TO} add aplicant.${error}`
       );
     }
+  }
+};
+
+export const saveUserFilter = async (req, res) => {
+  try {
+    const { userId, filters } = req.body;
+
+    const objectUserId = new mongoose.Types.ObjectId(userId);
+
+    const updatedFilter = await UserFilter.findOneAndUpdate(
+      { userId: objectUserId },
+      { filters },
+      { new: true, upsert: true }
+    );
+
+    logger.info("Filters saved successfully");
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      'Filters saved successfully',
+      updatedFilter
+    );
+  } catch (error) {
+    console.error('Error saving filters:', error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Error saving filters'
+    );
+  }
+};
+
+export const getUserFilter = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const objectUserId = new mongoose.Types.ObjectId(userId);
+    const filter = await UserFilter.findOne({ userId: objectUserId });
+
+    logger.info("Filters fetched successfully");
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      'Filters fetched successfully',
+      filter?.filters || {}
+    );
+  } catch (error) {
+    console.error('Error fetching filters:', error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Error fetching filters'
+    );
   }
 };
 

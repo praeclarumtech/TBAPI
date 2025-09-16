@@ -524,3 +524,4 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
       : countValues(data.isFavorite, [true, false], 'boolean'),
   };
 };
+
