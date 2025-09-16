@@ -410,16 +410,6 @@ export const saveUserFilter = async (req, res) => {
   try {
     const { userId, filters } = req.body;
 
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ message: 'userId is required' });
-    }
-
-    if (!mongoose.isValidObjectId(userId)) {
-      return res.status(400).json({ message: 'Invalid userId format' });
-    }
-
     const objectUserId = new mongoose.Types.ObjectId(userId);
 
     const updatedFilter = await UserFilter.findOneAndUpdate(
@@ -428,13 +418,23 @@ export const saveUserFilter = async (req, res) => {
       { new: true, upsert: true }
     );
 
-    return res.status(200).json({
-      message: 'Filters saved successfully',
-      data: updatedFilter,
-    });
+    logger.info("Filters saved successfully");
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      'Filters saved successfully',
+      updatedFilter
+    );
   } catch (error) {
     console.error('Error saving filters:', error);
-    return res.status(500).json({ message: 'Error saving filters' });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Error saving filters'
+    );
   }
 };
 
@@ -442,26 +442,26 @@ export const getUserFilter = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ message: 'userId is required' });
-    }
-
-    if (!mongoose.isValidObjectId(userId)) {
-      return res.status(400).json({ message: 'Invalid userId format' });
-    }
-
     const objectUserId = new mongoose.Types.ObjectId(userId);
-    const filter = await UserFilter.findOne({ userId: objectUserId});
+    const filter = await UserFilter.findOne({ userId: objectUserId });
 
-    return res.status(200).json({
-      message: 'Filters fetched successfully',
-      data: filter?.filters || {},
-    });
+    logger.info("Filters fetched successfully");
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      'Filters fetched successfully',
+      filter?.filters || {}
+    );
   } catch (error) {
     console.error('Error fetching filters:', error);
-    return res.status(500).json({ message: 'Error fetching filters' });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Error fetching filters'
+    );
   }
 };
 

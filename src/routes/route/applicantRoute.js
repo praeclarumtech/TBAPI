@@ -28,6 +28,8 @@ import {
   applicantValidation,
   updateApplicantValidation,
   updateManyApplicantsValidation,
+  saveUserFilterValidation,
+  getUserFilterValidation
 } from '../../validations/applicantValidation.js';
 import { validator } from '../../helpers/validator.js';
 import { authorization } from '../../helpers/userMiddleware.js'
@@ -42,8 +44,8 @@ router.put('/applicant-edit-qr-code/:id',uploadAttachments, updateApplicant);
 
 router.get('/viewAllApplicant', viewAllApplicant);
 
-router.post('/userFilter', saveUserFilter);
-router.get('/userFilter/:userId', getUserFilter);
+router.post('/userFilter',validator.body(saveUserFilterValidation), saveUserFilter);
+router.get('/userFilter/:userId',validator.params(getUserFilterValidation), getUserFilter);
 
 router.get('/viewApplicant/:id', viewApplicant);
 router.get('/viewResumeAndCsvApplicant', authorization, getResumeAndCsvApplicants);
