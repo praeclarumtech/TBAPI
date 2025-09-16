@@ -502,7 +502,7 @@ export const viewAllApplicant = async (req, res) => {
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 100;
 
-    let query = { isDeleted: false };
+    let query = { isDeleted: false, isActive: true };
 
     if (addedBy && typeof addedBy === 'string') {
       const validAddedBy = addedBy
