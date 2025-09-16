@@ -78,7 +78,7 @@ export const createJob = async (req, res) => {
     try {
       const htmlBlock = jobCreatedTemplate({
         jobId: job_id,
-        role: userData.roleId?.name || userData.role || 'N/A', // ✅ fixed
+        role: userData.roleId?.name || userData.role || 'N/A', 
         jobTitle: req.body.job_subject,
         startDate: req.body.start_time,
         endDate: req.body.end_time,
@@ -146,6 +146,7 @@ export const viewJobs = async (req, res) => {
     } else if (user?.role === Enum.CLIENT) {
       query.addedBy = user.id;
     }
+
 
     if (search && typeof search === 'string') {
       const cleanSearch = search.replace(/[^a-zA-Z0-9]/g, '');
