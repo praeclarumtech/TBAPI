@@ -388,6 +388,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     isActive,
     isFavorite,
   } = filters;
+  
   const match = {isActive:true};
 
   if (gender) {
@@ -482,6 +483,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     Applicant.countDocuments({ isActive: true }),
     Applicant.countDocuments({ isActive: false }),
   ]);
+
 
   return {
     gender: gender
