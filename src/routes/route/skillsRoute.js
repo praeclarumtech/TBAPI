@@ -5,6 +5,7 @@ import { validator } from '../../helpers/validator.js';
 import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
 import {Enum} from '../../utils/enum.js'
 
+
 const router = express.Router();
 
 router.post('/addSkills', authorization, verifyRoles([Enum.ADMIN, Enum.HR]), validator.body(skillsValidation), addSkills);
