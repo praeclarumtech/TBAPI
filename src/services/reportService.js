@@ -455,6 +455,3 @@ export const getApplicantCountByDesignationCounts = async (designation, user) =>
 };
 
 
-
-
-
