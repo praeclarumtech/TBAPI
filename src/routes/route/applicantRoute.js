@@ -48,7 +48,7 @@ router.get('/viewAllApplicant', viewAllApplicant);
 router.post('/userFilter',validator.body(saveUserFilterValidation), saveUserFilter);
 router.get('/userFilter/:userId',validator.params(getUserFilterValidation), getUserFilter);
 
-router.get('/viewApplicant/:id', viewApplicant);
+router.get('/viewApplicant/:id', authorization, verifyRoles(Enum.ADMIN), viewApplicant);
 router.get('/viewResumeAndCsvApplicant', authorization, getResumeAndCsvApplicants);
 router.put('/updateApplicant/:id', authorization, verifyRoles(Enum.ADMIN), validator.body(updateApplicantValidation), updateApplicant);
 
