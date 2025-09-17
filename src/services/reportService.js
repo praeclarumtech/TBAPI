@@ -121,9 +121,10 @@ export const getApplicantSkillCounts = async (skillIds = [], user) => {
       skills = await Skills.find({
         _id: { $in: skillIds },
         isDeleted: false,
+        
       });
     } else {
-      const matchCondition = { isDeleted: false };
+      const matchCondition = { isDeleted: false, isActive: true };
       if (isVendor) {
         matchCondition.vendor_id = user.id;
       }
@@ -185,7 +186,7 @@ export const getApplicantSkillCounts = async (skillIds = [], user) => {
     );
     return {};
   }
-};
+}; 
 
 export const getApplicantCountCityAndState = async (type = 'city', user) => {
   try {
@@ -195,8 +196,8 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
     const matchStage = { isDeleted: false, isActive: true };
     if (isVendor || isClient) {
       matchStage.vendor_id = user.id;
-    }
-
+    }      
+ 
     if (isClient) {
       const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
       const jobIdList = jobIds.map((job) => job._id);
@@ -208,7 +209,7 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
       { $match: matchStage },
       {
         $group: {
-          _id: { $ifNull: [groupField, null] },
+          _id: { $toLower: { $ifNull: [groupField, null] } }, // normalize to lowercase
           count: { $sum: 1 },
         },
       },
@@ -239,9 +240,13 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
 
     const finalResult = {};
     for (const row of resultArr) {
-      const name = row._id?.trim();
-      if (name && validNameSet.has(name.toLowerCase())) {
-        finalResult[name] = row.count;
+      if (validNameSet.has(row._id)) {
+        // Inline Title Case without helper
+        const formattedName = row._id
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        finalResult[formattedName] = row.count;
       }
     }
 
@@ -260,7 +265,7 @@ export const getApplicantCountByAddedBy = async (
   currentCompanyDesignation
 ) => {
   try {
-    const query = { isDeleted: false };
+    const query = { isDeleted: false, isActive: true };
 
     if (startDate || endDate) {
       const start = startDate
