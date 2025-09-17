@@ -1,4 +1,4 @@
-import express from "express";
+import express from 'express';
 import {
   createRole,
   getRoles,
@@ -16,3 +16,4 @@ router.put('/update/:id', updateRole);
 router.delete('/delete/:id', deleteRole);
 
 export default router;
+

@@ -398,3 +398,26 @@ export const updateManyApplicantsValidation = Joi.object({
       'any.required': 'updateData is required.',
     }),
 });
+
+export const saveUserFilterValidation = Joi.object({
+  userId: Joi.string()
+    .regex(/^[0-9a-fA-F]{24}$/)
+    .required()
+    .messages({
+      "string.empty": "userId cannot be empty",
+      "any.required": "userId is required",
+      "string.pattern.base": "Invalid userId format",
+    }),
+  filters: Joi.object().default({}),
+});
+
+export const getUserFilterValidation = Joi.object({
+  userId: Joi.string()
+    .regex(/^[0-9a-fA-F]{24}$/)
+    .required()
+    .messages({
+      "string.empty": "userId cannot be empty",
+      "any.required": "userId is required",
+      "string.pattern.base": "Invalid userId format",
+    }),
+});

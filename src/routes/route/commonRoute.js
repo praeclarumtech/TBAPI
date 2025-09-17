@@ -23,9 +23,9 @@ router.get('/viewStateById/:id', viewStateById);
 
 router.get('/city', viewCity);
 router.post('/addCity', addCity);
-router.get("/viewCityById/:id", viewCityById);
-router.put("/updateCityById/:city_id", updateCityById);
-router.delete("/deleteCityById/:id", deleteCityById);
-router.delete("/deleteManyCities", deleteManyCities);
+router.get('/viewCityById/:id', viewCityById);
+router.put('/updateCityById/:city_id', updateCityById);
+router.delete('/deleteCityById/:id', deleteCityById);
+router.delete('/deleteManyCities', deleteManyCities);
 
 export default router;

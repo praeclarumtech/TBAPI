@@ -205,14 +205,18 @@ export const applicantCountByDesignation = async (req, res) => {
 
 
 
+
 export const getApplicationsByGenderWorkNotice = async (req, res) => {
   try {
-    const { gender, workPreference, noticePeriod } = req.query;
+    const { gender, workPreference, noticePeriod, createdBy, isActive, isFavorite } = req.query;
 
     const applicants = await getApplicantByGenderWorkNotice({
       gender,
       workPreference,
       noticePeriod,
+      createdBy,
+      isActive,
+      isFavorite
     });
 
     if (!applicants) {

@@ -1,5 +1,5 @@
 import applicantEmail from '../models/applicantEmailModel.js';
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 
 export const findAllEmails = async (query, applicantQuery, page, limit) => {
@@ -52,18 +52,18 @@ export const findEmailById = async (id) => {
 
   const email = await applicantEmail.aggregate([
     { $match: { _id: new mongoose.Types.ObjectId(id) } },
-    { $unwind: "$email_to" },
+    { $unwind: '$email_to' },
     {
       $lookup: {
-        from: "applicants",
-        localField: "email_to",
-        foreignField: "email",
-        as: "applicantDetails",
+        from: 'applicants',
+        localField: 'email_to',
+        foreignField: 'email',
+        as: 'applicantDetails',
       },
     },
     {
       $unwind: {
-        path: "$applicantDetails",
+        path: '$applicantDetails',
         preserveNullAndEmptyArrays: true,
       },
     },
@@ -75,8 +75,8 @@ export const findEmailById = async (id) => {
         description: 1,
         attachments: 1,
         createdAt: 1,
-        "applicantDetails.name": { $ifNull: ["$applicantDetails.name", " "] },
-        "applicantDetails.appliedSkills": { $ifNull: ["$applicantDetails.appliedSkills", []] },
+        'applicantDetails.name': { $ifNull: ['$applicantDetails.name', ' '] },
+        'applicantDetails.appliedSkills': { $ifNull: ['$applicantDetails.appliedSkills', []] },
       },
     },
   ]);

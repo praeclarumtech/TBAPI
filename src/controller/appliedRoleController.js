@@ -438,7 +438,7 @@ export const findAndReplaceSkillOrAppliedRole = async (req, res) => {
   } catch (error) {
     logger.error(`Failed to perform find and replace. ${error}`);
     if (error.name === 'MongoServerError' && error.code === 11000) {
-      const match = error.message.match(/index: (\w+)_1 dup key: { (\w+): "(.*?)" }/);
+      const match = error.message.match(/index: (\w+)_1 dup key: { (\w+): '(.*?)' }/);
       if (match) {
         const [, indexField, keyField, keyValue] = match;
         const msg = `Duplicate key error: ${keyField} : ${keyValue}`;

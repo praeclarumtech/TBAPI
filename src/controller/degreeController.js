@@ -14,7 +14,7 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 
 export const addDegree = async (req, res) => {
     const { degree } = req.body;
-    if (!degree || typeof degree !== "string") {
+    if (!degree || typeof degree !== 'string') {
         logger.warn(`Qualification ${Message.NOT_FOUND}`);
         return HandleResponse(
             res,
@@ -58,7 +58,7 @@ export const getDegrees = async (req, res) => {
     try {
         let page = Math.max(1, parseInt(req.query.page)) || 1;
         let limit = Math.min(800, Math.max(1, parseInt(req.query.limit))) || 10;
-        let search = req.query.search || "";
+        let search = req.query.search || '';
 
         let data;
         let totalRecords;
@@ -214,7 +214,7 @@ export const deleteDegree = async (req, res) => {
       deletedDegree
     );
   } catch (error) {
-    console.error("Error in deleteDegree controller:", error);
+    console.error('Error in deleteDegree controller:', error);
     logger.error(`${Message.FAILED_TO} delete qualification.`);
     return HandleResponse(
       res,
