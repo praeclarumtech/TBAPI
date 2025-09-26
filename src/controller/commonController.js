@@ -24,6 +24,7 @@ import country from '../models/countryModel.js';
 import city from '../models/citymodel.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
+import { clearCacheByPrefixes } from '../helpers/commonFunction/cacheUtils.js'; 
 
 export const viewCountry = async (req, res) => {
   try {
@@ -86,8 +87,8 @@ export const addCountry = async (req, res) => {
         'Country already exists!.'
       );
     }
-
     const newCountry = await createCountry({ country_name });
+    clearCacheByPrefixes('country','country-id');
     return HandleResponse(
       res,
       true,
@@ -128,7 +129,7 @@ export const updateCountryById = async (req, res) => {
     }
 
     const updatedcountrys = await updateCountry(countryId, updateData);
-
+    clearCacheByPrefixes('country','country-id');
     logger.info(`country  is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -161,7 +162,8 @@ export const deleteCountryById = async (req, res) => {
         'Country not found'
       );
     }
-
+    clearCacheByPrefixes('country','country-id');
+    
     return HandleResponse(
       res,
       true,
@@ -193,8 +195,8 @@ export const deleteManyCountries = async (req, res) => {
         'IDs are required for deletion'
       );
     }
-
     const result = await deleteManyCountry(ids);
+    clearCacheByPrefixes('country','country-id');
     return HandleResponse(
       res,
       true,
@@ -334,6 +336,7 @@ export const addState = async (req, res) => {
     }
 
     const result = await createState({ state_name, country_id });
+    clearCacheByPrefixes('state','state-id');
 
     logger.info(`State ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
@@ -403,7 +406,7 @@ export const updateStateById = async (req, res) => {
     }
 
     const updatedState = await updateState(stateId, { state_name, country_id });
-
+    clearCacheByPrefixes('state','state-id');
     logger.info(`State ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -439,7 +442,7 @@ export const deleteStateById = async (req, res) => {
         `State is ${Message.NOT_FOUND}`
       );
     }
-
+    clearCacheByPrefixes('state','state-id');
     logger.info(`State is ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -486,7 +489,8 @@ export const deleteManyStates = async (req, res) => {
         `States are ${Message.NOT_FOUND}`
       );
     }
-
+    clearCacheByPrefixes('state','state-id');
+  
     logger.info(`States are ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -626,7 +630,7 @@ export const addCity = async (req, res) => {
     }
 
     const result = await createCity({ city_name, state_id });
-
+    clearCacheByPrefixes('city','city-id');
     logger.info(`City ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -661,7 +665,7 @@ export const viewCityById = async (req, res) => {
         'City not found'
       );
     }
-
+    
     logger.info(`City fetched successfully`);
     return HandleResponse(res, true, StatusCodes.OK, undefined, cityData);
   } catch (error) {
@@ -727,7 +731,7 @@ export const updateCityById = async (req, res) => {
     }
 
     const result = await updateCity(city_id, { city_name, state_id });
-
+    clearCacheByPrefixes('city','city-id');
     logger.info(`City is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -754,7 +758,7 @@ export const deleteCityById = async (req, res) => {
     const { id } = req.params;
 
     const result = await deleteCity(id);
-
+    clearCacheByPrefixes('city','city-id');
     logger.info(`City deleted successfully`);
     return HandleResponse(
       res,
@@ -783,7 +787,7 @@ export const deleteManyCities = async (req, res) => {
     const { ids } = req.body;
 
     const result = await deleteManyCity(ids);
-
+    clearCacheByPrefixes('city','city-id');
     logger.info(`Cities deleted successfully`);
     return HandleResponse(
       res,

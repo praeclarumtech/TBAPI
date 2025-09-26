@@ -14,6 +14,7 @@ import { commonSearch } from '../helpers/commonFunction/search.js';
 import fs from 'fs';
 import csvParser from 'csv-parser';
 import { uploadCv } from '../helpers/multer.js';
+import { clearCacheByPrefixes } from '../helpers/commonFunction/cacheUtils.js';
 
 export const addSkills = async (req, res) => {
   const { skills } = req.body;
@@ -44,6 +45,7 @@ export const addSkills = async (req, res) => {
     }
 
     const result = await create({ skills: skills.trim() });
+    clearCacheByPrefixes(['skill','skill-id','skill-dashboard']);
     logger.info(`Skill ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,
@@ -155,6 +157,7 @@ export const updateSkills = async (req, res) => {
         `Skill ${Message.NOT_FOUND}`
       );
     }
+    clearCacheByPrefixes(['skill','skill-id','skill-dashboard']);
     logger.info(`Skill ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -190,6 +193,7 @@ export const deleteSkills = async (req, res) => {
         `Skill ${Message.NOT_FOUND}`
       );
     }
+    clearCacheByPrefixes(['skill','skill-id','skill-dashboard']);
     logger.info(`Skill ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
