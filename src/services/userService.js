@@ -7,6 +7,10 @@ export const getUser = async (body) => {
   return await User.findOne({ ...body, isDeleted: false });
 };
 
+export const getUserByUserName = async (userName) => {
+  return await User.findOne({ userName, isDeleted: false });
+};
+
 export const createUser = async (body) => {
   const user = new User({ ...body });
   return await user.save();

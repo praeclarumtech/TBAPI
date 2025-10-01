@@ -66,31 +66,33 @@ export const registerValidation = Joi.object().keys({
 export const vendorValidation = Joi.object().keys({
   whatsapp_number: Joi.string()
     .pattern(/^\+?[0-9]{10,15}$/)
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'string.pattern.base':
         'Whatsapp number must be a valid mobile number with country code',
     }),
 
-  vendor_linkedin_profile: Joi.string().uri().required().messages({
+  vendor_linkedin_profile: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Vendor LinkedIn profile must be a valid URL',
   }),
 
-  company_name: Joi.string().required(),
+  company_name: Joi.string().optional().allow(''),
 
-  company_email: Joi.string().email().required().messages({
+  company_email: Joi.string().email().optional().allow('').messages({
     'string.email': 'Company email should be a valid email address',
   }),
 
   company_phone_number: Joi.string()
     .pattern(/^\+?[0-9]{10,15}$/)
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'string.pattern.base':
         'Company phone number must be a valid mobile number with country code',
     }),
 
-  company_location: Joi.string().required(),
+  company_location: Joi.string().optional().allow(''),
 
   company_type: Joi.string()
     .valid(
@@ -119,13 +121,13 @@ export const vendorValidation = Joi.object().keys({
       ).join(', ')}`,
     }),
 
-  company_strength: Joi.string().required(),
+  company_strength: Joi.string().optional().allow(''),
 
-  company_linkedin_profile: Joi.string().uri().required().messages({
+  company_linkedin_profile: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Company LinkedIn profile must be a valid URL',
   }),
 
-  company_website: Joi.string().uri().required().messages({
+  company_website: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Company website must be a valid URL',
   }),
 });
