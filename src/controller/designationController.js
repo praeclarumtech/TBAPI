@@ -12,6 +12,7 @@ import { StatusCodes } from 'http-status-codes';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import { clearCacheByPrefixes } from '../helpers/commonFunction/cacheUtils.js';
 
 export const adddesignations = async (req, res) => {
   const { designation } = req.body;
@@ -38,6 +39,7 @@ export const adddesignations = async (req, res) => {
     }
 
     const result = await create({ designation });
+    clearCacheByPrefixes('designation','designation-id');
     logger.info(`Designation ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,
@@ -79,7 +81,7 @@ export const getDesignation = async (req, res) => {
       totalRecords = await designations.countDocuments({ isDeleted: false });
       data = await getAllDesignation(page, limit);
     }
-
+    
     logger.info(`All designation are ${Message.FETCH_SUCCESSFULLY}`);
     HandleResponse(
       res,
@@ -171,6 +173,7 @@ export const updateDesignations = async (req, res) => {
         `Designation is ${Message.NOT_FOUND}`
       );
     }
+    clearCacheByPrefixes('designation','designation-id');
     logger.info(`Designation ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -205,7 +208,7 @@ export const deleteDesignation = async (req, res) => {
         `Designation ${Message.NOT_FOUND}`
       );
     }
-
+    clearCacheByPrefixes('designation','designation-id');
     logger.info(`Designation ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -250,7 +253,7 @@ export const deleteManyDesignation = async (req, res) => {
         `Designation ${Message.NOT_FOUND}`
       );
     }
-
+    clearCacheByPrefixes('designation','designation-id');
     logger.info(`Designation ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,

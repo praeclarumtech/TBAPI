@@ -9,13 +9,14 @@ import {
 } from '../../controller/designationController.js';
 import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
 import {Enum} from '../../utils/enum.js';
+import { cacheMiddleware } from '../../helpers/commonFunction/cacheMiddleware.js';
 
 const router = express.Router();
 
 router.post('/adddesignations',authorization, verifyRoles([Enum.ADMIN, Enum.HR]),adddesignations);
-router.get('/viewDesignation', getDesignation);
+router.get('/viewDesignation',cacheMiddleware('designation'), getDesignation);
 router.get(
-  '/getDesignationsById/:designationId',
+  '/getDesignationsById/:designationId',cacheMiddleware('designation-id'),
   authorization,
   verifyRoles([Enum.ADMIN, Enum.HR]),
   getDesignationsById

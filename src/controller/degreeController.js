@@ -11,6 +11,8 @@ import { StatusCodes } from 'http-status-codes';
 import { Message } from '../utils/constant/message.js';
 import logger from '../loggers/logger.js';
 import { commonSearch } from '../helpers/commonFunction/search.js';
+import cache from '../utils/cache.js';
+import { clearCacheByPrefixes } from '../helpers/commonFunction/cacheUtils.js';
 
 export const addDegree = async (req, res) => {
     const { degree } = req.body;
@@ -35,6 +37,7 @@ export const addDegree = async (req, res) => {
         }
 
         const result = await create({ degree });
+        clearCacheByPrefixes(["degree", "degree-id"]);
         logger.info(`Qualification ${Message.ADDED_SUCCESSFULLY}`);
         HandleResponse(
             res,
@@ -147,6 +150,7 @@ export const updateDegreebyId = async (req, res) => {
                 `Qualification ${Message.NOT_FOUND}`
             );
         }
+        clearCacheByPrefixes(["degree", "degree-id"]);
         logger.info(`Qualification ${Message.UPDATED_SUCCESSFULLY}`);
         return HandleResponse(
             res,
@@ -204,7 +208,7 @@ export const deleteDegree = async (req, res) => {
         `Qualification is not found from given id(s)`
       );
     }
- 
+    clearCacheByPrefixes(["degree", "degree-id"]);
     logger.info(`Qualification ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,

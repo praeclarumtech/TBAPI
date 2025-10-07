@@ -220,8 +220,20 @@ export const listOfUsers = async (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     const additionalFilter = {};
     if (role && Object.values(Enum).includes(role)) {
-      additionalFilter.role = role;
+
+      const roleId = await roleModel.findOne({name:role}).select('_id');
+      if (!roleId) {
+        logger.warn(`Role ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          `Role ${Message.NOT_FOUND}`
+        );
+      }
+      additionalFilter.roleId = roleId;
     }
+
     if (search && typeof search === 'string') {
       const searchFields = [
         'userName',
