@@ -222,8 +222,15 @@ export const listOfUsers = async (req, res) => {
     if (role && Object.values(Enum).includes(role)) {
 
       const roleId = await roleModel.findOne({name:role}).select('_id');
-      
-      console.log("roleId------------>",roleId);
+      if (!roleId) {
+        logger.warn(`Role ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          `Role ${Message.NOT_FOUND}`
+        );
+      }
       additionalFilter.roleId = roleId;
     }
 
