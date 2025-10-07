@@ -9,8 +9,8 @@ import { cacheMiddleware } from '../../helpers/commonFunction/cacheMiddleware.js
 const router = express.Router();
 
 router.post('/addDegree', authorization, verifyRoles([Enum.ADMIN, Enum.HR]), validator.body(degreeValidation), addDegree);
-router.get('/viewDegrees',cacheMiddleware("degree",600),authorization,verifyRoles([Enum.ADMIN, Enum.HR]), getDegrees);
-router.get('/viewById/:degreeId',cacheMiddleware("degree-id",60), authorization, verifyRoles([Enum.ADMIN, Enum.HR]), getSingleDegree);
+router.get('/viewDegrees',cacheMiddleware("degree"),authorization,verifyRoles([Enum.ADMIN, Enum.HR]), getDegrees);
+router.get('/viewById/:degreeId',cacheMiddleware("degree-id"), authorization, verifyRoles([Enum.ADMIN, Enum.HR]), getSingleDegree);
 router.put('/update/:degreeId', authorization, verifyRoles([Enum.ADMIN]), validator.body(degreeValidation), updateDegreebyId);
 router.delete('/delete/deleteManyDegree', authorization, verifyRoles([Enum.ADMIN]), deleteDegree);
 
