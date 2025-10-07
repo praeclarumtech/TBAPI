@@ -234,26 +234,18 @@ export const listOfUsers = async (req, res) => {
     const additionalFilter = {};
     const loggedInUser = req.user; // Get the logged-in user from JWT token
     if (role && Object.values(Enum).includes(role)) {
-      additionalFilter.role = role;
-    }
 
-    // Build the base query for deleted users
-    const baseQuery = { 
-      $or: [
-        { isDeleted: false },
-        { isDeleted: { $exists: false } }
-      ],
-      ...additionalFilter 
-    };
-
-    // If logged-in user is admin, show both active and inactive users
-    // Otherwise, only show active users
-    if (loggedInUser.role === Enum.ADMIN) {
-      // Admin can see all users (active and inactive)
-      // No additional filter needed for isActive
-    } else {
-      // Non-admin users can only see active users
-      baseQuery.isActive = true;
+      const roleId = await roleModel.findOne({name:role}).select('_id');
+      if (!roleId) {
+        logger.warn(`Role ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          `Role ${Message.NOT_FOUND}`
+        );
+      }
+      additionalFilter.roleId = roleId;
     }
 
     if (search && typeof search === 'string') {
