@@ -54,7 +54,7 @@ export const registerValidation = Joi.object().keys({
 
   role: Joi.string()
     .required()
-    .valid(Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.GUEST,Enum.CLIENT)
+    .valid(Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.GUEST, Enum.CLIENT)
     .messages({
       'string.base': `Role should be number`,
       'any.only': `Role must be a ${Enum.ADMIN},${Enum.VENDOR},${Enum.HR},${Enum.CLIENT}, or ${Enum.GUEST}`,
@@ -100,7 +100,8 @@ export const vendorValidation = Joi.object().keys({
       CompanyTypeEnum.SERVICE,
       CompanyTypeEnum.BOTH
     )
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'any.only': `Company type must be one of ${Object.values(
         CompanyTypeEnum
@@ -114,7 +115,8 @@ export const vendorValidation = Joi.object().keys({
       HireResourcesEnum.IN_HOUSE,
       HireResourcesEnum.ALL
     )
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'any.only': `Hire resources must be one of ${Object.values(
         HireResourcesEnum
@@ -131,7 +133,6 @@ export const vendorValidation = Joi.object().keys({
     'string.uri': 'Company website must be a valid URL',
   }),
 });
-
 
 export const loginValidation = Joi.object().keys({
   email: Joi.alternatives()
@@ -157,7 +158,6 @@ export const loginValidation = Joi.object().keys({
     'any.required': `Password is a required field`,
   }),
 });
-
 
 export const sendEmailValidation = Joi.object({
   email: Joi.string().required().email().messages({
@@ -232,4 +232,4 @@ export const changePasswordValidation = Joi.object().keys({
     }),
 });
 
-export const combinedValidation = registerValidation.concat(vendorValidation)
+export const combinedValidation = registerValidation.concat(vendorValidation);

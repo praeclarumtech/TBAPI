@@ -76,7 +76,7 @@ export const register = async (req, res, next) => {
 
     let roleId = null;
 
-    const existingRole = await roleModel.findOne({name:role});
+    const existingRole = await roleModel.findOne({ name: role });
 
     if (!existingRole) {
       logger.warn(`Role ${Message.NOT_FOUND}`);
@@ -85,7 +85,7 @@ export const register = async (req, res, next) => {
         false,
         StatusCodes.NOT_FOUND,
         `Role ${Message.NOT_FOUND}`
-      );  
+      );
     }
 
     roleId = existingRole._id;
@@ -147,7 +147,8 @@ export const register = async (req, res, next) => {
       StatusCodes.CREATED,
       Message.REGISTERED_SUCCESSFULLY
     );
-  } catch (error) {    logger.error(`${Message.FAILED_TO} register.`);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} register.`);
     return HandleResponse(
       res,
       false,
@@ -234,8 +235,7 @@ export const listOfUsers = async (req, res) => {
     const additionalFilter = {};
     const loggedInUser = req.user; // Get the logged-in user from JWT token
     if (role && Object.values(Enum).includes(role)) {
-
-      const roleId = await roleModel.findOne({name:role}).select('_id');
+      const roleId = await roleModel.findOne({ name: role }).select('_id');
       if (!roleId) {
         logger.warn(`Role ${Message.NOT_FOUND}`);
         return HandleResponse(
@@ -247,6 +247,9 @@ export const listOfUsers = async (req, res) => {
       }
       additionalFilter.roleId = roleId;
     }
+
+    // Define baseQuery with additional filters
+    const baseQuery = { ...additionalFilter };
 
     if (search && typeof search === 'string') {
       const searchFields = [
@@ -271,14 +274,14 @@ export const listOfUsers = async (req, res) => {
       if (searchResults.results && searchResults.results.length > 0) {
         const uniqueUsers = [];
         const seenUserNames = new Set();
-        
-        searchResults.results.forEach(user => {
+
+        searchResults.results.forEach((user) => {
           if (!seenUserNames.has(user.userName)) {
             seenUserNames.add(user.userName);
             uniqueUsers.push(user);
           }
         });
-        
+
         searchResults.results = uniqueUsers;
       }
 
@@ -307,14 +310,14 @@ export const listOfUsers = async (req, res) => {
     if (paginatedData.item && paginatedData.item.length > 0) {
       const uniqueUsers = [];
       const seenUserNames = new Set();
-      
-      paginatedData.item.forEach(user => {
+
+      paginatedData.item.forEach((user) => {
         if (!seenUserNames.has(user.userName)) {
           seenUserNames.add(user.userName);
           uniqueUsers.push(user);
         }
       });
-      
+
       paginatedData.item = uniqueUsers;
     }
 

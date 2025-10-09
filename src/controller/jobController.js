@@ -13,6 +13,7 @@ import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import jobs from '../models/jobModel.js';
 import { generateJobId } from '../helpers/generateApplicationNo.js';
 import { getAllusers, getUser } from '../services/userService.js';
+import { getRoleByNameService } from '../services/roleService.js';
 import { Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
 import { sendingEmail } from '../utils/email.js';
@@ -78,7 +79,7 @@ export const createJob = async (req, res) => {
     try {
       const htmlBlock = jobCreatedTemplate({
         jobId: job_id,
-        role: userData.roleId?.name || userData.role || 'N/A', 
+        role: userData.roleId?.name || userData.role || 'N/A',
         jobTitle: req.body.job_subject,
         startDate: req.body.start_time,
         endDate: req.body.end_time,
@@ -131,14 +132,17 @@ export const viewJobs = async (req, res) => {
       required_skills,
       job_location,
       posted_by_role,
-      filterBy
+      filterBy,
     } = req.query;
     const query = { isDeleted: false };
 
     const user = req.user || {};
-
     if (posted_by_role) {
-      const usersWithRole = await User.find({ role: posted_by_role }, '_id').lean();
+      const usersWithRole = await User.find(
+        { role: posted_by_role },
+        '_id'
+      ).lean();
+
       const userIds = usersWithRole.map((u) => u._id);
       query.addedBy = { $in: userIds };
     } else if (user?.role === Enum.VENDOR) {
@@ -147,6 +151,23 @@ export const viewJobs = async (req, res) => {
       query.addedBy = user.id;
     }
 
+    if (user.role === Enum.ADMIN && filterBy === Enum.VENDOR) {
+      const vendorRole = await getRoleByNameService(Enum.VENDOR);
+      const vendorUsers = await getAllusers(
+        { roleId: vendorRole._id },
+        { _id: 1 }
+      );
+      const vendorIds = vendorUsers.map((v) => v._id);
+      query.addedBy = { $in: vendorIds };
+    } else if (user.role === Enum.ADMIN && filterBy === Enum.CLIENT) {
+      const clientRole = await getRoleByNameService(Enum.CLIENT);
+      const clientUsers = await getAllusers(
+        { roleId: clientRole._id },
+        { _id: 1 }
+      );
+      const clientIds = clientUsers.map((v) => v._id);
+      query.addedBy = { $in: clientIds };
+    }
 
     if (search && typeof search === 'string') {
       const cleanSearch = search.replace(/[^a-zA-Z0-9]/g, '');
@@ -203,16 +224,6 @@ export const viewJobs = async (req, res) => {
         );
         query.required_skills = { $in: regexPatterns };
       }
-    }
-
-    if (user.role === Enum.ADMIN && filterBy === Enum.VENDOR) {
-      const vendorUsers = await getAllusers({ role: Enum.VENDOR }, { _id: 1 });
-      const vendorIds = vendorUsers.map(v => v._id);
-      query.addedBy = { $in: vendorIds };
-    } else if (user.role === Enum.ADMIN && filterBy === Enum.CLIENT) {
-      const clientUsers = await getAllusers({ role: Enum.CLIENT }, { _id: 1 });
-      const clientIds = clientUsers.map(v => v._id);
-      query.addedBy = { $in: clientIds };
     }
 
     const result = await pagination({
