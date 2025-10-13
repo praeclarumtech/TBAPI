@@ -52,6 +52,7 @@ import { extractMatchingRoleFromResume } from '../services/applicantService.js';
 import { extractSkillsFromResume } from '../services/applicantService.js';
 import { buildApplicantQuery } from '../helpers/commonFunction/filterQuery.js';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
+import { Enum } from '../utils/enum.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
