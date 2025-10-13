@@ -186,7 +186,7 @@ export const getApplicantSkillCounts = async (skillIds = [], user) => {
     );
     return {};
   }
-}; 
+};
 
 export const getApplicantCountCityAndState = async (type = 'city', user) => {
   try {
@@ -196,8 +196,8 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
     const matchStage = { isDeleted: false, isActive: true };
     if (isVendor || isClient) {
       matchStage.vendor_id = user.id;
-    }      
- 
+    }
+
     if (isClient) {
       const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
       const jobIdList = jobIds.map((job) => job._id);
@@ -243,9 +243,9 @@ export const getApplicantCountCityAndState = async (type = 'city', user) => {
       if (validNameSet.has(row._id)) {
         // Inline Title Case without helper
         const formattedName = row._id
-          .split(" ")
+          .split(' ')
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ");
+          .join(' ');
         finalResult[formattedName] = row.count;
       }
     }
@@ -393,7 +393,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     isActive,
     isFavorite,
   } = filters;
-  
+
   const match = {isActive:true};
 
   if (gender) {
@@ -432,8 +432,8 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
             $cond: [
               {
                 $or: [
-                  { $eq: [{ $ifNull: ['$gender', ''] }, ''] }, // null or missing
-                  { $eq: ['$gender', ''] }, // empty string
+                  { $eq: [{ $ifNull: ['$gender', ''] }, ''] }, 
+                  { $eq: ['$gender', ''] },
                 ],
               },
               'other',
@@ -441,10 +441,60 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
             ],
           },
         },
-        workPreference: { $push: '$workPreference' },
-        noticePeriod: { $push: '$noticePeriod' },
-        createdBy: { $push: '$createdBy' },
-        isFavorite: { $push: '$isFavorite' },
+        workPreference: {
+          $push: {
+            $cond: [
+              {
+                $or: [
+                  { $eq: [{ $ifNull: ['$workPreference', ''] }, ''] },
+                  { $eq: ['$workPreference', ''] },
+                ],
+              },
+              'other',
+              { $toLower: '$workPreference' },
+            ],
+          },
+        },
+        noticePeriod: {
+          $push: {
+            $cond: [
+              {
+                $or: [
+                  { $eq: ['$noticePeriod', ''] }, // empty string
+                  { $eq: [{ $ifNull: ['$noticePeriod', ''] }, ''] }, // null or missing
+                  { $not: [{ $isNumber: '$noticePeriod' }] }, // not a number
+                  { $not: [{ $in: ['$noticePeriod', [15, 30, 60, 90]] }] }, // not a valid number
+                ],
+              },
+              'other',
+              '$noticePeriod', 
+            ],
+          },
+        },
+
+        createdBy: {
+          $push: {
+            $cond: [
+              {
+                $or: [
+                  { $eq: [{ $ifNull: ['$createdBy', ''] }, ''] },
+                  { $eq: ['$createdBy', ''] },
+                ],
+              },
+              'other',
+              { $toLower: '$createdBy' },
+            ],
+          },
+        },
+        isFavorite: {
+          $push: {
+            $cond: [
+              { $eq: ['$isFavorite', true] },
+              true,
+              false,
+            ],
+          },
+        },
       },
     },
   ];
@@ -457,13 +507,14 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
 
   const data = result[0];
 
-  // helper functions
   const normalizeValue = (val, type = 'string') => {
     if (type === 'number') {
-      return typeof val === 'number' ? val : null;
+      if (typeof val === 'number' && !isNaN(val)) return val;
+      return 'other'; 
     }
-    if (typeof val === 'boolean') {
-      return val;
+    if (type === 'boolean') {
+      if (typeof val === 'boolean') return val;
+      return 'other';
     }
     return val && val.toString().trim()
       ? val.toString().toLowerCase()
@@ -475,14 +526,19 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     allOptions.forEach((val) => {
       counts[val] = arr.filter((x) => normalizeValue(x, type) === val).length;
     });
+    if (!allOptions.includes('other')) {
+      const otherCount = arr.filter(
+        (x) => normalizeValue(x, type) === 'other'
+      ).length;
+      if (otherCount > 0) counts['other'] = otherCount;
+    }
     return counts;
   };
 
-  // predefined options
   const genderOptions = ['male', 'female', 'other'];
-  const workPrefOptions = ['onsite', 'remote', 'hybrid'];
-  const noticeOptions = [15, 30, 60, 90];
-  const roleOptions = ['admin', 'vendor', 'client', 'hr', 'guest'];
+  const workPrefOptions = ['onsite', 'remote', 'hybrid', 'other'];
+  const noticeOptions = [15, 30, 60, 90, 'other'];
+  const roleOptions = ['admin', 'vendor', 'client', 'hr', 'guest', 'other'];
 
   const [activeCount, inactiveCount] = await Promise.all([
     Applicant.countDocuments({ isActive: true }),

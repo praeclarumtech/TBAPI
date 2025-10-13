@@ -31,11 +31,17 @@ import {
 import { applicantEnum, Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
 import { getAllusers } from '../services/userService.js';
+import { getRoleByNameService } from '../services/roleService.js';
 
 export const scoreResume = async (req, res) => {
   try {
     if (req.fileValidationError) {
-      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, req.fileValidationError);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        req.fileValidationError
+      );
     }
     if (!req.files || (!req.files.resume && !req.files.jobDescriptionFile)) {
       logger.warn(Message.UPLOAD_FAILED);
@@ -103,11 +109,15 @@ export const addJobApplication = async (req, res) => {
       );
     }
 
-    const jdText = `jobsubject: ${job.job_subject
-      }, jobdetails: ${job.job_details.replace(/<[^>]*>/g, '')}, jobtype: ${job.job_type
-      }, job location: ${job.job_location}, ${job.job_type}, min experience: ${job.min_experience
-      }, contractduration: ${job.contract_duration}, ${job.required_skills
-      }, work preference :${job.work_preference}`;
+    const jdText = `jobsubject: ${
+      job.job_subject
+    }, jobdetails: ${job.job_details.replace(/<[^>]*>/g, '')}, jobtype: ${
+      job.job_type
+    }, job location: ${job.job_location}, ${job.job_type}, min experience: ${
+      job.min_experience
+    }, contractduration: ${job.contract_duration}, ${
+      job.required_skills
+    }, work preference :${job.work_preference}`;
 
     let resumeText;
     try {
@@ -295,38 +305,49 @@ export const fetchAppliedJobs = async (req, res) => {
 export const viewJobApplicantionsByVendor = async (req, res) => {
   try {
     const user = req.user || {};
-    const { appliedSkills, filterBy } = req.query
+    const { appliedSkills, filterBy } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const query = { isDeleted: false };
-
+    
     if (user.role === Enum.VENDOR) {
-      // const vendorApps = await jobApplication.find({ vendor_id: user.id }).lean();
+      const vendorApps = await jobApplication
+        .find({ user_id: user.id })
+        .lean();
       query.vendor_id = user.id;
     }
     if (user.role === Enum.CLIENT) {
+      const clientApps = await jobApplication
+        .find({ user_id: user.id })
+        .lean();
       const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
-      const jobIdList = jobIds.map(job => job._id);
+      const jobIdList = jobIds.map((job) => job._id);
       query.job_id = { $in: jobIdList };
     }
 
     if (user.role === Enum.ADMIN && filterBy) {
       if (filterBy === Enum.VENDOR) {
-        const vendorUsers = await getAllusers({ role: Enum.VENDOR }, { _id: 1 });
-        const vendorJobIds = await jobs.find(
-          { addedBy: { $in: vendorUsers.map(u => u._id) } },
+        const vendorRole = await getRoleByNameService(Enum.VENDOR);
+        const vendorUsers = await getAllusers(
+          { roleId: vendorRole._id },
           { _id: 1 }
-        ).lean();
-        query.job_id = { $in: vendorJobIds.map(job => job._id) };
+        );
+        const vendorJobIds = await jobs
+          .find({ addedBy: { $in: vendorUsers.map((u) => u._id) } }, { _id: 1 })
+          .lean();
+        query.job_id = { $in: vendorJobIds.map((job) => job._id) };
       } else if (filterBy === Enum.CLIENT) {
-        const clientUsers = await getAllusers({ role: Enum.CLIENT }, { _id: 1 });
-        const clientJobIds = await jobs.find(
-          { addedBy: { $in: clientUsers.map(u => u._id) } },
+        const clientRole = await getRoleByNameService(Enum.CLIENT);
+        const clientUsers = await getAllusers(
+          { roleId: clientRole._id },
           { _id: 1 }
-        ).lean();
-        query.job_id = { $in: clientJobIds.map(job => job._id) };
+        );
+        const clientJobIds = await jobs
+          .find({ addedBy: { $in: clientUsers.map((u) => u._id) } }, { _id: 1 })
+          .lean();
+        query.job_id = { $in: clientJobIds.map((job) => job._id) };
       }
     }
 
@@ -389,7 +410,6 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
   }
 };
 
-
 export const viewApplicantionsById = async (req, res) => {
   try {
     const applicationId = req.params.applicationId;
@@ -441,7 +461,7 @@ export const deleteApplicant = async (req, res) => {
       return res.status(400).json({ message: 'No applicant ID(s) provided' });
     }
 
-    const deleteApplicant = await deleteApplications(ids, { isDeleted: true, });
+    const deleteApplicant = await deleteApplications(ids, { isDeleted: true });
     logger.info(`Applicantion ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,

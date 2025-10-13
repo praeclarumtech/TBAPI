@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     userName: {
       type: String,
       required: true,
+      unique: true,
     },
     firstName: {
       type: String,
@@ -23,7 +24,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // role: { type: String, required: true }, // Role string
+    role: { type: String, required: false }, // Role string
     roleId: {
       // Role ObjectId
       type: mongoose.Schema.Types.ObjectId,
@@ -68,6 +69,9 @@ userSchema.pre('save', async function (next) {
   }
   next();
 });
+
+// Create unique index for userName to prevent duplicates at database level
+userSchema.index({ userName: 1 }, { unique: true });
 
 const User = mongoose.model('user', userSchema);
 export default User;

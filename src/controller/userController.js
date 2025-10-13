@@ -16,6 +16,7 @@ dotenv.config();
 import {
   createUser,
   getUser,
+  getUserByUserName,
   getAllusers,
   getUserById,
   updateUserById,
@@ -61,9 +62,21 @@ export const register = async (req, res, next) => {
       );
     }
 
+    const existingUserName = await getUserByUserName(userName);
+
+    if (existingUserName) {
+      logger.warn(`Username ${Message.ALREADY_EXIST}`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Username ${Message.ALREADY_EXIST}`
+      );
+    }
+
     let roleId = null;
 
-    const existingRole = await roleModel.findOne({name:role});
+    const existingRole = await roleModel.findOne({ name: role });
 
     if (!existingRole) {
       logger.warn(`Role ${Message.NOT_FOUND}`);
@@ -72,7 +85,7 @@ export const register = async (req, res, next) => {
         false,
         StatusCodes.NOT_FOUND,
         `Role ${Message.NOT_FOUND}`
-      );  
+      );
     }
 
     roleId = existingRole._id;
@@ -134,7 +147,8 @@ export const register = async (req, res, next) => {
       StatusCodes.CREATED,
       Message.REGISTERED_SUCCESSFULLY
     );
-  } catch (error) {    logger.error(`${Message.FAILED_TO} register.`);
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} register.`);
     return HandleResponse(
       res,
       false,
@@ -219,9 +233,24 @@ export const listOfUsers = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
     const additionalFilter = {};
+    const loggedInUser = req.user; // Get the logged-in user from JWT token
     if (role && Object.values(Enum).includes(role)) {
-      additionalFilter.role = role;
+      const roleId = await roleModel.findOne({ name: role }).select('_id');
+      if (!roleId) {
+        logger.warn(`Role ${Message.NOT_FOUND}`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.NOT_FOUND,
+          `Role ${Message.NOT_FOUND}`
+        );
+      }
+      additionalFilter.roleId = roleId;
     }
+
+    // Define baseQuery with additional filters
+    const baseQuery = { ...additionalFilter };
+
     if (search && typeof search === 'string') {
       const searchFields = [
         'userName',
@@ -238,8 +267,24 @@ export const listOfUsers = async (req, res) => {
         page,
         limit,
         { createdAt: -1 },
-        additionalFilter
+        baseQuery
       );
+
+      // Remove duplicate userNames from search results
+      if (searchResults.results && searchResults.results.length > 0) {
+        const uniqueUsers = [];
+        const seenUserNames = new Set();
+
+        searchResults.results.forEach((user) => {
+          if (!seenUserNames.has(user.userName)) {
+            seenUserNames.add(user.userName);
+            uniqueUsers.push(user);
+          }
+        });
+
+        searchResults.results = uniqueUsers;
+      }
+
       logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
       return HandleResponse(
         res,
@@ -250,17 +295,32 @@ export const listOfUsers = async (req, res) => {
       );
     }
 
-    const query = { isDeleted: false, ...additionalFilter };
     const paginatedData = await pagination({
       Schema: User,
       page,
       limit,
-      query,
+      query: baseQuery,
       sort: { createdAt: -1 },
       populate: {
         path: 'vendorProfileId',
       },
     });
+
+    // Remove duplicate userNames from the results to prevent UI duplicates
+    if (paginatedData.item && paginatedData.item.length > 0) {
+      const uniqueUsers = [];
+      const seenUserNames = new Set();
+
+      paginatedData.item.forEach((user) => {
+        if (!seenUserNames.has(user.userName)) {
+          seenUserNames.add(user.userName);
+          uniqueUsers.push(user);
+        }
+      });
+
+      paginatedData.item = uniqueUsers;
+    }
+
     logger.info(`All profile are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -407,6 +467,7 @@ export const updateProfile = (req, res) => {
       }
 
       const updatedUser = await updateProfileById(userId, updateData);
+
       if (!updatedUser) {
         logger.warn(`Profile ${Message.NOT_FOUND}`);
         return HandleResponse(
@@ -416,6 +477,9 @@ export const updateProfile = (req, res) => {
           `Profile ${Message.NOT_FOUND}`
         );
       }
+
+      // Get user with role information to check if they should have a vendor profile
+      const userWithRole = await User.findById(userId).populate('roleId');
 
       const vendorUpdateData = {
         whatsapp_number,
@@ -450,12 +514,27 @@ export const updateProfile = (req, res) => {
             vendorUpdateData
           );
         } else {
-          return HandleResponse(
-            res,
-            false,
-            StatusCodes.NOT_FOUND,
-            `Profile ${Message.NOT_FOUND}`
-          );
+          // Check if user is vendor or client and create vendor profile if it doesn't exist
+          const userRole = userWithRole?.roleId?.name || userWithRole?.role;
+          if (userRole === Enum.VENDOR || userRole === Enum.CLIENT) {
+            const vendorData = {
+              userId: updatedUser._id,
+              ...vendorUpdateData,
+              type: userRole,
+            };
+            const newVendor = await createVendorData(vendorData);
+            await updateProfileById(updatedUser._id, {
+              vendorProfileId: newVendor._id,
+            });
+            updatedVendor = newVendor;
+          } else {
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.NOT_FOUND,
+              `Profile ${Message.NOT_FOUND}`
+            );
+          }
         }
       }
 
