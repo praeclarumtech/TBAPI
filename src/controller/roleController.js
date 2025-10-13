@@ -8,6 +8,7 @@ import {
   getRoleByIdService,
   updateRoleService,
   deleteRoleService,
+  assignPermissionsService,
 } from '../services/roleService.js';
 
 export const createRole = async (req, res) => {
@@ -144,5 +145,35 @@ export const deleteRole = async (req, res) => {
       StatusCodes.INTERNAL_SERVER_ERROR,
       error.message
     );
+  }
+};
+
+export const assignRole = async (req, res) => {
+  try {
+    const role = await assignPermissionsService(req.params.id, req.body);
+    if (!role) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        Message.NOT_FOUND
+      );
+    }
+    logger.info(`Role permissions assigned: ${role._id}`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.ACCEPTED,
+      'Role assigned successfully',
+      role
+    );
+  } catch (error) {
+    logger.error(`Assign role failed: ${error.message}`, {
+      stack: error.stack,
+    });
+    const status = error.message.includes('Invalid permission keys')
+      ? StatusCodes.BAD_REQUEST
+      : StatusCodes.INTERNAL_SERVER_ERROR;
+    return HandleResponse(res, false, status, error.message);
   }
 };

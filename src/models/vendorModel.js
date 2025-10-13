@@ -36,12 +36,12 @@ const vendorSchema = new mongoose.Schema(
     },
     company_type: {
       type: String,
-      enum: Object.values(CompanyTypeEnum),
+      enum: [...Object.values(CompanyTypeEnum), ''],
       default: 'both',
     },
     hire_resources: {
       type: String,
-      enum: Object.values(HireResourcesEnum),
+      enum: [...Object.values(HireResourcesEnum), ''],
       default: 'all',
     },
     company_strength: {
@@ -65,7 +65,9 @@ const vendorSchema = new mongoose.Schema(
       required: false,
     },
     userId: {
-      type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
     isDeleted: {
       type: Boolean,

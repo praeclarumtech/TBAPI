@@ -54,7 +54,7 @@ export const registerValidation = Joi.object().keys({
 
   role: Joi.string()
     .required()
-    .valid(Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.GUEST,Enum.CLIENT)
+    .valid(Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.GUEST, Enum.CLIENT)
     .messages({
       'string.base': `Role should be number`,
       'any.only': `Role must be a ${Enum.ADMIN},${Enum.VENDOR},${Enum.HR},${Enum.CLIENT}, or ${Enum.GUEST}`,
@@ -66,31 +66,33 @@ export const registerValidation = Joi.object().keys({
 export const vendorValidation = Joi.object().keys({
   whatsapp_number: Joi.string()
     .pattern(/^\+?[0-9]{10,15}$/)
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'string.pattern.base':
         'Whatsapp number must be a valid mobile number with country code',
     }),
 
-  vendor_linkedin_profile: Joi.string().uri().required().messages({
+  vendor_linkedin_profile: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Vendor LinkedIn profile must be a valid URL',
   }),
 
-  company_name: Joi.string().required(),
+  company_name: Joi.string().optional().allow(''),
 
-  company_email: Joi.string().email().required().messages({
+  company_email: Joi.string().email().optional().allow('').messages({
     'string.email': 'Company email should be a valid email address',
   }),
 
   company_phone_number: Joi.string()
     .pattern(/^\+?[0-9]{10,15}$/)
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'string.pattern.base':
         'Company phone number must be a valid mobile number with country code',
     }),
 
-  company_location: Joi.string().required(),
+  company_location: Joi.string().optional().allow(''),
 
   company_type: Joi.string()
     .valid(
@@ -98,7 +100,8 @@ export const vendorValidation = Joi.object().keys({
       CompanyTypeEnum.SERVICE,
       CompanyTypeEnum.BOTH
     )
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'any.only': `Company type must be one of ${Object.values(
         CompanyTypeEnum
@@ -112,24 +115,24 @@ export const vendorValidation = Joi.object().keys({
       HireResourcesEnum.IN_HOUSE,
       HireResourcesEnum.ALL
     )
-    .required()
+    .optional()
+    .allow('')
     .messages({
       'any.only': `Hire resources must be one of ${Object.values(
         HireResourcesEnum
       ).join(', ')}`,
     }),
 
-  company_strength: Joi.string().required(),
+  company_strength: Joi.string().optional().allow(''),
 
-  company_linkedin_profile: Joi.string().uri().required().messages({
+  company_linkedin_profile: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Company LinkedIn profile must be a valid URL',
   }),
 
-  company_website: Joi.string().uri().required().messages({
+  company_website: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Company website must be a valid URL',
   }),
 });
-
 
 export const loginValidation = Joi.object().keys({
   email: Joi.alternatives()
@@ -155,7 +158,6 @@ export const loginValidation = Joi.object().keys({
     'any.required': `Password is a required field`,
   }),
 });
-
 
 export const sendEmailValidation = Joi.object({
   email: Joi.string().required().email().messages({
@@ -230,4 +232,4 @@ export const changePasswordValidation = Joi.object().keys({
     }),
 });
 
-export const combinedValidation = registerValidation.concat(vendorValidation)
+export const combinedValidation = registerValidation.concat(vendorValidation);

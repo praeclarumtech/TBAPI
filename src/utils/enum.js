@@ -4,7 +4,7 @@ export const Enum = {
   USER: 'user',
   VENDOR: 'vendor',
   GUEST: 'guest',
-  CLIENT: 'client'
+  CLIENT: 'client',
 };
 export const genderEnum = {
   MALE: 'male',
@@ -139,7 +139,7 @@ export const applicantEnum = {
   MANUAL: 'Manual',
   CSV: 'Csv',
   RESUME: 'Resume',
-  GUEST: 'guest'
+  GUEST: 'guest',
 };
 
 export const candidateTemplateType = {
@@ -153,4 +153,42 @@ export const candidateTemplateType = {
   GENERAL_REJECTION: 'GENERAL_REJECTION',
   ONBOARDING_REMINDER: 'ONBOARDING_REMINDER',
   THANK_YOU_FOR_INTERVIEW: 'THANK_YOU_FOR_INTERVIEW',
+};
+
+// Permission keys based on sidebar menu structure
+export const PermissionKey = {
+  // Dashboard
+  DASHBOARD: 'dashboard',
+
+  // Applicants
+  APPLICANTS: 'applicants',
+  APPLICANTS_IMPORT: 'applicants_import',
+
+  //clients
+  CLIENTS: 'clients',
+  CLIENT_LIST: 'client_list',
+  CLIENT_JOB_LISTING: 'client_job_listing',
+  CLIENT_JOB_APPLICANTS: 'client_job_applicants',
+
+  // Vendors
+  VENDORS: 'vendors',
+  VENDOR_LIST: 'vendor_list',
+  VENDOR_JOB_LISTING: 'vendor_job_listing',
+  VENDOR_JOB_APPLICANTS: 'vendor_job_applicants',
+
+  // Analysis
+  EMAIL: 'email',
+  REPORTS: 'reports',
+
+  // Masters
+  MASTER: 'master',
+  MASTER_SKILLS: 'master_skills',
+  MASTER_DEGREE: 'master_degree',
+  MASTER_ROLE_SKILL: 'master_role_skill',
+  MASTER_FIND_FIELDS: 'master_find_fields',
+  MASTER_EMAIL_TEMPLATE: 'master_email_template',
+  MASTER_DESIGNATION: 'master_designation',
+  MASTER_COUNTRY: 'master_country',
+  MASTER_STATE: 'master_state',
+  MASTER_CITY: 'master_city',
 };
