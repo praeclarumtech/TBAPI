@@ -14,7 +14,7 @@ export const sendingEmail = async ({
   inlineImages = [], //for allow image
 }) => {
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: 'outlook',
     auth: {
       user: process.env.USER,
       pass: process.env.PASS,
@@ -27,14 +27,18 @@ export const sendingEmail = async ({
   const toRecipients = Array.isArray(email_to) ? email_to.join(',') : email;
   const bccRecipients = Array.isArray(email_bcc) ? email_bcc.join(',') : '';
 
-
   const extractBase64Content = (dataUrl) => {
     const matches = dataUrl.match(/^data:image\/\w+;base64,(.+)$/);
     return matches ? matches[1] : '';
   };
   // Convert inlineImages into nodemailer attachment format
   const inlineAttachments = inlineImages
-    .filter(image => image && typeof image.base64 === 'string' && typeof image.cid === 'string')
+    .filter(
+      (image) =>
+        image &&
+        typeof image.base64 === 'string' &&
+        typeof image.cid === 'string'
+    )
     .map(({ base64, cid }) => ({
       filename: `${cid}.png`,
       content: extractBase64Content(base64),
@@ -43,7 +47,7 @@ export const sendingEmail = async ({
     }));
 
   // Also map normal attachments if any
-  const normalAttachments = attachments.map(file => ({
+  const normalAttachments = attachments.map((file) => ({
     filename: file.filename,
     path: file.path,
   }));
@@ -64,19 +68,19 @@ export const sendingEmail = async ({
 // generateQr function
 
 export const generateQrEmailHtml = async (applicantId) => {
-  let url = ''
-  let cid = ''
-  let baseUrl = process.env.FRONT_URL
+  let url = '';
+  let cid = '';
+  let baseUrl = process.env.FRONT_URL;
 
   if (applicantId) {
-    url = `${baseUrl}/applicants/applicant-edit-qr-code/${applicantId}`
+    url = `${baseUrl}/applicants/applicant-edit-qr-code/${applicantId}`;
     cid = `qr-${applicantId}@qr`;
   } else {
-    url = `${baseUrl}/applicants/applicant-add-qr-code`
-    cid = `qr-new-applicant@qr`
+    url = `${baseUrl}/applicants/applicant-add-qr-code`;
+    cid = `qr-new-applicant@qr`;
   }
 
-  const qrCode = await QRCode.toDataURL(url)
+  const qrCode = await QRCode.toDataURL(url);
 
   const htmlBlock = `
     <div style="margin-bottom: 20px;">
