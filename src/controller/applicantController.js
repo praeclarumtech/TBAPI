@@ -39,7 +39,7 @@ import {
   processCsvRow,
 } from '../helpers/commonFunction/applicantExport.js';
 import User from '../models/userModel.js';
-import { applicantEnum } from '../utils/enum.js';
+import { applicantEnum, Enum } from '../utils/enum.js';
 import {
   extractTextFromPDF,
   extractTextFromDocx,
@@ -418,7 +418,7 @@ export const saveUserFilter = async (req, res) => {
       { new: true, upsert: true }
     );
 
-    logger.info("Filters saved successfully");
+    logger.info('Filters saved successfully');
 
     return HandleResponse(
       res,
@@ -445,7 +445,7 @@ export const getUserFilter = async (req, res) => {
     const objectUserId = new mongoose.Types.ObjectId(userId);
     const filter = await UserFilter.findOne({ userId: objectUserId });
 
-    logger.info("Filters fetched successfully");
+    logger.info('Filters fetched successfully');
 
     return HandleResponse(
       res,
