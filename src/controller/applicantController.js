@@ -479,6 +479,7 @@ export const viewAllApplicant = async (req, res) => {
       endDate,
       currentCity,
       interviewStage,
+      interviewMode,
       expectedPkg,
       noticePeriod,
       status,
@@ -609,6 +610,10 @@ export const viewAllApplicant = async (req, res) => {
 
     if (interviewStage && typeof interviewStage === 'string') {
       query.interviewStage = interviewStage;
+    }
+
+    if (interviewMode && typeof interviewMode === 'string') {
+      query.interviewMode = interviewMode;
     }
 
     if (expectedPkg) {

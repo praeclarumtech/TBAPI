@@ -81,6 +81,10 @@ export const applicantEnum = {
   PRACTICAL: 'practical',
   CLIENT: 'client',
 
+  //interview mode
+  ONLINE: 'Online',
+  OFFLINE: 'Offline',
+
   SOFTWARE_ENGINEER: 'Software Engineer',
   WEB_DESIGNER: 'Web Designer',
   WEB_DEVELOPER: 'web Developer',

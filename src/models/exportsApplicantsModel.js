@@ -83,6 +83,11 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
       default: applicantEnum.FIRST_INTERVIEW_ROUND,
       required: false,
     },
+    interviewMode: {
+      type: String,
+      enum: [applicantEnum.ONLINE, applicantEnum.OFFLINE, ''],
+      required: false,
+    },
     currentCompanyDesignation: {
       type: String,
       required: false,

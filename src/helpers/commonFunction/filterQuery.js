@@ -10,6 +10,7 @@ export const buildApplicantQuery = (params) => {
     endDate,
     currentCity,
     interviewStage,
+    interviewMode,
     expectedPkg,
     noticePeriod,
     status,
@@ -27,12 +28,19 @@ export const buildApplicantQuery = (params) => {
 
   let query = { isDeleted: false, isActive: true };
 
-  if (applicationNo && !isNaN(applicationNo)) query.applicationNo = parseInt(applicationNo);
+  if (applicationNo && !isNaN(applicationNo))
+    query.applicationNo = parseInt(applicationNo);
 
   if (appliedSkills) {
-    const skillsArray = appliedSkills.split(',').map(skill =>
-      new RegExp(`^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
-    );
+    const skillsArray = appliedSkills
+      .split(',')
+      .map(
+        (skill) =>
+          new RegExp(
+            `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+            'i'
+          )
+      );
     query.appliedSkills = { $all: skillsArray };
   }
 
@@ -53,13 +61,15 @@ export const buildApplicantQuery = (params) => {
   if (appliedRole && typeof appliedRole === 'string') {
     const roleArray = appliedRole
       .split(',')
-      .map((role) => new RegExp(`^${role.trim()}$`, 'i'))
+      .map((role) => new RegExp(`^${role.trim()}$`, 'i'));
 
     query.appliedRole = { $in: roleArray };
   }
 
   if (totalExperience) {
-    const rangeMatch = totalExperience.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    const rangeMatch = totalExperience
+      .toString()
+      .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
     if (rangeMatch) {
       const min = parseFloat(rangeMatch[1]);
       const max = parseFloat(rangeMatch[3]);
@@ -71,15 +81,19 @@ export const buildApplicantQuery = (params) => {
 
   if (startDate || endDate) {
     query.createdAt = {};
-    if (startDate) query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
+    if (startDate)
+      query.createdAt.$gte = new Date(startDate + 'T00:00:00.000Z');
     if (endDate) query.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
   }
 
   if (currentCity) query.currentCity = { $regex: new RegExp(currentCity, 'i') };
   if (interviewStage) query.interviewStage = interviewStage;
+  if (interviewMode) query.interviewMode = interviewMode;
 
   if (expectedPkg) {
-    const rangeMatch = expectedPkg.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    const rangeMatch = expectedPkg
+      .toString()
+      .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
     if (rangeMatch) {
       const min = parseFloat(rangeMatch[1]);
       const max = parseFloat(rangeMatch[3]);
@@ -102,7 +116,8 @@ export const buildApplicantQuery = (params) => {
 
   if (gender) query.gender = gender;
   if (status) query.status = status;
-  if (currentCompanyDesignation) query.currentCompanyDesignation = currentCompanyDesignation;
+  if (currentCompanyDesignation)
+    query.currentCompanyDesignation = currentCompanyDesignation;
   if (state) query.state = { $regex: new RegExp(state, 'i') };
   if (workPreference) query.workPreference = workPreference;
 
@@ -129,7 +144,9 @@ export const buildApplicantQuery = (params) => {
   }
 
   if (communicationSkill) {
-    const rangeMatch = communicationSkill.toString().match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    const rangeMatch = communicationSkill
+      .toString()
+      .match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
     if (rangeMatch) {
       const min = parseFloat(rangeMatch[1]);
       const max = parseFloat(rangeMatch[3]);
