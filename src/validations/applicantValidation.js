@@ -155,6 +155,11 @@ export const applicantValidation = Joi.object({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
     }),
+    interviewMode: Joi.string()
+    .valid(applicantEnum.ONLINE, applicantEnum.OFFLINE, '')
+    .messages({
+      'any.only': 'Interview mode must be online or offline.',
+    }),
   preferredLocations: Joi.string().allow(''),
   currentCompanyName: Joi.string().allow(''),
   maritalStatus: Joi.string()
