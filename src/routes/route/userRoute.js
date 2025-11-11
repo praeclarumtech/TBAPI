@@ -11,6 +11,8 @@ import {
   getProfileByToken,
   updateStatus,
   listOfUsers,
+  importvendorCsv,
+  exportVendorCsv
 } from '../../controller/userController.js';
 import { validator } from '../../helpers/validator.js';
 import {
@@ -23,6 +25,7 @@ import {
 import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
 import { validateUserRegistration  } from '../../validations/authValidation.js';
 import {Enum} from '../../utils/enum.js'
+import { upload, uploadCv } from '../../helpers/multer.js';
 
 const router = express.Router();
 
@@ -43,6 +46,8 @@ router.post('/sendEmail/verifyOtp', verifyOtp);
 router.put('/forgotPassword', validator.body(forgotPasswordValidation), forgotPassword);
 router.post('/changePassword/:id', authorization, validator.body(changePasswordValidation), changePassword);
 router.put('/updateStatus/:id', authorization, verifyRoles([Enum.ADMIN]), updateStatus);
+router.post('/importCsv', authorization, verifyRoles([Enum.ADMIN]),uploadCv, importvendorCsv);
+router.post('/exportCsv', authorization, verifyRoles([Enum.ADMIN]), exportVendorCsv);
 
 export default router;
 

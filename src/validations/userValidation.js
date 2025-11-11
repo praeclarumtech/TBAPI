@@ -66,11 +66,11 @@ export const registerValidation = Joi.object().keys({
 export const vendorValidation = Joi.object().keys({
   whatsapp_number: Joi.string()
     .pattern(/^\+?[0-9]{10,15}$/)
-    .optional()
-    .allow('')
+    .required()
     .messages({
       'string.pattern.base':
         'Whatsapp number must be a valid mobile number with country code',
+      'any.required': 'Whatsapp number is required',
     }),
 
   vendor_linkedin_profile: Joi.string().uri().optional().allow('').messages({
@@ -100,8 +100,10 @@ export const vendorValidation = Joi.object().keys({
       CompanyTypeEnum.SERVICE,
       CompanyTypeEnum.BOTH
     )
-    .optional()
-    .allow('')
+    .required()
+    .messages({
+      'any.required': 'Company type is required',
+    })
     .messages({
       'any.only': `Company type must be one of ${Object.values(
         CompanyTypeEnum
@@ -115,9 +117,9 @@ export const vendorValidation = Joi.object().keys({
       HireResourcesEnum.IN_HOUSE,
       HireResourcesEnum.ALL
     )
-    .optional()
-    .allow('')
+    .required()
     .messages({
+      'any.required': 'Hire resources is required',
       'any.only': `Hire resources must be one of ${Object.values(
         HireResourcesEnum
       ).join(', ')}`,
