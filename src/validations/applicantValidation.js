@@ -155,7 +155,7 @@ export const applicantValidation = Joi.object({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
     }),
-    interviewMode: Joi.string()
+  interviewMode: Joi.string()
     .valid(applicantEnum.ONLINE, applicantEnum.OFFLINE, '')
     .messages({
       'any.only': 'Interview mode must be online or offline.',
@@ -315,6 +315,12 @@ export const updateApplicantValidation = Joi.object({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
     }),
+  interviewMode: Joi.string()
+    .valid(applicantEnum.ONLINE, applicantEnum.OFFLINE, '')
+    .allow(null, '')
+    .messages({
+      'any.only': 'Interview Mode must be Online or Offline.',
+    }),
 
   practicalUrl: Joi.string().allow(''),
   portfolioUrl: Joi.string().allow(''),
@@ -388,6 +394,12 @@ export const updateManyApplicantsValidation = Joi.object({
         applicantEnum.PRACTICAL
       )
       .messages({ 'any.only': 'Invalid interview stage value.' }),
+    interviewMode: Joi.string()
+      .valid(applicantEnum.ONLINE, applicantEnum.OFFLINE, '')
+      .allow(null, '')
+      .messages({
+        'any.only': 'Interview Mode must be Online or Offline.',
+      }),
 
     appliedRole: Joi.string(),
     appliedSkills: Joi.array().items(Joi.string()),
