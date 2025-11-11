@@ -3,6 +3,15 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import logger from '../loggers/logger.js';
 import dotenv from 'dotenv';
+import path from 'path';
+import Vendor from '../models/vendorModel.js';
+import fs from 'fs';
+import xlsx from 'xlsx';
+import csvParser from "csv-parser";
+import Role from '../models/roleModel.js';
+import { CompanyTypeEnum } from '../utils/enum.js';
+import { HireResourcesEnum } from '../utils/enum.js';
+import { generateVendorCsv,vendorFieldMap } from '../helpers/commonFunction/vendorExport.js';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 import {
@@ -103,7 +112,7 @@ export const register = async (req, res, next) => {
         lastName,
         firstName,
       });
-      if (roleId === Enum.VENDOR || roleId === Enum.CLIENT) {
+      if (role === Enum.VENDOR || role === Enum.CLIENT) {
         const vendorData = {
           userId: newUser._id,
           ...req.body,
@@ -832,3 +841,332 @@ export const updateStatus = async (req, res) => {
     );
   }
 };
+
+export const importvendorCsv = async (req, res) => {
+  try {
+    const updateFlag =
+      req.query.updateFlag === "true"
+        ? true
+        : req.query.updateFlag === "false"
+          ? false
+          : undefined;
+
+    if (!req.file) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        "No file uploaded"
+      );
+    }
+
+    // ✅ Load vendor role ID once
+    const vendorRole = await Role.findOne({ name: Enum.VENDOR });
+    if (!vendorRole) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        "Vendor role not found in Role collection"
+      );
+    }
+
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    let rows = [];
+
+    // ✅ PARSE CSV
+    if (ext === ".csv") {
+      rows = await new Promise((resolve, reject) => {
+        let headers = [];
+        let data = [];
+
+        fs.createReadStream(req.file.path)
+          .pipe(csvParser({ headers: false, skipEmptyLines: true }))
+          .on("data", row => {
+            if (!headers.length) {
+              headers = Object.values(row).map(h => h.trim());
+            } else {
+              const formatted = {};
+              Object.values(row).forEach((val, i) => {
+                formatted[headers[i]] = val?.trim() || "";
+              });
+              data.push(formatted);
+            }
+          })
+          .on("end", () => resolve(data))
+          .on("error", err => reject(err));
+      });
+
+      // ✅ PARSE EXCEL
+    } else if ([".xlsx", ".xls", ".xlsm", ".xltx", ".xlsb"].includes(ext)) {
+      const workbook = xlsx.readFile(req.file.path);
+      const sheet = workbook.SheetNames[0];
+      rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheet], {
+        defval: "",
+        raw: false
+      });
+
+    } else {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        "Unsupported file type (CSV/XLSX only)"
+      );
+    }
+
+    // ✅ VALIDATION
+    const validVendors = [];
+    const validationErrors = [];
+
+    rows.forEach((row, index) => {
+      const line = index + 1;
+
+      const vendor = {
+        username: row.username?.trim() || "",                     // ✅ New
+        email: row.email?.trim().toLowerCase() || "",
+        whatsapp_number: row.whatsapp_number?.trim() || "",
+        company_type: row.company_type?.trim().toUpperCase() || "",
+        hire_resources: row.hire_resources?.trim().toUpperCase() || "",
+
+        // optional fields
+        company_name: row.company_name?.trim() || "",
+        company_email: row.company_email?.trim() || "",
+        company_phone_number: row.company_phone_number?.trim() || "",
+        company_location: row.company_location?.trim() || "",
+        company_strength: row.company_strength?.trim() || "",
+        company_linkedin_profile: row.company_linkedin_profile?.trim() || "",
+        company_website: row.company_website?.trim() || "",
+        vendor_linkedin_profile: row.vendor_linkedin_profile?.trim() || "",
+      };
+
+      const errs = [];
+
+      // ✅ Required fields
+      if (!vendor.username) errs.push("username is required");
+      if (!vendor.email) errs.push("email is required");
+      if (!vendor.whatsapp_number) errs.push("whatsapp_number is required");
+
+      if (!vendor.company_type) {
+        errs.push("company_type is required");
+      } else if (
+        !Object.values(CompanyTypeEnum)
+          .map(v => v.toUpperCase())
+          .includes(vendor.company_type)
+      ) {
+        errs.push(`Invalid company_type: ${vendor.company_type}`);
+      }
+
+      if (!vendor.hire_resources) {
+        errs.push("hire_resources is required");
+      } else if (
+        !Object.values(HireResourcesEnum)
+          .map(v => v.toUpperCase())
+          .includes(vendor.hire_resources)
+      ) {
+        errs.push(`Invalid hire_resources: ${vendor.hire_resources}`);
+      }
+
+      if (errs.length) {
+        validationErrors.push(`Line ${line}: ${errs.join(", ")}`);
+      } else {
+        validVendors.push(vendor);
+      }
+    });
+
+    if (validationErrors.length) {
+      fs.unlinkSync(req.file.path);
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, validationErrors);
+    }
+
+    // ✅ DUPLICATE CHECK INSIDE FILE
+    const seenEmails = new Set();
+    const seenPhones = new Set();
+    const seenUsernames = new Set();        // ✅ Username duplicate check
+    const duplicateErrors = [];
+
+    validVendors.forEach((v, i) => {
+      const line = i + 1;
+
+      if (seenUsernames.has(v.username)) {
+        duplicateErrors.push(`Duplicate username in file at line ${line}`);
+      }
+      seenUsernames.add(v.username);
+
+      if (seenEmails.has(v.email)) {
+        duplicateErrors.push(`Duplicate email in file at line ${line}`);
+      }
+      seenEmails.add(v.email);
+
+      if (seenPhones.has(v.whatsapp_number)) {
+        duplicateErrors.push(`Duplicate whatsapp_number in file at line ${line}`);
+      }
+      seenPhones.add(v.whatsapp_number);
+    });
+
+    if (duplicateErrors.length) {
+      fs.unlinkSync(req.file.path);
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, duplicateErrors);
+    }
+
+    // ✅ CHECK EXISTING VENDORS
+    const existing = await Vendor.find({
+      email: { $in: [...seenEmails] }
+    }).lean();
+
+    const existingEmails = new Set(existing.map(v => v.email));
+
+    // ✅ CHECK EXISTING USERNAMES
+    const existingUsers = await User.find({
+      userName: { $in: [...seenUsernames] }
+    }).lean();
+
+    const existingUsernames = new Set(existingUsers.map(u => u.userName));
+
+    const toInsert = [];
+    const updated = [];
+    const skipped = [];
+    const updateErrors = [];
+
+    // ✅ INSERT / UPDATE PROCESS
+    for (const vendor of validVendors) {
+      const exists = existingEmails.has(vendor.email);
+
+      if (exists) {
+        if (updateFlag) {
+          try {
+            await Vendor.findOneAndUpdate({ email: vendor.email }, vendor);
+            updated.push(vendor.email);
+          } catch (e) {
+            skipped.push(vendor.email);
+            updateErrors.push(`Failed to update ${vendor.email}: ${e.message}`);
+          }
+        } else {
+          skipped.push(vendor.email);
+        }
+
+      } else {
+        // ✅ Block duplicate usernames
+        if (existingUsernames.has(vendor.username)) {
+          skipped.push(vendor.email);
+          updateErrors.push(`Username already exists: ${vendor.username}`);
+          continue;
+        }
+
+        // ✅ Create User (with CSV username)
+        const defaultPassword = "Vendor@123";
+        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+        const user = await User.create({
+          userName: vendor.username,
+          email: vendor.email,
+          password: hashedPassword,
+          roleId: vendorRole._id,
+          firstName: vendor.company_name || "Vendor",
+          lastName: "",
+          isActive: true,
+        });
+
+        vendor.userId = user._id;
+        toInsert.push(vendor);
+      }
+    }
+
+    if (toInsert.length) {
+      await Vendor.insertMany(toInsert, { ordered: false });
+    }
+
+    fs.unlinkSync(req.file.path);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      "Vendor import completed",
+      {
+        inserted: toInsert.map(v => v.email),
+        updated,
+        skipped,
+        updateErrors
+      }
+    );
+
+  } catch (err) {
+    console.error(err);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Unexpected error during vendor import"
+    );
+  }
+};
+
+export const exportVendorCsv = async (req, res) => {
+  try {
+    if (req.user?.role !== Enum.ADMIN) {
+      return HandleResponse(res, false, StatusCodes.UNAUTHORIZED, "Only admin can export vendors");
+    }
+
+    const { ids, fields } = req.body;
+
+    let vendorQuery = { isDeleted: false };
+
+    if (ids?.length > 0) {
+      vendorQuery._id = { $in: ids };
+    }
+
+    const vendors = await Vendor.find(vendorQuery).lean();
+
+    if (!vendors.length) {
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, "No vendors found");
+    }
+
+    // merge User + Vendor
+    const finalData = [];
+
+    for (const v of vendors) {
+      const user = await User.findById(v.userId).lean();
+
+      finalData.push({
+        vendor: v,
+        user: user
+      });
+    }
+
+    const formattedData = finalData.map(item => ({
+      userId: item.user?._id,
+      userIdObj: item.user,
+
+      userId: item.user?._id,
+      userName: item.user?.userName,
+      email: item.user?.email,
+      firstName: item.user?.firstName,
+      lastName: item.user?.lastName,
+
+      whatsapp_number: item.vendor.whatsapp_number,
+      vendor_linkedin_profile: item.vendor.vendor_linkedin_profile,
+      company_name: item.vendor.company_name,
+      company_email: item.vendor.company_email,
+      company_phone_number: item.vendor.company_phone_number,
+      company_location: item.vendor.company_location,
+      company_type: item.vendor.company_type,
+      hire_resources: item.vendor.hire_resources,
+      company_strength: item.vendor.company_strength,
+      company_linkedin_profile: item.vendor.company_linkedin_profile,
+      company_website: item.vendor.company_website,
+    }));
+
+    const csv = generateVendorCsv(formattedData, fields);
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=vendors_export.csv");
+
+    return res.status(StatusCodes.OK).send(csv);
+
+  } catch (error) {
+    console.error("Vendor CSV Export Error:", error);
+    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Failed to export vendor CSV");
+  }
+};
+
