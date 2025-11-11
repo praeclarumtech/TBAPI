@@ -155,8 +155,9 @@ export const applicantValidation = Joi.object({
       'any.only': 'Invalid interview stage value.',
       'any.required': 'Interview stage is required.',
     }),
-    interviewMode: Joi.string()
+  interviewMode: Joi.string()
     .valid(applicantEnum.ONLINE, applicantEnum.OFFLINE, '')
+    .allow(null, '')
     .messages({
       'any.only': 'Interview mode must be online or offline.',
     }),
@@ -316,6 +317,13 @@ export const updateApplicantValidation = Joi.object({
       'any.required': 'Interview stage is required.',
     }),
 
+  interviewMode: Joi.string()
+    .valid(applicantEnum.ONLINE, applicantEnum.OFFLINE, '')
+    .allow(null, '')
+    .messages({
+      'any.only': 'Interview mode must be online or offline.',
+    }),
+
   practicalUrl: Joi.string().allow(''),
   portfolioUrl: Joi.string().allow(''),
   preferredLocations: Joi.string().allow(''),
@@ -409,9 +417,9 @@ export const saveUserFilterValidation = Joi.object({
     .regex(/^[0-9a-fA-F]{24}$/)
     .required()
     .messages({
-      "string.empty": "userId cannot be empty",
-      "any.required": "userId is required",
-      "string.pattern.base": "Invalid userId format",
+      'string.empty': 'userId cannot be empty',
+      'any.required': 'userId is required',
+      'string.pattern.base': 'Invalid userId format',
     }),
   filters: Joi.object().default({}),
 });
@@ -421,8 +429,8 @@ export const getUserFilterValidation = Joi.object({
     .regex(/^[0-9a-fA-F]{24}$/)
     .required()
     .messages({
-      "string.empty": "userId cannot be empty",
-      "any.required": "userId is required",
-      "string.pattern.base": "Invalid userId format",
+      'string.empty': 'userId cannot be empty',
+      'any.required': 'userId is required',
+      'string.pattern.base': 'Invalid userId format',
     }),
 });
