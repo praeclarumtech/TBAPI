@@ -1026,21 +1026,14 @@ export const importvendorCsv = async (req, res) => {
       const emailKey = vendor.company_email || vendor.email;
 
       // 🔍 Check existing vendor dynamically (fix)
+      // 🔍 Check existing vendor dynamically
       const existingVendor = await Vendor.findOne({ company_email: emailKey });
 
       if (existingVendor) {
-        if (updateFlag) {
-          try {
-            await Vendor.findOneAndUpdate({ company_email: emailKey }, vendor);
-            updated.push(emailKey);
-          } catch (e) {
-            skipped.push(emailKey);
-            updateErrors.push(`Failed to update ${emailKey}: ${e.message}`);
-          }
-        } else {
-          skipped.push(emailKey);
-        }
-        continue; // ✅ Important: Skip creation for existing vendors
+        // ❌ Don’t update, just skip and record duplicate error
+        skipped.push(emailKey);
+        updateErrors.push(`Duplicate vendor email found: ${emailKey}`);
+        continue; // move to next record
       }
 
       // ✅ Prevent duplicate username
@@ -1066,21 +1059,21 @@ export const importvendorCsv = async (req, res) => {
         });
 
         // ✅ Create Vendor linked with user
-await Vendor.create({
-  userId: user._id,
-  whatsapp_number: vendor.whatsapp_number,
-  vendor_linkedin_profile: vendor.vendor_linkedin_profile,
-  company_name: vendor.company_name,
-  company_email: vendor.company_email || vendor.email,
-  company_phone_number: vendor.company_phone_number,
-  company_location: vendor.company_location,
-  company_type: vendor.company_type?.toLowerCase() || "",
-  hire_resources: vendor.hire_resources?.toLowerCase() || "",
-  company_strength: vendor.company_strength,
-  company_linkedin_profile: vendor.company_linkedin_profile,
-  company_website: vendor.company_website,
-  type: "vendor",
-});
+        await Vendor.create({
+          userId: user._id,
+          whatsapp_number: vendor.whatsapp_number,
+          vendor_linkedin_profile: vendor.vendor_linkedin_profile,
+          company_name: vendor.company_name,
+          company_email: vendor.company_email || vendor.email,
+          company_phone_number: vendor.company_phone_number,
+          company_location: vendor.company_location,
+          company_type: vendor.company_type?.toLowerCase() || "",
+          hire_resources: vendor.hire_resources?.toLowerCase() || "",
+          company_strength: vendor.company_strength,
+          company_linkedin_profile: vendor.company_linkedin_profile,
+          company_website: vendor.company_website,
+          type: "vendor",
+        });
 
 
         inserted.push(emailKey);
