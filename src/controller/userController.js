@@ -860,14 +860,16 @@ export const importvendorCsv = async (req, res) => {
       );
     }
 
-    // ✅ Load vendor role
+    // ✅ Load roles
     const vendorRole = await Role.findOne({ name: Enum.VENDOR });
-    if (!vendorRole) {
+    const clientRole = await Role.findOne({ name: Enum.CLIENT });
+
+    if (!vendorRole || !clientRole) {
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        "Vendor role not found in Role collection"
+        "Vendor or Client role not found in Role collection"
       );
     }
 
@@ -920,12 +922,14 @@ export const importvendorCsv = async (req, res) => {
 
     rows.forEach((row, index) => {
       const line = index + 1;
+
       const vendor = {
         username: row.username?.trim() || "",
         email: row.email?.trim().toLowerCase() || "",
+        role: row.role?.trim().toLowerCase() || "", // <-- added role column
         whatsapp_number: row.whatsapp_number?.trim() || "",
-        company_type: row.company_type?.trim().toUpperCase() || "",
-        hire_resources: row.hire_resources?.trim().toUpperCase() || "",
+        company_type: row.company_type?.trim().toLowerCase() || "",
+        hire_resources: row.hire_resources?.trim().toLowerCase() || "",
         company_name: row.company_name?.trim() || "",
         company_email: row.company_email?.trim().toLowerCase() || "",
         company_phone_number: row.company_phone_number?.trim() || "",
@@ -940,24 +944,22 @@ export const importvendorCsv = async (req, res) => {
 
       if (!vendor.username) errs.push("username is required");
       if (!vendor.email) errs.push("email is required");
+      if (!vendor.role) errs.push("role is required (vendor/client)");
+      if (!["vendor", "client"].includes(vendor.role)) {
+        errs.push(`Invalid role: ${vendor.role}`);
+      }
       if (!vendor.whatsapp_number) errs.push("whatsapp_number is required");
 
       if (!vendor.company_type) {
         errs.push("company_type is required");
-      } else if (
-        !Object.values(CompanyTypeEnum)
-          .map((v) => v.toUpperCase())
-          .includes(vendor.company_type)
-      ) {
+      } else if (!Object.values(CompanyTypeEnum).includes(vendor.company_type)) {
         errs.push(`Invalid company_type: ${vendor.company_type}`);
       }
 
       if (!vendor.hire_resources) {
         errs.push("hire_resources is required");
       } else if (
-        !Object.values(HireResourcesEnum)
-          .map((v) => v.toUpperCase())
-          .includes(vendor.hire_resources)
+        !Object.values(HireResourcesEnum).includes(vendor.hire_resources)
       ) {
         errs.push(`Invalid hire_resources: ${vendor.hire_resources}`);
       }
@@ -982,6 +984,7 @@ export const importvendorCsv = async (req, res) => {
 
     validVendors.forEach((v, i) => {
       const line = i + 1;
+
       if (seenUsernames.has(v.username)) {
         duplicateErrors.push(`Duplicate username in file at line ${line}`);
       }
@@ -1004,7 +1007,7 @@ export const importvendorCsv = async (req, res) => {
       return HandleResponse(res, false, StatusCodes.BAD_REQUEST, duplicateErrors);
     }
 
-    // ✅ Check existing vendors and users
+    // ✅ Fetch existing vendors & users
     const existing = await Vendor.find({
       company_email: { $in: Array.from(seenEmails) },
     }).lean();
@@ -1021,22 +1024,19 @@ export const importvendorCsv = async (req, res) => {
     const skipped = [];
     const updateErrors = [];
 
-    // ✅ Insert / Update Process
+    // ✅ Insert process
     for (const vendor of validVendors) {
       const emailKey = vendor.company_email || vendor.email;
 
-      // 🔍 Check existing vendor dynamically (fix)
-      // 🔍 Check existing vendor dynamically
+      // 🔍 Prevent duplicates
       const existingVendor = await Vendor.findOne({ company_email: emailKey });
-
       if (existingVendor) {
-        // ❌ Don’t update, just skip and record duplicate error
         skipped.push(emailKey);
         updateErrors.push(`Duplicate vendor email found: ${emailKey}`);
-        continue; // move to next record
+        continue;
       }
 
-      // ✅ Prevent duplicate username
+      // 🔍 Prevent duplicate username
       if (existingUsernames.has(vendor.username)) {
         skipped.push(emailKey);
         updateErrors.push(`Username already exists: ${vendor.username}`);
@@ -1044,6 +1044,10 @@ export const importvendorCsv = async (req, res) => {
       }
 
       try {
+        // ✅ Select correct role based on CSV
+        const roleId =
+          vendor.role === "vendor" ? vendorRole._id : clientRole._id;
+
         // ✅ Create User
         const defaultPassword = "Vendor@123";
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
@@ -1052,13 +1056,13 @@ export const importvendorCsv = async (req, res) => {
           userName: vendor.username,
           email: vendor.email,
           password: hashedPassword,
-          roleId: vendorRole._id,
-          firstName: vendor.company_name || "Vendor",
+          roleId,
+          firstName: vendor.company_name || vendor.role.toUpperCase(),
           lastName: "",
           isActive: true,
         });
 
-        // ✅ Create Vendor linked with user
+        // ✅ Create record in Vendor collection (even for clients)
         await Vendor.create({
           userId: user._id,
           whatsapp_number: vendor.whatsapp_number,
@@ -1067,109 +1071,128 @@ export const importvendorCsv = async (req, res) => {
           company_email: vendor.company_email || vendor.email,
           company_phone_number: vendor.company_phone_number,
           company_location: vendor.company_location,
-          company_type: vendor.company_type?.toLowerCase() || "",
-          hire_resources: vendor.hire_resources?.toLowerCase() || "",
+          company_type: vendor.company_type,
+          hire_resources: vendor.hire_resources,
           company_strength: vendor.company_strength,
           company_linkedin_profile: vendor.company_linkedin_profile,
           company_website: vendor.company_website,
-          type: "vendor",
+          type: vendor.role, // ✅ "vendor" or "client"
         });
-
 
         inserted.push(emailKey);
       } catch (err) {
-        console.error(`❌ Vendor insert failed for ${emailKey}:`, err.message);
         skipped.push(emailKey);
-        updateErrors.push(`Failed to create vendor for ${emailKey}: ${err.message}`);
+        updateErrors.push(`Failed to create record for ${emailKey}: ${err.message}`);
       }
     }
 
     fs.unlinkSync(req.file.path);
 
-    return HandleResponse(res, true, StatusCodes.OK, "Vendor import completed", {
+    return HandleResponse(res, true, StatusCodes.OK, "Import completed", {
       inserted,
-      updated,
       skipped,
       updateErrors,
     });
   } catch (err) {
-    console.error("Unexpected error during vendor import:", err);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      "Unexpected error during vendor import"
+      "Unexpected error during import"
     );
   }
 };
 
 export const exportVendorCsv = async (req, res) => {
   try {
+    // ✅ Only admin can export
     if (req.user?.role !== Enum.ADMIN) {
-      return HandleResponse(res, false, StatusCodes.UNAUTHORIZED, "Only admin can export vendors");
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.UNAUTHORIZED,
+        "Only admin can export vendor/client data"
+      );
     }
 
-    const { ids, fields } = req.body;
+    // ✅ Read from body
+    const { role, ids, fields } = req.body;
+    const roleType = role?.toLowerCase();
 
-    let vendorQuery = { isDeleted: false };
+    // ✅ Validate role
+    if (!["vendor", "client"].includes(roleType)) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        "Invalid role. Use role='vendor' or role='client'"
+      );
+    }
 
+    // ✅ Query vendor/client data
+    const query = { isDeleted: false, type: roleType };
     if (ids?.length > 0) {
-      vendorQuery._id = { $in: ids };
+      query._id = { $in: ids };
     }
 
-    const vendors = await Vendor.find(vendorQuery).lean();
-
-    if (!vendors.length) {
-      return HandleResponse(res, false, StatusCodes.NOT_FOUND, "No vendors found");
+    const vendorClientRecords = await Vendor.find(query).lean();
+    if (!vendorClientRecords.length) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `No ${roleType} records found`
+      );
     }
 
-    // merge User + Vendor
-    const finalData = [];
+    // ✅ Combine User + Vendor/Client info
+    const combinedData = [];
+    for (const record of vendorClientRecords) {
+      const user = await User.findById(record.userId).lean();
 
-    for (const v of vendors) {
-      const user = await User.findById(v.userId).lean();
-
-      finalData.push({
-        vendor: v,
-        user: user
+      combinedData.push({
+        userId: user?._id?.toString() || "",
+        username: user?.userName || "",
+        email: user?.email || "",
+        firstName: user?.firstName || "",
+        lastName: user?.lastName || "",
+        role: roleType, // ✅ include role directly
+        whatsapp_number: record.whatsapp_number || "",
+        company_name: record.company_name || "",
+        company_email: record.company_email || "",
+        company_phone_number: record.company_phone_number || "",
+        company_location: record.company_location || "",
+        company_type: record.company_type || "",
+        hire_resources: record.hire_resources || "",
+        company_strength: record.company_strength || "",
+        company_linkedin_profile: record.company_linkedin_profile || "",
+        company_website: record.company_website || "",
+        vendor_linkedin_profile: record.vendor_linkedin_profile || "",
       });
     }
 
-    const formattedData = finalData.map(item => ({
-      userId: item.user?._id,
-      userIdObj: item.user,
+    // ✅ Generate CSV using your helper
+    const csv = generateVendorCsv(combinedData, fields);
 
-      userId: item.user?._id,
-      userName: item.user?.userName,
-      email: item.user?.email,
-      firstName: item.user?.firstName,
-      lastName: item.user?.lastName,
-
-      whatsapp_number: item.vendor.whatsapp_number,
-      vendor_linkedin_profile: item.vendor.vendor_linkedin_profile,
-      company_name: item.vendor.company_name,
-      company_email: item.vendor.company_email,
-      company_phone_number: item.vendor.company_phone_number,
-      company_location: item.vendor.company_location,
-      company_type: item.vendor.company_type,
-      hire_resources: item.vendor.hire_resources,
-      company_strength: item.vendor.company_strength,
-      company_linkedin_profile: item.vendor.company_linkedin_profile,
-      company_website: item.vendor.company_website,
-    }));
-
-    const csv = generateVendorCsv(formattedData, fields);
-
+    // ✅ Send CSV as file download
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=vendors_export.csv");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=${roleType}_export.csv`
+    );
 
     return res.status(StatusCodes.OK).send(csv);
-
   } catch (error) {
-    console.error("Vendor CSV Export Error:", error);
-    return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Failed to export vendor CSV");
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Failed to export vendor/client CSV"
+    );
   }
 };
+
+
 
 export const getCsvvendorclient = async (req, res) => {
   try {
@@ -1260,7 +1283,6 @@ export const getCsvvendorclient = async (req, res) => {
       results
     );
   } catch (error) {
-    console.error("❌ Failed to fetch vendor/client list:", error);
     return HandleResponse(
       res,
       false,
