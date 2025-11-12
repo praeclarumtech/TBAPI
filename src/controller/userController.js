@@ -11,7 +11,7 @@ import csvParser from "csv-parser";
 import Role from '../models/roleModel.js';
 import { CompanyTypeEnum } from '../utils/enum.js';
 import { HireResourcesEnum } from '../utils/enum.js';
-import { generateVendorCsv,vendorFieldMap } from '../helpers/commonFunction/vendorExport.js';
+import { generateVendorCsv, vendorFieldMap } from '../helpers/commonFunction/vendorExport.js';
 import { StatusCodes } from 'http-status-codes';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 import {
@@ -860,7 +860,7 @@ export const importvendorCsv = async (req, res) => {
       );
     }
 
-    // ✅ Load vendor role ID once
+    // ✅ Load vendor role
     const vendorRole = await Role.findOne({ name: Enum.VENDOR });
     if (!vendorRole) {
       return HandleResponse(
@@ -874,7 +874,7 @@ export const importvendorCsv = async (req, res) => {
     const ext = path.extname(req.file.originalname).toLowerCase();
     let rows = [];
 
-    // ✅ PARSE CSV
+    // ✅ Parse CSV
     if (ext === ".csv") {
       rows = await new Promise((resolve, reject) => {
         let headers = [];
@@ -882,9 +882,9 @@ export const importvendorCsv = async (req, res) => {
 
         fs.createReadStream(req.file.path)
           .pipe(csvParser({ headers: false, skipEmptyLines: true }))
-          .on("data", row => {
+          .on("data", (row) => {
             if (!headers.length) {
-              headers = Object.values(row).map(h => h.trim());
+              headers = Object.values(row).map((h) => h.trim());
             } else {
               const formatted = {};
               Object.values(row).forEach((val, i) => {
@@ -894,18 +894,17 @@ export const importvendorCsv = async (req, res) => {
             }
           })
           .on("end", () => resolve(data))
-          .on("error", err => reject(err));
+          .on("error", (err) => reject(err));
       });
-
-      // ✅ PARSE EXCEL
-    } else if ([".xlsx", ".xls", ".xlsm", ".xltx", ".xlsb"].includes(ext)) {
+    }
+    // ✅ Parse Excel
+    else if ([".xlsx", ".xls", ".xlsm", ".xltx", ".xlsb"].includes(ext)) {
       const workbook = xlsx.readFile(req.file.path);
       const sheet = workbook.SheetNames[0];
       rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheet], {
         defval: "",
-        raw: false
+        raw: false,
       });
-
     } else {
       return HandleResponse(
         res,
@@ -915,23 +914,20 @@ export const importvendorCsv = async (req, res) => {
       );
     }
 
-    // ✅ VALIDATION
+    // ✅ Validation
     const validVendors = [];
     const validationErrors = [];
 
     rows.forEach((row, index) => {
       const line = index + 1;
-
       const vendor = {
-        username: row.username?.trim() || "",                     // ✅ New
+        username: row.username?.trim() || "",
         email: row.email?.trim().toLowerCase() || "",
         whatsapp_number: row.whatsapp_number?.trim() || "",
         company_type: row.company_type?.trim().toUpperCase() || "",
         hire_resources: row.hire_resources?.trim().toUpperCase() || "",
-
-        // optional fields
         company_name: row.company_name?.trim() || "",
-        company_email: row.company_email?.trim() || "",
+        company_email: row.company_email?.trim().toLowerCase() || "",
         company_phone_number: row.company_phone_number?.trim() || "",
         company_location: row.company_location?.trim() || "",
         company_strength: row.company_strength?.trim() || "",
@@ -942,7 +938,6 @@ export const importvendorCsv = async (req, res) => {
 
       const errs = [];
 
-      // ✅ Required fields
       if (!vendor.username) errs.push("username is required");
       if (!vendor.email) errs.push("email is required");
       if (!vendor.whatsapp_number) errs.push("whatsapp_number is required");
@@ -951,7 +946,7 @@ export const importvendorCsv = async (req, res) => {
         errs.push("company_type is required");
       } else if (
         !Object.values(CompanyTypeEnum)
-          .map(v => v.toUpperCase())
+          .map((v) => v.toUpperCase())
           .includes(vendor.company_type)
       ) {
         errs.push(`Invalid company_type: ${vendor.company_type}`);
@@ -961,7 +956,7 @@ export const importvendorCsv = async (req, res) => {
         errs.push("hire_resources is required");
       } else if (
         !Object.values(HireResourcesEnum)
-          .map(v => v.toUpperCase())
+          .map((v) => v.toUpperCase())
           .includes(vendor.hire_resources)
       ) {
         errs.push(`Invalid hire_resources: ${vendor.hire_resources}`);
@@ -979,24 +974,24 @@ export const importvendorCsv = async (req, res) => {
       return HandleResponse(res, false, StatusCodes.BAD_REQUEST, validationErrors);
     }
 
-    // ✅ DUPLICATE CHECK INSIDE FILE
+    // ✅ Check duplicates in file
     const seenEmails = new Set();
     const seenPhones = new Set();
-    const seenUsernames = new Set();        // ✅ Username duplicate check
+    const seenUsernames = new Set();
     const duplicateErrors = [];
 
     validVendors.forEach((v, i) => {
       const line = i + 1;
-
       if (seenUsernames.has(v.username)) {
         duplicateErrors.push(`Duplicate username in file at line ${line}`);
       }
       seenUsernames.add(v.username);
 
-      if (seenEmails.has(v.email)) {
+      const emailKey = v.company_email || v.email;
+      if (seenEmails.has(emailKey)) {
         duplicateErrors.push(`Duplicate email in file at line ${line}`);
       }
-      seenEmails.add(v.email);
+      seenEmails.add(emailKey);
 
       if (seenPhones.has(v.whatsapp_number)) {
         duplicateErrors.push(`Duplicate whatsapp_number in file at line ${line}`);
@@ -1009,51 +1004,54 @@ export const importvendorCsv = async (req, res) => {
       return HandleResponse(res, false, StatusCodes.BAD_REQUEST, duplicateErrors);
     }
 
-    // ✅ CHECK EXISTING VENDORS
+    // ✅ Check existing vendors and users
     const existing = await Vendor.find({
-      email: { $in: [...seenEmails] }
+      company_email: { $in: Array.from(seenEmails) },
     }).lean();
 
-    const existingEmails = new Set(existing.map(v => v.email));
-
-    // ✅ CHECK EXISTING USERNAMES
     const existingUsers = await User.find({
-      userName: { $in: [...seenUsernames] }
+      userName: { $in: Array.from(seenUsernames) },
     }).lean();
 
-    const existingUsernames = new Set(existingUsers.map(u => u.userName));
+    const existingEmails = new Set(existing.map((v) => v.company_email));
+    const existingUsernames = new Set(existingUsers.map((u) => u.userName));
 
-    const toInsert = [];
+    const inserted = [];
     const updated = [];
     const skipped = [];
     const updateErrors = [];
 
-    // ✅ INSERT / UPDATE PROCESS
+    // ✅ Insert / Update Process
     for (const vendor of validVendors) {
-      const exists = existingEmails.has(vendor.email);
+      const emailKey = vendor.company_email || vendor.email;
 
-      if (exists) {
+      // 🔍 Check existing vendor dynamically (fix)
+      const existingVendor = await Vendor.findOne({ company_email: emailKey });
+
+      if (existingVendor) {
         if (updateFlag) {
           try {
-            await Vendor.findOneAndUpdate({ email: vendor.email }, vendor);
-            updated.push(vendor.email);
+            await Vendor.findOneAndUpdate({ company_email: emailKey }, vendor);
+            updated.push(emailKey);
           } catch (e) {
-            skipped.push(vendor.email);
-            updateErrors.push(`Failed to update ${vendor.email}: ${e.message}`);
+            skipped.push(emailKey);
+            updateErrors.push(`Failed to update ${emailKey}: ${e.message}`);
           }
         } else {
-          skipped.push(vendor.email);
+          skipped.push(emailKey);
         }
+        continue; // ✅ Important: Skip creation for existing vendors
+      }
 
-      } else {
-        // ✅ Block duplicate usernames
-        if (existingUsernames.has(vendor.username)) {
-          skipped.push(vendor.email);
-          updateErrors.push(`Username already exists: ${vendor.username}`);
-          continue;
-        }
+      // ✅ Prevent duplicate username
+      if (existingUsernames.has(vendor.username)) {
+        skipped.push(emailKey);
+        updateErrors.push(`Username already exists: ${vendor.username}`);
+        continue;
+      }
 
-        // ✅ Create User (with CSV username)
+      try {
+        // ✅ Create User
         const defaultPassword = "Vendor@123";
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
@@ -1067,32 +1065,42 @@ export const importvendorCsv = async (req, res) => {
           isActive: true,
         });
 
-        vendor.userId = user._id;
-        toInsert.push(vendor);
-      }
-    }
+        // ✅ Create Vendor linked with user
+await Vendor.create({
+  userId: user._id,
+  whatsapp_number: vendor.whatsapp_number,
+  vendor_linkedin_profile: vendor.vendor_linkedin_profile,
+  company_name: vendor.company_name,
+  company_email: vendor.company_email || vendor.email,
+  company_phone_number: vendor.company_phone_number,
+  company_location: vendor.company_location,
+  company_type: vendor.company_type?.toLowerCase() || "",
+  hire_resources: vendor.hire_resources?.toLowerCase() || "",
+  company_strength: vendor.company_strength,
+  company_linkedin_profile: vendor.company_linkedin_profile,
+  company_website: vendor.company_website,
+  type: "vendor",
+});
 
-    if (toInsert.length) {
-      await Vendor.insertMany(toInsert, { ordered: false });
+
+        inserted.push(emailKey);
+      } catch (err) {
+        console.error(`❌ Vendor insert failed for ${emailKey}:`, err.message);
+        skipped.push(emailKey);
+        updateErrors.push(`Failed to create vendor for ${emailKey}: ${err.message}`);
+      }
     }
 
     fs.unlinkSync(req.file.path);
 
-    return HandleResponse(
-      res,
-      true,
-      StatusCodes.OK,
-      "Vendor import completed",
-      {
-        inserted: toInsert.map(v => v.email),
-        updated,
-        skipped,
-        updateErrors
-      }
-    );
-
+    return HandleResponse(res, true, StatusCodes.OK, "Vendor import completed", {
+      inserted,
+      updated,
+      skipped,
+      updateErrors,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Unexpected error during vendor import:", err);
     return HandleResponse(
       res,
       false,
@@ -1167,6 +1175,105 @@ export const exportVendorCsv = async (req, res) => {
   } catch (error) {
     console.error("Vendor CSV Export Error:", error);
     return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, "Failed to export vendor CSV");
+  }
+};
+
+export const getCsvvendorclient = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      company_type,
+      hire_resources,
+      company_name,
+      company_location,
+      email,
+      type, // vendor or client
+    } = req.query;
+
+    // ✅ Validate type
+    if (!["vendor", "client"].includes(type)) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        "Invalid type. Use ?type=vendor or ?type=client"
+      );
+    }
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+
+    // ✅ Base Query
+    const query = {
+      isDeleted: false,
+      type: type, // 👈 dynamically filter based on ?type=
+    };
+
+    // ✅ Optional Filters
+    if (company_type) query.company_type = company_type;
+    if (hire_resources) query.hire_resources = hire_resources;
+    if (company_name)
+      query.company_name = { $regex: new RegExp(company_name, "i") };
+    if (company_location)
+      query.company_location = { $regex: new RegExp(company_location, "i") };
+    if (email) query.email = { $regex: new RegExp(email, "i") };
+
+    // ✅ Global Search
+    if (search && typeof search === "string") {
+      const searchFields = [
+        "company_name",
+        "email",
+        "company_email",
+        "company_phone_number",
+        "company_location",
+        "vendor_linkedin_profile",
+      ];
+
+      const searchResults = await commonSearch(
+        Vendor,
+        searchFields,
+        search,
+        search,
+        pageNum,
+        limitNum,
+        query // 👈 includes vendor/client filter
+      );
+
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        `${type.charAt(0).toUpperCase() + type.slice(1)} list fetched successfully`,
+        searchResults
+      );
+    }
+
+    // ✅ Paginated Result
+    const results = await pagination({
+      Schema: Vendor,
+      page: pageNum,
+      limit: limitNum,
+      query,
+      sort: { createdAt: -1 },
+    });
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `${type.charAt(0).toUpperCase() + type.slice(1)} list fetched successfully`,
+      results
+    );
+  } catch (error) {
+    console.error("❌ Failed to fetch vendor/client list:", error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to fetch ${req.query.type} list. ${error.message}`
+    );
   }
 };
 

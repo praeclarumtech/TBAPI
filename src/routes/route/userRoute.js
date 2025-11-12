@@ -12,7 +12,8 @@ import {
   updateStatus,
   listOfUsers,
   importvendorCsv,
-  exportVendorCsv
+  exportVendorCsv,
+  getCsvvendorclient
 } from '../../controller/userController.js';
 import { validator } from '../../helpers/validator.js';
 import {
@@ -40,6 +41,7 @@ router.post('/login', validator.body(loginValidation), login);
 router.get('/listOfUsers', authorization, verifyRoles([Enum.ADMIN]), listOfUsers);
 router.get('/getProfileByToken', authorization, getProfileByToken);
 router.get('/viewProfileByID/:id', authorization, viewProfileById);
+router.get('/viewvendorclientCsv', authorization, verifyRoles([Enum.ADMIN]),getCsvvendorclient);
 router.put('/updateProfile/:id', authorization, updateProfile);
 router.post('/sendEmail', validator.body(sendEmailValidation), sendEmail);
 router.post('/sendEmail/verifyOtp', verifyOtp);
