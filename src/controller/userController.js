@@ -1088,7 +1088,6 @@ export const importvendorCsv = async (req, res) => {
               whatsapp_number: vendor.whatsapp_number,
               vendor_linkedin_profile: vendor.vendor_linkedin_profile,
               company_name: vendor.company_name,
-              company_email: vendor.company_email || vendor.email,
               company_phone_number: vendor.company_phone_number,
               company_location: vendor.company_location,
               company_type: vendor.company_type,
@@ -1096,7 +1095,6 @@ export const importvendorCsv = async (req, res) => {
               company_strength: vendor.company_strength,
               company_linkedin_profile: vendor.company_linkedin_profile,
               company_website: vendor.company_website,
-              type: vendor.role,
             }
           );
 
