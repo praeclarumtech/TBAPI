@@ -8,6 +8,7 @@ import Vendor from '../models/vendorModel.js';
 import fs from 'fs';
 import xlsx from 'xlsx';
 import csvParser from "csv-parser";
+import { importEnum } from '../utils/enum.js';
 import Role from '../models/roleModel.js';
 import { CompanyTypeEnum } from '../utils/enum.js';
 import { HireResourcesEnum } from '../utils/enum.js';
@@ -858,13 +859,13 @@ export const importvendorCsv = async (req, res) => {
         StatusCodes.BAD_REQUEST,
         "No file uploaded"
       );
-    }
+    } 
 
-    // ✅ Load roles
-    const vendorRole = await Role.findOne({ name: Enum.VENDOR });
-    const clientRole = await Role.findOne({ name: Enum.CLIENT });
+        // ✅ Load roles
+    const roleData = await Role.findOne({ name: req.body.role });
 
-    if (!vendorRole || !clientRole) {
+
+    if (!roleData) {
       return HandleResponse(
         res,
         false,
@@ -926,7 +927,7 @@ export const importvendorCsv = async (req, res) => {
       const vendor = {
         username: row.username?.trim() || "",
         email: row.email?.trim().toLowerCase() || "",
-        role: row.role?.trim().toLowerCase() || "", // <-- added role column
+        role: req.body.role || "", // <-- added role column
         whatsapp_number: row.whatsapp_number?.trim() || "",
         company_type: row.company_type?.trim().toLowerCase() || "",
         hire_resources: row.hire_resources?.trim().toLowerCase() || "",
@@ -1045,14 +1046,13 @@ export const importvendorCsv = async (req, res) => {
 
       try {
         // ✅ Select correct role based on CSV
-        const roleId =
-          vendor.role === "vendor" ? vendorRole._id : clientRole._id;
+        const roleId = roleData._id;
 
         // ✅ Create User
         const defaultPassword = "Vendor@123";
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
-        const user = await User.create({
+        const userObject  = {
           userName: vendor.username,
           email: vendor.email,
           password: hashedPassword,
@@ -1060,7 +1060,9 @@ export const importvendorCsv = async (req, res) => {
           firstName: vendor.company_name || vendor.role.toUpperCase(),
           lastName: "",
           isActive: true,
-        });
+        }
+
+        const user = await User.create(userObject);
 
         // ✅ Create record in Vendor collection (even for clients)
         await Vendor.create({
