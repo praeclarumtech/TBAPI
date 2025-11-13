@@ -263,7 +263,7 @@ export const listOfUsers = async (req, res) => {
     }
 
     // Define baseQuery with additional filters
-    const baseQuery = { ...additionalFilter };
+    const baseQuery = { ...additionalFilter, isDeleted: false };
 
     if (search && typeof search === 'string') {
       const searchFields = [
