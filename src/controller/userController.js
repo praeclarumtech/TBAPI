@@ -848,8 +848,8 @@ export const importvendorCsv = async (req, res) => {
       req.query.updateFlag === "true"
         ? true
         : req.query.updateFlag === "false"
-          ? false
-          : undefined;
+        ? false
+        : undefined;
 
     if (!req.file) {
       return HandleResponse(
@@ -858,7 +858,7 @@ export const importvendorCsv = async (req, res) => {
         StatusCodes.BAD_REQUEST,
         "No file uploaded"
       );
-    } 
+    }
 
         // ✅ Load roles
     const roleData = await Role.findOne({ name: req.body.role });
@@ -880,7 +880,7 @@ export const importvendorCsv = async (req, res) => {
     if (ext === ".csv") {
       rows = await new Promise((resolve, reject) => {
         let headers = [];
-        let data = [];
+        const data = [];
 
         fs.createReadStream(req.file.path)
           .pipe(csvParser({ headers: false, skipEmptyLines: true }))
@@ -926,7 +926,7 @@ export const importvendorCsv = async (req, res) => {
       const vendor = {
         username: row.username?.trim() || "",
         email: row.email?.trim().toLowerCase() || "",
-        role: req.body.role || "", // <-- added role column
+        role: req.body.role || "",
         whatsapp_number: row.whatsapp_number?.trim() || "",
         company_type: row.company_type?.trim().toLowerCase() || "",
         hire_resources: row.hire_resources?.trim().toLowerCase() || "",
@@ -976,7 +976,6 @@ export const importvendorCsv = async (req, res) => {
       return HandleResponse(res, false, StatusCodes.BAD_REQUEST, validationErrors);
     }
 
-    // ✅ Check duplicates in file
     const seenEmails = new Set();
     const seenPhones = new Set();
     const seenUsernames = new Set();
@@ -985,21 +984,24 @@ export const importvendorCsv = async (req, res) => {
     validVendors.forEach((v, i) => {
       const line = i + 1;
 
-      if (seenUsernames.has(v.username)) {
-        duplicateErrors.push(`Duplicate username in file at line ${line}`);
-      }
-      seenUsernames.add(v.username);
+      const emailKey = (v.company_email || v.email).trim().toLowerCase();
+      const phone = v.whatsapp_number.trim();
+      const username = v.username.trim();
 
-      const emailKey = v.company_email || v.email;
+      if (seenUsernames.has(username)) {
+        duplicateErrors.push(`Line ${line}: Duplicate username (${username}) inside file`);
+      }
+      seenUsernames.add(username);
+
       if (seenEmails.has(emailKey)) {
-        duplicateErrors.push(`Duplicate email in file at line ${line}`);
+        duplicateErrors.push(`Line ${line}: Duplicate email (${emailKey}) inside file`);
       }
       seenEmails.add(emailKey);
 
-      if (seenPhones.has(v.whatsapp_number)) {
-        duplicateErrors.push(`Duplicate whatsapp_number in file at line ${line}`);
+      if (seenPhones.has(phone)) {
+        duplicateErrors.push(`Line ${line}: Duplicate whatsapp_number (${phone}) inside file`);
       }
-      seenPhones.add(v.whatsapp_number);
+      seenPhones.add(phone);
     });
 
     if (duplicateErrors.length) {
@@ -1007,51 +1009,123 @@ export const importvendorCsv = async (req, res) => {
       return HandleResponse(res, false, StatusCodes.BAD_REQUEST, duplicateErrors);
     }
 
-    // ✅ Fetch existing vendors & users
-    const existing = await Vendor.find({
-      company_email: { $in: Array.from(seenEmails) },
+    const dbVendors = await Vendor.find({
+      $or: [
+        { company_email: { $in: [...seenEmails] } },
+        { whatsapp_number: { $in: [...seenPhones] } },
+      ],
     }).lean();
 
-    const existingUsers = await User.find({
-      userName: { $in: Array.from(seenUsernames) },
+    const dbUsers = await User.find({
+      userName: { $in: [...seenUsernames] },
     }).lean();
 
-    const existingEmails = new Set(existing.map((v) => v.company_email));
-    const existingUsernames = new Set(existingUsers.map((u) => u.userName));
+    const dbDupErrors = [];
+
+    const dbEmails = new Set(
+      dbVendors.map((v) => (v.company_email || "").trim().toLowerCase())
+    );
+    const dbPhones = new Set(
+      dbVendors.map((v) => (v.whatsapp_number || "").trim())
+    );
+    const dbUsernames = new Set(dbUsers.map((u) => u.userName.trim()));
+
+    validVendors.forEach((v, i) => {
+      const line = i + 1;
+      const emailKey = (v.company_email || v.email).trim().toLowerCase();
+      const phone = v.whatsapp_number.trim();
+      const username = v.username.trim();
+
+      if (dbEmails.has(emailKey)) {
+        dbDupErrors.push(`Line ${line}: Email already exists in DB (${emailKey})`);
+      }
+      if (dbPhones.has(phone)) {
+        dbDupErrors.push(`Line ${line}: whatsapp_number already exists in DB (${phone})`);
+      }
+      if (dbUsernames.has(username)) {
+        dbDupErrors.push(`Line ${line}: Username already exists in DB (${username})`);
+      }
+    });
+
+    if (dbDupErrors.length && updateFlag !== true) {
+      fs.unlinkSync(req.file.path);
+
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        "Duplicate records found. Do you want to update?",
+        {
+          existingEmails: [...dbEmails],
+        }
+      );
+    }
 
     const inserted = [];
     const updated = [];
     const skipped = [];
     const updateErrors = [];
 
-    // ✅ Insert process
     for (const vendor of validVendors) {
-      const emailKey = vendor.company_email || vendor.email;
+      const emailKey = (vendor.company_email || vendor.email).trim().toLowerCase();
+      const phone = vendor.whatsapp_number.trim();
+      const username = vendor.username.trim();
 
-      // 🔍 Prevent duplicates
-      const existingVendor = await Vendor.findOne({ company_email: emailKey });
-      if (existingVendor) {
+      const existingVendor = await Vendor.findOne({
+        $or: [
+          { company_email: emailKey },
+          { whatsapp_number: phone },
+        ],
+      });
+
+      const existingUser = await User.findOne({ userName: username });
+
+      if (existingVendor && updateFlag === true) {
+        try {
+          await Vendor.updateOne(
+            { _id: existingVendor._id },
+            {
+              whatsapp_number: vendor.whatsapp_number,
+              vendor_linkedin_profile: vendor.vendor_linkedin_profile,
+              company_name: vendor.company_name,
+              company_email: vendor.company_email || vendor.email,
+              company_phone_number: vendor.company_phone_number,
+              company_location: vendor.company_location,
+              company_type: vendor.company_type,
+              hire_resources: vendor.hire_resources,
+              company_strength: vendor.company_strength,
+              company_linkedin_profile: vendor.company_linkedin_profile,
+              company_website: vendor.company_website,
+              type: vendor.role,
+            }
+          );
+
+          updated.push(emailKey);
+          continue;
+        } catch (err) {
+          updateErrors.push(`Failed to update ${emailKey}: ${err.message}`);
+          skipped.push(emailKey);
+          continue;
+        }
+      }
+
+      if (existingVendor && updateFlag !== true) {
         skipped.push(emailKey);
-        updateErrors.push(`Duplicate vendor email found: ${emailKey}`);
+        updateErrors.push(`Duplicate record found: ${emailKey}`);
         continue;
       }
 
-      // 🔍 Prevent duplicate username
-      if (existingUsernames.has(vendor.username)) {
+      if (existingUser && updateFlag !== true) {
         skipped.push(emailKey);
-        updateErrors.push(`Username already exists: ${vendor.username}`);
+        updateErrors.push(`Duplicate username found: ${username}`);
         continue;
       }
 
       try {
-        // ✅ Select correct role based on CSV
         const roleId = roleData._id;
+        const hashedPassword = await bcrypt.hash("Vendor@123", 10);
 
-        // ✅ Create User
-        const defaultPassword = "Vendor@123";
-        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
-        const userObject  = {
+        const user = await User.create({
           userName: vendor.username,
           email: vendor.email,
           password: hashedPassword,
@@ -1059,11 +1133,8 @@ export const importvendorCsv = async (req, res) => {
           firstName: vendor.company_name || vendor.role.toUpperCase(),
           lastName: "",
           isActive: true,
-        }
+        });
 
-        const user = await User.create(userObject);
-
-        // ✅ Create record in Vendor collection (even for clients)
         await Vendor.create({
           userId: user._id,
           whatsapp_number: vendor.whatsapp_number,
@@ -1077,13 +1148,13 @@ export const importvendorCsv = async (req, res) => {
           company_strength: vendor.company_strength,
           company_linkedin_profile: vendor.company_linkedin_profile,
           company_website: vendor.company_website,
-          type: vendor.role, // ✅ "vendor" or "client"
+          type: vendor.role,
         });
 
         inserted.push(emailKey);
       } catch (err) {
         skipped.push(emailKey);
-        updateErrors.push(`Failed to create record for ${emailKey}: ${err.message}`);
+        updateErrors.push(`Failed to create ${emailKey}: ${err.message}`);
       }
     }
 
@@ -1091,6 +1162,7 @@ export const importvendorCsv = async (req, res) => {
 
     return HandleResponse(res, true, StatusCodes.OK, "Import completed", {
       inserted,
+      updated,
       skipped,
       updateErrors,
     });
@@ -1193,8 +1265,6 @@ export const exportVendorCsv = async (req, res) => {
   }
 };
 
-
-
 export const getCsvvendorclient = async (req, res) => {
   try {
     const {
@@ -1206,10 +1276,15 @@ export const getCsvvendorclient = async (req, res) => {
       company_name,
       company_location,
       email,
-      type, // vendor or client
+      company_email,
+      vendor_linkedin_profile,
+      company_strength,
+      startDate,
+      endDate,
+      company_phone_number,
+      type,
     } = req.query;
 
-    // ✅ Validate type
     if (!["vendor", "client"].includes(type)) {
       return HandleResponse(
         res,
@@ -1222,22 +1297,67 @@ export const getCsvvendorclient = async (req, res) => {
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
 
-    // ✅ Base Query
     const query = {
       isDeleted: false,
-      type: type, // 👈 dynamically filter based on ?type=
+      type,
     };
 
-    // ✅ Optional Filters
     if (company_type) query.company_type = company_type;
     if (hire_resources) query.hire_resources = hire_resources;
+
     if (company_name)
       query.company_name = { $regex: new RegExp(company_name, "i") };
+
     if (company_location)
       query.company_location = { $regex: new RegExp(company_location, "i") };
-    if (email) query.email = { $regex: new RegExp(email, "i") };
 
-    // ✅ Global Search
+    if (email)
+      query.email = { $regex: new RegExp(email, "i") };
+
+    if (company_email)
+      query.company_email = { $regex: new RegExp(company_email, "i") };
+
+    if (vendor_linkedin_profile)
+      query.vendor_linkedin_profile = {
+        $regex: new RegExp(vendor_linkedin_profile, "i"),
+      };
+
+    if (company_phone_number) {
+      const rangeMatch = company_phone_number
+        .toString()
+        .match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseInt(rangeMatch[1]);
+        const max = parseInt(rangeMatch[2]);
+        query.company_phone_number = { $gte: min, $lte: max };
+      } else {
+        query.company_phone_number = company_phone_number;
+      }
+    }
+
+    if (company_strength) {
+      const rangeMatch = company_strength
+        .toString()
+        .match(/^(\d+)-(\d+)$/);
+
+      if (rangeMatch) {
+        const min = parseInt(rangeMatch[1]);
+        const max = parseInt(rangeMatch[2]);
+        query.company_strength = { $gte: min, $lte: max };
+      } else {
+        query.company_strength = parseInt(company_strength);
+      }
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate)
+        query.createdAt.$gte = new Date(startDate + "T00:00:00.000Z");
+      if (endDate)
+        query.createdAt.$lte = new Date(endDate + "T23:59:59.999Z");
+    }
+
     if (search && typeof search === "string") {
       const searchFields = [
         "company_name",
@@ -1255,7 +1375,7 @@ export const getCsvvendorclient = async (req, res) => {
         search,
         pageNum,
         limitNum,
-        query // 👈 includes vendor/client filter
+        query
       );
 
       return HandleResponse(
@@ -1267,7 +1387,6 @@ export const getCsvvendorclient = async (req, res) => {
       );
     }
 
-    // ✅ Paginated Result
     const results = await pagination({
       Schema: Vendor,
       page: pageNum,
@@ -1292,4 +1411,5 @@ export const getCsvvendorclient = async (req, res) => {
     );
   }
 };
+
 
