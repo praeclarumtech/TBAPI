@@ -79,3 +79,5 @@ router.patch('/activateApplicant/:id', authorization, verifyRoles(Enum.ADMIN), a
 router.patch('/inactivateApplicant/:id', authorization, verifyRoles(Enum.ADMIN), inActiveApplicant);
 
 export default router;
+
+

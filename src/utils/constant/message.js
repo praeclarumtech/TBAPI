@@ -18,7 +18,7 @@ export const Message = {
   NO_TOKEN: 'Authorization header is missing.',
   TOKEN_IS_NOT_VALID: 'Token is not valid.',
 
-  ADDED_SUCCESSFULLY: 'addedd successfully.',
+  ADDED_SUCCESSFULLY: 'added successfully.',
   DELETED_SUCCESSFULLY: 'deleted successfully.',
   UPDATED_SUCCESSFULLY: 'updated successfully.',
   REGISTERED_SUCCESSFULLY: 'Congratulation! You are registered successfully..',

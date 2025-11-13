@@ -94,6 +94,10 @@ const ApplicantSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    interviewMode: {
+      type: String,
+      enum: [applicantEnum.ONLINE, applicantEnum.OFFLINE, ''],
+    },
     practicalUrl: { type: String },
     practicalFeedback: { type: String },
     portfolioUrl: { type: String },
