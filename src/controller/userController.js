@@ -8,7 +8,6 @@ import Vendor from '../models/vendorModel.js';
 import fs from 'fs';
 import xlsx from 'xlsx';
 import csvParser from "csv-parser";
-import { importEnum } from '../utils/enum.js';
 import Role from '../models/roleModel.js';
 import { CompanyTypeEnum } from '../utils/enum.js';
 import { HireResourcesEnum } from '../utils/enum.js';
