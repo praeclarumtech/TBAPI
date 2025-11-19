@@ -853,8 +853,8 @@ export const importvendorCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     if (!req.file) {
       return HandleResponse(
@@ -1026,32 +1026,12 @@ export const importvendorCsv = async (req, res) => {
         });
       }
 
-    
+
       const errs = [];
 
-      if (!vendor.username) errs.push('username is required');
       if (!vendor.email) errs.push('email is required');
-      if (!vendor.role) errs.push('role is required (vendor/client)');
-      if (!['vendor', 'client'].includes(vendor.role)) {
-        errs.push(`Invalid role: ${vendor.role}`);
-      }
+
       if (!vendor.whatsapp_number) errs.push('whatsapp_number is required');
-
-      if (!vendor.company_type) {
-        errs.push('company_type is required');
-      } else if (
-        !Object.values(CompanyTypeEnum).includes(vendor.company_type)
-      ) {
-        errs.push(`Invalid company_type: ${vendor.company_type}`);
-      }
-
-      if (!vendor.hire_resources) {
-        errs.push('hire_resources is required');
-      } else if (
-        !Object.values(HireResourcesEnum).includes(vendor.hire_resources)
-      ) {
-        errs.push(`Invalid hire_resources: ${vendor.hire_resources}`);
-      }
 
       if (errs.length) {
         validationErrors.push(`Line ${line}: ${errs.join(', ')}`);
@@ -1071,23 +1051,11 @@ export const importvendorCsv = async (req, res) => {
     }
 
     const seenEmails = new Set();
-    const seenPhones = new Set();
-    const seenUsernames = new Set();
     const duplicateErrors = [];
 
     validVendors.forEach((v, i) => {
       const line = i + 1;
-
       const emailKey = (v.company_email || v.email).trim().toLowerCase();
-      const phone = v.whatsapp_number.trim();
-      const username = v.username.trim();
-
-      if (seenUsernames.has(username)) {
-        duplicateErrors.push(
-          `Line ${line}: Duplicate username (${username}) inside file`
-        );
-      }
-      seenUsernames.add(username);
 
       if (seenEmails.has(emailKey)) {
         duplicateErrors.push(
@@ -1095,13 +1063,6 @@ export const importvendorCsv = async (req, res) => {
         );
       }
       seenEmails.add(emailKey);
-
-      if (seenPhones.has(phone)) {
-        duplicateErrors.push(
-          `Line ${line}: Duplicate whatsapp_number (${phone}) inside file`
-        );
-      }
-      seenPhones.add(phone);
     });
 
     if (duplicateErrors.length) {
@@ -1115,45 +1076,22 @@ export const importvendorCsv = async (req, res) => {
     }
 
     const dbVendors = await Vendor.find({
-      $or: [
-        { company_email: { $in: [...seenEmails] } },
-        { whatsapp_number: { $in: [...seenPhones] } },
-      ],
+      company_email: { $in: [...seenEmails] }
     }).lean();
-
-    const dbUsers = await User.find({
-      userName: { $in: [...seenUsernames] },
-    }).lean();
-
-    const dbDupErrors = [];
 
     const dbEmails = new Set(
       dbVendors.map((v) => (v.company_email || '').trim().toLowerCase())
     );
-    const dbPhones = new Set(
-      dbVendors.map((v) => (v.whatsapp_number || '').trim())
-    );
-    const dbUsernames = new Set(dbUsers.map((u) => u.userName.trim()));
+
+    const dbDupErrors = [];
 
     validVendors.forEach((v, i) => {
       const line = i + 1;
       const emailKey = (v.company_email || v.email).trim().toLowerCase();
-      const phone = v.whatsapp_number.trim();
-      const username = v.username.trim();
 
       if (dbEmails.has(emailKey)) {
         dbDupErrors.push(
           `Line ${line}: Email already exists in DB (${emailKey})`
-        );
-      }
-      if (dbPhones.has(phone)) {
-        dbDupErrors.push(
-          `Line ${line}: whatsapp_number already exists in DB (${phone})`
-        );
-      }
-      if (dbUsernames.has(username)) {
-        dbDupErrors.push(
-          `Line ${line}: Username already exists in DB (${username})`
         );
       }
     });
@@ -1185,7 +1123,7 @@ export const importvendorCsv = async (req, res) => {
       const username = vendor.username.trim();
 
       const existingVendor = await Vendor.findOne({
-        $or: [{ company_email: emailKey }, { whatsapp_number: phone }],
+        company_email: emailKey
       });
 
       const existingUser = await User.findOne({ userName: username });
@@ -1269,18 +1207,13 @@ export const importvendorCsv = async (req, res) => {
         continue;
       }
 
-      if (existingUser && updateFlag !== true) {
-        skipped.push(emailKey);
-        updateErrors.push(`Duplicate username found: ${username}`);
-        continue;
-      }
-
       try {
         const roleId = roleData._id;
         const hashedPassword = await bcrypt.hash('Vendor@123', 10);
+        const usernameToUse = vendor.username || vendor.email.split('@')[0];
 
         const user = await User.create({
-          userName: vendor.username,
+          userName: usernameToUse,
           email: vendor.email,
           password: hashedPassword,
           roleId,
