@@ -17,7 +17,7 @@ export const sendingEmail = async ({
     // service: 'outlook',
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
-    secure: false,
+    secure: true,
     auth: {
       user: process.env.USER,
       pass: process.env.PASS,
@@ -64,8 +64,12 @@ export const sendingEmail = async ({
     attachments: [...inlineAttachments, ...normalAttachments],
   };
 
-  const data = await transporter.sendMail(mailOptions);
-  return { success: true, data };
+  try {
+    const data = await transporter.sendMail(mailOptions);
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 };
 
 // generateQr function
