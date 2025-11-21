@@ -15,12 +15,12 @@ export const sendingEmail = async ({
 }) => {
   const transporter = nodemailer.createTransport({
     service: 'outlook',
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: false,
     auth: {
       user: process.env.USER,
       pass: process.env.PASS,
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: false
     },
   });
 
