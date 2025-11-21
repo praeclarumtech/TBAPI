@@ -27,6 +27,8 @@ export const sendingEmail = async ({
       // minVersion: 'TLSv1.2',
     }
   }
+
+  console.log('-------------------obj------>',obj);
   const transporter = nodemailer.createTransport(obj);
 
   const emailText = newOtp ? `Your Otp is: ${newOtp}` : description;
