@@ -13,16 +13,19 @@ export const sendingEmail = async ({
   attachments = [],
   inlineImages = [], //for allow image
 }) => {
-  const transporter = nodemailer.createTransport({
-    // service: 'outlook',
+
+  let obj = {
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
     secure: true,
     auth: {
       user: process.env.USER,
       pass: process.env.PASS,
-    },
-  });
+    }
+  }
+
+  console.log('------------------------->',obj);
+  const transporter = nodemailer.createTransport(obj);
 
   const emailText = newOtp ? `Your Otp is: ${newOtp}` : description;
   const subjectText = newOtp ? 'Otp for forgot password' : subject;
@@ -66,8 +69,10 @@ export const sendingEmail = async ({
 
   try {
     const data = await transporter.sendMail(mailOptions);
+    console.log('----Data in sending email--------------------->',data);
     return { success: true, data };
   } catch (error) {
+    console.log('----Error in sending email--------------------->',error);
     return { success: false, error: error.message };
   }
 };
