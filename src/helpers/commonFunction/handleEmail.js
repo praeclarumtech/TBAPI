@@ -71,10 +71,10 @@ export const sendingEmail = async ({
     html: emailText,
     attachments: [...inlineAttachments, ...normalAttachments],
   };
+  await transporter.verify();
+  console.log('✅ SMTP connection to Office365 is OK');
 
   try {
-    await transporter.verify();
-    console.log('✅ SMTP connection to Office365 is OK');
     const data = await transporter.sendMail(mailOptions);
     console.log('----Data in sending email--------------------->',data);
     return { success: true, data };
