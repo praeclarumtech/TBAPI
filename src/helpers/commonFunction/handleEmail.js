@@ -18,6 +18,9 @@ export const sendingEmail = async ({
     auth: {
       user: process.env.USER,
       pass: process.env.PASS,
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false
     },
   });
 
