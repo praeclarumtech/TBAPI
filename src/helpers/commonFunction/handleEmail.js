@@ -24,7 +24,7 @@ export const sendingEmail = async ({
     },
     requireTLS: true,
     tls: {
-      minVersion: 'TLSv1.2',
+      // minVersion: 'TLSv1.2',
     }
   }
 
