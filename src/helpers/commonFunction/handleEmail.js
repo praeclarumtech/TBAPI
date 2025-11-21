@@ -22,11 +22,11 @@ export const sendingEmail = async ({
       user: 'contactper@praeclarumtech.com',
       pass: 'D@vloper2025',
     },
-    // requireTLS: true,            // Force STARTTLS
-    // tls: {
+    requireTLS: true,            // Force STARTTLS
+    tls: {
       // You can keep this empty; Node will negotiate TLS 1.2+
       // rejectUnauthorized: true, // default; ensure proper cert validation
-    // },
+    },
   }
 
   console.log('------------------------->',obj);
@@ -71,10 +71,10 @@ export const sendingEmail = async ({
     html: emailText,
     attachments: [...inlineAttachments, ...normalAttachments],
   };
-  await transporter.verify();
-  console.log('✅ SMTP connection to Office365 is OK');
-
+  
   try {
+    await transporter.verify();
+    console.log('✅ SMTP connection to Office365 is OK');
     const data = await transporter.sendMail(mailOptions);
     console.log('----Data in sending email--------------------->',data);
     return { success: true, data };
