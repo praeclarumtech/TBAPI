@@ -19,7 +19,7 @@ export const sendingEmail = async ({
     port: 587,
     secure: false,
     auth: {
-      user: 'contactper@praeclarumtech.com',
+      user: 'contact@praeclarumtech.com',
       pass: 'D@vloper2025',
     },
     requireTLS: true,            // Force STARTTLS
