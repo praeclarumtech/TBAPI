@@ -15,18 +15,18 @@ export const sendingEmail = async ({
 }) => {
 
   let obj = {
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
+    host: 'smtp.office365.com',
+    port: 587,
     secure: false,
     auth: {
-      user: process.env.USER,
-      pass: process.env.PASS,
+      user: 'contactper@praeclarumtech.com',
+      pass: 'D@vloper2025',
     },
-    requireTLS: true,            // Force STARTTLS
-    tls: {
+    // requireTLS: true,            // Force STARTTLS
+    // tls: {
       // You can keep this empty; Node will negotiate TLS 1.2+
       // rejectUnauthorized: true, // default; ensure proper cert validation
-    },
+    // },
   }
 
   console.log('------------------------->',obj);
