@@ -22,11 +22,10 @@ export const sendingEmail = async ({
       user: 'contact@praeclarumtech.com',
       pass: 'D@vloper2025',
     },
-    requireTLS: true,            // Force STARTTLS
+    requireTLS: true,
     tls: {
-      // You can keep this empty; Node will negotiate TLS 1.2+
-      // rejectUnauthorized: true, // default; ensure proper cert validation
-    },
+      minVersion: 'TLSv1.2',
+    }
   }
 
   console.log('------------------------->',obj);
