@@ -15,20 +15,18 @@ export const sendingEmail = async ({
 }) => {
 
   let obj = {
-    host: 'smtp.office365.com',
-    port: 587,
+    host: process.env.SMTP_HOST || 'smtp.office365.com',
+    port: process.env.SMTP_PORT || 587,
     secure: false,
     auth: {
-      user: 'contact@praeclarumtech.com',
-      pass: 'D@vloper2025',
+      user: process.env.SMTP_USER || 'contact@praeclarumtech.com',
+      pass: process.env.SMTP_PASS || 'D@vloper2025',
     },
     requireTLS: true,
     tls: {
       // minVersion: 'TLSv1.2',
     }
   }
-
-  console.log('------------------------->',obj);
   const transporter = nodemailer.createTransport(obj);
 
   const emailText = newOtp ? `Your Otp is: ${newOtp}` : description;
@@ -75,7 +73,6 @@ export const sendingEmail = async ({
     await transporter.verify();
     console.log('✅ SMTP connection to Office365 is OK');
     const data = await transporter.sendMail(mailOptions);
-    console.log('----Data in sending email--------------------->',data);
     return { success: true, data };
   } catch (error) {
     console.log('----Error in sending email--------------------->',error);
