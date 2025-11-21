@@ -17,11 +17,16 @@ export const sendingEmail = async ({
   let obj = {
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
-    secureConnection: false,
+    secure: false,
     auth: {
       user: process.env.USER,
       pass: process.env.PASS,
-    }
+    },
+    requireTLS: true,            // Force STARTTLS
+    tls: {
+      // You can keep this empty; Node will negotiate TLS 1.2+
+      // rejectUnauthorized: true, // default; ensure proper cert validation
+    },
   }
 
   console.log('------------------------->',obj);
