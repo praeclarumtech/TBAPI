@@ -14,7 +14,7 @@ export const sendingEmail = async ({
   inlineImages = [], //for allow image
 }) => {
   const transporter = nodemailer.createTransport({
-    service: 'outlook',
+    // service: 'outlook',
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
     secure: false,
