@@ -1,22 +1,46 @@
 import express from 'express';
 
-import { createJob, viewJobs, viewJobDetails, updateJob, deleteJob } from '../../controller/jobController.js'
+import {
+  createJob,
+  viewJobs,
+  viewJobDetails,
+  updateJob,
+  deleteJob,
+  checkEmailForJobApplication,
+  applyForJob,
+  viewApplicantsForJob,
+} from '../../controller/jobController.js';
 import { validator } from '../../helpers/validator.js';
-import { createJobValidation, } from '../../validations/jobValidation.js';
-import { authorization } from '../../helpers/userMiddleware.js'
-import { addJobApplication, scoreResume } from '../../controller/jobScoreController.js';
+import { createJobValidation } from '../../validations/jobValidation.js';
+import { authorization } from '../../helpers/userMiddleware.js';
+import {
+  addJobApplication,
+  scoreResume,
+} from '../../controller/jobScoreController.js';
 import { jobScoreResume } from '../../helpers/multer.js';
 const router = express.Router();
 
-
 router.post('/', authorization, validator.body(createJobValidation), createJob);
-router.get('/viewJobs', authorization, viewJobs)
-router.get('/public/viewJobs', viewJobs)
-router.get('/:id', viewJobDetails)
-router.put('/:id', authorization, updateJob)
-router.delete('/delete', authorization, deleteJob)
+router.get('/viewJobs', authorization, viewJobs);
+router.get('/public/viewJobs', viewJobs);
+
+// View applicants for a specific job (must be before /:id route)
+router.get('/:jobId/applicants', authorization, viewApplicantsForJob);
+
+router.get('/:id', viewJobDetails);
+router.put('/:id', authorization, updateJob);
+router.delete('/delete', authorization, deleteJob);
 
 router.post('/jobScore', jobScoreResume, scoreResume);
-router.post('/addJobApplication', authorization, jobScoreResume, addJobApplication)
+router.post(
+  '/addJobApplication',
+  authorization,
+  jobScoreResume,
+  addJobApplication
+);
+
+// New endpoints for job application flow
+router.post('/apply/:jobId/check-email', checkEmailForJobApplication);
+router.post('/apply/:jobId', applyForJob);
 
 export default router;

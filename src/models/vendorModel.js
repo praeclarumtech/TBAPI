@@ -66,12 +66,25 @@ const vendorSchema = new mongoose.Schema(
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'user',
       required: true,
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
     },
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+      required: false,
+    },
+    addedByRole: {
+      type: String,
+      required: false,
     },
   },
   { timestamps: true }

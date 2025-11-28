@@ -51,6 +51,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -58,6 +62,19 @@ const userSchema = new mongoose.Schema(
     vendorProfileId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Vendor',
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+      required: false,
+    },
+    addedByRole: {
+      type: String,
+      required: false,
+    },
+    passwordChanged: {
+      type: Boolean,
+      default: true, // Default to true for existing users, false for users with temp passwords
     },
   },
   { timestamps: true }

@@ -27,11 +27,24 @@ import {
   getJobApplicationsByvendor,
   updateJobApplicantionStatus,
   updateStatusAndInterviewstage,
+  createVendorData,
+  findVendorByUserId,
 } from '../services/jobService.js';
 import { applicantEnum, Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
-import { getAllusers } from '../services/userService.js';
+import {
+  getAllusers,
+  createUser,
+  getUser,
+  getUserByUserName,
+  updateProfileById,
+} from '../services/userService.js';
 import { getRoleByNameService } from '../services/roleService.js';
+import Vendor from '../models/vendorModel.js';
+import Role from '../models/roleModel.js';
+import bcrypt from 'bcryptjs';
+import { sendingEmail } from '../utils/email.js';
+import { vendorRegistrationRequestTemplate } from '../utils/emailTemplates/emailTemplates.js';
 
 export const scoreResume = async (req, res) => {
   try {
@@ -311,17 +324,13 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const query = { isDeleted: false };
-    
+
     if (user.role === Enum.VENDOR) {
-      const vendorApps = await jobApplication
-        .find({ user_id: user.id })
-        .lean();
+      const vendorApps = await jobApplication.find({ user_id: user.id }).lean();
       query.vendor_id = user.id;
     }
     if (user.role === Enum.CLIENT) {
-      const clientApps = await jobApplication
-        .find({ user_id: user.id })
-        .lean();
+      const clientApps = await jobApplication.find({ user_id: user.id }).lean();
       const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
       const jobIdList = jobIds.map((job) => job._id);
       query.job_id = { $in: jobIdList };
@@ -643,6 +652,660 @@ export const getVendorJobApplicantReport = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       'Failed to generate vendor report'
+    );
+  }
+};
+
+const generateTemporaryPassword = () => {
+  const length = 12;
+  const charset =
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
+  let password = '';
+  password += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+  password += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
+  password += '0123456789'[Math.floor(Math.random() * 10)];
+  password += '@#$%&*'[Math.floor(Math.random() * 6)];
+
+  for (let i = password.length; i < length; i++) {
+    password += charset[Math.floor(Math.random() * charset.length)];
+  }
+
+  return password
+    .split('')
+    .sort(() => Math.random() - 0.5)
+    .join('');
+};
+
+export const addVendor = async (req, res) => {
+  try {
+    const {
+      userName,
+      email,
+      firstName,
+      lastName,
+      whatsapp_number,
+      vendor_linkedin_profile,
+      company_name,
+      company_email,
+      company_phone_number,
+      company_location,
+      company_type,
+      hire_resources,
+      company_strength,
+      company_linkedin_profile,
+      company_website,
+      state,
+      city,
+    } = req.body;
+
+    if (!userName || !email) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Username and email are required'
+      );
+    }
+
+    // Check if user already exists
+    const existingUser = await getUser({ email });
+    if (existingUser) {
+      logger.warn(`User with email ${email} already exists`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `User with email ${email} already exists`
+      );
+    }
+
+    const existingUserName = await getUserByUserName(userName);
+    if (existingUserName) {
+      logger.warn(`Username ${userName} already exists`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Username ${userName} already exists`
+      );
+    }
+
+    // Get vendor role
+    const vendorRole = await Role.findOne({ name: Enum.VENDOR });
+    if (!vendorRole) {
+      logger.error('Vendor role not found');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'Vendor role not found'
+      );
+    }
+
+    // Determine who added this vendor and their role
+    let isAdminFlag = false;
+    let addedByUserId = null;
+    let addedByRole = null;
+
+    if (req.user && req.user._id) {
+      addedByUserId = req.user._id;
+      if (req.user.role) {
+        const normalizedRole = req.user.role.toLowerCase();
+        isAdminFlag = normalizedRole === Enum.ADMIN.toLowerCase();
+        addedByRole = req.user.role;
+      } else {
+        const requesterUser = await User.findById(req.user._id).populate(
+          'roleId'
+        );
+        if (requesterUser?.roleId?.name) {
+          addedByRole = requesterUser.roleId.name;
+          const normalizedRole = addedByRole.toLowerCase();
+          isAdminFlag = normalizedRole === Enum.ADMIN.toLowerCase();
+        }
+      }
+    } else {
+      addedByRole = 'admin';
+    }
+
+    const tempPassword = generateTemporaryPassword();
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    const newUser = await createUser({
+      userName,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      roleId: vendorRole._id,
+      firstName: firstName || company_name || 'Vendor',
+      lastName: lastName || '',
+      isActive: false, // Inactive until HR approves
+      isAdmin: isAdminFlag, // Store isAdmin flag in database
+      addedBy: addedByUserId,
+      addedByRole: addedByRole,
+      passwordChanged: false, // Set to false for users with temporary password
+    });
+
+    const vendorData = {
+      userId: newUser._id,
+      whatsapp_number: whatsapp_number || '',
+      vendor_linkedin_profile: vendor_linkedin_profile || '',
+      company_name: company_name || '',
+      company_email: company_email ? company_email.toLowerCase() : '',
+      company_phone_number: company_phone_number || '',
+      company_location: company_location || '',
+      company_type: company_type || 'both',
+      hire_resources: hire_resources || 'all',
+      company_strength: company_strength || '',
+      company_linkedin_profile: company_linkedin_profile || '',
+      company_website: company_website || '',
+      type: Enum.VENDOR,
+      addedBy: addedByUserId || null,
+      addedByRole: addedByRole || null,
+    };
+
+    const newVendor = await createVendorData(vendorData);
+
+    await updateProfileById(newUser._id, {
+      vendorProfileId: newVendor._id,
+    });
+
+    const emailContent = vendorRegistrationRequestTemplate({
+      userName,
+      email,
+      companyName: company_name,
+      companyEmail: company_email,
+      whatsappNumber: whatsapp_number,
+      companyLocation: company_location,
+      companyType: company_type,
+      hireResources: hire_resources,
+      qrCodeHtml: '', // No QR code for HR
+    });
+
+    const hrEmail = process.env.USER;
+    if (!hrEmail || hrEmail.trim() === '') {
+      logger.warn(
+        'HR_EMAIL environment variable is not set. Skipping email notification.'
+      );
+    } else {
+      try {
+        const emailResult = await sendingEmail({
+          email_to: [hrEmail],
+          subject: 'New Vendor Registration - Approval Required',
+          description: emailContent,
+        });
+
+        if (!emailResult || !emailResult.success) {
+          logger.warn('Failed to send email to HR, but vendor was created');
+        }
+      } catch (emailError) {
+        logger.error(`Failed to send email to HR: ${emailError.message}`);
+      }
+    }
+
+    let userRole = '';
+    let isAdmin = false;
+    let isGuest = false;
+
+    if (req.user && req.user.role) {
+      userRole = req.user.role;
+      const normalizedRole = userRole.toLowerCase();
+      isAdmin = normalizedRole === Enum.ADMIN.toLowerCase();
+      isGuest = !isAdmin;
+    } else {
+      const userWithRole = await User.findById(newUser._id).populate('roleId');
+      userRole =
+        userWithRole?.roleId?.name || userWithRole?.role || Enum.VENDOR;
+      const normalizedRole = userRole.toLowerCase();
+      isAdmin = normalizedRole === Enum.ADMIN.toLowerCase();
+      isGuest = !isAdmin;
+    }
+
+    logger.info(
+      `Vendor registration request created for ${email}. HR notification sent.`
+    );
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.CREATED,
+      'Vendor registration submitted successfully. HR has been notified for approval.',
+      {
+        userId: newUser._id,
+        vendorId: newVendor._id,
+        email: email,
+        status: 'pending_approval',
+        isAdmin: isAdmin,
+        isGuest: isGuest,
+        userRole: userRole,
+        addedBy: addedByUserId,
+        addedByRole: addedByRole || 'admin',
+      }
+    );
+  } catch (error) {
+    logger.error(`Failed to add vendor: ${error.message}`, {
+      stack: error.stack,
+    });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to add vendor: ${error.message}`
+    );
+  }
+};
+
+export const addVendorByQrCode = async (req, res) => {
+  try {
+    const {
+      userName,
+      email,
+      firstName,
+      lastName,
+      whatsapp_number,
+      phone,
+      vendor_linkedin_profile,
+      company_name,
+      company_email,
+      company_phone_number,
+      company_location,
+      company_type,
+      hire_resources,
+      company_strength,
+      company_linkedin_profile,
+      company_website,
+      role,
+    } = req.body;
+
+    let emailValue = null;
+
+    if (
+      email &&
+      email.trim() &&
+      email.trim() !== 'null' &&
+      email.trim() !== 'undefined'
+    ) {
+      emailValue = email.trim();
+    } else if (req.body?.Email && req.body.Email.trim()) {
+      emailValue = req.body.Email.trim();
+    } else if (req.body?.EMAIL && req.body.EMAIL.trim()) {
+      emailValue = req.body.EMAIL.trim();
+    } else if (req.body?.userEmail && req.body.userEmail.trim()) {
+      emailValue = req.body.userEmail.trim();
+    } else if (
+      company_email &&
+      company_email.trim() &&
+      company_email.trim() !== 'null'
+    ) {
+      emailValue = company_email.trim();
+    }
+
+    if (
+      !emailValue ||
+      emailValue === '' ||
+      emailValue === 'null' ||
+      emailValue === 'undefined'
+    ) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Email is required and must be a valid email address. Please ensure the email field is included in your form submission.'
+      );
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailValue)) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Please provide a valid email address. Received: ${emailValue}`
+      );
+    }
+
+    const finalWhatsappNumber =
+      whatsapp_number ||
+      phone?.whatsappNumber ||
+      phone?.['whatsappNumber'] ||
+      '';
+
+    let finalUserName = userName?.trim();
+    if (!finalUserName || finalUserName === '') {
+      const emailParts = emailValue.split('@');
+      finalUserName = emailParts[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      const randomSuffix = Math.floor(Math.random() * 10000);
+      finalUserName = `${finalUserName}${randomSuffix}`;
+    }
+
+    const existingUser = await getUser({ email: emailValue });
+    if (existingUser) {
+      logger.warn(`User with email ${email} already exists`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `User with email ${email} already exists`
+      );
+    }
+
+    let checkUserName = finalUserName;
+    let attempts = 0;
+    while ((await getUserByUserName(checkUserName)) && attempts < 10) {
+      const randomSuffix = Math.floor(Math.random() * 10000);
+      checkUserName = `${finalUserName}${randomSuffix}`;
+      attempts++;
+    }
+    finalUserName = checkUserName;
+
+    if (await getUserByUserName(finalUserName)) {
+      logger.warn(`Unable to generate unique username`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Unable to create unique username. Please try again.`
+      );
+    }
+
+    // Validate and get role (vendor or client)
+    const requestedRole = role?.toLowerCase() || Enum.VENDOR.toLowerCase();
+    if (
+      ![Enum.VENDOR.toLowerCase(), Enum.CLIENT.toLowerCase()].includes(
+        requestedRole
+      )
+    ) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Invalid role. Role must be either '${Enum.VENDOR}' or '${Enum.CLIENT}'.`
+      );
+    }
+
+    const roleName =
+      requestedRole === Enum.CLIENT.toLowerCase() ? Enum.CLIENT : Enum.VENDOR;
+    const roleDocument = await Role.findOne({ name: roleName });
+    if (!roleDocument) {
+      logger.error(`${roleName} role not found`);
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `${roleName} role not found`
+      );
+    }
+
+    let isAdminFlag = false;
+    let addedByUserId = null;
+    let addedByRole = null;
+
+    if (req.user && req.user._id) {
+      addedByUserId = req.user._id;
+      if (req.user.role) {
+        const normalizedRole = req.user.role.toLowerCase();
+        isAdminFlag = normalizedRole === Enum.ADMIN.toLowerCase();
+        addedByRole = req.user.role;
+      } else {
+        const requesterUser = await User.findById(req.user._id).populate(
+          'roleId'
+        );
+        if (requesterUser?.roleId?.name) {
+          addedByRole = requesterUser.roleId.name;
+          const normalizedRole = addedByRole.toLowerCase();
+          isAdminFlag = normalizedRole === Enum.ADMIN.toLowerCase();
+        }
+      }
+    } else {
+      addedByRole = Enum.GUEST;
+    }
+
+    const tempPassword = generateTemporaryPassword();
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    const roleDisplayName =
+      roleName.charAt(0).toUpperCase() + roleName.slice(1).toLowerCase();
+    const defaultFirstName = firstName || company_name || roleDisplayName;
+
+    const newUser = await createUser({
+      userName: finalUserName,
+      email: emailValue.toLowerCase(),
+      password: hashedPassword,
+      roleId: roleDocument._id,
+      firstName: defaultFirstName,
+      lastName: lastName || '',
+      isActive: false,
+      isAdmin: isAdminFlag,
+      addedBy: addedByUserId,
+      addedByRole: addedByRole,
+      passwordChanged: false, // Set to false for users with temporary password
+    });
+
+    const vendorData = {
+      userId: newUser._id,
+      whatsapp_number: finalWhatsappNumber,
+      vendor_linkedin_profile: vendor_linkedin_profile || '',
+      company_name: company_name || '',
+      company_email: company_email ? company_email.toLowerCase() : '',
+      company_phone_number: company_phone_number || '',
+      company_location: company_location || '',
+      company_type: company_type || 'both',
+      hire_resources: hire_resources || 'all',
+      company_strength: company_strength || '',
+      company_linkedin_profile: company_linkedin_profile || '',
+      company_website: company_website || '',
+      type: roleName,
+      addedBy: addedByUserId || null, // Always save to vendor table
+      addedByRole: addedByRole || null, // Always save to vendor table
+    };
+
+    const newVendor = await createVendorData(vendorData);
+
+    await updateProfileById(newUser._id, {
+      vendorProfileId: newVendor._id,
+    });
+
+    const emailContent = vendorRegistrationRequestTemplate({
+      userName: finalUserName,
+      email: emailValue,
+      companyName: company_name,
+      companyEmail: company_email,
+      whatsappNumber: finalWhatsappNumber,
+      companyLocation: company_location,
+      companyType: company_type,
+      hireResources: hire_resources,
+      qrCodeHtml: '', // No QR code for HR
+    });
+
+    const hrEmail = process.env.USER;
+    if (!hrEmail || hrEmail.trim() === '') {
+      logger.warn(
+        'HR_EMAIL environment variable is not set. Skipping email notification.'
+      );
+    } else {
+      try {
+        const emailSubject = `New ${roleDisplayName} Registration via QR Code - Approval Required`;
+        const emailResult = await sendingEmail({
+          email_to: [hrEmail],
+          subject: emailSubject,
+          description: emailContent,
+        });
+
+        if (!emailResult || !emailResult.success) {
+          logger.warn(
+            `Failed to send email to HR, but ${roleDisplayName.toLowerCase()} was created`
+          );
+        }
+      } catch (emailError) {
+        logger.error(`Failed to send email to HR: ${emailError.message}`);
+      }
+    }
+
+    const userWithRole = await User.findById(newUser._id).populate('roleId');
+    const userRole =
+      userWithRole?.roleId?.name || userWithRole?.role || roleName;
+    const normalizedRole = userRole.toLowerCase();
+    const isAdmin = normalizedRole === Enum.ADMIN.toLowerCase();
+    const isGuest = !isAdmin;
+
+    logger.info(
+      `${roleDisplayName} registration via QR code created for ${emailValue}. HR notification sent.`
+    );
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.CREATED,
+      `${roleDisplayName} registration submitted successfully via QR code. HR has been notified for approval.`,
+      {
+        userId: newUser._id,
+        vendorId: newVendor._id,
+        email: emailValue,
+        status: 'pending_approval',
+        isAdmin: isAdmin,
+        isGuest: isGuest,
+        userRole: userRole,
+        addedBy: addedByUserId,
+        addedByRole: addedByRole || Enum.GUEST,
+      }
+    );
+  } catch (error) {
+    const roleType = req.body?.role?.toLowerCase() || 'vendor/client';
+    logger.error(`Failed to add ${roleType} via QR code: ${error.message}`, {
+      stack: error.stack,
+    });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to add ${roleType} via QR code: ${error.message}`
+    );
+  }
+};
+
+export const updateVendorByQrCode = async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const {
+      whatsapp_number,
+      vendor_linkedin_profile,
+      company_name,
+      company_email,
+      company_phone_number,
+      company_location,
+      company_type,
+      hire_resources,
+      company_strength,
+      company_linkedin_profile,
+      company_website,
+    } = req.body;
+
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'Vendor not found'
+      );
+    }
+
+    const vendorUpdateData = {
+      whatsapp_number: whatsapp_number || vendor.whatsapp_number,
+      vendor_linkedin_profile:
+        vendor_linkedin_profile || vendor.vendor_linkedin_profile,
+      company_name: company_name || vendor.company_name,
+      company_email: company_email
+        ? company_email.toLowerCase()
+        : vendor.company_email,
+      company_phone_number: company_phone_number || vendor.company_phone_number,
+      company_location: company_location || vendor.company_location,
+      company_type: company_type || vendor.company_type,
+      hire_resources: hire_resources || vendor.hire_resources,
+      company_strength: company_strength || vendor.company_strength,
+      company_linkedin_profile:
+        company_linkedin_profile || vendor.company_linkedin_profile,
+      company_website: company_website || vendor.company_website,
+    };
+
+    Object.keys(vendorUpdateData).forEach(
+      (key) =>
+        (vendorUpdateData[key] === undefined ||
+          vendorUpdateData[key] === null) &&
+        delete vendorUpdateData[key]
+    );
+
+    const updatedVendor = await Vendor.findByIdAndUpdate(
+      vendorId,
+      { $set: vendorUpdateData },
+      { new: true }
+    );
+
+    const user = await User.findById(vendor.userId).populate('roleId');
+
+    const userRole = user?.roleId?.name || user?.role || '';
+    const normalizedRole = userRole.toLowerCase();
+    const isAdmin = normalizedRole === Enum.ADMIN.toLowerCase();
+    const isGuest = !isAdmin;
+
+    const emailContent = vendorRegistrationRequestTemplate({
+      userName: user?.userName || 'N/A',
+      email: user?.email || 'N/A',
+      companyName: updatedVendor.company_name,
+      companyEmail: updatedVendor.company_email,
+      whatsappNumber: updatedVendor.whatsapp_number,
+      companyLocation: updatedVendor.company_location,
+      companyType: updatedVendor.company_type,
+      hireResources: updatedVendor.hire_resources,
+    });
+
+    // Send email to HR about the update
+    const hrEmail = process.env.USER;
+    if (!hrEmail || hrEmail.trim() === '') {
+      logger.warn(
+        'HR_EMAIL environment variable is not set. Skipping email notification.'
+      );
+    } else {
+      try {
+        const emailResult = await sendingEmail({
+          email_to: [hrEmail],
+          subject: 'Vendor Details Updated via QR Code',
+          description: emailContent,
+          // No inlineImages for HR email
+        });
+
+        if (!emailResult || !emailResult.success) {
+          logger.warn('Failed to send email to HR, but vendor was updated');
+        }
+      } catch (emailError) {
+        logger.error(`Failed to send email to HR: ${emailError.message}`);
+        // Don't fail the entire request if email fails
+      }
+    }
+
+    logger.info(`Vendor ${vendorId} updated via QR code. HR notified.`);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      'Vendor details updated successfully via QR code. HR has been notified.',
+      {
+        vendorId: updatedVendor._id,
+        status: 'updated',
+        isAdmin: isAdmin,
+        isGuest: isGuest,
+        userRole: userRole,
+      }
+    );
+  } catch (error) {
+    logger.error(`Failed to update vendor via QR code: ${error.message}`, {
+      stack: error.stack,
+    });
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to update vendor via QR code: ${error.message}`
     );
   }
 };
