@@ -25,8 +25,8 @@ export const sendingEmail = async ({
     requireTLS: true,
     tls: {
       // minVersion: 'TLSv1.2',
-    }
-  }
+    },
+  };
 
   const transporter = nodemailer.createTransport(obj);
 

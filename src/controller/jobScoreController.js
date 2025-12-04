@@ -3,7 +3,7 @@ import {
   processResumeAndJD,
 } from '../services/jobScoreService.js';
 import { StatusCodes } from 'http-status-codes';
-import Applicant from '../models/applicantModel.js';
+import mongoose from 'mongoose';
 import jobApplication from '../models/jobApplicantionModel.js';
 import logger from '../loggers/logger.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
@@ -23,12 +23,9 @@ import fs from 'fs';
 import {
   deleteApplications,
   fetchJobsById,
-  getApplicantionById,
-  getJobApplicationsByvendor,
-  updateJobApplicantionStatus,
+  getApplicantionById, updateJobApplicantionStatus,
   updateStatusAndInterviewstage,
-  createVendorData,
-  findVendorByUserId,
+  createVendorData
 } from '../services/jobService.js';
 import { applicantEnum, Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
@@ -492,8 +489,62 @@ export const deleteApplicant = async (req, res) => {
 
 export const updateApplicantStatus = async (req, res) => {
   try {
+    const user = req.user || {};
     const applicantId = req.params.id;
     const { interviewStage, status } = req.body;
+
+    const application = await jobApplication.findById(applicantId);
+    if (!application || application.isDeleted) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'Application not found'
+      );
+    }
+
+    const job = await jobs.findById(application.job_id);
+    if (!job) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'Job not found for this application'
+      );
+    }
+
+    if (user.role === Enum.VENDOR) {
+      const vendorId = new mongoose.Types.ObjectId(user.id);
+   
+      const ownsJob = job.addedBy.toString() === user.id;
+      const wasEmailed = job.emailedVendors?.some(
+        (id) => id.toString() === vendorId.toString()
+      );
+      if (!ownsJob && !wasEmailed) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.FORBIDDEN,
+          'You can only update status for applications to your own jobs or client jobs you were emailed about'
+        );
+      }
+    } else if (user.role === Enum.CLIENT) {
+      if (job.addedBy.toString() !== user.id) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.FORBIDDEN,
+          'You can only update status for applications to your own jobs'
+        );
+      }
+    } else if (user.role !== Enum.ADMIN && user.role !== Enum.HR) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.FORBIDDEN,
+        'Only clients, vendors, admins, and HR can update application status'
+      );
+    }
 
     const update = await updateStatusAndInterviewstage(applicantId, {
       interviewStage,
@@ -707,7 +758,6 @@ export const addVendor = async (req, res) => {
       );
     }
 
-    // Check if user already exists
     const existingUser = await getUser({ email });
     if (existingUser) {
       logger.warn(`User with email ${email} already exists`);
@@ -730,7 +780,6 @@ export const addVendor = async (req, res) => {
       );
     }
 
-    // Get vendor role
     const vendorRole = await Role.findOne({ name: Enum.VENDOR });
     if (!vendorRole) {
       logger.error('Vendor role not found');
@@ -742,7 +791,6 @@ export const addVendor = async (req, res) => {
       );
     }
 
-    // Determine who added this vendor and their role
     let isAdminFlag = false;
     let addedByUserId = null;
     let addedByRole = null;
@@ -777,11 +825,11 @@ export const addVendor = async (req, res) => {
       roleId: vendorRole._id,
       firstName: firstName || company_name || 'Vendor',
       lastName: lastName || '',
-      isActive: false, // Inactive until HR approves
-      isAdmin: isAdminFlag, // Store isAdmin flag in database
+      isActive: false,
+      isAdmin: isAdminFlag,
       addedBy: addedByUserId,
       addedByRole: addedByRole,
-      passwordChanged: false, // Set to false for users with temporary password
+      passwordChanged: false,
     });
 
     const vendorData = {
@@ -820,7 +868,7 @@ export const addVendor = async (req, res) => {
       qrCodeHtml: '', // No QR code for HR
     });
 
-    const hrEmail = process.env.USER;
+    const hrEmail = process.env.SMTP_USER || process.env.USER;
     if (!hrEmail || hrEmail.trim() === '') {
       logger.warn(
         'HR_EMAIL environment variable is not set. Skipping email notification.'
@@ -1007,7 +1055,6 @@ export const addVendorByQrCode = async (req, res) => {
       );
     }
 
-    // Validate and get role (vendor or client)
     const requestedRole = role?.toLowerCase() || Enum.VENDOR.toLowerCase();
     if (
       ![Enum.VENDOR.toLowerCase(), Enum.CLIENT.toLowerCase()].includes(
@@ -1077,7 +1124,7 @@ export const addVendorByQrCode = async (req, res) => {
       isAdmin: isAdminFlag,
       addedBy: addedByUserId,
       addedByRole: addedByRole,
-      passwordChanged: false, // Set to false for users with temporary password
+      passwordChanged: false,
     });
 
     const vendorData = {
@@ -1094,8 +1141,8 @@ export const addVendorByQrCode = async (req, res) => {
       company_linkedin_profile: company_linkedin_profile || '',
       company_website: company_website || '',
       type: roleName,
-      addedBy: addedByUserId || null, // Always save to vendor table
-      addedByRole: addedByRole || null, // Always save to vendor table
+      addedBy: addedByUserId || null,
+      addedByRole: addedByRole || null,
     };
 
     const newVendor = await createVendorData(vendorData);
@@ -1116,7 +1163,7 @@ export const addVendorByQrCode = async (req, res) => {
       qrCodeHtml: '', // No QR code for HR
     });
 
-    const hrEmail = process.env.USER;
+    const hrEmail = process.env.SMTP_USER || process.env.USER;
     if (!hrEmail || hrEmail.trim() === '') {
       logger.warn(
         'HR_EMAIL environment variable is not set. Skipping email notification.'
@@ -1258,8 +1305,7 @@ export const updateVendorByQrCode = async (req, res) => {
       hireResources: updatedVendor.hire_resources,
     });
 
-    // Send email to HR about the update
-    const hrEmail = process.env.USER;
+    const hrEmail = process.env.SMTP_USER || process.env.USER;
     if (!hrEmail || hrEmail.trim() === '') {
       logger.warn(
         'HR_EMAIL environment variable is not set. Skipping email notification.'
@@ -1270,7 +1316,6 @@ export const updateVendorByQrCode = async (req, res) => {
           email_to: [hrEmail],
           subject: 'Vendor Details Updated via QR Code',
           description: emailContent,
-          // No inlineImages for HR email
         });
 
         if (!emailResult || !emailResult.success) {
@@ -1278,7 +1323,6 @@ export const updateVendorByQrCode = async (req, res) => {
         }
       } catch (emailError) {
         logger.error(`Failed to send email to HR: ${emailError.message}`);
-        // Don't fail the entire request if email fails
       }
     }
 

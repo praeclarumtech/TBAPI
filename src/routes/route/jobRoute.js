@@ -9,6 +9,10 @@ import {
   checkEmailForJobApplication,
   applyForJob,
   viewApplicantsForJob,
+  viewClientJobApplications,
+  sendJobEmailToRecipients,
+  getVendorsAndApplicantsForEmail,
+  sendJobNotificationsToApplicants,
 } from '../../controller/jobController.js';
 import { validator } from '../../helpers/validator.js';
 import { createJobValidation } from '../../validations/jobValidation.js';
@@ -24,8 +28,16 @@ router.post('/', authorization, validator.body(createJobValidation), createJob);
 router.get('/viewJobs', authorization, viewJobs);
 router.get('/public/viewJobs', viewJobs);
 
-// View applicants for a specific job (must be before /:id route)
+router.get('/client/applications', authorization, viewClientJobApplications);
+router.get('/email/recipients', authorization, getVendorsAndApplicantsForEmail);
+
 router.get('/:jobId/applicants', authorization, viewApplicantsForJob);
+router.post('/:jobId/send-email', authorization, sendJobEmailToRecipients);
+router.post(
+  '/:jobId/notify-matching-applicants',
+  authorization,
+  sendJobNotificationsToApplicants
+);
 
 router.get('/:id', viewJobDetails);
 router.put('/:id', authorization, updateJob);
@@ -39,7 +51,6 @@ router.post(
   addJobApplication
 );
 
-// New endpoints for job application flow
 router.post('/apply/:jobId/check-email', checkEmailForJobApplication);
 router.post('/apply/:jobId', applyForJob);
 

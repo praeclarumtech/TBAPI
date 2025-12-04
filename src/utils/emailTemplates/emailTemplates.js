@@ -508,3 +508,109 @@ export const jobNotificationTemplate = ({
     </div>
   </div>
 `;
+
+export const vendorJobNotificationTemplate = ({
+  jobTitle,
+  jobSubject,
+  jobType,
+  jobLocation,
+  companyName,
+  clientName,
+  applicationUrl,
+}) => `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px;">
+    <div style="max-width: 650px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); overflow: hidden;">
+      
+      <!-- Header Section -->
+      <div style="background: #667eea; padding: 40px 30px; text-align: center;">
+        <h1 style="color: #ffffff !important; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+          🎯 New Job Added!
+        </h1>
+        <p style="color: #ffffff !important; margin: 10px 0 0 0; font-size: 16px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+          A New Opportunity for Your Network
+        </p>
+      </div>
+
+      <!-- Content Section -->
+      <div style="padding: 40px 30px;">
+        <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
+          A new job has been added that might interest you. Login to view the complete job details and share it with your network of applicants.
+        </p>
+
+        <!-- Job Details Card -->
+        <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 30px; border-radius: 10px; margin: 0 0 30px 0; border-left: 5px solid #667eea;">
+          <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 22px; font-weight: 600;">
+            📋 Job Details
+          </h2>
+          <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600; width: 40%;">Position:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px; font-weight: 500;">${
+                  jobTitle || jobSubject || 'N/A'
+                }</td>
+              </tr>
+              ${
+                jobType
+                  ? `<tr>
+                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Job Type:</td>
+                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${jobType}</td>
+                    </tr>`
+                  : ''
+              }
+              ${
+                jobLocation
+                  ? `<tr>
+                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Location:</td>
+                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${jobLocation}</td>
+                    </tr>`
+                  : ''
+              }
+              ${
+                companyName
+                  ? `<tr>
+                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Company:</td>
+                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${companyName}</td>
+                    </tr>`
+                  : ''
+              }
+            </table>
+          </div>
+        </div>
+
+        <!-- Login Button Section -->
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${applicationUrl || '#'}" 
+             style="display: inline-block; background-color: #667eea !important; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); border: 2px solid #667eea;">
+            <span style="color: #ffffff !important; text-decoration: none;">🔐 Login to View Job</span>
+          </a>
+        </div>
+
+        <!-- Info Box -->
+        <div style="background-color: #e8f4f8; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 8px;">
+          <p style="color: #004085; font-size: 14px; margin: 0; line-height: 1.6;">
+            <strong>💡 Next Steps:</strong> Click the "Login to View Job" button above to access your dashboard and view the complete job details. You can then share this opportunity with your network of qualified applicants.
+          </p>
+        </div>
+
+        <p style="color: #666; font-size: 14px; line-height: 1.8; margin: 30px 0 0 0;">
+          This job opportunity is now available in your dashboard. Login to explore the full details and start connecting with potential candidates.
+        </p>
+      </div>
+
+      <!-- Footer Section -->
+      <div style="background-color: #f8f9fa; padding: 25px 30px; border-top: 1px solid #e9ecef;">
+        <p style="margin: 0 0 10px 0; color: #555; font-size: 14px;">
+          Best regards,<br/>
+          <strong style="color: #2c3e50;">${
+            clientName || 'The TalentBox Team'
+          }</strong>
+        </p>
+        <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;" />
+        <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+          This is an automated message. Please do not reply directly to this email.
+        </p>
+      </div>
+    </div>
+  </div>
+`;
