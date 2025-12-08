@@ -23,9 +23,10 @@ import fs from 'fs';
 import {
   deleteApplications,
   fetchJobsById,
-  getApplicantionById, updateJobApplicantionStatus,
+  getApplicantionById,
+  updateJobApplicantionStatus,
   updateStatusAndInterviewstage,
-  createVendorData
+  createVendorData,
 } from '../services/jobService.js';
 import { applicantEnum, Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
@@ -40,7 +41,7 @@ import { getRoleByNameService } from '../services/roleService.js';
 import Vendor from '../models/vendorModel.js';
 import Role from '../models/roleModel.js';
 import bcrypt from 'bcryptjs';
-import { sendingEmail } from '../utils/email.js';
+import { sendingEmail as sendingEmailHelper } from '../helpers/commonFunction/handleEmail.js';
 import { vendorRegistrationRequestTemplate } from '../utils/emailTemplates/emailTemplates.js';
 
 export const scoreResume = async (req, res) => {
@@ -385,9 +386,19 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
           select: 'firstName lastName role',
         },
       })
+      .populate({
+        path: 'vendor_id',
+        model: 'user',
+        select: 'firstName lastName email role vendorProfileId',
+        populate: {
+          path: 'vendorProfileId',
+          select: 'company_name',
+        },
+      })
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
+
 
     logger.info(`Job applications ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
@@ -515,7 +526,7 @@ export const updateApplicantStatus = async (req, res) => {
 
     if (user.role === Enum.VENDOR) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
-   
+
       const ownsJob = job.addedBy.toString() === user.id;
       const wasEmailed = job.emailedVendors?.some(
         (id) => id.toString() === vendorId.toString()
@@ -1164,6 +1175,7 @@ export const addVendorByQrCode = async (req, res) => {
     });
 
     const hrEmail = process.env.SMTP_USER || process.env.USER;
+    console.log(hrEmail);
     if (!hrEmail || hrEmail.trim() === '') {
       logger.warn(
         'HR_EMAIL environment variable is not set. Skipping email notification.'
@@ -1171,8 +1183,8 @@ export const addVendorByQrCode = async (req, res) => {
     } else {
       try {
         const emailSubject = `New ${roleDisplayName} Registration via QR Code - Approval Required`;
-        const emailResult = await sendingEmail({
-          email_to: [hrEmail],
+        const emailResult = await sendingEmailHelper({
+          email: hrEmail,
           subject: emailSubject,
           description: emailContent,
         });

@@ -509,6 +509,344 @@ export const jobNotificationTemplate = ({
   </div>
 `;
 
+// Applicant Status Change Email Templates
+
+// Template for notifying Vendor when Client changes applicant status
+export const applicantStatusChangeToVendorTemplate = ({
+  vendorName,
+  applicantName,
+  applicantEmail,
+  jobTitle,
+  oldStatus,
+  newStatus,
+  clientName,
+  changedBy,
+  changedAt,
+  dashboardUrl,
+}) => `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px;">
+    <div style="max-width: 650px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); overflow: hidden;">
+      
+      <!-- Header Section -->
+      <div style="background: #667eea; padding: 40px 30px; text-align: center;">
+        <h1 style="color: #ffffff !important; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+          📋 Applicant Status Updated
+        </h1>
+        <p style="color: #ffffff !important; margin: 10px 0 0 0; font-size: 16px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+          Status Change Notification
+        </p>
+      </div>
+
+      <!-- Content Section -->
+      <div style="padding: 40px 30px;">
+        <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
+          Dear ${vendorName || 'Vendor'},
+        </p>
+        <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
+          The status of an applicant you submitted has been updated. Please find the details below:
+        </p>
+
+        <!-- Applicant Details Card -->
+        <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 30px; border-radius: 10px; margin: 0 0 30px 0; border-left: 5px solid #667eea;">
+          <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 22px; font-weight: 600;">
+            👤 Applicant Details
+          </h2>
+          <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600; width: 40%;">Applicant Name:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px; font-weight: 500;">${
+                  applicantName || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Applicant Email:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  applicantEmail || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Job Position:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  jobTitle || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Previous Status:</td>
+                <td style="padding: 12px 0; color: #dc3545; font-size: 15px; font-weight: 500;">${
+                  oldStatus || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">New Status:</td>
+                <td style="padding: 12px 0; color: #28a745; font-size: 15px; font-weight: 600;">${
+                  newStatus || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Changed By:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  changedBy || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Changed At:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  changedAt || 'N/A'
+                }</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Dashboard Button Section -->
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${dashboardUrl || '#'}" 
+             style="display: inline-block; background-color: #667eea !important; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); border: 2px solid #667eea;">
+            <span style="color: #ffffff !important; text-decoration: none;">🔗 View in Dashboard</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Footer Section -->
+      <div style="background-color: #f8f9fa; padding: 25px 30px; border-top: 1px solid #e9ecef;">
+        <p style="margin: 0 0 10px 0; color: #555; font-size: 14px;">
+          Best regards,<br/>
+          <strong style="color: #2c3e50;">${
+            clientName || 'The TalentBox Team'
+          }</strong>
+        </p>
+        <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;" />
+        <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+          This is an automated message. Please do not reply directly to this email.
+        </p>
+      </div>
+    </div>
+  </div>
+`;
+
+// Template for notifying Admin when applicant is selected (Client role)
+export const applicantSelectedToAdminTemplate = ({
+  applicantName,
+  applicantEmail,
+  jobTitle,
+  jobId,
+  vendorName,
+  vendorEmail,
+  clientName,
+  clientEmail,
+  selectedAt,
+  dashboardUrl,
+}) => `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 30px 20px;">
+    <div style="max-width: 650px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); overflow: hidden;">
+      
+      <!-- Header Section -->
+      <div style="background: #28a745; padding: 40px 30px; text-align: center;">
+        <h1 style="color: #ffffff !important; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+          🎉 Applicant Selected!
+        </h1>
+        <p style="color: #ffffff !important; margin: 10px 0 0 0; font-size: 16px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+          A candidate has been selected for a job
+        </p>
+      </div>
+
+      <!-- Content Section -->
+      <div style="padding: 40px 30px;">
+        <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
+          Dear Admin,
+        </p>
+        <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
+          Great news! An applicant has been selected for a job position. Please find the details below:
+        </p>
+
+        <!-- Selection Details Card -->
+        <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 30px; border-radius: 10px; margin: 0 0 30px 0; border-left: 5px solid #28a745;">
+          <h2 style="color: #155724; margin: 0 0 20px 0; font-size: 22px; font-weight: 600;">
+            ✅ Selection Details
+          </h2>
+          <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600; width: 40%;">Applicant Name:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px; font-weight: 500;">${
+                  applicantName || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Applicant Email:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  applicantEmail || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Job Position:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  jobTitle || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Job ID:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  jobId || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Vendor Name:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  vendorName || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Vendor Email:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  vendorEmail || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Client Name:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  clientName || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Selected At:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  selectedAt || 'N/A'
+                }</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Dashboard Button Section -->
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${dashboardUrl || '#'}" 
+             style="display: inline-block; background-color: #28a745 !important; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); border: 2px solid #28a745;">
+            <span style="color: #ffffff !important; text-decoration: none;">📊 View in Dashboard</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Footer Section -->
+      <div style="background-color: #f8f9fa; padding: 25px 30px; border-top: 1px solid #e9ecef;">
+        <p style="margin: 0 0 10px 0; color: #555; font-size: 14px;">
+          Best regards,<br/>
+          <strong style="color: #2c3e50;">The TalentBox Team</strong>
+        </p>
+        <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;" />
+        <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+          This is an automated message. Please do not reply directly to this email.
+        </p>
+      </div>
+    </div>
+  </div>
+`;
+
+// Template for notifying Vendor when their applicant status changes (Vendor role update confirmation)
+export const vendorApplicantStatusUpdateTemplate = ({
+  vendorName,
+  applicantName,
+  applicantEmail,
+  jobTitle,
+  oldStatus,
+  newStatus,
+  updatedAt,
+  dashboardUrl,
+}) => `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px;">
+    <div style="max-width: 650px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); overflow: hidden;">
+      
+      <!-- Header Section -->
+      <div style="background: #667eea; padding: 40px 30px; text-align: center;">
+        <h1 style="color: #ffffff !important; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+          ✅ Status Update Confirmed
+        </h1>
+        <p style="color: #ffffff !important; margin: 10px 0 0 0; font-size: 16px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+          Your applicant status has been updated
+        </p>
+      </div>
+
+      <!-- Content Section -->
+      <div style="padding: 40px 30px;">
+        <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
+          Dear ${vendorName || 'Vendor'},
+        </p>
+        <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
+          This is to confirm that you have successfully updated the status of an applicant. Please find the details below:
+        </p>
+
+        <!-- Update Details Card -->
+        <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 30px; border-radius: 10px; margin: 0 0 30px 0; border-left: 5px solid #667eea;">
+          <h2 style="color: #2c3e50; margin: 0 0 20px 0; font-size: 22px; font-weight: 600;">
+            📝 Update Details
+          </h2>
+          <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600; width: 40%;">Applicant Name:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px; font-weight: 500;">${
+                  applicantName || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Applicant Email:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  applicantEmail || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Job Position:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  jobTitle || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Previous Status:</td>
+                <td style="padding: 12px 0; color: #dc3545; font-size: 15px; font-weight: 500;">${
+                  oldStatus || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">New Status:</td>
+                <td style="padding: 12px 0; color: #28a745; font-size: 15px; font-weight: 600;">${
+                  newStatus || 'N/A'
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Updated At:</td>
+                <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${
+                  updatedAt || 'N/A'
+                }</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Dashboard Button Section -->
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${dashboardUrl || '#'}" 
+             style="display: inline-block; background-color: #667eea !important; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); border: 2px solid #667eea;">
+            <span style="color: #ffffff !important; text-decoration: none;">🔗 View in Dashboard</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Footer Section -->
+      <div style="background-color: #f8f9fa; padding: 25px 30px; border-top: 1px solid #e9ecef;">
+        <p style="margin: 0 0 10px 0; color: #555; font-size: 14px;">
+          Best regards,<br/>
+          <strong style="color: #2c3e50;">The TalentBox Team</strong>
+        </p>
+        <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;" />
+        <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+          This is an automated message. Please do not reply directly to this email.
+        </p>
+      </div>
+    </div>
+  </div>
+`;
+
 export const vendorJobNotificationTemplate = ({
   jobTitle,
   jobSubject,

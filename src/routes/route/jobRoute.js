@@ -13,6 +13,7 @@ import {
   sendJobEmailToRecipients,
   getVendorsAndApplicantsForEmail,
   sendJobNotificationsToApplicants,
+  sendApplicantStatusEmail,
 } from '../../controller/jobController.js';
 import { validator } from '../../helpers/validator.js';
 import { createJobValidation } from '../../validations/jobValidation.js';
@@ -30,6 +31,12 @@ router.get('/public/viewJobs', viewJobs);
 
 router.get('/client/applications', authorization, viewClientJobApplications);
 router.get('/email/recipients', authorization, getVendorsAndApplicantsForEmail);
+
+router.post(
+  '/applicant/send-status-email',
+  authorization,
+  sendApplicantStatusEmail
+);
 
 router.get('/:jobId/applicants', authorization, viewApplicantsForJob);
 router.post('/:jobId/send-email', authorization, sendJobEmailToRecipients);

@@ -17,7 +17,6 @@ import { getAllusers, getUser } from '../services/userService.js';
 import { getRoleByNameService } from '../services/roleService.js';
 import { Enum } from '../utils/enum.js';
 import User from '../models/userModel.js';
-import { sendingEmail } from '../utils/email.js';
 import {
   jobCreatedTemplate,
   jobNotificationTemplate,
@@ -513,7 +512,7 @@ export const viewJobs = async (req, res) => {
     const query = { isDeleted: false };
 
     const user = req.user || {};
-    console.log('viewJobs - user:', user);
+
     if (posted_by_role) {
       const usersWithRole = await User.find(
         { role: posted_by_role },
@@ -525,10 +524,8 @@ export const viewJobs = async (req, res) => {
     } else if (user?.role === Enum.VENDOR) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
       query.$or = [{ addedBy: vendorId }, { emailedVendors: vendorId }];
-      console.log('viewJobs - Vendor query:', JSON.stringify(query, null, 2));
     } else if (user?.role === Enum.CLIENT) {
       query.addedBy = user.id;
-      console.log(query.addedBy);
     }
 
     if (filterBy === Enum.VENDOR) {
@@ -545,7 +542,6 @@ export const viewJobs = async (req, res) => {
       }
     } else if (filterBy === Enum.CLIENT) {
       const clientRole = await getRoleByNameService(Enum.CLIENT);
-      console.log('clientRole', clientRole);
       const clientUsers = await getAllusers(
         { roleId: clientRole._id },
         { _id: 1 }
@@ -640,13 +636,6 @@ export const viewJobs = async (req, res) => {
       }
     }
 
-    if (user?.role === Enum.VENDOR) {
-      console.log(
-        'viewJobs - Final query for vendor:',
-        JSON.stringify(query, null, 2)
-      );
-    }
-
     const result = await pagination({
       Schema: jobs,
       page: parseInt(page),
@@ -666,6 +655,33 @@ export const viewJobs = async (req, res) => {
 
     if (user?.role === Enum.VENDOR && result?.item) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
+
+      // Get all unique client IDs for client jobs
+      const clientJobIds = result.item
+        .filter((job) => {
+          const jobObj = job.toObject ? job.toObject() : job;
+          return jobObj.addedBy?.toString() !== user.id;
+        })
+        .map((job) => {
+          const jobObj = job.toObject ? job.toObject() : job;
+          return jobObj.addedBy;
+        });
+
+      // Fetch client details for all client jobs
+      const clientUsers = await User.find({
+        _id: { $in: clientJobIds },
+      }).select('firstName lastName userName');
+
+      // Create a map of client ID to client name
+      const clientNameMap = {};
+      clientUsers.forEach((client) => {
+        const clientName =
+          client.firstName && client.lastName
+            ? `${client.firstName} ${client.lastName}`
+            : client.firstName || client.userName || 'Client';
+        clientNameMap[client._id.toString()] = clientName;
+      });
+
       result.item = result.item.map((job) => {
         const jobObj = job.toObject ? job.toObject() : job;
         const isClientJob = jobObj.addedBy?.toString() !== user.id;
@@ -674,6 +690,13 @@ export const viewJobs = async (req, res) => {
         );
         jobObj.canShare = isClientJob && wasEmailed;
         jobObj.isClientJob = isClientJob;
+
+        // Add client name if it's a client job
+        if (isClientJob && jobObj.addedBy) {
+          jobObj.clientName =
+            clientNameMap[jobObj.addedBy.toString()] || 'Client';
+        }
+
         return jobObj;
       });
     }
@@ -747,57 +770,58 @@ export const updateJob = async (req, res) => {
     logger.info(`Job ${Message.UPDATED_SUCCESSFULLY}`);
 
     let notificationStatus = null;
-    if (isVendorActivating) {
-      try {
-        const updatedJob = await fetchJobService(jobId);
-        notificationStatus = await sendJobNotificationsToMatchingApplicants(
-          updatedJob,
-          jobId
-        );
-        logger.info(
-          `Job activation notifications sent: ${notificationStatus.sent} successful, ${notificationStatus.failed} failed`
-        );
-      } catch (notifErr) {
-        logger.error(
-          `Failed to send job activation notifications: ${notifErr.message}`
-        );
-      }
-    } else if (isClientActivating) {
-      try {
-        const updatedJob = await fetchJobService(jobId);
+    // Commented out: Email notifications on job activation
+    // if (isVendorActivating) {
+    //   try {
+    //     const updatedJob = await fetchJobService(jobId);
+    //     notificationStatus = await sendJobNotificationsToMatchingApplicants(
+    //       updatedJob,
+    //       jobId
+    //     );
+    //     logger.info(
+    //       `Job activation notifications sent: ${notificationStatus.sent} successful, ${notificationStatus.failed} failed`
+    //     );
+    //   } catch (notifErr) {
+    //     logger.error(
+    //       `Failed to send job activation notifications: ${notifErr.message}`
+    //     );
+    //   }
+    // } else if (isClientActivating) {
+    //   try {
+    //     const updatedJob = await fetchJobService(jobId);
 
-        // Send notifications to all active vendors
-        const vendorNotificationStatus = await sendJobNotificationsToAllVendors(
-          updatedJob,
-          jobId
-        );
+    //     // Send notifications to all active vendors
+    //     const vendorNotificationStatus = await sendJobNotificationsToAllVendors(
+    //       updatedJob,
+    //       jobId
+    //     );
 
-        // Send notifications to matching applicants
-        const applicantNotificationStatus =
-          await sendJobNotificationsToMatchingApplicants(updatedJob, jobId);
+    //     // Send notifications to matching applicants
+    //     const applicantNotificationStatus =
+    //       await sendJobNotificationsToMatchingApplicants(updatedJob, jobId);
 
-        notificationStatus = {
-          vendors: {
-            sent: vendorNotificationStatus.sent,
-            failed: vendorNotificationStatus.failed,
-            errors: vendorNotificationStatus.errors,
-          },
-          applicants: {
-            sent: applicantNotificationStatus.sent,
-            failed: applicantNotificationStatus.failed,
-            errors: applicantNotificationStatus.errors,
-          },
-        };
+    //     notificationStatus = {
+    //       vendors: {
+    //         sent: vendorNotificationStatus.sent,
+    //         failed: vendorNotificationStatus.failed,
+    //         errors: vendorNotificationStatus.errors,
+    //       },
+    //       applicants: {
+    //         sent: applicantNotificationStatus.sent,
+    //         failed: applicantNotificationStatus.failed,
+    //         errors: applicantNotificationStatus.errors,
+    //       },
+    //     };
 
-        logger.info(
-          `Client job activation notifications sent - Vendors: ${vendorNotificationStatus.sent} successful, ${vendorNotificationStatus.failed} failed; Applicants: ${applicantNotificationStatus.sent} successful, ${applicantNotificationStatus.failed} failed`
-        );
-      } catch (notifErr) {
-        logger.error(
-          `Failed to send client job activation notifications: ${notifErr.message}`
-        );
-      }
-    }
+    //     logger.info(
+    //       `Client job activation notifications sent - Vendors: ${vendorNotificationStatus.sent} successful, ${vendorNotificationStatus.failed} failed; Applicants: ${applicantNotificationStatus.sent} successful, ${applicantNotificationStatus.failed} failed`
+    //     );
+    //   } catch (notifErr) {
+    //     logger.error(
+    //       `Failed to send client job activation notifications: ${notifErr.message}`
+    //     );
+    //   }
+    // }
 
     return HandleResponse(
       res,
@@ -1376,6 +1400,15 @@ export const viewApplicantsForJob = async (req, res) => {
           model: 'jobs',
           select: 'job_id job_subject job_type job_location required_skills',
         },
+        {
+          path: 'vendor_id',
+          model: 'user',
+          select: 'firstName lastName email vendorProfileId',
+          populate: {
+            path: 'vendorProfileId',
+            select: 'company_name',
+          },
+        },
       ],
     });
 
@@ -1607,9 +1640,6 @@ export const viewClientJobApplications = async (req, res) => {
   }
 };
 
-// Send job email to selected vendors/applicants
-// - Clients/Admins: Use new email template system (emailTemplateId or default)
-// - Vendors: Use original jobNotificationTemplate (same as sendJobNotificationsToApplicants)
 export const sendJobEmailToRecipients = async (req, res) => {
   try {
     const user = req.user || {};
@@ -1621,7 +1651,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
       emailTemplateId,
     } = req.body;
 
-    // Validate job ID
     if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
       return HandleResponse(
         res,
@@ -1631,7 +1660,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
       );
     }
 
-    // Check if job exists
     const job = await fetchJobService(jobId);
     if (!job) {
       return HandleResponse(
@@ -1642,9 +1670,7 @@ export const sendJobEmailToRecipients = async (req, res) => {
       );
     }
 
-    // Authorization check: Allow clients, admins, and vendors
     if (user.role === Enum.CLIENT) {
-      // Client can only send emails for their own jobs
       if (job.addedBy.toString() !== user.id) {
         return HandleResponse(
           res,
@@ -1654,13 +1680,11 @@ export const sendJobEmailToRecipients = async (req, res) => {
         );
       }
     } else if (user.role === Enum.VENDOR) {
-      // Vendor can send emails for their own jobs OR client jobs they were emailed about
       const vendorId = new mongoose.Types.ObjectId(user.id);
       const ownsJob = job.addedBy.toString() === user.id;
       const isClientJob = !ownsJob;
 
       if (isClientJob) {
-        // For client jobs, vendor must have been emailed about it
         if (
           !job.emailedVendors ||
           !job.emailedVendors.some(
@@ -1675,8 +1699,7 @@ export const sendJobEmailToRecipients = async (req, res) => {
           );
         }
       }
-      // If vendor owns the job, they can send emails (no additional check needed)
-      // Vendors can only send to applicants, not to other vendors
+
       if (vendorIds && vendorIds.length > 0) {
         return HandleResponse(
           res,
@@ -1694,7 +1717,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
       );
     }
 
-    // Validate that at least one recipient is selected
     if (
       (!vendorIds || vendorIds.length === 0) &&
       (!applicantIds || applicantIds.length === 0)
@@ -1724,18 +1746,15 @@ export const sendJobEmailToRecipients = async (req, res) => {
       applicants: { sent: 0, failed: 0, errors: [] },
     };
 
-    // Track successfully emailed vendor and applicant IDs
     const successfullyEmailedVendorIds = [];
     const successfullyEmailedApplicantIds = [];
 
-    // Get sender information (client or vendor)
     const senderUser = await User.findById(user.id).populate('roleId', 'name');
     let senderName = '';
     let companyName = '';
-    let clientName = ''; // Original client name (for vendor sharing)
+    let clientName = '';
 
     if (user.role === Enum.CLIENT) {
-      // Client sending their own job
       senderName =
         senderUser.firstName && senderUser.lastName
           ? `${senderUser.firstName} ${senderUser.lastName}`
@@ -1744,9 +1763,8 @@ export const sendJobEmailToRecipients = async (req, res) => {
         const vendor = await findVendorByUserId({ userId: user.id });
         companyName = vendor?.company_name || '';
       }
-      clientName = senderName; // Same as sender for clients
+      clientName = senderName;
     } else if (user.role === Enum.VENDOR) {
-      // Vendor sharing client's job
       senderName =
         senderUser.firstName && senderUser.lastName
           ? `${senderUser.firstName} ${senderUser.lastName}`
@@ -1754,7 +1772,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
       const vendor = await findVendorByUserId({ userId: user.id });
       companyName = vendor?.company_name || '';
 
-      // Get original client information
       const originalClient = await User.findById(job.addedBy).populate(
         'roleId',
         'name'
@@ -1765,7 +1782,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
           : originalClient.firstName || 'Client';
     }
 
-    // Get email template if provided
     let emailTemplate = null;
     if (emailTemplateId && mongoose.Types.ObjectId.isValid(emailTemplateId)) {
       try {
@@ -1782,14 +1798,11 @@ export const sendJobEmailToRecipients = async (req, res) => {
       }
     }
 
-    // Get job details for email
     const baseUrl = process.env.FRONT_URL || '';
     const jobIdForUrl = job._id || job._id?.toString();
-    // Different URLs for vendors (login) and applicants (application)
     const vendorApplicationUrl = `${baseUrl}login`; // Vendors redirect to login
     const applicantApplicationUrl = `${baseUrl}vendor/email-check-apply?jobId=${jobIdForUrl}`; // Applicants redirect to application
 
-    // Helper function to replace placeholders in template
     const replaceTemplatePlaceholders = (template, replacements) => {
       let result = template;
       Object.keys(replacements).forEach((key) => {
@@ -1799,7 +1812,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
       return result;
     };
 
-    // Process vendor emails
     if (vendorIds && vendorIds.length > 0) {
       for (const vendorId of vendorIds) {
         try {
@@ -1826,7 +1838,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
             continue;
           }
 
-          // Check if user is deleted or inactive
           if (vendorUser.isDeleted) {
             emailStatus.vendors.failed++;
             emailStatus.vendors.errors.push({
@@ -1845,7 +1856,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
             continue;
           }
 
-          // Check if user is a vendor (check both roleId.name and role field)
           const userRole = vendorUser.roleId?.name || vendorUser.role;
           if (userRole !== Enum.VENDOR) {
             emailStatus.vendors.failed++;
@@ -1878,16 +1888,12 @@ export const sendJobEmailToRecipients = async (req, res) => {
           const vendorCompanyName =
             vendorUser.vendorProfileId?.company_name || companyName || '';
 
-          // Prepare job details (strip HTML tags for cleaner display)
           const jobDetailsText = job.job_details
             ? job.job_details.replace(/<[^>]*>/g, '').substring(0, 500)
             : '';
 
-          // For vendors: Simple notification email (no QR code, no complex template)
-          // Use email template if provided, otherwise use simple default template
           let emailContent, emailSubject;
           if (emailTemplate) {
-            // Replace placeholders in template (but don't include QR code for vendors)
             const replacements = {
               recipientName: vendorName,
               jobTitle: job.job_subject || 'Job Opening',
@@ -1898,21 +1904,19 @@ export const sendJobEmailToRecipients = async (req, res) => {
               companyName: vendorCompanyName,
               clientName: clientName,
               customMessage: customMessage || '',
-              applicationUrl: vendorApplicationUrl, // Vendors redirect to login
-              qrCodeHtml: '', // No QR code for vendors
+              applicationUrl: vendorApplicationUrl,
+              qrCodeHtml: '',
             };
             emailContent = replaceTemplatePlaceholders(
               emailTemplate.description,
               replacements
             );
-            // Remove any QR code placeholders that might be in the template
             emailContent = emailContent.replace(/{{qrCodeHtml}}/g, '');
             emailSubject = replaceTemplatePlaceholders(
               emailTemplate.subject,
               replacements
             );
           } else {
-            // Simple default template for vendors - just notification
             emailContent = `
               <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
@@ -1985,7 +1989,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
       }
     }
 
-    // Process applicant emails
     if (applicantIds && applicantIds.length > 0) {
       for (const applicantId of applicantIds) {
         try {
@@ -2023,21 +2026,17 @@ export const sendJobEmailToRecipients = async (req, res) => {
               ? `${applicant.name.firstName} ${applicant.name.lastName}`
               : applicant.name?.firstName || 'Applicant';
 
-          // Use applicationUrl for applicants - redirect to application page
           const applicationUrl = applicantApplicationUrl;
 
-          // Prepare job details (strip HTML tags for cleaner display)
           const jobDetailsText = job.job_details
             ? job.job_details.replace(/<[^>]*>/g, '').substring(0, 500)
             : '';
 
-          // Different email templates based on sender role
           let emailContent, emailSubject;
           const isVendorSharing = user.role === Enum.VENDOR;
 
           // If vendor is sharing, use the original jobNotificationTemplate (same as sendJobNotificationsToApplicants)
           if (isVendorSharing) {
-            // Generate QR code for vendor sharing (same as original template)
             let qrCodeHtml = '';
             let inlineImage = null;
             try {
@@ -2074,7 +2073,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
               );
             }
 
-            // Use original jobNotificationTemplate for vendor sharing (same as sendJobNotificationsToApplicants)
             emailContent = jobNotificationTemplate({
               jobTitle: job.job_subject || 'Job Opening',
               jobSubject: job.job_subject || 'Job Opening',
@@ -2089,7 +2087,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
               job.job_subject || 'Job Opening'
             }`;
 
-            // Send email with QR code
             await sendingEmailHelper({
               email_to: applicant.email,
               subject: emailSubject,
@@ -2105,12 +2102,10 @@ export const sendJobEmailToRecipients = async (req, res) => {
             logger.info(
               `Job email sent to applicant ${applicant.email} by vendor ${user.id} for job ${jobId}`
             );
-            continue; // Skip the rest - vendor uses original template
+            continue;
           }
 
-          // For clients/admins: Use new email template system
           if (emailTemplate) {
-            // Replace placeholders in template (no QR code for applicants)
             const replacements = {
               recipientName: applicantName,
               jobTitle: job.job_subject || 'Job Opening',
@@ -2128,14 +2123,12 @@ export const sendJobEmailToRecipients = async (req, res) => {
               emailTemplate.description,
               replacements
             );
-            // Remove any QR code placeholders that might be in the template
             emailContent = emailContent.replace(/{{qrCodeHtml}}/g, '');
             emailSubject = replaceTemplatePlaceholders(
               emailTemplate.subject,
               replacements
             );
           } else {
-            // Simple default template for clients/admins (vendors use original template above)
             emailContent = `
               <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
@@ -2220,15 +2213,16 @@ export const sendJobEmailToRecipients = async (req, res) => {
       `Job emails sent: ${totalSent} successful, ${totalFailed} failed for job ${jobId}`
     );
 
-    // Update job to track emailed vendors and applicants
     if (
       successfullyEmailedVendorIds.length > 0 ||
       successfullyEmailedApplicantIds.length > 0
     ) {
       try {
         const updateData = {};
-        if (successfullyEmailedVendorIds.length > 0) {
-          // Add vendor IDs to the job's emailedVendors array (avoid duplicates)
+        if (
+          successfullyEmailedVendorIds.length > 0 &&
+          (user.role === Enum.CLIENT || user.role === Enum.ADMIN)
+        ) {
           await jobs.findByIdAndUpdate(
             jobId,
             {
@@ -2240,7 +2234,6 @@ export const sendJobEmailToRecipients = async (req, res) => {
           );
         }
         if (successfullyEmailedApplicantIds.length > 0) {
-          // Add applicant IDs to the job's emailedApplicants array (avoid duplicates)
           await jobs.findByIdAndUpdate(
             jobId,
             {
@@ -2252,7 +2245,11 @@ export const sendJobEmailToRecipients = async (req, res) => {
           );
         }
         logger.info(
-          `Updated job ${jobId} with ${successfullyEmailedVendorIds.length} vendors and ${successfullyEmailedApplicantIds.length} applicants`
+          `Updated job ${jobId} with ${
+            user.role === Enum.CLIENT || user.role === Enum.ADMIN
+              ? successfullyEmailedVendorIds.length
+              : 0
+          } vendors and ${successfullyEmailedApplicantIds.length} applicants`
         );
       } catch (updateErr) {
         logger.error(
@@ -2476,6 +2473,248 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `Failed to fetch vendors and applicants: ${error.message}`
+    );
+  }
+};
+
+// Send applicant status email based on logged-in user role
+// - Client role: Send to vendor (if applicant has vendor_id) or admin (if no vendor)
+// - Vendor role: Send to applicant
+export const sendApplicantStatusEmail = async (req, res) => {
+  try {
+    const user = req.user || {};
+    const {
+      applicantName,
+      applicantEmail,
+      templateType,
+      applicantStatus,
+      applicantId,
+      jobId,
+    } = req.body;
+
+    // Validate required fields
+    if (
+      !applicantName ||
+      !applicantEmail ||
+      !templateType ||
+      !applicantStatus
+    ) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Missing required fields: applicantName, applicantEmail, templateType, and applicantStatus are required'
+      );
+    }
+
+    // Get logged-in user details
+    const loggedInUser = await User.findById(user.id).populate('roleId');
+    if (!loggedInUser) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.UNAUTHORIZED,
+        'User not found'
+      );
+    }
+
+    const userRole = loggedInUser.roleId?.name || loggedInUser.role || '';
+    const normalizedRole = userRole.toLowerCase();
+
+    // Get the email template by type
+    const { getEmailTemplateByStatus } = await import(
+      '../services/emailTemplateService.js'
+    );
+    const emailTemplate = await getEmailTemplateByStatus(templateType);
+
+    if (!emailTemplate) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Email template with type '${templateType}' not found`
+      );
+    }
+
+    // Prepare email content with dynamic placeholders
+    let emailSubject = emailTemplate.subject;
+    let emailDescription = emailTemplate.description;
+
+    // Replace placeholders in template
+    const placeholders = {
+      '{{applicantName}}': applicantName,
+      '{{applicantEmail}}': applicantEmail,
+      '{{status}}': applicantStatus,
+      '{{applicantStatus}}': applicantStatus,
+    };
+
+    // Get job details if jobId is provided
+    let jobTitle = '';
+    if (jobId && mongoose.Types.ObjectId.isValid(jobId)) {
+      const job = await fetchJobService(jobId);
+      if (job) {
+        jobTitle = job.job_subject || job.job_title || '';
+        placeholders['{{jobTitle}}'] = jobTitle;
+        placeholders['{{jobSubject}}'] = jobTitle;
+      }
+    }
+
+    // Replace all placeholders
+    Object.keys(placeholders).forEach((key) => {
+      const regex = new RegExp(key, 'g');
+      emailSubject = emailSubject.replace(regex, placeholders[key]);
+      emailDescription = emailDescription.replace(regex, placeholders[key]);
+    });
+
+    let recipientEmail = '';
+    let recipientName = '';
+    let emailSentTo = '';
+
+    // Determine recipient based on logged-in user role
+    if (normalizedRole === Enum.CLIENT.toLowerCase()) {
+      // Client role: Send to vendor if applicant has vendor_id, otherwise send to admin
+
+      // First, try to find the applicant to get vendor_id
+      let vendorId = null;
+
+      if (applicantId && mongoose.Types.ObjectId.isValid(applicantId)) {
+        const applicant = await jobApplication
+          .findById(applicantId)
+          .populate('vendor_id');
+        if (applicant && applicant.vendor_id) {
+          vendorId = applicant.vendor_id;
+        }
+      }
+
+      if (vendorId) {
+        // Send to vendor
+        const vendorUser = await User.findById(vendorId).populate(
+          'vendorProfileId'
+        );
+        if (vendorUser && vendorUser.email) {
+          recipientEmail = vendorUser.email;
+          recipientName = vendorUser.firstName
+            ? `${vendorUser.firstName} ${vendorUser.lastName || ''}`
+            : vendorUser.userName || 'Vendor';
+          emailSentTo = 'vendor';
+        } else {
+          // Vendor not found or no email, send to admin
+          const adminRole = await getRoleByNameService(Enum.ADMIN);
+          if (adminRole) {
+            const adminUser = await User.findOne({
+              roleId: adminRole._id,
+              isDeleted: false,
+              isActive: true,
+              email: { $exists: true, $ne: '' },
+            });
+            if (adminUser) {
+              recipientEmail = adminUser.email;
+              recipientName = adminUser.firstName
+                ? `${adminUser.firstName} ${adminUser.lastName || ''}`
+                : adminUser.userName || 'Admin';
+              emailSentTo = 'admin';
+            }
+          }
+        }
+      } else {
+        // No vendor_id, send to admin
+        const adminRole = await getRoleByNameService(Enum.ADMIN);
+        if (adminRole) {
+          const adminUser = await User.findOne({
+            roleId: adminRole._id,
+            isDeleted: false,
+            isActive: true,
+            email: { $exists: true, $ne: '' },
+          });
+          if (adminUser) {
+            recipientEmail = adminUser.email;
+            recipientName = adminUser.firstName
+              ? `${adminUser.firstName} ${adminUser.lastName || ''}`
+              : adminUser.userName || 'Admin';
+            emailSentTo = 'admin';
+          }
+        }
+
+        // If no admin found, fall back to HR_EMAIL
+        if (!recipientEmail) {
+          recipientEmail = process.env.HR_EMAIL;
+          recipientName = 'Admin';
+          emailSentTo = 'admin (HR_EMAIL)';
+        }
+      }
+    } else if (normalizedRole === Enum.VENDOR.toLowerCase()) {
+      // Vendor role: Send to applicant
+      recipientEmail = applicantEmail;
+      recipientName = applicantName;
+      emailSentTo = 'applicant';
+    } else {
+      // For admin/hr or other roles, send to applicant by default
+      recipientEmail = applicantEmail;
+      recipientName = applicantName;
+      emailSentTo = 'applicant';
+    }
+
+    // Validate recipient email
+    if (!recipientEmail) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Unable to determine recipient email address'
+      );
+    }
+
+    // Add recipient name placeholder
+    emailDescription = emailDescription.replace(
+      /{{recipientName}}/g,
+      recipientName
+    );
+    emailSubject = emailSubject.replace(/{{recipientName}}/g, recipientName);
+
+    // Send email
+    const emailResult = await sendingEmailHelper({
+      email_to: [recipientEmail],
+      subject: emailSubject,
+      description: emailDescription,
+    });
+
+    if (!emailResult || !emailResult.success) {
+      logger.error(
+        `Failed to send applicant status email to ${recipientEmail}`
+      );
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `Failed to send email: ${emailResult?.error || 'Unknown error'}`
+      );
+    }
+
+    logger.info(
+      `Applicant status email sent successfully to ${recipientEmail} (${emailSentTo}) by ${userRole}`
+    );
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Email sent successfully to ${emailSentTo}`,
+      {
+        sentTo: emailSentTo,
+        recipientEmail: recipientEmail,
+        recipientName: recipientName,
+        templateType: templateType,
+        applicantStatus: applicantStatus,
+        senderRole: userRole,
+      }
+    );
+  } catch (error) {
+    logger.error(`Failed to send applicant status email: ${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to send applicant status email: ${error.message}`
     );
   }
 };
