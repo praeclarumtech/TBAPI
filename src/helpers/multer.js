@@ -84,6 +84,9 @@ export const uploadAttachments = multer({
   },
 }).array('attachments', 5);
 
+// Multer middleware for parsing form-data without requiring files
+export const parseFormData = multer().none();
+
 const UPLOAD_CONFIG = {
   RESUME_UPLOAD_DIR: 'src/uploads/resumes',
   MAX_FILE_SIZE: 800 * 1024 * 1024, // 800MB
@@ -91,16 +94,18 @@ const UPLOAD_CONFIG = {
   ALLOWED_MIME_TYPES: [
     'application/pdf',
     'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ],
-  FILENAME_PREFIX: 'resume'
+  FILENAME_PREFIX: 'resume',
 };
 
 const ensureUploadDirExists = () => {
   try {
     if (!fs.existsSync(UPLOAD_CONFIG.RESUME_UPLOAD_DIR)) {
       fs.mkdirSync(UPLOAD_CONFIG.RESUME_UPLOAD_DIR, { recursive: true });
-      logger.info(`Created upload directory: ${UPLOAD_CONFIG.RESUME_UPLOAD_DIR}`);
+      logger.info(
+        `Created upload directory: ${UPLOAD_CONFIG.RESUME_UPLOAD_DIR}`
+      );
     }
   } catch (error) {
     logger.error(`Failed to create upload directory: ${error.message}`);
@@ -118,13 +123,15 @@ const resumeStorage = multer.diskStorage({
     const ext = path.extname(file.originalname);
     const filename = `${UPLOAD_CONFIG.FILENAME_PREFIX}${uniqueSuffix}${ext}`;
     cb(null, filename);
-  }
+  },
 });
 
 const resumeFileFilter = (req, file, cb) => {
   try {
     if (!UPLOAD_CONFIG.ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-      logger.warn(`Rejected file type: ${file.mimetype} for ${file.originalname}`);
+      logger.warn(
+        `Rejected file type: ${file.mimetype} for ${file.originalname}`
+      );
       return cb(new Error(Message.INVALID_FILE_TYPE), false);
     }
     cb(null, true);
@@ -140,21 +147,21 @@ export const handleMulterError = (err, req, res, next) => {
       logger.warn(`File size limit exceeded: ${err.message}`);
       return res.status(413).json({
         success: false,
-        message: Message.FILE_TOO_LARGE
+        message: Message.FILE_TOO_LARGE,
       });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
       logger.warn(`File count limit exceeded: ${err.message}`);
       return res.status(413).json({
         success: false,
-        message: Message.TOO_MANY_FILES
+        message: Message.TOO_MANY_FILES,
       });
     }
   } else if (err) {
     logger.error(`Upload error: ${err.message}`);
     return res.status(400).json({
       success: false,
-      message: err.message || Message.UPLOAD_FAILED
+      message: err.message || Message.UPLOAD_FAILED,
     });
   }
   next();
@@ -164,9 +171,9 @@ export const uploadResume = multer({
   storage: resumeStorage,
   limits: {
     fileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
-    files: UPLOAD_CONFIG.MAX_FILES
+    files: UPLOAD_CONFIG.MAX_FILES,
   },
-  fileFilter: resumeFileFilter
+  fileFilter: resumeFileFilter,
 }).array('resume', UPLOAD_CONFIG.MAX_FILES);
 
 const jobScoreDir = 'src/uploads/jobScore';
@@ -186,27 +193,35 @@ const jobScorestorage = multer.diskStorage({
 export const jobScoreResume = (req, res, next) => {
   multer({
     storage: jobScorestorage,
-    limits: { fileSize: 100 * 1024 * 1024 }, 
+    limits: { fileSize: 100 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
       const allowedTypes = [
         'application/pdf',
         'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       ];
-      cb(allowedTypes.includes(file.mimetype) ? null : new Error(Message.INVALID_FILE_TYPE), true);
-    }
+      cb(
+        allowedTypes.includes(file.mimetype)
+          ? null
+          : new Error(Message.INVALID_FILE_TYPE),
+        true
+      );
+    },
   }).fields([
     { name: 'resume', maxCount: 1 },
-    { name: 'jobDescriptionFile', maxCount: 1 }
-  ])(req, res, err => {
+    { name: 'jobDescriptionFile', maxCount: 1 },
+  ])(req, res, (err) => {
     const exceeded = [];
-    const maxSize = 5 * 1024 * 1024; 
+    const maxSize = 5 * 1024 * 1024;
 
     if (req.files?.resume?.[0]?.size > maxSize) exceeded.push('resume');
-    if (req.files?.jobDescriptionFile?.[0]?.size > maxSize) exceeded.push('jobDescriptionFile');
+    if (req.files?.jobDescriptionFile?.[0]?.size > maxSize)
+      exceeded.push('jobDescriptionFile');
 
     if (exceeded.length) {
-      req.fileValidationError = `${exceeded.join(', ')} size exceeded for Limit is 5MB.`;
+      req.fileValidationError = `${exceeded.join(
+        ', '
+      )} size exceeded for Limit is 5MB.`;
     } else if (err) {
       req.fileValidationError = err.message;
     }

@@ -53,14 +53,14 @@ export const getPermissionsByCategory = () => ({
   vendors: [
     PermissionKey.VENDORS,
     PermissionKey.VENDOR_LIST,
-    PermissionKey.JOB_LISTING,
-    PermissionKey.JOB_APPLICANTS,
+    PermissionKey.VENDOR_JOB_LISTING,
+    PermissionKey.VENDOR_JOB_APPLICANTS,
   ],
   clients: [
     PermissionKey.CLIENTS,
     PermissionKey.CLIENT_LIST,
-    PermissionKey.JOB_LISTING,
-    PermissionKey.JOB_APPLICANTS,
+    PermissionKey.CLIENT_JOB_LISTING,
+    PermissionKey.CLIENT_JOB_APPLICANTS,
   ],
   analysis: [PermissionKey.EMAIL, PermissionKey.REPORTS],
   masters: [

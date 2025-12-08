@@ -24,6 +24,7 @@ import {
   accountCredentialsTemplate,
   passwordResetRequestTemplate,
   resetPasswordCredentialsTemplate,
+  vendorApprovalWithCredentialsTemplate,
 } from '../utils/emailTemplates/emailTemplates.js';
 dotenv.config();
 import {
@@ -105,6 +106,7 @@ export const register = async (req, res, next) => {
     roleId = existingRole._id;
 
     const createdByAdmin = req.user?.role === Enum.ADMIN;
+    const isAdminFlag = createdByAdmin || false;
     if (createdByAdmin || role === Enum.GUEST) {
       logger.info(`New user has ${Message.ADDED_SUCCESSFULLY} by admin`);
       const newUser = await createUser({
@@ -116,12 +118,18 @@ export const register = async (req, res, next) => {
         isActive,
         lastName,
         firstName,
+        isAdmin: isAdminFlag, // Store isAdmin flag in database
+        addedBy: req.user?._id || null,
+        addedByRole: req.user?.role || null,
       });
       if (role === Enum.VENDOR || role === Enum.CLIENT) {
         const vendorData = {
           userId: newUser._id,
           ...req.body,
           type: newUser.role,
+          isAdmin: isAdminFlag, // Store isAdmin flag in database
+          addedBy: req.user?._id || null,
+          addedByRole: req.user?.role || null,
         };
         const newVendor = await createVendorData(vendorData);
         await updateProfileById(newUser._id, {
@@ -138,9 +146,14 @@ export const register = async (req, res, next) => {
         isActive: false,
         lastName,
         firstName,
+        isAdmin: false, // Store isAdmin flag in database (false for non-admin created users)
       });
       if (role === Enum.VENDOR || role === Enum.CLIENT) {
-        const vendorData = { userId: newUser._id, type: newUser.role };
+        const vendorData = {
+          userId: newUser._id,
+          type: newUser.role,
+          isAdmin: false, // Store isAdmin flag in database (false for non-admin created users)
+        };
         const newVendor = await createVendorData(vendorData);
         await updateProfileById(newUser._id, {
           vendorProfileId: newVendor._id,
@@ -531,10 +544,13 @@ export const updateProfile = (req, res) => {
           // Check if user is vendor or client and create vendor profile if it doesn't exist
           const userRole = userWithRole?.roleId?.name || userWithRole?.role;
           if (userRole === Enum.VENDOR || userRole === Enum.CLIENT) {
+            // Determine if requester is admin
+            const isAdminFlag = req.user?.role === Enum.ADMIN || false;
             const vendorData = {
               userId: updatedUser._id,
               ...vendorUpdateData,
               type: userRole,
+              isAdmin: isAdminFlag, // Store isAdmin flag in database
             };
             const newVendor = await createVendorData(vendorData);
             await updateProfileById(updatedUser._id, {
@@ -760,7 +776,8 @@ export const changePassword = async (req, res) => {
         Message.OLD_PASSWORD_INCORRECT
       );
     }
-    user.password = await newPassword;
+    user.password = newPassword; // Pre-save hook will hash it
+    user.passwordChanged = true; // Mark password as changed
     await user.save();
 
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
@@ -781,10 +798,31 @@ export const changePassword = async (req, res) => {
   }
 };
 
+const generateTemporaryPassword = () => {
+  const length = 12;
+  const charset =
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
+  let password = '';
+  password += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+  password += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
+  password += '0123456789'[Math.floor(Math.random() * 10)];
+  password += '@#$%&*'[Math.floor(Math.random() * 6)];
+
+  for (let i = password.length; i < length; i++) {
+    password += charset[Math.floor(Math.random() * charset.length)];
+  }
+
+  return password
+    .split('')
+    .sort(() => Math.random() - 0.5)
+    .join('');
+};
+
 export const updateStatus = async (req, res) => {
   try {
     const userId = req.params.id;
-    const { isActive, isDeleted } = req.body;
+    let { isActive, isDeleted, isAdmin } = req.body;
+
     const existingUser = await getUser({ _id: userId });
     if (!existingUser) {
       logger.warn(`Profile ${Message.NOT_FOUND}`);
@@ -794,6 +832,34 @@ export const updateStatus = async (req, res) => {
         StatusCodes.NOT_FOUND,
         `Profile ${Message.NOT_FOUND}`
       );
+    }
+
+    const userWithRole = await User.findById(userId).populate('roleId');
+    const userRole = userWithRole?.roleId?.name || userWithRole?.role || '';
+    const normalizedRole = userRole.toLowerCase();
+    const isVendorOrClient =
+      normalizedRole === Enum.VENDOR.toLowerCase() ||
+      normalizedRole === Enum.CLIENT.toLowerCase();
+
+    if (existingUser.isActive === false && isAdmin === true) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Cannot approve ${normalizedRole}. Please activate them first.`
+      );
+    }
+    let tempPassword = null;
+    const isApproving = existingUser.isActive === true;
+
+    if (isApproving && isVendorOrClient) {
+      tempPassword = generateTemporaryPassword();
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      req.body.password = hashedPassword;
+    }
+
+    if (isAdmin !== undefined) {
+      req.body.isAdmin = isAdmin;
     }
 
     const updatedUser = await updateProfileById(userId, req.body);
@@ -811,17 +877,48 @@ export const updateStatus = async (req, res) => {
     if (isVendor) {
       await updateVendorData(userId, req.body);
     }
-
-    if (existingUser.isActive === false && isActive === true) {
-      const htmlBlock = accountApprovedTemplate({
-        userName: existingUser.userName,
-      });
-      await sendingEmail({
-        email_to: [existingUser.email],
-        subject: 'Access Granted - Welcome to TalentBox',
-        description: htmlBlock,
-      });
+    if (isApproving && isAdmin === true) {
+      try {
+        if (isVendorOrClient && tempPassword) {
+          const htmlBlock = vendorApprovalWithCredentialsTemplate({
+            userName: existingUser.userName,
+            email: existingUser.email,
+            password: tempPassword,
+            role: userRole,
+          });
+          await sendingEmail({
+            email_to: [existingUser.email],
+            subject: 'Account Approved – Your TalentBox Login Credentials',
+            description: htmlBlock,
+          });
+          logger.info(
+            `Approval email with credentials sent to ${existingUser.email}`
+          );
+        } else {
+          const htmlBlock = accountApprovedTemplate({
+            userName: existingUser.userName,
+          });
+          await sendingEmail({
+            email_to: [existingUser.email],
+            subject: 'Access Granted - Welcome to TalentBox',
+            description: htmlBlock,
+          });
+        }
+      } catch (emailError) {
+        logger.error(
+          `Failed to send approval email: ${emailError.message}`,
+          emailError
+        );
+      }
     }
+
+    const finalUpdatedUser = await User.findById(userId)
+      .populate('roleId')
+      .populate('addedBy', 'userName email')
+      .select('-password');
+
+    const vendorInfo = await findVendorByUserId({ userId: existingUser._id });
+
     let message;
     if (isActive !== undefined) {
       message =
@@ -834,10 +931,30 @@ export const updateStatus = async (req, res) => {
       message = `User ${Message.UPDATED_SUCCESSFULLY}`;
     }
 
+    const responseData = {
+      userId: finalUpdatedUser._id,
+      userName: finalUpdatedUser.userName,
+      email: finalUpdatedUser.email,
+      isActive: finalUpdatedUser.isActive,
+      isDeleted: finalUpdatedUser.isDeleted,
+      isAdmin: finalUpdatedUser.isAdmin || false,
+      role: userRole,
+      addedBy: finalUpdatedUser.addedBy || null,
+      addedByRole:
+        finalUpdatedUser.addedByRole || vendorInfo?.addedByRole || null,
+      ...(isVendorOrClient && tempPassword && { emailSent: true }),
+    };
+
     logger.info(message);
-    return HandleResponse(res, true, StatusCodes.ACCEPTED, message, undefined);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.ACCEPTED,
+      message,
+      responseData
+    );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} update profile.`);
+    logger.error(`${Message.FAILED_TO} update profile.`, error);
     return HandleResponse(
       res,
       false,
@@ -1026,7 +1143,6 @@ export const importvendorCsv = async (req, res) => {
         });
       }
 
-    
       const errs = [];
 
       if (!vendor.username) errs.push('username is required');

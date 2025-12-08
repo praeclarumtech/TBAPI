@@ -11,7 +11,7 @@ export function HandleResponse(res, success, statusCode, message, data, error) {
     });
   }
 
-  return res.status(StatusCodes.OK).json({
+  return res.status(statusCode).json({
     success,
     statusCode,
     message,

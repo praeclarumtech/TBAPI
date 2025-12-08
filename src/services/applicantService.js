@@ -10,8 +10,8 @@ export const createApplicant = async (body) => {
       $or: [
         { email: body.email },
         { 'phone.phoneNumber': body.phone?.phoneNumber },
-        { 'phone.whatsappNumber': body.phone?.whatsappNumber }
-      ]
+        { 'phone.whatsappNumber': body.phone?.whatsappNumber },
+      ],
     };
     const applicant = await Applicant.findOneAndUpdate(
       query,
@@ -28,7 +28,6 @@ export const createApplicant = async (body) => {
     throw error;
   }
 };
-
 
 export const createApplicantByResume = async (body) => {
   try {
@@ -127,9 +126,74 @@ export const removeManyApplicants = async (ids) => {
 
 export const findApplicantByField = async (field, value) => {
   try {
-    return await Applicant.findOne({ [field]: value });
+    const normalizedValue = typeof value === 'string' ? value.trim() : value;
+
+    logger.info(`Finding applicant by ${field}: ${normalizedValue}`);
+
+    if (field === 'email') {
+      const escapedEmail = normalizedValue.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        '\\$&'
+      );
+      const emailRegex = new RegExp(`^${escapedEmail}$`, 'i');
+      let applicant = await Applicant.findOne({
+        email: { $regex: emailRegex },
+        isDeleted: { $ne: true },
+      });
+
+
+      if (!applicant) {
+        applicant = await Applicant.findOne({
+          email: { $regex: emailRegex },
+        });
+        if (applicant) {
+          logger.warn(
+            `Applicant found but isDeleted=${applicant.isDeleted}, isActive=${applicant.isActive}`
+          );
+        }
+      }
+
+      if (!applicant) {
+        applicant = await Applicant.findOne({
+          $expr: {
+            $eq: [{ $toLower: '$email' }, normalizedValue.toLowerCase()],
+          },
+          isDeleted: { $ne: true },
+        });
+      }
+      if (!applicant) {
+        applicant = await Applicant.findOne({
+          email: normalizedValue,
+          isDeleted: { $ne: true },
+        });
+      }
+
+      if (!applicant) {
+        const anyMatch = await Applicant.findOne({
+          email: { $regex: emailRegex },
+        });
+        if (anyMatch) {
+          logger.warn(
+            `Email exists but filtered out - isDeleted: ${anyMatch.isDeleted}, isActive: ${anyMatch.isActive}`
+          );
+        } else {
+          logger.warn(
+            `Email ${normalizedValue} does not exist in database at all`
+          );
+        }
+      }
+
+      return applicant;
+    }
+    return await Applicant.findOne({
+      [field]: normalizedValue,
+      isDeleted: { $ne: true },
+    });
   } catch (error) {
-    logger.error(`Error while finding applicant by field ${field}`, error);
+    logger.error(
+      `Error while finding applicant by field ${field}: ${error.message}`,
+      error
+    );
     throw error;
   }
 };
@@ -181,7 +245,6 @@ export const removeManyExportsApplicants = async (ids) => {
     throw error;
   }
 };
-
 
 export const AddManyApplicantsByImport = async (body) => {
   try {
@@ -280,4 +343,4 @@ export const inActivateApplicant = async (applicantId) => {
     logger.error('Error in inActivateApplicant', error);
     throw error;
   }
-}
+};

@@ -14,6 +14,9 @@ export const sidebarToPermissionMap = {
   'Vendor List': PermissionKey.VENDOR_LIST,
   'Job Listing': PermissionKey.VENDOR_JOB_LISTING,
   'Jobs Applicants': PermissionKey.VENDOR_JOB_APPLICANTS,
+  'Client List': PermissionKey.CLIENT_LIST,
+  'Client Job Listing': PermissionKey.CLIENT_JOB_LISTING,
+  'Client Jobs Applicants': PermissionKey.CLIENT_JOB_APPLICANTS,
   Email: PermissionKey.EMAIL,
   Reports: PermissionKey.REPORTS,
   'Add Skills': PermissionKey.MASTER_SKILLS,
@@ -88,5 +91,11 @@ export const getPermissionsByCategory = () => ({
     PermissionKey.MASTER_COUNTRY,
     PermissionKey.MASTER_STATE,
     PermissionKey.MASTER_CITY,
+  ],
+  clients: [
+    PermissionKey.CLIENTS,
+    PermissionKey.CLIENT_LIST,
+    PermissionKey.CLIENT_JOB_LISTING,
+    PermissionKey.CLIENT_JOB_APPLICANTS,
   ],
 });

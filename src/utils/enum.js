@@ -155,6 +155,7 @@ export const candidateTemplateType = {
   GENERAL_REJECTION: 'GENERAL_REJECTION',
   ONBOARDING_REMINDER: 'ONBOARDING_REMINDER',
   THANK_YOU_FOR_INTERVIEW: 'THANK_YOU_FOR_INTERVIEW',
+  JOB_NOTIFICATION: 'JOB_NOTIFICATION',
 };
 
 // Permission keys based on sidebar menu structure

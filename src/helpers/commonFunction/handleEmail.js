@@ -25,8 +25,8 @@ export const sendingEmail = async ({
     requireTLS: true,
     tls: {
       // minVersion: 'TLSv1.2',
-    }
-  }
+    },
+  };
 
   const transporter = nodemailer.createTransport(obj);
 
@@ -35,6 +35,8 @@ export const sendingEmail = async ({
 
   const toRecipients = Array.isArray(email_to) ? email_to.join(',') : email;
   const bccRecipients = Array.isArray(email_bcc) ? email_bcc.join(',') : '';
+
+  console.log(toRecipients);
 
   const extractBase64Content = (dataUrl) => {
     const matches = dataUrl.match(/^data:image\/\w+;base64,(.+)$/);
@@ -99,23 +101,41 @@ export const generateQrEmailHtml = async (applicantId) => {
   const qrCode = await QRCode.toDataURL(url);
 
   const htmlBlock = `
-    <div style="margin-bottom: 20px;">
-     <h2>Fill Out Your Details</h2>
-    <p>Please scan the QR code below to fill out your application form.</p>
-    <p>Or simply click it to open the form on your device.</p>
-    <a href="${url}">
-      <img src="cid:${cid}" alt="QR Code" width="150" height="150" style="cursor: pointer;" />
-    </a>
+    <div style="text-align: center; margin: 30px 0; padding: 30px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px;">
+      <h3 style="color: #2c3e50; margin: 0 0 15px 0; font-size: 20px; font-weight: 600;">
+        📱 Quick Apply with QR Code
+      </h3>
+      <p style="color: #555; font-size: 15px; margin: 0 0 20px 0; line-height: 1.6;">
+        Scan the QR code below to fill out your application form instantly.<br/>
+        Or simply click it to open the form on your device.
+      </p>
+      <div style="display: inline-block; background-color: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <a href="${url}">
+          <img src="cid:${cid}" alt="QR Code" width="200" height="200" style="cursor: pointer; display: block; border-radius: 8px;" />
+        </a>
+      </div>
+      <p style="color: #666; font-size: 13px; margin: 15px 0 0 0;">
+        Click the QR code or use the button below to apply
+      </p>
     </div>
   `;
   const htmlBlockforUpdate = `
-    <div style="margin-bottom: 20px;">
-      <h2>Edit Your Submitted Details</h2>
-    <p>Scan the QR code below to review and update your existing application information.</p>
-    <p>Or simply click it to open the form on your device.</p>
-    <a href="${url}">
-      <img src="cid:${cid}" alt="QR Code" width="150" height="150" style="cursor: pointer;" />
-    </a>
+    <div style="text-align: center; margin: 30px 0; padding: 30px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px;">
+      <h3 style="color: #2c3e50; margin: 0 0 15px 0; font-size: 20px; font-weight: 600;">
+        📱 Update Your Application
+      </h3>
+      <p style="color: #555; font-size: 15px; margin: 0 0 20px 0; line-height: 1.6;">
+        Scan the QR code below to review and update your existing application information.<br/>
+        Or simply click it to open the form on your device.
+      </p>
+      <div style="display: inline-block; background-color: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <a href="${url}">
+          <img src="cid:${cid}" alt="QR Code" width="200" height="200" style="cursor: pointer; display: block; border-radius: 8px;" />
+        </a>
+      </div>
+      <p style="color: #666; font-size: 13px; margin: 15px 0 0 0;">
+        Click the QR code or use the button below to update your application
+      </p>
     </div>
   `;
 
