@@ -1,7 +1,6 @@
 import applicantEmail from '../models/applicantEmailModel.js';
 import mongoose from 'mongoose';
 
-
 export const findAllEmails = async (query, applicantQuery, page, limit) => {
   const skip = (page - 1) * limit;
 
@@ -9,10 +8,23 @@ export const findAllEmails = async (query, applicantQuery, page, limit) => {
     { $match: query },
     { $unwind: '$email_to' },
     {
+      $addFields: {
+        email_to_lower: { $toLower: '$email_to' },
+      },
+    },
+    {
       $lookup: {
         from: 'applicants',
-        localField: 'email_to',
-        foreignField: 'email',
+        let: { emailLower: '$email_to_lower' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: [{ $toLower: '$email' }, '$$emailLower'],
+              },
+            },
+          },
+        ],
         as: 'applicantDetails',
       },
     },
@@ -30,7 +42,19 @@ export const findAllEmails = async (query, applicantQuery, page, limit) => {
         description: 1,
         attachments: 1,
         createdAt: 1,
-        'applicantDetails.name': { $ifNull: ['$applicantDetails.name', ''] },
+        'applicantDetails.name': {
+          $trim: {
+            input: {
+              $concat: [
+                { $ifNull: ['$applicantDetails.name.firstName', ''] },
+                ' ',
+                { $ifNull: ['$applicantDetails.name.middleName', ''] },
+                ' ',
+                { $ifNull: ['$applicantDetails.name.lastName', ''] },
+              ],
+            },
+          },
+        },
         'applicantDetails.appliedSkills': {
           $ifNull: ['$applicantDetails.appliedSkills', []],
         },
@@ -54,10 +78,23 @@ export const findEmailById = async (id) => {
     { $match: { _id: new mongoose.Types.ObjectId(id) } },
     { $unwind: '$email_to' },
     {
+      $addFields: {
+        email_to_lower: { $toLower: '$email_to' },
+      },
+    },
+    {
       $lookup: {
         from: 'applicants',
-        localField: 'email_to',
-        foreignField: 'email',
+        let: { emailLower: '$email_to_lower' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: [{ $toLower: '$email' }, '$$emailLower'],
+              },
+            },
+          },
+        ],
         as: 'applicantDetails',
       },
     },
@@ -75,8 +112,22 @@ export const findEmailById = async (id) => {
         description: 1,
         attachments: 1,
         createdAt: 1,
-        'applicantDetails.name': { $ifNull: ['$applicantDetails.name', ' '] },
-        'applicantDetails.appliedSkills': { $ifNull: ['$applicantDetails.appliedSkills', []] },
+        'applicantDetails.name': {
+          $trim: {
+            input: {
+              $concat: [
+                { $ifNull: ['$applicantDetails.name.firstName', ''] },
+                ' ',
+                { $ifNull: ['$applicantDetails.name.middleName', ''] },
+                ' ',
+                { $ifNull: ['$applicantDetails.name.lastName', ''] },
+              ],
+            },
+          },
+        },
+        'applicantDetails.appliedSkills': {
+          $ifNull: ['$applicantDetails.appliedSkills', []],
+        },
       },
     },
   ]);
@@ -99,18 +150,20 @@ export const createEmail = async (emailRecords) => {
   }
 };
 
-
 export const countEmailsByDate = async (start, end) => {
-  const emails = await applicantEmail.find({
-    createdAt: { $gte: start, $lte: end },
-  }, {
-    email_to: 1,
-    email_bcc: 1
-  });
+  const emails = await applicantEmail.find(
+    {
+      createdAt: { $gte: start, $lte: end },
+    },
+    {
+      email_to: 1,
+      email_bcc: 1,
+    }
+  );
 
   let total = 0;
 
-  emails.forEach(email => {
+  emails.forEach((email) => {
     total += (email.email_to?.length || 0) + (email.email_bcc?.length || 0);
   });
 

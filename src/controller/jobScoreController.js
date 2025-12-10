@@ -185,10 +185,16 @@ export const addJobApplication = async (req, res) => {
       );
     }
 
+    // Determine vendor_id and client_id based on logged-in user role
+    const userRole = req.user?.role?.toLowerCase() || '';
+    const isVendorSubmitting = userRole === Enum.VENDOR.toLowerCase();
+    const isClientSubmitting = userRole === Enum.CLIENT.toLowerCase();
+
     const applicant = new jobApplication({
       ...applicantData,
       job_id: job._id,
-      vendor_id: job.addedBy,
+      vendor_id: isVendorSubmitting ? req.user.id : null,
+      client_id: isClientSubmitting ? req.user.id : null,
       otherSkills: matchedSkills,
       appliedRole: role,
       isActive: true,
@@ -351,10 +357,13 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
           { roleId: clientRole._id },
           { _id: 1 }
         );
+        console.log('clientUsers', clientUsers);
         const clientJobIds = await jobs
           .find({ addedBy: { $in: clientUsers.map((u) => u._id) } }, { _id: 1 })
           .lean();
+        console.log('clientJobIds', clientJobIds);
         query.job_id = { $in: clientJobIds.map((job) => job._id) };
+        console.log('query', query);
       }
     }
 
@@ -398,7 +407,6 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
-
 
     logger.info(`Job applications ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(

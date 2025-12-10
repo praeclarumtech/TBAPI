@@ -131,10 +131,8 @@ const sendJobNotificationsToMatchingApplicants = async (job, jobId) => {
             const emailContent = jobNotificationTemplate({
               jobTitle: job.job_subject,
               jobSubject: job.job_subject,
-              jobType: job.job_type,
-              jobLocation: job.job_location,
-              companyName: companyName,
-              qrCodeHtml: qrCodeHtml,
+              jobId: jobId,
+              hrEmail: process.env.HR_EMAIL || 'hr@talentbox.com',
               applicationUrl: applicationUrl,
             });
 
@@ -267,11 +265,8 @@ const sendJobNotificationsToAllVendors = async (job, jobId) => {
         const emailContent = vendorJobNotificationTemplate({
           jobTitle: job.job_subject,
           jobSubject: job.job_subject,
-          jobType: job.job_type,
-          jobLocation: job.job_location,
-          companyName: vendorCompanyName,
-          clientName: clientName,
-          applicationUrl: vendorApplicationUrl,
+          jobId: jobId,
+          hrEmail: process.env.HR_EMAIL || 'hr@talentbox.com',
         });
         const emailSubject = `New Job Added: ${
           job.job_subject || 'Job Opening'
@@ -701,6 +696,49 @@ export const viewJobs = async (req, res) => {
       });
     }
 
+    // Add clientName for ADMIN role - show only CLIENT job creator's name
+    if (user?.role === Enum.ADMIN && result?.item) {
+      // Get all unique job creator IDs
+      const creatorIds = result.item
+        .map((job) => {
+          const jobObj = job.toObject ? job.toObject() : job;
+          return jobObj.addedBy;
+        })
+        .filter((id) => id);
+
+      // Fetch all job creators' details with role information
+      const creatorUsers = await User.find({
+        _id: { $in: creatorIds },
+      })
+        .populate('roleId', 'name')
+        .select('firstName lastName userName role roleId');
+
+      // Create a map of creator ID to creator info (only for clients)
+      const clientNameMap = {};
+      creatorUsers.forEach((creator) => {
+        const creatorRole = creator.roleId?.name || creator.role || '';
+        // Only add to map if creator is a CLIENT
+        if (creatorRole.toLowerCase() === Enum.CLIENT.toLowerCase()) {
+          const clientName =
+            creator.firstName && creator.lastName
+              ? `${creator.firstName} ${creator.lastName}`
+              : creator.firstName || creator.userName || 'Client';
+          clientNameMap[creator._id.toString()] = clientName;
+        }
+      });
+
+      result.item = result.item.map((job) => {
+        const jobObj = job.toObject ? job.toObject() : job;
+
+        // Add client name only if job creator is a CLIENT
+        if (jobObj.addedBy && clientNameMap[jobObj.addedBy.toString()]) {
+          jobObj.clientName = clientNameMap[jobObj.addedBy.toString()];
+        }
+
+        return jobObj;
+      });
+    }
+
     logger.info(`All jobs ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(res, true, StatusCodes.OK, undefined, result);
   } catch (error) {
@@ -727,8 +765,12 @@ export const viewJobDetails = async (req, res) => {
         `Job ${Message.NOT_FOUND}`
       );
     }
+    const response = {
+      ...(result._doc || result),
+      hrEmail: process.env.HR_EMAIL || 'hr@talentbox.com',
+    };
     logger.info(`Job ${Message.FETCH_SUCCESSFULLY}`);
-    return HandleResponse(res, true, StatusCodes.OK, undefined, result);
+    return HandleResponse(res, true, StatusCodes.OK, undefined, response);
   } catch (error) {
     logger.error(`${Message.FAILED_TO} fetch job`);
     return HandleResponse(
@@ -1008,8 +1050,10 @@ export const checkEmailForJobApplication = async (req, res) => {
 
 export const applyForJob = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, sharedBy } = req.body;
     const { jobId } = req.params;
+    // sharedBy can also be passed as query parameter
+    const sharedById = sharedBy || req.query.sharedBy;
 
     if (!email) {
       return HandleResponse(
@@ -1030,7 +1074,6 @@ export const applyForJob = async (req, res) => {
     }
 
     const job = await fetchJobService(jobId);
-    console.log(job);
     if (!job) {
       return HandleResponse(
         res,
@@ -1073,6 +1116,53 @@ export const applyForJob = async (req, res) => {
       );
     }
 
+    let vendorId = null;
+    let clientId = null;
+
+    // If sharedBy is provided, check who shared the job
+    if (sharedById && mongoose.Types.ObjectId.isValid(sharedById)) {
+      const sharedByUser = await User.findById(sharedById)
+        .populate('roleId', 'name')
+        .select('role roleId');
+
+      if (sharedByUser) {
+        const sharedByRole = (
+          sharedByUser.roleId?.name ||
+          sharedByUser.role ||
+          ''
+        ).toLowerCase();
+
+        if (sharedByRole === Enum.VENDOR.toLowerCase()) {
+          // Shared by VENDOR
+          vendorId = sharedById;
+          clientId = null;
+        } else if (sharedByRole === Enum.CLIENT.toLowerCase()) {
+          // Shared by CLIENT
+          clientId = sharedById;
+          vendorId = null;
+        }
+      }
+    } else {
+      // No sharedBy provided, fall back to job creator
+      const jobCreator = await User.findById(job.addedBy)
+        .populate('roleId', 'name')
+        .select('role roleId');
+
+      const creatorRole = (
+        jobCreator?.roleId?.name ||
+        jobCreator?.role ||
+        ''
+      ).toLowerCase();
+
+      if (creatorRole === Enum.CLIENT.toLowerCase()) {
+        clientId = job.addedBy;
+        vendorId = null;
+      } else if (creatorRole === Enum.VENDOR.toLowerCase()) {
+        vendorId = job.addedBy;
+        clientId = null;
+      }
+    }
+
     const jdText = `jobsubject: ${job.job_subject}, jobdetails: ${
       job.job_details?.replace(/<[^>]*>/g, '') || ''
     }, jobtype: ${job.job_type}, job location: ${
@@ -1105,7 +1195,8 @@ export const applyForJob = async (req, res) => {
       },
       email: applicant.email,
       job_id: job._id,
-      vendor_id: job.addedBy,
+      vendor_id: vendorId,
+      client_id: clientId,
       otherSkills: applicant.otherSkills || '',
       appliedRole: applicant.appliedRole || '',
       isActive: true,
@@ -1409,6 +1500,15 @@ export const viewApplicantsForJob = async (req, res) => {
             select: 'company_name',
           },
         },
+        {
+          path: 'client_id',
+          model: 'user',
+          select: 'firstName lastName email vendorProfileId',
+          populate: {
+            path: 'vendorProfileId',
+            select: 'company_name',
+          },
+        },
       ],
     });
 
@@ -1436,6 +1536,14 @@ export const viewApplicantsForJob = async (req, res) => {
       );
     }
 
+    // Process applications - vendor_id and client_id are now properly set
+    const processedApplications = result.item.map((application) => {
+      const appObj = application.toObject
+        ? application.toObject()
+        : application;
+      return appObj;
+    });
+
     logger.info(`Applicants for job ${jobId} ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -1450,7 +1558,7 @@ export const viewApplicantsForJob = async (req, res) => {
           job_type: job.job_type,
           job_location: job.job_location,
         },
-        applications: result.item,
+        applications: processedApplications,
         pagination: {
           totalCount: result.totalRecords,
           currentPage: result.currentPage,
@@ -1898,6 +2006,7 @@ export const sendJobEmailToRecipients = async (req, res) => {
               recipientName: vendorName,
               jobTitle: job.job_subject || 'Job Opening',
               jobSubject: job.job_subject || 'Job Opening',
+              jobId: job._id?.toString() || jobIdForUrl,
               jobType: job.job_type || '',
               jobLocation: job.job_location || '',
               jobDetails: jobDetailsText,
@@ -1905,6 +2014,8 @@ export const sendJobEmailToRecipients = async (req, res) => {
               clientName: clientName,
               customMessage: customMessage || '',
               applicationUrl: vendorApplicationUrl,
+              hrEmail: process.env.HR_EMAIL || 'hr@talentbox.com',
+              FRONT_URL: baseUrl,
               qrCodeHtml: '',
             };
             emailContent = replaceTemplatePlaceholders(
@@ -2076,11 +2187,10 @@ export const sendJobEmailToRecipients = async (req, res) => {
             emailContent = jobNotificationTemplate({
               jobTitle: job.job_subject || 'Job Opening',
               jobSubject: job.job_subject || 'Job Opening',
-              jobType: job.job_type || '',
-              jobLocation: job.job_location || '',
-              companyName: companyName || clientName || '',
-              qrCodeHtml: qrCodeHtml,
+              jobId: job._id,
+              hrEmail: process.env.HR_EMAIL || 'hr@talentbox.com',
               applicationUrl: applicationUrl,
+              frontUrl: process.env.FRONT_URL || 'https://talentbox.com',
             });
 
             emailSubject = `New Job Opportunity: ${
@@ -2110,6 +2220,7 @@ export const sendJobEmailToRecipients = async (req, res) => {
               recipientName: applicantName,
               jobTitle: job.job_subject || 'Job Opening',
               jobSubject: job.job_subject || 'Job Opening',
+              jobId: job._id?.toString() || jobIdForUrl,
               jobType: job.job_type || '',
               jobLocation: job.job_location || '',
               jobDetails: jobDetailsText,
@@ -2117,6 +2228,8 @@ export const sendJobEmailToRecipients = async (req, res) => {
               clientName: clientName,
               customMessage: customMessage || '',
               applicationUrl: applicationUrl,
+              hrEmail: process.env.HR_EMAIL || 'hr@talentbox.com',
+              FRONT_URL: baseUrl,
               qrCodeHtml: '', // No QR code
             };
             emailContent = replaceTemplatePlaceholders(
