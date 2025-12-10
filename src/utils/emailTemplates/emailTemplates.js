@@ -405,10 +405,8 @@ export const vendorApprovalWithCredentialsTemplate = ({
 export const jobNotificationTemplate = ({
   jobTitle,
   jobSubject,
-  jobType,
-  jobLocation,
-  companyName,
-  qrCodeHtml,
+  jobId,
+  hrEmail,
   applicationUrl,
 }) => `
   <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px;">
@@ -443,55 +441,45 @@ export const jobNotificationTemplate = ({
                   jobTitle || jobSubject || 'N/A'
                 }</td>
               </tr>
-              ${
-                jobType
-                  ? `<tr>
-                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Job Type:</td>
-                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${jobType}</td>
-                    </tr>`
-                  : ''
-              }
-              ${
-                jobLocation
-                  ? `<tr>
-                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Location:</td>
-                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${jobLocation}</td>
-                    </tr>`
-                  : ''
-              }
-              ${
-                companyName
-                  ? `<tr>
-                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Company:</td>
-                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${companyName}</td>
-                    </tr>`
-                  : ''
-              }
             </table>
           </div>
         </div>
 
-        <!-- QR Code Section -->
-        ${qrCodeHtml || ''}
-
-        <!-- Apply Button Section -->
+        <!-- Buttons Section -->
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${applicationUrl || '#'}" 
-             style="display: inline-block; background-color: #667eea !important; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); border: 2px solid #667eea;">
+          <a href="${process.env.FRONT_URL}master/job3/${
+  jobId || ''
+}?source=email" target="_blank"
+             style="display: inline-block; background-color: #667eea !important; color: #ffffff !important; padding: 16px 32px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); border: 2px solid #667eea; margin: 5px;">
+            <span style="color: #ffffff !important; text-decoration: none;">👁️ View Job Details</span>
+          </a>
+          <a href="${
+            applicationUrl
+              ? applicationUrl +
+                (applicationUrl.includes('?') ? '&' : '?') +
+                'source=email'
+              : '#'
+          }" target="_blank"
+             style="display: inline-block; background-color: #28a745 !important; color: #ffffff !important; padding: 16px 32px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); border: 2px solid #28a745; margin: 5px;">
             <span style="color: #ffffff !important; text-decoration: none;">🚀 Apply Now</span>
           </a>
         </div>
 
-        <!-- Info Box -->
-        <div style="background-color: #e8f4f8; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 8px;">
+        <p style="color: #666; font-size: 14px; line-height: 1.8; margin: 30px 0 0 0;">
+          If you're interested in this position, don't miss this opportunity! Click the buttons above to view complete job details and apply.
+        </p>
+
+        <!-- HR Contact Section -->
+        <div style="background-color: #e8f4f8; border-left: 4px solid #667eea; padding: 15px 20px; margin: 20px 0; border-radius: 8px;">
           <p style="color: #004085; font-size: 14px; margin: 0; line-height: 1.6;">
-            <strong>💡 Quick Apply:</strong> Scan the QR code above or click the "Apply Now" button to fill out your application form. The process is quick and easy!
+            <strong>📧 Need Help?</strong> Contact our HR team at: 
+            <a href="mailto:${
+              hrEmail || 'hr@talentbox.com'
+            }" style="color: #667eea; text-decoration: none; font-weight: 600;">${
+  hrEmail || 'hr@talentbox.com'
+}</a>
           </p>
         </div>
-
-        <p style="color: #666; font-size: 14px; line-height: 1.8; margin: 30px 0 0 0;">
-          If you're interested in this position, don't miss this opportunity! Apply now to take the next step in your career journey.
-        </p>
       </div>
 
       <!-- Footer Section -->
@@ -850,11 +838,8 @@ export const vendorApplicantStatusUpdateTemplate = ({
 export const vendorJobNotificationTemplate = ({
   jobTitle,
   jobSubject,
-  jobType,
-  jobLocation,
-  companyName,
-  clientName,
-  applicationUrl,
+  jobId,
+  hrEmail,
 }) => `
   <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px;">
     <div style="max-width: 650px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); overflow: hidden;">
@@ -872,7 +857,7 @@ export const vendorJobNotificationTemplate = ({
       <!-- Content Section -->
       <div style="padding: 40px 30px;">
         <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
-          A new job has been added that might interest you. Login to view the complete job details and share it with your network of applicants.
+          A new job has been added that might interest you. Click below to view the complete job details and share it with your network of applicants.
         </p>
 
         <!-- Job Details Card -->
@@ -888,61 +873,46 @@ export const vendorJobNotificationTemplate = ({
                   jobTitle || jobSubject || 'N/A'
                 }</td>
               </tr>
-              ${
-                jobType
-                  ? `<tr>
-                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Job Type:</td>
-                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${jobType}</td>
-                    </tr>`
-                  : ''
-              }
-              ${
-                jobLocation
-                  ? `<tr>
-                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Location:</td>
-                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${jobLocation}</td>
-                    </tr>`
-                  : ''
-              }
-              ${
-                companyName
-                  ? `<tr>
-                      <td style="padding: 12px 0; color: #555; font-size: 15px; font-weight: 600;">Company:</td>
-                      <td style="padding: 12px 0; color: #2c3e50; font-size: 15px;">${companyName}</td>
-                    </tr>`
-                  : ''
-              }
             </table>
           </div>
         </div>
 
-        <!-- Login Button Section -->
+        <!-- Buttons Section -->
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${applicationUrl || '#'}" 
-             style="display: inline-block; background-color: #667eea !important; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); border: 2px solid #667eea;">
+          <a href="${process.env.FRONT_URL}master/job3/${
+  jobId || ''
+}?source=email" target="_blank"
+             style="display: inline-block; background-color: #667eea !important; color: #ffffff !important; padding: 16px 32px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); border: 2px solid #667eea; margin: 5px;">
+            <span style="color: #ffffff !important; text-decoration: none;">👁️ View Job Details</span>
+          </a>
+          <a href="${process.env.FRONT_URL}" target="_blank"
+             style="display: inline-block; background-color: #28a745 !important; color: #ffffff !important; padding: 16px 32px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); border: 2px solid #28a745; margin: 5px;">
             <span style="color: #ffffff !important; text-decoration: none;">🔐 Login to View Job</span>
           </a>
         </div>
 
-        <!-- Info Box -->
-        <div style="background-color: #e8f4f8; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 8px;">
+        <p style="color: #666; font-size: 14px; line-height: 1.8; margin: 30px 0 0 0;">
+          This job opportunity is now available. Click the buttons above to view the full details and start connecting with potential candidates.
+        </p>
+
+        <!-- HR Contact Section -->
+        <div style="background-color: #e8f4f8; border-left: 4px solid #667eea; padding: 15px 20px; margin: 20px 0; border-radius: 8px;">
           <p style="color: #004085; font-size: 14px; margin: 0; line-height: 1.6;">
-            <strong>💡 Next Steps:</strong> Click the "Login to View Job" button above to access your dashboard and view the complete job details. You can then share this opportunity with your network of qualified applicants.
+            <strong>📧 Need Help?</strong> Contact our HR team at: 
+            <a href="mailto:${
+              hrEmail || 'hr@talentbox.com'
+            }" style="color: #667eea; text-decoration: none; font-weight: 600;">${
+  hrEmail || 'hr@talentbox.com'
+}</a>
           </p>
         </div>
-
-        <p style="color: #666; font-size: 14px; line-height: 1.8; margin: 30px 0 0 0;">
-          This job opportunity is now available in your dashboard. Login to explore the full details and start connecting with potential candidates.
-        </p>
       </div>
 
       <!-- Footer Section -->
       <div style="background-color: #f8f9fa; padding: 25px 30px; border-top: 1px solid #e9ecef;">
         <p style="margin: 0 0 10px 0; color: #555; font-size: 14px;">
           Best regards,<br/>
-          <strong style="color: #2c3e50;">${
-            clientName || 'The TalentBox Team'
-          }</strong>
+          <strong style="color: #2c3e50;">The TalentBox Team</strong>
         </p>
         <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;" />
         <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">

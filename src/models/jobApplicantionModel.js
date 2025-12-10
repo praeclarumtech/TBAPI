@@ -148,10 +148,17 @@ const jobApplicationSchema = new mongoose.Schema(
       ref: 'jobs',
       required: true,
     },
-     vendor_id: {
+    vendor_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'user',
-      required: true,
+      required: false,
+      default: null,
+    },
+    client_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+      required: false,
+      default: null,
     },
     score: { type: Number, required: true },
   },
