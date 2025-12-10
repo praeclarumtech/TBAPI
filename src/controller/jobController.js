@@ -96,10 +96,12 @@ const sendJobNotificationsToMatchingApplicants = async (job, jobId) => {
 
         const baseUrl = process.env.FRONT_URL || '';
         const jobIdForUrl = job._id || job._id?.toString();
+        // Include sharedBy parameter to track that the job creator sent this notification
+        const sharedById = job.addedBy?.toString() || '';
 
         for (const applicant of matchingApplicants) {
           try {
-            const applicationUrl = `${baseUrl}vendor/email-check-apply?jobId=${jobIdForUrl}`;
+            const applicationUrl = `${baseUrl}vendor/email-check-apply?jobId=${jobIdForUrl}&sharedBy=${sharedById}`;
             const qrCode = await QRCode.toDataURL(applicationUrl);
             const cid = `qr-job-${jobIdForUrl}@qr`;
 
@@ -1322,7 +1324,26 @@ export const viewApplicantsForVendorJobs = async (req, res) => {
         {
           path: 'job_id',
           model: 'jobs',
-          select: 'job_id job_subject job_type job_location required_skills',
+          select:
+            'job_id job_subject job_type job_location required_skills addedBy',
+          populate: {
+            path: 'addedBy',
+            model: 'user',
+            select: 'firstName lastName email vendorProfileId',
+            populate: {
+              path: 'vendorProfileId',
+              select: 'company_name',
+            },
+          },
+        },
+        {
+          path: 'client_id',
+          model: 'user',
+          select: 'firstName lastName email vendorProfileId',
+          populate: {
+            path: 'vendorProfileId',
+            select: 'company_name',
+          },
         },
       ],
     });
@@ -1698,11 +1719,61 @@ export const viewClientJobApplications = async (req, res) => {
           model: 'jobs',
           select: 'job_id job_subject job_type job_location required_skills',
         },
+        {
+          path: 'vendor_id',
+          model: 'user',
+          select: 'firstName lastName email vendorProfileId',
+          populate: {
+            path: 'vendorProfileId',
+            select: 'company_name',
+          },
+        },
+        {
+          path: 'client_id',
+          model: 'user',
+          select: 'firstName lastName email vendorProfileId',
+          populate: {
+            path: 'vendorProfileId',
+            select: 'company_name',
+          },
+        },
       ],
     });
 
+    // Format applicants with referredBy field to show who sent the email
+    const formattedApplicants = (applicantsResult?.item || []).map((app) => {
+      // Determine referredBy: vendor_id takes precedence if exists, otherwise client_id
+      let referredBy = null;
+      if (app.vendor_id) {
+        referredBy = {
+          type: 'vendor',
+          _id: app.vendor_id._id,
+          name: `${app.vendor_id.firstName || ''} ${
+            app.vendor_id.lastName || ''
+          }`.trim(),
+          email: app.vendor_id.email,
+          companyName: app.vendor_id.vendorProfileId?.company_name || null,
+        };
+      } else if (app.client_id) {
+        referredBy = {
+          type: 'client',
+          _id: app.client_id._id,
+          name: `${app.client_id.firstName || ''} ${
+            app.client_id.lastName || ''
+          }`.trim(),
+          email: app.client_id.email,
+          companyName: app.client_id.vendorProfileId?.company_name || null,
+        };
+      }
+
+      return {
+        ...(app.toObject ? app.toObject() : app),
+        referredBy,
+      };
+    });
+
     const responseData = {
-      applicants: applicantsResult?.item || [],
+      applicants: formattedApplicants,
       applicantsPagination: applicantsResult
         ? {
             totalCount: applicantsResult.totalRecords,
@@ -1909,7 +1980,8 @@ export const sendJobEmailToRecipients = async (req, res) => {
     const baseUrl = process.env.FRONT_URL || '';
     const jobIdForUrl = job._id || job._id?.toString();
     const vendorApplicationUrl = `${baseUrl}login`; // Vendors redirect to login
-    const applicantApplicationUrl = `${baseUrl}vendor/email-check-apply?jobId=${jobIdForUrl}`; // Applicants redirect to application
+    // Include sharedBy parameter to track who sent the email (vendor or client)
+    const applicantApplicationUrl = `${baseUrl}vendor/email-check-apply?jobId=${jobIdForUrl}&sharedBy=${user.id}`; // Applicants redirect to application
 
     const replaceTemplatePlaceholders = (template, replacements) => {
       let result = template;
@@ -2412,6 +2484,7 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
 
     // Fetch job details if jobId is provided (for skill matching)
     let jobRequiredSkills = [];
+    let alreadyAppliedEmails = [];
     if (jobId && mongoose.Types.ObjectId.isValid(jobId)) {
       try {
         const job = await fetchJobService(jobId);
@@ -2420,6 +2493,18 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
             skill.trim().toLowerCase()
           );
         }
+
+        // Fetch emails of applicants who have already applied for this job
+        const existingApplications = await jobApplication
+          .find({
+            job_id: new mongoose.Types.ObjectId(jobId),
+            isDeleted: false,
+          })
+          .select('email')
+          .lean();
+        alreadyAppliedEmails = existingApplications
+          .map((app) => app.email?.toLowerCase())
+          .filter(Boolean);
       } catch (jobErr) {
         logger.error(
           `Error fetching job for skill matching: ${jobErr.message}`
@@ -2488,6 +2573,17 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
           isActive: true,
           email: { $exists: true, $ne: '' },
         };
+
+        // Exclude applicants who have already applied for this job
+        if (jobId && alreadyAppliedEmails.length > 0) {
+          // Use case-insensitive regex to exclude already applied emails
+          applicantQuery.$nor = alreadyAppliedEmails.map((email) => ({
+            email: new RegExp(
+              `^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            ),
+          }));
+        }
 
         // If jobId is provided and type is 'applicant', match applicants by required skills
         if (
