@@ -30,6 +30,21 @@ router.post(
   validator.body(addVendorQrCodeValidation),
   addVendorByQrCode
 );
+// Client QR Code registration route - same as vendor but for clients
+router.post(
+  '/client-add-qr-code',
+  parseFormData,
+  validator.body(addVendorQrCodeValidation),
+  addVendorByQrCode
+);
+
+// Client edit QR Code registration route - same as vendor but for clients
+router.put(
+  '/client-edit-qr-code/:clientId',
+  parseFormData,
+  validator.body(vendorValidation),
+  updateVendorByQrCode
+);
 router.put(
   '/vendor-edit-qr-code/:vendorId',
   parseFormData,

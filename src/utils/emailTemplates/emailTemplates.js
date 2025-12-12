@@ -279,21 +279,25 @@ export const vendorRegistrationRequestTemplate = ({
   companyType,
   hireResources,
   qrCodeHtml,
-}) => `
+  role = 'Vendor',
+}) => {
+  const roleDisplay = role ? role.charAt(0).toUpperCase() + role.slice(1).toLowerCase() : 'Vendor';
+  return `
   <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
     <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 30px;">
-      <h2 style="color: #2c3e50;">New Vendor Registration – Approval Required</h2>
+      <h2 style="color: #2c3e50;">New ${roleDisplay} Registration – Approval Required</h2>
 
       <p style="color: #555; font-size: 15px;">Dear HR Team,</p>
 
       <p style="color: #555; font-size: 15px; line-height: 1.6;">
-        A new vendor has submitted their registration on the TalentBox platform. The account is currently <strong>pending approval</strong> and requires your verification to proceed.
+        A new ${roleDisplay.toLowerCase()} has submitted their registration on the TalentBox platform. The account is currently <strong>pending approval</strong> and requires your verification to proceed.
       </p>
 
       <div style="background-color: #f1f1f1; padding: 15px; border-radius: 6px; margin: 20px 0; font-size: 14px;">
-        <h3 style="color: #2c3e50; margin-top: 0;">Vendor Information:</h3>
+        <h3 style="color: #2c3e50; margin-top: 0;">${roleDisplay} Information:</h3>
         <p><strong>User Name:</strong> ${userName || 'N/A'}</p>
         <p><strong>Email:</strong> ${email || 'N/A'}</p>
+        <p><strong>Role:</strong> ${roleDisplay}</p>
         <p><strong>Company Name:</strong> ${companyName || 'N/A'}</p>
         <p><strong>Company Email:</strong> ${companyEmail || 'N/A'}</p>
         <p><strong>WhatsApp Number:</strong> ${whatsappNumber || 'N/A'}</p>
@@ -306,18 +310,18 @@ export const vendorRegistrationRequestTemplate = ({
       ${qrCodeHtml || ''}
 
       <p style="color: #555; font-size: 15px;">
-        Please review the vendor information and take appropriate action from the admin panel.
+        Please review the ${roleDisplay.toLowerCase()} information and take appropriate action from the admin panel.
       </p>
 
       <div style="text-align: center; margin: 30px 0;">
         <a href="${process.env.ADMIN_PANEL_URL || process.env.FRONT_URL}" 
            style="background-color: #007bff; color: #ffffff; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold;">
-          Review & Approve Vendor
+          Review & Approve ${roleDisplay}
         </a>
       </div>
 
       <p style="color: #555; font-size: 14px;">
-        If you believe this registration is not valid or needs clarification, please follow up as necessary with the vendor or support team.
+        If you believe this registration is not valid or needs clarification, please follow up as necessary with the ${roleDisplay.toLowerCase()} or support team.
       </p>
 
       <p style="margin-top: 30px; color: #555; font-size: 14px;">
@@ -333,6 +337,7 @@ export const vendorRegistrationRequestTemplate = ({
     </div>
   </div>
 `;
+};
 
 export const vendorApprovalWithCredentialsTemplate = ({
   userName,

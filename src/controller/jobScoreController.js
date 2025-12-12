@@ -885,6 +885,7 @@ export const addVendor = async (req, res) => {
       companyType: company_type,
       hireResources: hire_resources,
       qrCodeHtml: '', // No QR code for HR
+      role: Enum.VENDOR, // Explicitly set role as Vendor
     });
 
     const hrEmail = process.env.SMTP_USER || process.env.USER;
@@ -979,6 +980,10 @@ export const addVendorByQrCode = async (req, res) => {
       company_strength,
       company_linkedin_profile,
       company_website,
+      company_state,
+      company_city,
+      state,
+      city,
       role,
     } = req.body;
 
@@ -1144,6 +1149,8 @@ export const addVendorByQrCode = async (req, res) => {
       addedBy: addedByUserId,
       addedByRole: addedByRole,
       passwordChanged: false,
+      state: state || '',
+      city: city || '',
     });
 
     const vendorData = {
@@ -1159,6 +1166,8 @@ export const addVendorByQrCode = async (req, res) => {
       company_strength: company_strength || '',
       company_linkedin_profile: company_linkedin_profile || '',
       company_website: company_website || '',
+      company_state: company_state || '',
+      company_city: company_city || '',
       type: roleName,
       addedBy: addedByUserId || null,
       addedByRole: addedByRole || null,
@@ -1180,6 +1189,7 @@ export const addVendorByQrCode = async (req, res) => {
       companyType: company_type,
       hireResources: hire_resources,
       qrCodeHtml: '', // No QR code for HR
+      role: roleName, // Pass the role (Vendor or Client)
     });
 
     const hrEmail = process.env.SMTP_USER || process.env.USER;
@@ -1251,7 +1261,10 @@ export const addVendorByQrCode = async (req, res) => {
 
 export const updateVendorByQrCode = async (req, res) => {
   try {
-    const { vendorId } = req.params;
+    // Support both vendorId and clientId params (for vendor and client routes)
+    const { vendorId, clientId } = req.params;
+    const profileId = vendorId || clientId;
+
     const {
       whatsapp_number,
       vendor_linkedin_profile,
@@ -1264,15 +1277,20 @@ export const updateVendorByQrCode = async (req, res) => {
       company_strength,
       company_linkedin_profile,
       company_website,
+      company_state,
+      company_city,
+      state,
+      city,
     } = req.body;
 
-    const vendor = await Vendor.findById(vendorId);
+    const vendor = await Vendor.findById(profileId);
     if (!vendor) {
+      const entityType = clientId ? 'Client' : 'Vendor';
       return HandleResponse(
         res,
         false,
         StatusCodes.NOT_FOUND,
-        'Vendor not found'
+        `${entityType} not found`
       );
     }
 
@@ -1292,6 +1310,8 @@ export const updateVendorByQrCode = async (req, res) => {
       company_linkedin_profile:
         company_linkedin_profile || vendor.company_linkedin_profile,
       company_website: company_website || vendor.company_website,
+      company_state: company_state || vendor.company_state,
+      company_city: company_city || vendor.company_city,
     };
 
     Object.keys(vendorUpdateData).forEach(
@@ -1302,10 +1322,19 @@ export const updateVendorByQrCode = async (req, res) => {
     );
 
     const updatedVendor = await Vendor.findByIdAndUpdate(
-      vendorId,
+      profileId,
       { $set: vendorUpdateData },
       { new: true }
     );
+
+    // Update user's state and city if provided
+    const userUpdateData = {};
+    if (state) userUpdateData.state = state;
+    if (city) userUpdateData.city = city;
+
+    if (Object.keys(userUpdateData).length > 0) {
+      await User.findByIdAndUpdate(vendor.userId, { $set: userUpdateData });
+    }
 
     const user = await User.findById(vendor.userId).populate('roleId');
 
@@ -1313,6 +1342,10 @@ export const updateVendorByQrCode = async (req, res) => {
     const normalizedRole = userRole.toLowerCase();
     const isAdmin = normalizedRole === Enum.ADMIN.toLowerCase();
     const isGuest = !isAdmin;
+
+    // Determine role display name based on user's actual role
+    const roleDisplayName =
+      userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
 
     const emailContent = vendorRegistrationRequestTemplate({
       userName: user?.userName || 'N/A',
@@ -1323,6 +1356,7 @@ export const updateVendorByQrCode = async (req, res) => {
       companyLocation: updatedVendor.company_location,
       companyType: updatedVendor.company_type,
       hireResources: updatedVendor.hire_resources,
+      role: userRole, // Pass the actual role (Vendor or Client)
     });
 
     const hrEmail = process.env.SMTP_USER || process.env.USER;
@@ -1334,25 +1368,29 @@ export const updateVendorByQrCode = async (req, res) => {
       try {
         const emailResult = await sendingEmail({
           email_to: [hrEmail],
-          subject: 'Vendor Details Updated via QR Code',
+          subject: `${roleDisplayName} Details Updated via QR Code`,
           description: emailContent,
         });
 
         if (!emailResult || !emailResult.success) {
-          logger.warn('Failed to send email to HR, but vendor was updated');
+          logger.warn(
+            `Failed to send email to HR, but ${roleDisplayName.toLowerCase()} was updated`
+          );
         }
       } catch (emailError) {
         logger.error(`Failed to send email to HR: ${emailError.message}`);
       }
     }
 
-    logger.info(`Vendor ${vendorId} updated via QR code. HR notified.`);
+    logger.info(
+      `${roleDisplayName} ${profileId} updated via QR code. HR notified.`
+    );
 
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      'Vendor details updated successfully via QR code. HR has been notified.',
+      `${roleDisplayName} details updated successfully via QR code. HR has been notified.`,
       {
         vendorId: updatedVendor._id,
         status: 'updated',
@@ -1362,14 +1400,18 @@ export const updateVendorByQrCode = async (req, res) => {
       }
     );
   } catch (error) {
-    logger.error(`Failed to update vendor via QR code: ${error.message}`, {
-      stack: error.stack,
-    });
+    const entityType = req.params.clientId ? 'client' : 'vendor';
+    logger.error(
+      `Failed to update ${entityType} via QR code: ${error.message}`,
+      {
+        stack: error.stack,
+      }
+    );
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `Failed to update vendor via QR code: ${error.message}`
+      `Failed to update ${entityType} via QR code: ${error.message}`
     );
   }
 };
