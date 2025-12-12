@@ -76,6 +76,15 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true, // Default to true for existing users, false for users with temp passwords
     },
+    // User address fields
+    state: {
+      type: String,
+      required: false,
+    },
+    city: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 );

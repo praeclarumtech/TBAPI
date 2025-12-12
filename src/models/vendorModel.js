@@ -60,6 +60,15 @@ const vendorSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    // Company address fields
+    company_state: {
+      type: String,
+      required: false,
+    },
+    company_city: {
+      type: String,
+      required: false,
+    },
     type: {
       type: String,
       required: false,

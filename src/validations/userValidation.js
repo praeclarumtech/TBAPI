@@ -134,6 +134,11 @@ export const vendorValidation = Joi.object().keys({
   company_website: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Company website must be a valid URL',
   }),
+
+  company_state: Joi.string().optional().allow(''),
+  company_city: Joi.string().optional().allow(''),
+  state: Joi.string().optional().allow(''),
+  city: Joi.string().optional().allow(''),
 });
 
 // Validation for adding a new vendor (includes user fields)
@@ -173,10 +178,13 @@ export const addVendorQrCodeValidation = Joi.object().keys({
     }),
   firstName: Joi.string().optional().allow(''),
   lastName: Joi.string().optional().allow(''),
-  phone: Joi.string().pattern(/^\+?[0-9]{10,15}$/).required().messages({
-    'string.pattern.base':
-      'Phone number must be a valid mobile number with country code',
-  }),
+  phone: Joi.string()
+    .pattern(/^\+?[0-9]{10,15}$/)
+    .required()
+    .messages({
+      'string.pattern.base':
+        'Phone number must be a valid mobile number with country code',
+    }),
   whatsapp_number: Joi.string()
     .pattern(/^\+?[0-9]{10,15}$/)
     .optional()
@@ -235,8 +243,16 @@ export const addVendorQrCodeValidation = Joi.object().keys({
   company_website: Joi.string().uri().optional().allow('').messages({
     'string.uri': 'Company website must be a valid URL',
   }),
+  company_state: Joi.string().optional().allow(''),
+  company_city: Joi.string().optional().allow(''),
   state: Joi.string().optional().allow(''),
   city: Joi.string().optional().allow(''),
+  role: Joi.string()
+    .valid('vendor', 'client', 'Vendor', 'Client', 'VENDOR', 'CLIENT')
+    .optional()
+    .messages({
+      'any.only': 'Role must be either vendor or client',
+    }),
 });
 
 export const loginValidation = Joi.object().keys({
