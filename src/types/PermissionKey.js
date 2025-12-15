@@ -16,12 +16,14 @@ export const PermissionKey = {
   VENDOR_LIST: 'vendor_list',
   VENDOR_JOB_LISTING: 'vendor_job_listing',
   VENDOR_JOB_APPLICANTS: 'vendor_job_applicants',
+  VENDOR_APPLICATIONS_BY_ROLE: 'vendor_applications_by_role',
 
   // Clients
   CLIENTS: 'clients',
   CLIENT_LIST: 'client_list',
   CLIENT_JOB_LISTING: 'client_job_listing',
   CLIENT_JOB_APPLICANTS: 'client_job_applicants',
+  CLIENT_APPLICATIONS_BY_ROLE: 'client_applications_by_role',
 
   // Analysis
   EMAIL: 'email',
@@ -55,12 +57,14 @@ export const getPermissionsByCategory = () => ({
     PermissionKey.VENDOR_LIST,
     PermissionKey.VENDOR_JOB_LISTING,
     PermissionKey.VENDOR_JOB_APPLICANTS,
+    PermissionKey.VENDOR_APPLICATIONS_BY_ROLE,
   ],
   clients: [
     PermissionKey.CLIENTS,
     PermissionKey.CLIENT_LIST,
     PermissionKey.CLIENT_JOB_LISTING,
     PermissionKey.CLIENT_JOB_APPLICANTS,
+    PermissionKey.CLIENT_APPLICATIONS_BY_ROLE,
   ],
   analysis: [PermissionKey.EMAIL, PermissionKey.REPORTS],
   masters: [

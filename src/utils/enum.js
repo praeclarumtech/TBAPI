@@ -172,12 +172,14 @@ export const PermissionKey = {
   CLIENT_LIST: 'client_list',
   CLIENT_JOB_LISTING: 'client_job_listing',
   CLIENT_JOB_APPLICANTS: 'client_job_applicants',
+  CLIENT_APPLICATIONS_BY_ROLE: 'client_applications_by_role',
 
   // Vendors
   VENDORS: 'vendors',
   VENDOR_LIST: 'vendor_list',
   VENDOR_JOB_LISTING: 'vendor_job_listing',
   VENDOR_JOB_APPLICANTS: 'vendor_job_applicants',
+  VENDOR_APPLICATIONS_BY_ROLE: 'vendor_applications_by_role',
 
   // Analysis
   EMAIL: 'email',

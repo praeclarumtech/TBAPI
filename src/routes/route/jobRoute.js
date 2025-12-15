@@ -14,6 +14,7 @@ import {
   getVendorsAndApplicantsForEmail,
   sendJobNotificationsToApplicants,
   sendApplicantStatusEmail,
+  getJobApplicationsByRole,
 } from '../../controller/jobController.js';
 import { validator } from '../../helpers/validator.js';
 import { createJobValidation } from '../../validations/jobValidation.js';
@@ -30,6 +31,7 @@ router.get('/viewJobs', authorization, viewJobs);
 router.get('/public/viewJobs', viewJobs);
 
 router.get('/client/applications', authorization, viewClientJobApplications);
+router.get('/applications/by-role', authorization, getJobApplicationsByRole);
 router.get('/email/recipients', authorization, getVendorsAndApplicantsForEmail);
 
 router.post(

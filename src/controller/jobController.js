@@ -2473,13 +2473,14 @@ export const sendJobEmailToRecipients = async (req, res) => {
 export const getVendorsAndApplicantsForEmail = async (req, res) => {
   try {
     const user = req.user || {};
-    const { search, type, jobId } = req.query; // type: 'vendor', 'applicant', or 'all'
+    const { search, type, jobId } = req.query; // type: 'vendor', 'applicant', 'client', or 'all'
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 100;
 
     const result = {
       vendors: [],
       applicants: [],
+      clients: [],
     };
 
     // Fetch job details if jobId is provided (for skill matching)
@@ -2562,6 +2563,59 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
         }
       } catch (vendorErr) {
         logger.error(`Error fetching vendors: ${vendorErr.message}`);
+      }
+    }
+
+    // Fetch clients if type is 'client' or 'all'
+    if (type === 'client' || type === 'all') {
+      try {
+        const clientRole = await getRoleByNameService(Enum.CLIENT);
+        if (clientRole) {
+          let clientQuery = {
+            roleId: clientRole._id,
+            isDeleted: false,
+            isActive: true,
+          };
+
+          // Add search filter if provided
+          if (search && typeof search === 'string') {
+            const searchRegex = new RegExp(
+              search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+              'i'
+            );
+            clientQuery.$or = [
+              { firstName: searchRegex },
+              { lastName: searchRegex },
+              { email: searchRegex },
+              { userName: searchRegex },
+            ];
+          }
+
+          const clients = await pagination({
+            Schema: User,
+            page,
+            limit,
+            query: clientQuery,
+            sort: { createdAt: -1 },
+            populate: {
+              path: 'vendorProfileId',
+              select: 'company_name company_email',
+            },
+          });
+
+          // Format client data
+          result.clients = (clients.item || []).map((client) => ({
+            _id: client._id,
+            firstName: client.firstName,
+            lastName: client.lastName,
+            email: client.email,
+            userName: client.userName,
+            companyName: client.vendorProfileId?.company_name || '',
+            companyEmail: client.vendorProfileId?.company_email || '',
+          }));
+        }
+      } catch (clientErr) {
+        logger.error(`Error fetching clients: ${clientErr.message}`);
       }
     }
 
@@ -2665,23 +2719,23 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
     }
 
     logger.info(
-      `Vendors and applicants fetched for client ${user.id}: ${result.vendors.length} vendors, ${result.applicants.length} applicants`
+      `Recipients fetched for user ${user.id}: ${result.vendors.length} vendors, ${result.clients.length} clients, ${result.applicants.length} applicants`
     );
 
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      'Vendors and applicants fetched successfully',
+      'Recipients fetched successfully',
       result
     );
   } catch (error) {
-    logger.error(`Failed to fetch vendors and applicants: ${error.message}`);
+    logger.error(`Failed to fetch recipients: ${error.message}`);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `Failed to fetch vendors and applicants: ${error.message}`
+      `Failed to fetch recipients: ${error.message}`
     );
   }
 };
@@ -2689,6 +2743,458 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
 // Send applicant status email based on logged-in user role
 // - Client role: Send to vendor (if applicant has vendor_id) or admin (if no vendor)
 // - Vendor role: Send to applicant
+// Get job applications based on role (client/vendor) with filters
+export const getJobApplicationsByRole = async (req, res) => {
+  try {
+    const user = req.user || {};
+    const {
+      role,
+      job_id,
+      applicant_id,
+      vendor_id,
+      client_id,
+      status,
+      search,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    // Validate role parameter
+    if (!role || !['client', 'vendor'].includes(role.toLowerCase())) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Invalid role parameter. Must be "client" or "vendor"'
+      );
+    }
+
+    const normalizedRole = role.toLowerCase();
+    const query = { isDeleted: false };
+
+    // Role-based authorization
+    // Admin can see all data
+    // Client can see applications for jobs they created (using job.addedBy)
+    // Vendor can see applications where they are the vendor (vendor_id matches)
+    if (user.role === Enum.ADMIN) {
+      // Admin can see all - no additional filter needed
+    } else if (user.role === Enum.CLIENT) {
+      // Client can see applications for jobs they created
+      // First, get all job IDs created by this client
+      const clientJobs = await jobs
+        .find({ addedBy: user.id, isDeleted: false }, '_id')
+        .lean();
+      const jobIds = clientJobs.map((job) => job._id);
+
+      if (jobIds.length === 0) {
+        return HandleResponse(
+          res,
+          true,
+          StatusCodes.OK,
+          'No job applications found',
+          {
+            applications: [],
+            pagination: {
+              totalCount: 0,
+              currentPage: parseInt(page),
+              totalPages: 0,
+              limit: parseInt(limit),
+            },
+          }
+        );
+      }
+      query.job_id = { $in: jobIds };
+    } else if (user.role === Enum.VENDOR) {
+      // Vendor can see applications where they are the vendor
+      query.vendor_id = new mongoose.Types.ObjectId(user.id);
+    } else {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.FORBIDDEN,
+        'You do not have permission to access this resource'
+      );
+    }
+
+    // Apply job_id filter
+    if (job_id) {
+      if (mongoose.Types.ObjectId.isValid(job_id)) {
+        const jobObjectId = new mongoose.Types.ObjectId(job_id);
+        // For CLIENT, verify the job belongs to them
+        if (user.role === Enum.CLIENT) {
+          const job = await jobs.findOne({
+            _id: jobObjectId,
+            addedBy: user.id,
+            isDeleted: false,
+          });
+          if (!job) {
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.FORBIDDEN,
+              'You can only view applications for your own jobs'
+            );
+          }
+        }
+        query.job_id = jobObjectId;
+      } else {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          'Invalid job_id format'
+        );
+      }
+    }
+
+    // Apply applicant_id filter
+    if (applicant_id) {
+      if (mongoose.Types.ObjectId.isValid(applicant_id)) {
+        // Search by applicant's email or _id in jobApplication
+        const applicant = await Applicant.findById(applicant_id);
+        if (applicant) {
+          query.email = applicant.email;
+        } else {
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.NOT_FOUND,
+            'Applicant not found'
+          );
+        }
+      } else {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          'Invalid applicant_id format'
+        );
+      }
+    }
+
+    // Filter by vendor_id - Admin and Client can use this filter
+    // Client can filter by vendor to see which vendor submitted which applicants
+    if (vendor_id && (user.role === Enum.ADMIN || user.role === Enum.CLIENT)) {
+      if (mongoose.Types.ObjectId.isValid(vendor_id)) {
+        query.vendor_id = new mongoose.Types.ObjectId(vendor_id);
+      } else {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          'Invalid vendor_id format'
+        );
+      }
+    }
+
+    // Filter by client_id - Admin and Vendor can use this filter
+    // Vendor can filter by client to see applicants for jobs from a specific client
+    if (client_id && (user.role === Enum.ADMIN || user.role === Enum.VENDOR)) {
+      if (mongoose.Types.ObjectId.isValid(client_id)) {
+        // Get jobs created by this client and filter by those job IDs
+        const clientJobsForFilter = await jobs
+          .find({ addedBy: client_id, isDeleted: false }, '_id')
+          .lean();
+        const clientJobIds = clientJobsForFilter.map((job) => job._id);
+
+        if (clientJobIds.length === 0) {
+          return HandleResponse(
+            res,
+            true,
+            StatusCodes.OK,
+            'No job applications found for this client',
+            {
+              applications: [],
+              pagination: {
+                totalCount: 0,
+                currentPage: parseInt(page),
+                totalPages: 0,
+                limit: parseInt(limit),
+              },
+            }
+          );
+        }
+
+        // If vendor already has job_id filter from their own applications, intersect with client jobs
+        if (user.role === Enum.VENDOR) {
+          // Vendor is filtering by client - only show applications for jobs created by that client
+          // that the vendor has submitted
+          query.job_id = { $in: clientJobIds };
+        } else {
+          query.job_id = { $in: clientJobIds };
+        }
+      } else {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          'Invalid client_id format'
+        );
+      }
+    }
+
+    if (status) {
+      // Case-insensitive status filter
+      query.status = {
+        $regex: new RegExp(
+          `^${status.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+          'i'
+        ),
+      };
+    }
+
+    // Search functionality
+    if (search && typeof search === 'string') {
+      const searchRegex = new RegExp(
+        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'i'
+      );
+      query.$or = [
+        { 'name.firstName': searchRegex },
+        { 'name.lastName': searchRegex },
+        { email: searchRegex },
+      ];
+    }
+
+    // Fetch job applications with pagination
+    const result = await pagination({
+      Schema: jobApplication,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      query,
+      sort: { createdAt: -1 },
+      populate: [
+        {
+          path: 'job_id',
+          model: 'jobs',
+          select: 'job_id job_subject job_type job_location addedBy',
+          populate: {
+            path: 'addedBy',
+            model: 'user',
+            select: 'firstName lastName email role roleId vendorProfileId',
+            populate: [
+              {
+                path: 'vendorProfileId',
+                select: 'company_name',
+              },
+              {
+                path: 'roleId',
+                select: 'name',
+              },
+            ],
+          },
+        },
+        {
+          path: 'vendor_id',
+          model: 'user',
+          select: 'firstName lastName email vendorProfileId',
+          populate: {
+            path: 'vendorProfileId',
+            select: 'company_name',
+          },
+        },
+        {
+          path: 'client_id',
+          model: 'user',
+          select: 'firstName lastName email vendorProfileId',
+          populate: {
+            path: 'vendorProfileId',
+            select: 'company_name',
+          },
+        },
+      ],
+    });
+
+    if (!result || !result.item || result.item.length === 0) {
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        'No job applications found',
+        {
+          applications: [],
+          pagination: {
+            totalCount: 0,
+            currentPage: parseInt(page),
+            totalPages: 0,
+            limit: parseInt(limit),
+          },
+        }
+      );
+    }
+
+    // Format response based on role
+    let formattedApplications = [];
+
+    if (normalizedRole === 'client') {
+      // Client view: jobid, vendor, applicant name, status
+      formattedApplications = result.item.map((app) => {
+        const appObj = app.toObject ? app.toObject() : app;
+
+        // Get vendor name - first try vendor_id, then fallback to job creator if they are a vendor
+        let vendorName = null;
+        let vendorCompany = null;
+        let vendorId = null;
+
+        // Check if vendor_id is populated (has _id property meaning it's a populated object)
+        if (
+          appObj.vendor_id &&
+          typeof appObj.vendor_id === 'object' &&
+          appObj.vendor_id._id
+        ) {
+          // vendor_id is populated
+          vendorId = appObj.vendor_id._id;
+          const firstName = appObj.vendor_id.firstName || '';
+          const lastName = appObj.vendor_id.lastName || '';
+          vendorName =
+            `${firstName} ${lastName}`.trim() || appObj.vendor_id.email || null;
+          vendorCompany =
+            appObj.vendor_id.vendorProfileId?.company_name || null;
+        } else if (
+          appObj.job_id?.addedBy &&
+          typeof appObj.job_id.addedBy === 'object' &&
+          appObj.job_id.addedBy._id
+        ) {
+          // Fallback to job creator if they are a vendor
+          const jobCreator = appObj.job_id.addedBy;
+          if (jobCreator.role === Enum.VENDOR) {
+            vendorId = jobCreator._id;
+            const firstName = jobCreator.firstName || '';
+            const lastName = jobCreator.lastName || '';
+            vendorName =
+              `${firstName} ${lastName}`.trim() || jobCreator.email || null;
+            vendorCompany = jobCreator.vendorProfileId?.company_name || null;
+          }
+        }
+
+        // Get applicant name
+        const applicantName =
+          `${appObj.name?.firstName || ''} ${
+            appObj.name?.lastName || ''
+          }`.trim() || null;
+
+        return {
+          _id: appObj._id,
+          job_id: appObj.job_id?.job_id || null,
+          job_subject: appObj.job_id?.job_subject || null,
+          vendor: {
+            _id: vendorId,
+            name: vendorName,
+            company_name: vendorCompany,
+          },
+          applicant_name: applicantName,
+          applicant_email: appObj.email,
+          status: appObj.status,
+          createdAt: appObj.createdAt,
+        };
+      });
+    } else {
+      // Vendor view: jobid, applicant name, state, client name, status
+      formattedApplications = result.item.map((app) => {
+        const appObj = app.toObject ? app.toObject() : app;
+
+        // Get client name - first try job creator if they are a client, then fallback to client_id
+        let clientName = null;
+        let clientCompany = null;
+        let clientId = null;
+
+        // First check job creator - most reliable source for client info
+        if (
+          appObj.job_id?.addedBy &&
+          typeof appObj.job_id.addedBy === 'object' &&
+          appObj.job_id.addedBy._id
+        ) {
+          const jobCreator = appObj.job_id.addedBy;
+          // Check role from both role field and roleId.name
+          const creatorRole = (
+            jobCreator.roleId?.name ||
+            jobCreator.role ||
+            ''
+          ).toLowerCase();
+
+          // Check if job creator is a client
+          if (creatorRole === 'client') {
+            clientId = jobCreator._id;
+            const firstName = jobCreator.firstName || '';
+            const lastName = jobCreator.lastName || '';
+            clientName =
+              `${firstName} ${lastName}`.trim() || jobCreator.email || null;
+            clientCompany = jobCreator.vendorProfileId?.company_name || null;
+          }
+        }
+
+        // If no client found from job creator, try client_id field
+        if (
+          !clientId &&
+          appObj.client_id &&
+          typeof appObj.client_id === 'object' &&
+          appObj.client_id._id
+        ) {
+          clientId = appObj.client_id._id;
+          const firstName = appObj.client_id.firstName || '';
+          const lastName = appObj.client_id.lastName || '';
+          clientName =
+            `${firstName} ${lastName}`.trim() || appObj.client_id.email || null;
+          clientCompany =
+            appObj.client_id.vendorProfileId?.company_name || null;
+        }
+
+        // Note: If no client found, it means this is vendor's own job (no client involved)
+
+        // Get applicant name
+        const applicantName =
+          `${appObj.name?.firstName || ''} ${
+            appObj.name?.lastName || ''
+          }`.trim() || null;
+
+        return {
+          _id: appObj._id,
+          job_id: appObj.job_id?.job_id || null,
+          job_subject: appObj.job_id?.job_subject || null,
+          applicant_name: applicantName,
+          applicant_email: appObj.email,
+          state: appObj.state || null,
+          status: appObj.status,
+          client: {
+            _id: clientId,
+            name: clientName,
+            company_name: clientCompany,
+          },
+          createdAt: appObj.createdAt,
+        };
+      });
+    }
+
+    logger.info(
+      `Job applications by role (${normalizedRole}) ${Message.FETCH_SUCCESSFULLY}`
+    );
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Job applications ${Message.FETCH_SUCCESSFULLY}`,
+      {
+        role: normalizedRole,
+        applications: formattedApplications,
+        pagination: {
+          totalCount: result.totalRecords,
+          currentPage: result.currentPage,
+          totalPages: result.totalPages,
+          limit: result.limit,
+        },
+      }
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch job applications by role`, error);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch job applications by role`
+    );
+  }
+};
+
 export const sendApplicantStatusEmail = async (req, res) => {
   try {
     const user = req.user || {};

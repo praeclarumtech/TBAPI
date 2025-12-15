@@ -780,6 +780,7 @@ export const viewAllApplicant = async (req, res) => {
 
 export const viewApplicant = async (req, res) => {
   try {
+    const user = req.user || {};
     const applicantId = req.params.id;
     const applicant = await getApplicantById(applicantId);
 
@@ -792,13 +793,25 @@ export const viewApplicant = async (req, res) => {
         `Applicant ${Message.NOT_FOUND}`
       );
     }
+
+    // Convert to plain object if mongoose document
+    let applicantData = applicant.toObject
+      ? applicant.toObject()
+      : { ...applicant };
+
+    // Hide email and phone for CLIENT and VENDOR roles
+    if (user.role === Enum.CLIENT || user.role === Enum.VENDOR) {
+      delete applicantData.email;
+      delete applicantData.phone;
+    }
+
     logger.info(`Applicant ${Message.FETCH_BY_ID}: ${applicantId}`);
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
       `Applicant ${Message.FETCH_BY_ID}`,
-      applicant
+      applicantData
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} view applicant by id.`);

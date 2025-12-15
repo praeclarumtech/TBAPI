@@ -9,6 +9,7 @@ import {
   addVendor,
   addVendorByQrCode,
   updateVendorByQrCode,
+  getMatchingApplicantsForJob,
 } from '../../controller/jobScoreController.js';
 import { authorization, verifyRoles } from '../../helpers/userMiddleware.js';
 import { jobApplicationStatusValidation } from '../../validations/jobValidation.js';
@@ -70,6 +71,13 @@ router.get(
   authorization,
   verifyRoles([Enum.ADMIN, Enum.HR]),
   getVendorJobApplicantReport
+);
+
+// Get matching applicants for a job based on required skills
+router.get(
+  '/matching-applicants/:jobId',
+  authorization,
+  getMatchingApplicantsForJob
 );
 
 export default router;
