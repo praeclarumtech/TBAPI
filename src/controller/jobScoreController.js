@@ -5,6 +5,7 @@ import {
 import { StatusCodes } from 'http-status-codes';
 import mongoose from 'mongoose';
 import jobApplication from '../models/jobApplicantionModel.js';
+import Applicant from '../models/applicantModel.js';
 import logger from '../loggers/logger.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
 import { Message } from '../utils/constant/message.js';
@@ -1412,6 +1413,182 @@ export const updateVendorByQrCode = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `Failed to update ${entityType} via QR code: ${error.message}`
+    );
+  }
+};
+
+// Get matching applicants for a job based on required skills
+export const getMatchingApplicantsForJob = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { search } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Valid Job ID is required'
+      );
+    }
+
+    // Get job details with required skills and job creator info
+    const job = await jobs
+      .findById(jobId)
+      .select('required_skills job_subject addedBy')
+      .populate({
+        path: 'addedBy',
+        model: 'user',
+        select: 'firstName lastName email roleId',
+        populate: {
+          path: 'roleId',
+          model: 'Role',
+          select: 'name',
+        },
+      })
+      .lean();
+    if (!job) {
+      return HandleResponse(res, false, StatusCodes.NOT_FOUND, 'Job not found');
+    }
+
+    // Get job creator role
+    const jobAddedByRole = job.addedBy?.roleId?.name || null;
+
+    const requiredSkills = job.required_skills || [];
+    if (requiredSkills.length === 0) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Job has no required skills defined'
+      );
+    }
+
+    // Normalize job skills for matching
+    const normalizedJobSkills = requiredSkills.map((skill) =>
+      skill.trim().toLowerCase()
+    );
+
+    // Build applicant query
+    let applicantQuery = {
+      isDeleted: false,
+      isActive: true,
+      email: { $exists: true, $ne: '' },
+    };
+
+    // Match applicants whose appliedSkills contain any of the required skills
+    applicantQuery.appliedSkills = {
+      $in: normalizedJobSkills.map(
+        (skill) =>
+          new RegExp(`^${skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+      ),
+    };
+
+    // Add search filter if provided
+    if (search && typeof search === 'string') {
+      const searchRegex = new RegExp(
+        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'i'
+      );
+      applicantQuery.$and = [
+        {
+          $or: [
+            { 'name.firstName': searchRegex },
+            { 'name.lastName': searchRegex },
+            { email: searchRegex },
+            { 'phone.phoneNumber': searchRegex },
+            { appliedSkills: searchRegex },
+          ],
+        },
+      ];
+    }
+
+    // Get total count
+    const totalCount = await Applicant.countDocuments(applicantQuery);
+
+    // Fetch matching applicants
+    const applicants = await Applicant.find(applicantQuery)
+      .select(
+        'name email phone appliedSkills otherSkills currentCompanyName currentCompanyDesignation totalExperience currentCity state workPreference noticePeriod preferredLocations resumeUrl status interviewStage'
+      )
+      .skip(skip)
+      .limit(limit)
+      .sort({ totalExperience: -1, createdAt: -1 })
+      .lean();
+
+    // Calculate skill match for each applicant
+    const enrichedApplicants = applicants.map((applicant) => {
+      const applicantSkills = (applicant.appliedSkills || []).map((s) =>
+        s.toLowerCase().trim()
+      );
+      const matchingSkills = applicantSkills.filter((skill) =>
+        normalizedJobSkills.some(
+          (reqSkill) =>
+            reqSkill === skill ||
+            reqSkill.includes(skill) ||
+            skill.includes(reqSkill)
+        )
+      );
+      const matchingCount = matchingSkills.length;
+      const matchPercentage =
+        normalizedJobSkills.length > 0
+          ? Math.round((matchingCount / normalizedJobSkills.length) * 100)
+          : 0;
+
+      return {
+        ...applicant,
+        skillsMatch: {
+          matchingSkills: matchingSkills,
+          matchingCount: matchingCount,
+          totalRequired: normalizedJobSkills.length,
+          matchPercentage: matchPercentage,
+        },
+      };
+    });
+
+    // Sort by match percentage (highest first)
+    enrichedApplicants.sort(
+      (a, b) => b.skillsMatch.matchPercentage - a.skillsMatch.matchPercentage
+    );
+
+    logger.info(`Matching applicants for job ${jobId} fetched successfully`);
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      `Matching applicants ${Message.FETCH_SUCCESSFULLY}`,
+      {
+        job: {
+          _id: job._id,
+          job_subject: job.job_subject,
+          required_skills: requiredSkills,
+          addedBy: {
+            _id: job.addedBy?._id,
+            firstName: job.addedBy?.firstName,
+            lastName: job.addedBy?.lastName,
+            email: job.addedBy?.email,
+            role: jobAddedByRole,
+          },
+        },
+        applicants: enrichedApplicants,
+        pagination: {
+          totalCount,
+          currentPage: page,
+          totalPages: Math.ceil(totalCount / limit),
+          limit,
+        },
+      }
+    );
+  } catch (error) {
+    logger.error(`Failed to fetch matching applicants: ${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to fetch matching applicants: ${error.message}`
     );
   }
 };
