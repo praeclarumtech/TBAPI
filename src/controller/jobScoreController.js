@@ -1512,12 +1512,33 @@ export const getMatchingApplicantsForJob = async (req, res) => {
     // Fetch matching applicants
     const applicants = await Applicant.find(applicantQuery)
       .select(
-        'name email phone appliedSkills otherSkills currentCompanyName currentCompanyDesignation totalExperience currentCity state workPreference noticePeriod preferredLocations resumeUrl status interviewStage'
+        'name email phone appliedSkills otherSkills currentCompanyName currentCompanyDesignation totalExperience currentCity state workPreference noticePeriod preferredLocations resumeUrl'
       )
       .skip(skip)
       .limit(limit)
       .sort({ totalExperience: -1, createdAt: -1 })
       .lean();
+
+    // Get applicant emails to check existing job applications
+    const applicantEmails = applicants.map((a) => a.email);
+
+    // Check which applicants have already applied to this job
+    const existingApplications = await jobApplication
+      .find({
+        job_id: jobId,
+        email: { $in: applicantEmails },
+        isDeleted: false,
+      })
+      .select('email status interviewStage')
+      .lean();
+
+    // Create a map for quick lookup of existing applications
+    const applicationMap = new Map(
+      existingApplications.map((app) => [
+        app.email,
+        { status: app.status, interviewStage: app.interviewStage },
+      ])
+    );
 
     // Calculate skill match for each applicant
     const enrichedApplicants = applicants.map((applicant) => {
@@ -1538,6 +1559,10 @@ export const getMatchingApplicantsForJob = async (req, res) => {
           ? Math.round((matchingCount / normalizedJobSkills.length) * 100)
           : 0;
 
+      // Check if applicant has already applied to this job
+      const existingApplication = applicationMap.get(applicant.email);
+      const hasAppliedToJob = !!existingApplication;
+
       return {
         ...applicant,
         skillsMatch: {
@@ -1545,6 +1570,11 @@ export const getMatchingApplicantsForJob = async (req, res) => {
           matchingCount: matchingCount,
           totalRequired: normalizedJobSkills.length,
           matchPercentage: matchPercentage,
+        },
+        jobApplicationStatus: {
+          hasApplied: hasAppliedToJob,
+          status: existingApplication?.status || null,
+          interviewStage: existingApplication?.interviewStage || null,
         },
       };
     });
