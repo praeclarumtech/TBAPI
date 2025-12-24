@@ -16,6 +16,7 @@ import duplicateRecordRouter from './route/duplicateRecordRoute.js';
 import jobsRouter from './route/jobRoute.js';
 import vendorRoute from './route/vendorRoute.js';
 import qrCodeRoute from './route/qrCodeRoute.js';
+import settingsRoute from './route/settingsRoute.js';
 // import { runSampleCronTask } from '../helpers/cron.js';
 
 const router = express.Router();
@@ -39,4 +40,5 @@ router.use('/', countryRouter);
 router.use('/email/template', applicantEmailTempletRouter);
 router.use('/designation', designationRouter);
 router.use('/applicants', duplicateRecordRouter);
+router.use('/settings', settingsRoute);
 export default router;

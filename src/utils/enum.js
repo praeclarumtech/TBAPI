@@ -155,7 +155,10 @@ export const candidateTemplateType = {
   GENERAL_REJECTION: 'GENERAL_REJECTION',
   ONBOARDING_REMINDER: 'ONBOARDING_REMINDER',
   THANK_YOU_FOR_INTERVIEW: 'THANK_YOU_FOR_INTERVIEW',
+  QR_CODE_VENDOR_INVITE: 'QR_CODE_VENDOR_INVITE',
+  QR_CODE_CLIENT_INVITE: 'QR_CODE_CLIENT_INVITE',
   JOB_NOTIFICATION: 'JOB_NOTIFICATION',
+  JOB_APPLICATION_STATUS: 'JOB_APPLICATION_STATUS',
 };
 
 // Permission keys based on sidebar menu structure
@@ -196,4 +199,7 @@ export const PermissionKey = {
   MASTER_COUNTRY: 'master_country',
   MASTER_STATE: 'master_state',
   MASTER_CITY: 'master_city',
+
+  // Settings
+  SETTINGS: 'settings',
 };

@@ -30,6 +30,7 @@ export const sidebarToPermissionMap = {
   'Add Country': PermissionKey.MASTER_COUNTRY,
   'Add State': PermissionKey.MASTER_STATE,
   'Add City': PermissionKey.MASTER_CITY,
+  Settings: PermissionKey.SETTINGS,
 };
 
 /**
@@ -102,4 +103,5 @@ export const getPermissionsByCategory = () => ({
     PermissionKey.CLIENT_JOB_APPLICANTS,
     PermissionKey.CLIENT_APPLICATIONS_BY_ROLE,
   ],
+  settings: [PermissionKey.SETTINGS],
 });

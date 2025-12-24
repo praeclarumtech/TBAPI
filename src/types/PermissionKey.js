@@ -39,6 +39,9 @@ export const PermissionKey = {
   MASTER_COUNTRY: 'master_country',
   MASTER_STATE: 'master_state',
   MASTER_CITY: 'master_city',
+
+  // Settings
+  SETTINGS: 'settings',
 };
 
 // Helper function to get all permission keys
@@ -78,4 +81,5 @@ export const getPermissionsByCategory = () => ({
     PermissionKey.MASTER_STATE,
     PermissionKey.MASTER_CITY,
   ],
+  settings: [PermissionKey.SETTINGS],
 });
