@@ -53,6 +53,7 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.REMOTE,
         applicantEnum.HYBRID,
         applicantEnum.ONSITE,
+        applicantEnum.FREELANCER_WORK,
         '',
       ],
       required: false,

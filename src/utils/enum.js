@@ -63,6 +63,7 @@ export const applicantEnum = {
   REMOTE: 'remote',
   HYBRID: 'hybrid',
   ONSITE: 'onsite',
+  FREELANCER_WORK: 'freelancer',
   ONLINE: 'online',
   OFFLINE: 'offline',
 
