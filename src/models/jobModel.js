@@ -43,6 +43,7 @@ const jobSchema = new mongoose.Schema(
         applicantEnum.REMOTE,
         applicantEnum.HYBRID,
         applicantEnum.ONSITE,
+        applicantEnum.FREELANCER_WORK,
         '',
       ],
     },

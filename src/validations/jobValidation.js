@@ -75,10 +75,10 @@ export const createJobValidation = Joi.object().keys({
     'number.base': 'Min Experience must be a number',
   }),
   work_preference: Joi.string()
-    .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, '')
+    .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, applicantEnum.FREELANCER_WORK, '')
     .optional()
     .messages({
-      'any.only': `Work Preference must be ${applicantEnum.REMOTE}, ${applicantEnum.HYBRID}, ${applicantEnum.ONSITE}, or empty.`,
+      'any.only': `Work Preference must be ${applicantEnum.REMOTE}, ${applicantEnum.HYBRID}, ${applicantEnum.ONSITE}, ${applicantEnum.FREELANCER_WORK}, or empty.`,
     }),
   required_skills: Joi.array().items(Joi.string()).optional().messages({
     'array.base': 'Required Skills must be an array of strings',

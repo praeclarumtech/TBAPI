@@ -50,6 +50,7 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
         applicantEnum.REMOTE,
         applicantEnum.HYBRID,
         applicantEnum.ONSITE,
+        applicantEnum.FREELANCER_WORK,
         '',
       ],
       required: false,
@@ -66,7 +67,7 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
         applicantEnum.REJECTED,
         applicantEnum.ON_HOLD,
         applicantEnum.ONBOARDED,
-        applicantEnum.LEAVED
+        applicantEnum.LEAVED,
       ],
       default: applicantEnum.APPLIED,
       required: false,
@@ -127,7 +128,12 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
     },
     addedBy: {
       type: String,
-      enum: [applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, applicantEnum.GUEST],
+      enum: [
+        applicantEnum.MANUAL,
+        applicantEnum.CSV,
+        applicantEnum.RESUME,
+        applicantEnum.GUEST,
+      ],
       required: true,
     },
     meta: {

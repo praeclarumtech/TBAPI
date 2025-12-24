@@ -141,7 +141,6 @@ export const findApplicantByField = async (field, value) => {
         isDeleted: { $ne: true },
       });
 
-
       if (!applicant) {
         applicant = await Applicant.findOne({
           email: { $regex: emailRegex },

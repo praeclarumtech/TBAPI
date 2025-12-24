@@ -110,10 +110,10 @@ export const applicantValidation = Joi.object({
   negotiation: Joi.string().allow(null, ''),
 
   workPreference: Joi.string()
-    .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, '')
+    .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, applicantEnum.FREELANCER_WORK, '')
     .allow(null, '')
     .messages({
-      'any.only': 'Work Preference must be remote, hybrid, or onsite.',
+      'any.only': 'Work Preference must be remote, hybrid, onsite, or freelancer.',
       'any.required': 'Work Preference is required.',
     }),
 
@@ -275,10 +275,10 @@ export const updateApplicantValidation = Joi.object({
   negotiation: Joi.string().allow(''),
 
   workPreference: Joi.string()
-    .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, '')
+    .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, applicantEnum.FREELANCER_WORK, '')
     .allow(null, '')
     .messages({
-      'any.only': 'Work Preference must be remote, hybrid, or onsite.',
+      'any.only': 'Work Preference must be remote, hybrid, onsite, or freelancer.',
     }),
 
   currentCompanyDesignation: Joi.string().allow(null, '').messages({
