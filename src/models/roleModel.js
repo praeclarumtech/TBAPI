@@ -7,7 +7,8 @@ const roleSchema = new mongoose.Schema(
       required: true,
       unique: true, 
       trim: true,
-      enum: ['admin', 'hr', 'vendor', 'client', 'guest']
+      lowercase: true, // Normalize role names to lowercase
+      // Removed enum constraint to allow custom role names
     },
     accessModules: {
       type: [String],

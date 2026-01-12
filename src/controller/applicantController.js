@@ -48,10 +48,12 @@ import {
 } from '../helpers/importResume.js';
 import ExportsApplicants from '../models/exportsApplicantsModel.js';
 import UserFilter from '../models/userFilter.js';
+import jobApplication from '../models/jobApplicantionModel.js';
 import { extractMatchingRoleFromResume } from '../services/applicantService.js';
 import { extractSkillsFromResume } from '../services/applicantService.js';
 import { buildApplicantQuery } from '../helpers/commonFunction/filterQuery.js';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
+import states from '../models/stateModel.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
@@ -386,21 +388,34 @@ export const addApplicant = async (req, res) => {
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} add aplicant.`, error);
-    if (error.code === 11000) {
-      const duplicateField = Object.keys(error.keyValue)[0];
-      const duplicateValue = Object.values(error.keyValue)[0];
+    if (error.code === 'DUPLICATE_PHONE') {
       return HandleResponse(
         res,
         false,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        `${duplicateField} ${duplicateValue} is already in use please use a different number.`
+        StatusCodes.CONFLICT,
+        'Phone number is already in use'
+      );
+    } else if (error.code === 'DUPLICATE_WHATSAPP') {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        'WhatsApp number is already in use'
+      );
+    } else if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyValue)[0];
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        `${duplicateField} is already in use`
       );
     } else {
       return HandleResponse(
         res,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `${Message.FAILED_TO} add aplicant.${error}`
+        `${Message.FAILED_TO} add applicant`
       );
     }
   }
@@ -675,7 +690,11 @@ export const viewAllApplicant = async (req, res) => {
     }
 
     if (state && typeof state === 'string') {
-      query.state = { $regex: new RegExp(state, 'i') };
+      // Look up state name from state ID
+      const stateDoc = await states.findById(state).lean();
+      if (stateDoc && stateDoc.state_name) {
+        query.state = { $regex: new RegExp(`^${stateDoc.state_name}$`, 'i') };
+      }
     }
 
     if (workPreference && typeof workPreference === 'string') {
@@ -980,7 +999,11 @@ export const getResumeAndCsvApplicants = async (req, res) => {
     }
 
     if (state && typeof state === 'string') {
-      query.state = { $regex: new RegExp(state, 'i') };
+      // Look up state name from state ID
+      const stateDoc = await states.findById(state).lean();
+      if (stateDoc && stateDoc.state_name) {
+        query.state = { $regex: new RegExp(`^${stateDoc.state_name}$`, 'i') };
+      }
     }
 
     if (workPreference && typeof workPreference === 'string') {
@@ -1116,6 +1139,51 @@ export const updateApplicant = async (req, res) => {
         StatusCodes.NOT_FOUND,
         `Applicant ${Message.NOT_FOUND}`
       );
+    }
+
+    // Sync updated applicant data to all job applications
+    const applicantEmail = body.email || existingApplicant.email;
+    if (applicantEmail) {
+      const jobApplicationUpdateData = {};
+
+      if (body.name) jobApplicationUpdateData.name = body.name;
+      if (body.phone) jobApplicationUpdateData.phone = body.phone;
+      if (body.email) jobApplicationUpdateData.email = body.email;
+      if (body.appliedSkills)
+        jobApplicationUpdateData.appliedSkills = body.appliedSkills;
+      if (body.otherSkills)
+        jobApplicationUpdateData.otherSkills = body.otherSkills;
+      if (body.appliedRole)
+        jobApplicationUpdateData.appliedRole = body.appliedRole;
+      if (body.totalExperience !== undefined)
+        jobApplicationUpdateData.totalExperience = body.totalExperience;
+      if (body.currentPkg !== undefined)
+        jobApplicationUpdateData.currentPkg = body.currentPkg;
+      if (body.expectedPkg !== undefined)
+        jobApplicationUpdateData.expectedPkg = body.expectedPkg;
+      if (body.noticePeriod !== undefined)
+        jobApplicationUpdateData.noticePeriod = body.noticePeriod;
+      if (body.workPreference)
+        jobApplicationUpdateData.workPreference = body.workPreference;
+      if (body.resumeUrl) jobApplicationUpdateData.resumeUrl = body.resumeUrl;
+      if (body.currentCity)
+        jobApplicationUpdateData.currentCity = body.currentCity;
+      if (body.state) jobApplicationUpdateData.state = body.state;
+      if (body.currentCompanyName)
+        jobApplicationUpdateData.currentCompanyName = body.currentCompanyName;
+      if (body.currentCompanyDesignation)
+        jobApplicationUpdateData.currentCompanyDesignation =
+          body.currentCompanyDesignation;
+
+      if (Object.keys(jobApplicationUpdateData).length > 0) {
+        await jobApplication.updateMany(
+          { email: existingApplicant.email },
+          { $set: jobApplicationUpdateData }
+        );
+        logger.info(
+          `Synced applicant updates to job applications for email: ${existingApplicant.email}`
+        );
+      }
     }
 
     const resumeFile = req.files || [];
@@ -1397,7 +1465,7 @@ export const exportApplicantCsv = async (req, res) => {
                 return HandleResponse(
                   res,
                   true,
-                  StatusCodes.GONE,
+                  StatusCodes.OK,
                   Message.MOVED_SUCCESSFULLY
                 );
               }
@@ -1425,7 +1493,7 @@ export const exportApplicantCsv = async (req, res) => {
           return HandleResponse(
             res,
             true,
-            StatusCodes.GONE,
+            StatusCodes.OK,
             `${applicants.length} records moved successfully`
           );
         }
@@ -1530,7 +1598,7 @@ export const exportApplicantCsv = async (req, res) => {
                 return HandleResponse(
                   res,
                   true,
-                  StatusCodes.GONE,
+                  StatusCodes.OK,
                   Message.MOVED_SUCCESSFULLY
                 );
               }
@@ -1574,7 +1642,7 @@ export const exportApplicantCsv = async (req, res) => {
             return HandleResponse(
               res,
               true,
-              StatusCodes.GONE,
+              StatusCodes.OK,
               Message.MOVED_SUCCESSFULLY
             );
           } else if (flag === false) {
@@ -1690,8 +1758,8 @@ export const exportApplicantCsv = async (req, res) => {
               return HandleResponse(
                 res,
                 true,
-                StatusCodes.GONE,
-                'Records sucessfully to move applicants'
+                StatusCodes.OK,
+                'Records moved successfully'
               );
             }
           }
@@ -1763,7 +1831,16 @@ export const exportApplicantCsv = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
     return res.status(200).send(csvData);
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} export file`);
+    logger.error(`${Message.FAILED_TO} export file: ${error.message}`, error);
+
+    if (error.message === 'Non-admin users cannot export applicants') {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.FORBIDDEN,
+        'Only admin users can export applicants'
+      );
+    }
 
     if (error.code === 11000) {
       const duplicateField =
@@ -1778,15 +1855,37 @@ export const exportApplicantCsv = async (req, res) => {
       return HandleResponse(
         res,
         false,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        `${duplicateField} ${duplicateValue} is already in use, please use a different value.`
+        StatusCodes.CONFLICT,
+        `Duplicate entry: ${duplicateField} "${duplicateValue}" already exists`
       );
     }
+
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(
+        (err) => err.message
+      );
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Validation failed: ${validationErrors.join(', ')}`
+      );
+    }
+
+    if (error.name === 'CastError') {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        `Invalid ${error.path}: ${error.value}`
+      );
+    }
+
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      `${Message.FAILED_TO} export file`
+      `Failed to export: ${error.message || 'Unknown error occurred'}`
     );
   }
 };

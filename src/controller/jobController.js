@@ -509,54 +509,63 @@ export const viewJobs = async (req, res) => {
     const query = { isDeleted: false };
 
     const user = req.user || {};
+    const userRole = user?.role?.toLowerCase(); // Normalize role to lowercase
 
-    if (posted_by_role) {
+    // Client can ONLY see their own jobs - no other filters apply
+    if (userRole === Enum.CLIENT) {
+      query.addedBy = new mongoose.Types.ObjectId(user.id);
+    } else if (userRole === Enum.VENDOR) {
+      const vendorId = new mongoose.Types.ObjectId(user.id);
+      query.$or = [{ addedBy: vendorId }, { emailedVendors: vendorId }];
+    } else if (posted_by_role && userRole === Enum.ADMIN) {
+      // Only admin can filter by posted_by_role (case-insensitive)
+      const normalizedRole = posted_by_role.toLowerCase();
       const usersWithRole = await User.find(
-        { role: posted_by_role },
+        { role: { $regex: new RegExp(`^${normalizedRole}$`, 'i') } },
         '_id'
       ).lean();
 
       const userIds = usersWithRole.map((u) => u._id);
       query.addedBy = { $in: userIds };
-    } else if (user?.role === Enum.VENDOR) {
-      const vendorId = new mongoose.Types.ObjectId(user.id);
-      query.$or = [{ addedBy: vendorId }, { emailedVendors: vendorId }];
-    } else if (user?.role === Enum.CLIENT) {
-      query.addedBy = user.id;
     }
 
-    if (filterBy === Enum.VENDOR) {
-      const vendorRole = await getRoleByNameService(Enum.VENDOR);
-      const vendorUsers = await getAllusers(
-        { roleId: vendorRole._id },
-        { _id: 1 }
-      );
-      const vendorIds = vendorUsers.map((v) => v._id);
+    // filterBy only applies to admin and vendor users, not clients
+    if (filterBy && userRole !== Enum.CLIENT) {
+      const normalizedFilterBy = filterBy.toLowerCase();
+      if (normalizedFilterBy === Enum.VENDOR) {
+        const vendorRole = await getRoleByNameService(Enum.VENDOR);
+        const vendorUsers = await getAllusers(
+          { roleId: vendorRole._id },
+          { _id: 1 }
+        );
+        const vendorIds = vendorUsers.map((v) => v._id);
 
-      if (user?.role === Enum.VENDOR && query.$or) {
-      } else {
-        query.addedBy = { $in: vendorIds };
-      }
-    } else if (filterBy === Enum.CLIENT) {
-      const clientRole = await getRoleByNameService(Enum.CLIENT);
-      const clientUsers = await getAllusers(
-        { roleId: clientRole._id },
-        { _id: 1 }
-      );
-      const clientIds = clientUsers.map((v) => v._id);
+        if (userRole === Enum.VENDOR && query.$or) {
+          // Keep vendor's own filter
+        } else {
+          query.addedBy = { $in: vendorIds };
+        }
+      } else if (normalizedFilterBy === Enum.CLIENT) {
+        const clientRole = await getRoleByNameService(Enum.CLIENT);
+        const clientUsers = await getAllusers(
+          { roleId: clientRole._id },
+          { _id: 1 }
+        );
+        const clientIds = clientUsers.map((v) => v._id);
 
-      if (user?.role === Enum.VENDOR && query.$or) {
-        const vendorId = new mongoose.Types.ObjectId(user.id);
-        query.$or = [
-          {
-            $and: [
-              { addedBy: { $in: clientIds } },
-              { emailedVendors: vendorId },
-            ],
-          },
-        ];
-      } else {
-        query.addedBy = { $in: clientIds };
+        if (userRole === Enum.VENDOR && query.$or) {
+          const vendorId = new mongoose.Types.ObjectId(user.id);
+          query.$or = [
+            {
+              $and: [
+                { addedBy: { $in: clientIds } },
+                { emailedVendors: vendorId },
+              ],
+            },
+          ];
+        } else {
+          query.addedBy = { $in: clientIds };
+        }
       }
     }
 
@@ -565,7 +574,7 @@ export const viewJobs = async (req, res) => {
       const flexiblePattern = cleanSearch.split('').join('[-_\\s]*');
       const regex = new RegExp(flexiblePattern, 'i');
 
-      if (user?.role === Enum.VENDOR && query.$or) {
+      if (userRole === Enum.VENDOR && query.$or) {
         query.$and = [
           {
             $or: query.$or,
@@ -650,7 +659,7 @@ export const viewJobs = async (req, res) => {
       );
     }
 
-    if (user?.role === Enum.VENDOR && result?.item) {
+    if (userRole === Enum.VENDOR && result?.item) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
 
       // Get all unique client IDs for client jobs
@@ -699,7 +708,7 @@ export const viewJobs = async (req, res) => {
     }
 
     // Add clientName for ADMIN role - show only CLIENT job creator's name
-    if (user?.role === Enum.ADMIN && result?.item) {
+    if (userRole === Enum.ADMIN && result?.item) {
       // Get all unique job creator IDs
       const creatorIds = result.item
         .map((job) => {
@@ -1392,6 +1401,7 @@ export const viewApplicantsForVendorJobs = async (req, res) => {
 export const viewApplicantsForJob = async (req, res) => {
   try {
     const user = req.user || {};
+    const userRole = user?.role?.toLowerCase(); // Normalize role to lowercase
     const { jobId } = req.params;
     const {
       page = 1,
@@ -1432,7 +1442,7 @@ export const viewApplicantsForJob = async (req, res) => {
       );
     }
 
-    if (user.role === Enum.VENDOR) {
+    if (userRole === Enum.VENDOR) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
       const ownsJob = job.addedBy.toString() === user.id;
       const wasEmailed = job.emailedVendors?.some(
@@ -1446,7 +1456,7 @@ export const viewApplicantsForJob = async (req, res) => {
           'You can only view applicants for your own jobs or client jobs you were emailed about'
         );
       }
-    } else if (user.role === Enum.CLIENT) {
+    } else if (userRole === Enum.CLIENT) {
       if (job.addedBy.toString() !== user.id) {
         return HandleResponse(
           res,
@@ -2747,6 +2757,7 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
 export const getJobApplicationsByRole = async (req, res) => {
   try {
     const user = req.user || {};
+    const userRole = user?.role?.toLowerCase(); // Normalize user role to lowercase
     const {
       role,
       job_id,
@@ -2776,9 +2787,9 @@ export const getJobApplicationsByRole = async (req, res) => {
     // Admin can see all data
     // Client can see applications for jobs they created (using job.addedBy)
     // Vendor can see applications where they are the vendor (vendor_id matches)
-    if (user.role === Enum.ADMIN) {
+    if (userRole === Enum.ADMIN) {
       // Admin can see all - no additional filter needed
-    } else if (user.role === Enum.CLIENT) {
+    } else if (userRole === Enum.CLIENT) {
       // Client can see applications for jobs they created
       // First, get all job IDs created by this client
       const clientJobs = await jobs
@@ -2804,7 +2815,7 @@ export const getJobApplicationsByRole = async (req, res) => {
         );
       }
       query.job_id = { $in: jobIds };
-    } else if (user.role === Enum.VENDOR) {
+    } else if (userRole === Enum.VENDOR) {
       // Vendor can see applications where they are the vendor
       query.vendor_id = new mongoose.Types.ObjectId(user.id);
     } else {
@@ -2821,7 +2832,7 @@ export const getJobApplicationsByRole = async (req, res) => {
       if (mongoose.Types.ObjectId.isValid(job_id)) {
         const jobObjectId = new mongoose.Types.ObjectId(job_id);
         // For CLIENT, verify the job belongs to them
-        if (user.role === Enum.CLIENT) {
+        if (userRole === Enum.CLIENT) {
           const job = await jobs.findOne({
             _id: jobObjectId,
             addedBy: user.id,
@@ -2874,7 +2885,7 @@ export const getJobApplicationsByRole = async (req, res) => {
 
     // Filter by vendor_id - Admin and Client can use this filter
     // Client can filter by vendor to see which vendor submitted which applicants
-    if (vendor_id && (user.role === Enum.ADMIN || user.role === Enum.CLIENT)) {
+    if (vendor_id && (userRole === Enum.ADMIN || userRole === Enum.CLIENT)) {
       if (mongoose.Types.ObjectId.isValid(vendor_id)) {
         query.vendor_id = new mongoose.Types.ObjectId(vendor_id);
       } else {
@@ -2889,7 +2900,7 @@ export const getJobApplicationsByRole = async (req, res) => {
 
     // Filter by client_id - Admin and Vendor can use this filter
     // Vendor can filter by client to see applicants for jobs from a specific client
-    if (client_id && (user.role === Enum.ADMIN || user.role === Enum.VENDOR)) {
+    if (client_id && (userRole === Enum.ADMIN || userRole === Enum.VENDOR)) {
       if (mongoose.Types.ObjectId.isValid(client_id)) {
         // Get jobs created by this client and filter by those job IDs
         const clientJobsForFilter = await jobs
@@ -2916,7 +2927,7 @@ export const getJobApplicationsByRole = async (req, res) => {
         }
 
         // If vendor already has job_id filter from their own applications, intersect with client jobs
-        if (user.role === Enum.VENDOR) {
+        if (userRole === Enum.VENDOR) {
           // Vendor is filtering by client - only show applications for jobs created by that client
           // that the vendor has submitted
           query.job_id = { $in: clientJobIds };

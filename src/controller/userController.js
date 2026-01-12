@@ -997,26 +997,57 @@ export const importvendorCsv = async (req, res) => {
     const ext = path.extname(req.file.originalname).toLowerCase();
     let rows = [];
 
+    // Helper function to remove BOM and clean header strings
+    const cleanHeader = (str) => {
+      if (!str) return '';
+      // Remove BOM (Byte Order Mark) and other invisible characters
+      return str
+        .replace(/^\uFEFF/, '')
+        .replace(/^\ufeff/, '')
+        .trim();
+    };
+
     // ✅ Parse CSV
     if (ext === '.csv') {
       rows = await new Promise((resolve, reject) => {
         let headers = [];
         const data = [];
+        let isFirstRow = true;
 
-        fs.createReadStream(req.file.path)
+        fs.createReadStream(req.file.path, { encoding: 'utf8' })
           .pipe(csvParser({ headers: false, skipEmptyLines: true }))
           .on('data', (row) => {
-            if (!headers.length) {
-              headers = Object.values(row).map((h) => h.trim());
+            const values = Object.values(row);
+            if (isFirstRow) {
+              // First row contains headers - clean them properly
+              headers = values.map((h, index) => {
+                let cleaned = cleanHeader(String(h || ''));
+                // Log first header for debugging BOM issues
+                if (index === 0) {
+                  logger.info(
+                    `First CSV header after cleaning: "${cleaned}" (length: ${cleaned.length})`
+                  );
+                }
+                return cleaned;
+              });
+              isFirstRow = false;
             } else {
               const formatted = {};
-              Object.values(row).forEach((val, i) => {
-                formatted[headers[i]] = val?.trim() || '';
+              values.forEach((val, i) => {
+                if (headers[i]) {
+                  formatted[headers[i]] = (val?.toString() || '').trim();
+                }
               });
               data.push(formatted);
             }
           })
-          .on('end', () => resolve(data))
+          .on('end', () => {
+            logger.info(
+              `CSV parsed: ${headers.length} headers, ${data.length} data rows`
+            );
+            logger.info(`Headers found: ${headers.join(', ')}`);
+            resolve(data);
+          })
           .on('error', (err) => reject(err));
       });
     }
@@ -1060,7 +1091,10 @@ export const importvendorCsv = async (req, res) => {
 
       const vendor = {
         username: row.Username?.trim() || row.username?.trim() || '',
-        email: row.Email?.trim().toLowerCase() || '',
+        email:
+          row.Email?.trim().toLowerCase() ||
+          row.email?.trim().toLowerCase() ||
+          '',
         firstName: row.firstName?.trim() || row['First Name']?.trim() || '',
         lastName: row.lastName?.trim() || row['Last Name']?.trim() || '',
         role: req.body.role || row.role?.trim().toLowerCase() || '',
@@ -1277,15 +1311,17 @@ export const importvendorCsv = async (req, res) => {
     if (dbDupErrors.length && updateFlag !== true) {
       fs.unlinkSync(req.file.path);
 
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.CONFLICT,
-        'Duplicate records found. Do you want to update?',
-        {
-          existingEmails: [...dbEmails],
-        }
-      );
+      // Collect only the duplicate emails that are actually in the CSV
+      const duplicateEmails = validVendors
+        .filter((v) => {
+          const emailKey = (v.company_email || v.email).trim().toLowerCase();
+          return dbEmails.has(emailKey);
+        })
+        .map((v) => (v.company_email || v.email).trim().toLowerCase());
+
+      return HandleResponse(res, false, StatusCodes.CONFLICT, dbDupErrors, {
+        duplicateEmails: [...new Set(duplicateEmails)],
+      });
     }
 
     const inserted = [];
@@ -1784,6 +1820,120 @@ export const getCsvvendorclient = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `Failed to fetch ${req.query.type} list. ${error.message}`
+    );
+  }
+};
+
+/**
+ * Download sample CSV template for vendor/client import
+ * GET /api/user/sample-csv?type=vendor|client
+ *
+ * Required fields: Email, First Name, Last Name, Username, Whatsapp Number, Company Type, Hire Resources
+ * Company Type options: product, service, both
+ * Hire Resources options: c2c, c2h, in-house, all
+ */
+export const downloadSampleCsv = async (req, res) => {
+  try {
+    const { type } = req.query;
+
+    if (!type || !['vendor', 'client'].includes(type.toLowerCase())) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Invalid type. Use ?type=vendor or ?type=client'
+      );
+    }
+
+    const roleType = type.toLowerCase();
+
+    // Define CSV headers (matching the expected import format)
+    const headers = [
+      'Email',
+      'First Name',
+      'Last Name',
+      'Username',
+      'Whatsapp Number',
+      'Company Name',
+      'Company Email',
+      'Company Phone Number',
+      'Company Location',
+      'Company Type',
+      'Hire Resources',
+      'Company Strength',
+      'Company Linkedin',
+      'Company Website',
+      'Vendor Linkedin',
+      'Role',
+    ];
+
+    // Sample data rows with placeholder values - user must replace these
+    const timestamp = Date.now();
+    // Generate unique phone numbers using last 10 digits of timestamp
+    const phoneBase = String(timestamp).slice(-10);
+    const phone1 = phoneBase.slice(0, 10).padStart(10, '9');
+    const phone2 = String(Number(phone1) + 1);
+
+    const sampleRow1 = [
+      `john.doe_${timestamp}@example.com`,
+      'John',
+      'Doe',
+      `johndoe_${timestamp}`,
+      phone1,
+      'Tech Solutions Pvt Ltd',
+      `contact_${timestamp}@techsolutions.com`,
+      phone1,
+      'Mumbai',
+      'product',
+      'c2c',
+      '10-50',
+      '',
+      '',
+      '',
+      roleType,
+    ];
+
+    const sampleRow2 = [
+      `jane.smith_${timestamp}@example.com`,
+      'Jane',
+      'Smith',
+      `janesmith_${timestamp}`,
+      phone2,
+      'Digital Services Inc',
+      `info_${timestamp}@digitalservices.com`,
+      phone2,
+      'Bangalore',
+      'service',
+      'c2h',
+      '50-100',
+      '',
+      '',
+      '',
+      roleType,
+    ];
+
+    // Build CSV content (no comments - clean CSV)
+    const csvRows = [
+      headers.join(','),
+      sampleRow1.join(','),
+      sampleRow2.join(','),
+    ];
+
+    const csvContent = csvRows.join('\n');
+
+    const filename = `sample_${roleType}_import_template.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+
+    return res.status(StatusCodes.OK).send(csvContent);
+  } catch (error) {
+    logger.error(`Failed to generate sample CSV: ${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to generate sample CSV: ${error.message}`
     );
   }
 };

@@ -12,7 +12,7 @@ export const sidebarToPermissionMap = {
   Vendors: PermissionKey.VENDORS,
   Vendor: PermissionKey.VENDORS,
   'Vendor List': PermissionKey.VENDOR_LIST,
-  'Job Listing': PermissionKey.VENDOR_JOB_LISTING,
+  'Vendor Job Listing': PermissionKey.VENDOR_JOB_LISTING,
   'Jobs Applicants': PermissionKey.VENDOR_JOB_APPLICANTS,
   'Vendor Applications': PermissionKey.VENDOR_APPLICATIONS_BY_ROLE,
   'Client List': PermissionKey.CLIENT_LIST,

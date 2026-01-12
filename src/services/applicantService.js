@@ -2,25 +2,91 @@ import Applicant from '../models/applicantModel.js';
 import ExportsApplicants from '../models/exportsApplicantsModel.js';
 import Skills from '../models/skillsModel.js';
 import appliedRoleModel from '../models/appliedRoleModel.js';
+import jobApplication from '../models/jobApplicantionModel.js';
 import logger from '../loggers/logger.js';
 
 export const createApplicant = async (body) => {
   try {
-    const query = {
-      $or: [
-        { email: body.email },
-        { 'phone.phoneNumber': body.phone?.phoneNumber },
-        { 'phone.whatsappNumber': body.phone?.whatsappNumber },
-      ],
-    };
+    if (!body.email) {
+      throw new Error('Email is required');
+    }
+
+    // Check if phone number is already used by a different applicant
+    if (body.phone?.phoneNumber) {
+      const existingByPhone = await Applicant.findOne({
+        'phone.phoneNumber': body.phone.phoneNumber,
+        email: { $ne: body.email },
+      });
+      if (existingByPhone) {
+        const error = new Error('Phone number is already in use');
+        error.code = 'DUPLICATE_PHONE';
+        throw error;
+      }
+    }
+
+    // Check if WhatsApp number is already used by a different applicant
+    if (body.phone?.whatsappNumber) {
+      const existingByWhatsapp = await Applicant.findOne({
+        'phone.whatsappNumber': body.phone.whatsappNumber,
+        email: { $ne: body.email },
+      });
+      if (existingByWhatsapp) {
+        const error = new Error('WhatsApp number is already in use');
+        error.code = 'DUPLICATE_WHATSAPP';
+        throw error;
+      }
+    }
+
+    // Find by email and update, or create new
     const applicant = await Applicant.findOneAndUpdate(
-      query,
+      { email: body.email },
       { $set: { ...body } },
       {
         upsert: true,
         setDefaultsOnInsert: true,
+        new: true,
       }
     );
+
+    // Sync updated data to all job applications for this email
+    const jobApplicationUpdateData = {};
+    if (body.name) jobApplicationUpdateData.name = body.name;
+    if (body.phone) jobApplicationUpdateData.phone = body.phone;
+    if (body.appliedSkills)
+      jobApplicationUpdateData.appliedSkills = body.appliedSkills;
+    if (body.otherSkills)
+      jobApplicationUpdateData.otherSkills = body.otherSkills;
+    if (body.appliedRole)
+      jobApplicationUpdateData.appliedRole = body.appliedRole;
+    if (body.totalExperience !== undefined)
+      jobApplicationUpdateData.totalExperience = body.totalExperience;
+    if (body.currentPkg !== undefined)
+      jobApplicationUpdateData.currentPkg = body.currentPkg;
+    if (body.expectedPkg !== undefined)
+      jobApplicationUpdateData.expectedPkg = body.expectedPkg;
+    if (body.noticePeriod !== undefined)
+      jobApplicationUpdateData.noticePeriod = body.noticePeriod;
+    if (body.workPreference)
+      jobApplicationUpdateData.workPreference = body.workPreference;
+    if (body.resumeUrl) jobApplicationUpdateData.resumeUrl = body.resumeUrl;
+    if (body.currentCity)
+      jobApplicationUpdateData.currentCity = body.currentCity;
+    if (body.state) jobApplicationUpdateData.state = body.state;
+    if (body.currentCompanyName)
+      jobApplicationUpdateData.currentCompanyName = body.currentCompanyName;
+    if (body.currentCompanyDesignation)
+      jobApplicationUpdateData.currentCompanyDesignation =
+        body.currentCompanyDesignation;
+
+    if (Object.keys(jobApplicationUpdateData).length > 0) {
+      await jobApplication.updateMany(
+        { email: body.email },
+        { $set: jobApplicationUpdateData }
+      );
+      logger.info(
+        `Synced applicant data to job applications for email: ${body.email}`
+      );
+    }
 
     return applicant;
   } catch (error) {

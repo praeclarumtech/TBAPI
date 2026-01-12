@@ -13,7 +13,8 @@ import {
   listOfUsers,
   importvendorCsv,
   exportVendorCsv,
-  getCsvvendorclient
+  getCsvvendorclient,
+  downloadSampleCsv,
 } from '../../controller/userController.js';
 import { validator } from '../../helpers/validator.js';
 import {
@@ -50,6 +51,9 @@ router.post('/changePassword/:id', authorization, validator.body(changePasswordV
 router.put('/updateStatus/:id', authorization, verifyRoles([Enum.ADMIN]), updateStatus);
 router.post('/importCsv', authorization, verifyRoles([Enum.ADMIN]),uploadCv, importvendorCsv);
 router.post('/exportCsv', authorization, verifyRoles([Enum.ADMIN]), exportVendorCsv);
+
+// Download sample CSV template for vendor/client import
+router.get('/sample-csv', downloadSampleCsv);
 
 export default router;
 

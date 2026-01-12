@@ -181,6 +181,15 @@ export const applicantValidation = Joi.object({
   meta: Joi.object().default({}).messages({
     'object.base': 'Meta must be an object with key-value pairs.',
   }),
+  job_id: Joi.string().allow(null, '').messages({
+    'string.base': 'Job ID must be a string.',
+  }),
+  addedBy: Joi.string()
+    .valid(applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, applicantEnum.GUEST, '')
+    .allow(null, '')
+    .messages({
+      'any.only': 'Added by must be Manual, Csv, Resume, or Guest.',
+    }),
 });
 
 export const updateApplicantValidation = Joi.object({
@@ -359,6 +368,15 @@ export const updateApplicantValidation = Joi.object({
     'object.base': 'Meta must be an object with key-value pairs.',
   }),
   isFavorite: Joi.boolean().optional().allow(''),
+  job_id: Joi.string().allow(null, '').messages({
+    'string.base': 'Job ID must be a string.',
+  }),
+  addedBy: Joi.string()
+    .valid(applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, applicantEnum.GUEST, '')
+    .allow(null, '')
+    .messages({
+      'any.only': 'Added by must be Manual, Csv, Resume, or Guest.',
+    }),
 });
 
 export const updateManyApplicantsValidation = Joi.object({
