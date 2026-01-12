@@ -1,15 +1,57 @@
 import mongoose from 'mongoose';
 import Applicant from '../models/applicantModel.js';
 import jobApplication from '../models/jobApplicantionModel.js';
+import jobs from '../models/jobModel.js';
 import { applicantEnum, Enum } from '../utils/enum.js';
 
 export const getDashboardCounts = async (role, userId) => {
-  const Model = (role === Enum.VENDOR || role === Enum.CLIENT) ? jobApplication : Applicant;
+  const Model =
+    role === Enum.VENDOR || role === Enum.CLIENT ? jobApplication : Applicant;
 
-  const matchCondition = { isDeleted: false, isActive: true };
+  // For VENDOR and CLIENT roles, only filter by isDeleted to include all applications
+  // This is consistent with getClientDashboard and viewJobApplicantionsByVendor
+  const matchCondition =
+    role === Enum.VENDOR || role === Enum.CLIENT
+      ? { isDeleted: false }
+      : { isDeleted: false, isActive: true };
 
-  if (role === Enum.VENDOR || role === Enum.CLIENT) {
-    matchCondition.vendor_id = new mongoose.Types.ObjectId(userId);
+  if (role === Enum.VENDOR) {
+    // Vendor can see applications for:
+    // 1. Jobs they created (addedBy)
+    // 2. Jobs they were emailed about (emailedVendors)
+    // 3. Applications they submitted (vendor_id)
+    const vendorId = new mongoose.Types.ObjectId(userId);
+
+    // Get job IDs for jobs vendor created or was emailed about
+    const vendorJobs = await jobs
+      .find(
+        {
+          $or: [{ addedBy: vendorId }, { emailedVendors: vendorId }],
+          isDeleted: false,
+        },
+        '_id'
+      )
+      .lean();
+
+    const jobIds = vendorJobs.map((job) => job._id);
+
+    matchCondition.$or = [{ vendor_id: vendorId }, { job_id: { $in: jobIds } }];
+  } else if (role === Enum.CLIENT) {
+    // Client can only see applications for jobs they created
+    const clientId = new mongoose.Types.ObjectId(userId);
+
+    const clientJobs = await jobs
+      .find(
+        {
+          addedBy: clientId,
+          isDeleted: false,
+        },
+        '_id'
+      )
+      .lean();
+
+    const jobIds = clientJobs.map((job) => job._id);
+    matchCondition.job_id = { $in: jobIds };
   }
 
   const statusCounts = await Model.aggregate([
@@ -17,9 +59,9 @@ export const getDashboardCounts = async (role, userId) => {
     {
       $group: {
         _id: '$status',
-        count: { $sum: 1 }
-      }
-    }
+        count: { $sum: 1 },
+      },
+    },
   ]);
 
   const defaultCounts = {
@@ -31,10 +73,10 @@ export const getDashboardCounts = async (role, userId) => {
     inProgressApplicants: 0,
     shortListedApplicants: 0,
     onboardedApplicants: 0,
-    leavedApplicants: 0
+    leavedApplicants: 0,
   };
 
-  statusCounts.forEach(stat => {
+  statusCounts.forEach((stat) => {
     defaultCounts.totalApplicants += stat.count;
     switch (stat._id) {
       case applicantEnum.APPLIED:

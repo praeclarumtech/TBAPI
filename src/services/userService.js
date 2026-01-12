@@ -21,7 +21,9 @@ export const getAllusers = async (filter = {}, projection = {}, options = {}) =>
 };
 
 export const getUserById = async (id) => {
-  return await User.findById(id).populate({ path: 'vendorProfileId', model: 'Vendor' });
+  return await User.findById(id)
+    .populate({ path: 'vendorProfileId', model: 'Vendor' })
+    .populate({ path: 'roleId', model: 'Role', select: '_id name' });
 };
 
 export const updateProfileById = async (id, updateData) => {

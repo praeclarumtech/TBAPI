@@ -197,4 +197,7 @@ export const PermissionKey = {
   MASTER_COUNTRY: 'master_country',
   MASTER_STATE: 'master_state',
   MASTER_CITY: 'master_city',
+
+  // Settings
+  SETTINGS: 'settings',
 };

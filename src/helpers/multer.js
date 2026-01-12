@@ -18,9 +18,9 @@ const storage = multer.diskStorage({
   },
 });
 
-export const upload = multer({
+const uploadMulter = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (allowedTypes.includes(file.mimetype)) {
@@ -31,9 +31,36 @@ export const upload = multer({
   },
 }).single('profilePicture');
 
-export const uploadCv = multer({
+// Wrapper with proper error handling for file size and type
+export const upload = (req, res, next) => {
+  uploadMulter(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          success: false,
+          statusCode: 413,
+          message: 'File too large. Maximum size is 5MB.',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: err.message,
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: err.message,
+      });
+    }
+    next();
+  });
+};
+
+const uploadCvMulter = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
       'text/csv',
@@ -42,19 +69,46 @@ export const uploadCv = multer({
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
       'application/vnd.ms-excel.sheet.macroEnabled.12', // .xlsm
       'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.template'
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
     ];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
       logger.info('Invalid file type:', file.mimetype);
-      cb(new Error(Message.INVALID_FILE_TYPE));
+      cb(new Error('Invalid file type. Only CSV and Excel files are allowed.'));
     }
   },
 }).single('csvFile');
 
+// Wrapper with proper error handling for file size and type
+export const uploadCv = (req, res, next) => {
+  uploadCvMulter(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          success: false,
+          statusCode: 413,
+          message: 'File too large. Maximum size is 5MB.',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: err.message,
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: err.message,
+      });
+    }
+    next();
+  });
+};
+
 // const uploadAttachmentsDir = 'src/uploads/Attachments';
-const uploadAttachmentsDir = path.join('src', 'uploads', 'Attachments');;
+const uploadAttachmentsDir = path.join('src', 'uploads', 'Attachments');
 if (!fs.existsSync(uploadAttachmentsDir)) {
   fs.mkdirSync(uploadAttachmentsDir, { recursive: true });
 }
@@ -68,13 +122,16 @@ const attachmentStorage = multer.diskStorage({
   },
 });
 
-export const uploadAttachments = multer({
+const uploadAttachmentsMulter = multer({
   storage: attachmentStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // up to 10MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
-      'image/jpeg', 'image/png', 'application/pdf',
-      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      'image/jpeg',
+      'image/png',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
@@ -83,6 +140,35 @@ export const uploadAttachments = multer({
     }
   },
 }).array('attachments', 5);
+
+export const uploadAttachments = (req, res, next) => {
+  uploadAttachmentsMulter(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          success: false,
+          message: 'File too large. Maximum size is 10MB',
+        });
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(413).json({
+          success: false,
+          message: 'Too many files. Maximum is 5 files',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
+    next();
+  });
+};
 
 // Multer middleware for parsing form-data without requiring files
 export const parseFormData = multer().none();

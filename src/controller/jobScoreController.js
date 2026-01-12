@@ -323,6 +323,7 @@ export const fetchAppliedJobs = async (req, res) => {
 export const viewJobApplicantionsByVendor = async (req, res) => {
   try {
     const user = req.user || {};
+    const userRole = user?.role?.toLowerCase(); // Normalize role to lowercase
     const { appliedSkills, filterBy } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -330,19 +331,35 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
 
     const query = { isDeleted: false };
 
-    if (user.role === Enum.VENDOR) {
-      const vendorApps = await jobApplication.find({ user_id: user.id }).lean();
-      query.vendor_id = user.id;
+    if (userRole === Enum.VENDOR) {
+      const vendorId = new mongoose.Types.ObjectId(user.id);
+      // Vendor can see applications for:
+      // 1. Jobs they created (addedBy)
+      // 2. Jobs they were emailed about (emailedVendors)
+      // 3. Applications they submitted (vendor_id)
+      const vendorJobs = await jobs.find({
+        $or: [
+          { addedBy: vendorId },
+          { emailedVendors: vendorId }
+        ],
+        isDeleted: false
+      }, '_id').lean();
+      
+      const jobIds = vendorJobs.map(job => job._id);
+      query.$or = [
+        { vendor_id: vendorId },
+        { job_id: { $in: jobIds } }
+      ];
     }
-    if (user.role === Enum.CLIENT) {
-      const clientApps = await jobApplication.find({ user_id: user.id }).lean();
-      const jobIds = await jobs.find({ addedBy: user.id }, { _id: 1 }).lean();
+    if (userRole === Enum.CLIENT) {
+      const jobIds = await jobs.find({ addedBy: user.id, isDeleted: false }, { _id: 1 }).lean();
       const jobIdList = jobIds.map((job) => job._id);
       query.job_id = { $in: jobIdList };
     }
 
-    if (user.role === Enum.ADMIN && filterBy) {
-      if (filterBy === Enum.VENDOR) {
+    if (userRole === Enum.ADMIN && filterBy) {
+      const normalizedFilterBy = filterBy.toLowerCase();
+      if (normalizedFilterBy === Enum.VENDOR) {
         const vendorRole = await getRoleByNameService(Enum.VENDOR);
         const vendorUsers = await getAllusers(
           { roleId: vendorRole._id },
@@ -352,7 +369,7 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
           .find({ addedBy: { $in: vendorUsers.map((u) => u._id) } }, { _id: 1 })
           .lean();
         query.job_id = { $in: vendorJobIds.map((job) => job._id) };
-      } else if (filterBy === Enum.CLIENT) {
+      } else if (normalizedFilterBy === Enum.CLIENT) {
         const clientRole = await getRoleByNameService(Enum.CLIENT);
         const clientUsers = await getAllusers(
           { roleId: clientRole._id },
@@ -510,6 +527,7 @@ export const deleteApplicant = async (req, res) => {
 export const updateApplicantStatus = async (req, res) => {
   try {
     const user = req.user || {};
+    const userRole = user?.role?.toLowerCase(); // Normalize role to lowercase
     const applicantId = req.params.id;
     const { interviewStage, status } = req.body;
 
@@ -533,7 +551,7 @@ export const updateApplicantStatus = async (req, res) => {
       );
     }
 
-    if (user.role === Enum.VENDOR) {
+    if (userRole === Enum.VENDOR) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
 
       const ownsJob = job.addedBy.toString() === user.id;
@@ -548,7 +566,7 @@ export const updateApplicantStatus = async (req, res) => {
           'You can only update status for applications to your own jobs or client jobs you were emailed about'
         );
       }
-    } else if (user.role === Enum.CLIENT) {
+    } else if (userRole === Enum.CLIENT) {
       if (job.addedBy.toString() !== user.id) {
         return HandleResponse(
           res,
@@ -557,7 +575,7 @@ export const updateApplicantStatus = async (req, res) => {
           'You can only update status for applications to your own jobs'
         );
       }
-    } else if (user.role !== Enum.ADMIN && user.role !== Enum.HR) {
+    } else if (userRole !== Enum.ADMIN && userRole !== Enum.HR) {
       return HandleResponse(
         res,
         false,
@@ -896,7 +914,7 @@ export const addVendor = async (req, res) => {
       );
     } else {
       try {
-        const emailResult = await sendingEmail({
+        const emailResult = await sendingEmailHelper({
           email_to: [hrEmail],
           subject: 'New Vendor Registration - Approval Required',
           description: emailContent,
@@ -1367,7 +1385,7 @@ export const updateVendorByQrCode = async (req, res) => {
       );
     } else {
       try {
-        const emailResult = await sendingEmail({
+        const emailResult = await sendingEmailHelper({
           email_to: [hrEmail],
           subject: `${roleDisplayName} Details Updated via QR Code`,
           description: emailContent,

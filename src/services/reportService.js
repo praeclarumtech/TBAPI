@@ -115,44 +115,166 @@ export const getApplicantSkillCounts = async (skillIds = [], user) => {
     let skills = [];
 
     const isVendor = user?.role === Enum.VENDOR;
+    const isClient = user?.role === Enum.CLIENT;
+
+    // For CLIENT: Get skills from Applicant table for applicants who applied to client's jobs
+    // For VENDOR: Use jobApplication table directly
+    // For ADMIN/HR: Use Applicant table directly (all applicants)
+
+    // VENDOR uses jobApplication, CLIENT and others use Applicant
     const model = isVendor ? jobApplication : Applicant;
+
+    // For CLIENT: Get job IDs for client's jobs
+    let clientJobIds = [];
+    if (isClient) {
+      const clientId = new mongoose.Types.ObjectId(user.id);
+      const clientJobs = await jobs
+        .find({ addedBy: clientId, isDeleted: false }, '_id')
+        .lean();
+      clientJobIds = clientJobs.map((job) => job._id);
+    }
 
     if (skillIds.length > 0) {
       skills = await Skills.find({
         _id: { $in: skillIds },
         isDeleted: false,
-        
       });
     } else {
-      const matchCondition = { isDeleted: false, isActive: true };
-      if (isVendor) {
-        matchCondition.vendor_id = user.id;
-      }
-      const skillCountsAggregation = await model.aggregate([
-        { $match: matchCondition },
-        { $unwind: '$appliedSkills' },
-        {
-          $group: {
-            _id: '$appliedSkills',
-            count: { $sum: 1 },
+      let skillCountsAggregation;
+
+      if (isClient && clientJobIds.length > 0) {
+        // Debug: Count total job applications for client's jobs
+        const totalApplications = await jobApplication.countDocuments({
+          job_id: { $in: clientJobIds },
+          isDeleted: false,
+        });
+        console.log('Total job applications for client:', totalApplications);
+
+        // Debug: Check how many have matching Applicant records (case-insensitive)
+        const withApplicantData = await jobApplication.aggregate([
+          { $match: { job_id: { $in: clientJobIds }, isDeleted: false } },
+          { $addFields: { emailLower: { $toLower: '$email' } } },
+          {
+            $lookup: {
+              from: 'applicants',
+              let: { appEmail: '$emailLower' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: [{ $toLower: '$email' }, '$$appEmail'] },
+                  },
+                },
+              ],
+              as: 'applicantData',
+            },
           },
-        },
-        { $sort: { count: -1 } },
-        { $limit: 16 },
-      ]);
+          { $match: { 'applicantData.0': { $exists: true } } },
+          { $count: 'withApplicant' },
+        ]);
+        console.log(
+          'Applications with matching Applicant (case-insensitive):',
+          withApplicantData[0]?.withApplicant || 0
+        );
+
+        // Debug: Check how many applicants have skills
+        const withSkills = await jobApplication.aggregate([
+          { $match: { job_id: { $in: clientJobIds }, isDeleted: false } },
+          { $addFields: { emailLower: { $toLower: '$email' } } },
+          {
+            $lookup: {
+              from: 'applicants',
+              let: { appEmail: '$emailLower' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: [{ $toLower: '$email' }, '$$appEmail'] },
+                  },
+                },
+              ],
+              as: 'applicantData',
+            },
+          },
+          { $unwind: '$applicantData' },
+          { $match: { 'applicantData.appliedSkills.0': { $exists: true } } },
+          { $count: 'withSkills' },
+        ]);
+        console.log(
+          'Applications with Applicant having skills:',
+          withSkills[0]?.withSkills || 0
+        );
+
+        // For CLIENT: Join jobApplication with Applicant to get skills
+        // Using pipeline $lookup for case-insensitive email matching
+        skillCountsAggregation = await jobApplication.aggregate([
+          // Match job applications for client's jobs
+          { $match: { job_id: { $in: clientJobIds }, isDeleted: false } },
+          // Normalize email to lowercase for matching
+          { $addFields: { emailLower: { $toLower: '$email' } } },
+          // Lookup applicant data by email (case-insensitive)
+          {
+            $lookup: {
+              from: 'applicants',
+              let: { appEmail: '$emailLower' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $eq: [{ $toLower: '$email' }, '$$appEmail'],
+                    },
+                  },
+                },
+              ],
+              as: 'applicantData',
+            },
+          },
+          { $unwind: '$applicantData' },
+          // Unwind the appliedSkills from Applicant
+          { $unwind: '$applicantData.appliedSkills' },
+          {
+            $group: {
+              _id: '$applicantData.appliedSkills',
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+          { $limit: 16 },
+        ]);
+      } else {
+        // For VENDOR and ADMIN/HR
+        const matchCondition = { isDeleted: false, isActive: true };
+        if (isVendor) {
+          matchCondition.vendor_id = new mongoose.Types.ObjectId(user.id);
+        }
+
+        skillCountsAggregation = await model.aggregate([
+          { $match: matchCondition },
+          { $unwind: '$appliedSkills' },
+          {
+            $group: {
+              _id: '$appliedSkills',
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+          { $limit: 16 },
+        ]);
+      }
 
       const skillNames = skillCountsAggregation.map((item) => item._id);
-      skills = await Skills.find({
-        $and: [
-          {
-            $or: skillNames.map((name) => ({
-              skills: { $regex: new RegExp(`^${name}$`, 'i') },
-            })),
-          },
-          { isDeleted: false },
-        ],
-      });
+      if (skillNames.length > 0) {
+        skills = await Skills.find({
+          $and: [
+            {
+              $or: skillNames.map((name) => ({
+                skills: { $regex: new RegExp(`^${name}$`, 'i') },
+              })),
+            },
+            { isDeleted: false },
+          ],
+        });
+      }
     }
+
     skillCounts = await Promise.all(
       skills.map(async (skillDoc) => {
         const skillName = skillDoc.skills;
@@ -161,16 +283,49 @@ export const getApplicantSkillCounts = async (skillIds = [], user) => {
           '\\$&'
         );
 
-        const query = {
-          appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
-          isDeleted: false,
-        };
-
-        if (isVendor) {
-          query.vendor_id = user.id;
+        let count;
+        if (isClient && clientJobIds.length > 0) {
+          // For CLIENT: Count using $lookup with Applicant (case-insensitive email)
+          const result = await jobApplication.aggregate([
+            { $match: { job_id: { $in: clientJobIds }, isDeleted: false } },
+            { $addFields: { emailLower: { $toLower: '$email' } } },
+            {
+              $lookup: {
+                from: 'applicants',
+                let: { appEmail: '$emailLower' },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: { $eq: [{ $toLower: '$email' }, '$$appEmail'] },
+                    },
+                  },
+                ],
+                as: 'applicantData',
+              },
+            },
+            { $unwind: '$applicantData' },
+            {
+              $match: {
+                'applicantData.appliedSkills': {
+                  $regex: new RegExp(`^${escapedSkill}$`, 'i'),
+                },
+              },
+            },
+            { $count: 'total' },
+          ]);
+          count = result[0]?.total || 0;
+        } else {
+          // For VENDOR and ADMIN/HR
+          const query = {
+            appliedSkills: { $regex: new RegExp(`^${escapedSkill}$`, 'i') },
+            isDeleted: false,
+          };
+          if (isVendor) {
+            query.vendor_id = new mongoose.Types.ObjectId(user.id);
+          }
+          count = await model.countDocuments(query);
         }
 
-        const count = await model.countDocuments(query);
         return { skill: skillName, count };
       })
     );
@@ -394,7 +549,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     isFavorite,
   } = filters;
 
-  const match = {isActive:true};
+  const match = { isActive: true };
 
   if (gender) {
     match.gender = {
@@ -432,7 +587,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
             $cond: [
               {
                 $or: [
-                  { $eq: [{ $ifNull: ['$gender', ''] }, ''] }, 
+                  { $eq: [{ $ifNull: ['$gender', ''] }, ''] },
                   { $eq: ['$gender', ''] },
                 ],
               },
@@ -467,7 +622,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
                 ],
               },
               'other',
-              '$noticePeriod', 
+              '$noticePeriod',
             ],
           },
         },
@@ -488,11 +643,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
         },
         isFavorite: {
           $push: {
-            $cond: [
-              { $eq: ['$isFavorite', true] },
-              true,
-              false,
-            ],
+            $cond: [{ $eq: ['$isFavorite', true] }, true, false],
           },
         },
       },
@@ -510,7 +661,7 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   const normalizeValue = (val, type = 'string') => {
     if (type === 'number') {
       if (typeof val === 'number' && !isNaN(val)) return val;
-      return 'other'; 
+      return 'other';
     }
     if (type === 'boolean') {
       if (typeof val === 'boolean') return val;
@@ -544,7 +695,6 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
     Applicant.countDocuments({ isActive: true }),
     Applicant.countDocuments({ isActive: false }),
   ]);
-
 
   return {
     gender: gender
@@ -587,4 +737,3 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
       : countValues(data.isFavorite, [true, false], 'boolean'),
   };
 };
-
