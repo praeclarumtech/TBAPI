@@ -1,7 +1,8 @@
 import { createLogger, format, transports } from 'winston';
 import 'winston-mongodb';
+import 'winston-daily-rotate-file';
 import dotenv from 'dotenv';
-dotenv.config(); 
+dotenv.config();
 
 const logFormat = format.combine(
   format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -10,26 +11,56 @@ const logFormat = format.combine(
   })
 );
 
+const jsonFormat = format.combine(
+  format.timestamp(),
+  format.json(),
+  format.errors({ stack: true })
+);
+
 const logger = createLogger({
-  level: 'info', 
+  level: 'info',
   format: logFormat,
   transports: [
+    // Console transport with colorized output
     new transports.Console({
       format: format.combine(format.colorize(), logFormat),
     }),
 
-    new transports.File({ filename: 'logs/app.log' }),
+    // Daily rotating file for error logs
+    new transports.DailyRotateFile({
+      filename: 'logs/error/%DATE%_error.log',
+      datePattern: 'DDMMYYYY',
+      zippedArchive: true,
+      level: 'error',
+      format: jsonFormat,
+      maxFiles: '7d',
+    }),
 
-    new transports.File({ filename: 'logs/error.log', level: 'error' }),
+    // Daily rotating file for combined logs (all levels)
+    new transports.DailyRotateFile({
+      filename: 'logs/combined/%DATE%_combined.log',
+      datePattern: 'DDMMYYYY',
+      zippedArchive: true,
+      format: jsonFormat,
+      maxFiles: '7d',
+    }),
 
+    // MongoDB transport for error logs
     new transports.MongoDB({
       level: 'error',
-      db: process.env.DBURL, 
+      db: process.env.DBURL,
       collection: 'logs',
     }),
   ],
   exceptionHandlers: [
-    new transports.File({ filename: 'logs/exceptions.log' }), 
+    // Daily rotating file for uncaught exceptions
+    new transports.DailyRotateFile({
+      filename: 'logs/exceptions/%DATE%_exceptions.log',
+      datePattern: 'DDMMYYYY',
+      zippedArchive: true,
+      format: jsonFormat,
+      maxFiles: '7d',
+    }),
   ],
 });
 
