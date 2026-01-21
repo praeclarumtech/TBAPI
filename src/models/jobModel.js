@@ -67,6 +67,12 @@ const jobSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    jobModule: {
+      type: String,
+      enum: ['vendor', 'client'],
+      required: false,
+      default: null,
+    },
     emailedVendors: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: 'user',
