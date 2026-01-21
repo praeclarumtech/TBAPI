@@ -9,6 +9,7 @@ import {
   checkEmailForJobApplication,
   applyForJob,
   viewApplicantsForJob,
+  viewInvitedApplicants,
   viewClientJobApplications,
   sendJobEmailToRecipients,
   getVendorsAndApplicantsForEmail,
@@ -41,6 +42,7 @@ router.post(
 );
 
 router.get('/:jobId/applicants', authorization, viewApplicantsForJob);
+router.get('/:jobId/invited-applicants', authorization, viewInvitedApplicants);
 router.post('/:jobId/send-email', authorization, sendJobEmailToRecipients);
 router.post(
   '/:jobId/notify-matching-applicants',

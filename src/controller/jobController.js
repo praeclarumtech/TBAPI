@@ -516,7 +516,12 @@ export const viewJobs = async (req, res) => {
       query.addedBy = new mongoose.Types.ObjectId(user.id);
     } else if (userRole === Enum.VENDOR) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
-      query.$or = [{ addedBy: vendorId }, { emailedVendors: vendorId }];
+      
+      // Vendor can see: their own jobs OR jobs they were emailed about
+      query.$or = [
+        { addedBy: vendorId },
+        { emailedVendors: vendorId }
+      ];
     } else if (posted_by_role && userRole === Enum.ADMIN) {
       // Only admin can filter by posted_by_role (case-insensitive)
       const normalizedRole = posted_by_role.toLowerCase();
@@ -533,38 +538,91 @@ export const viewJobs = async (req, res) => {
     if (filterBy && userRole !== Enum.CLIENT) {
       const normalizedFilterBy = filterBy.toLowerCase();
       if (normalizedFilterBy === Enum.VENDOR) {
+        // Get vendor users (by roleId OR role string field)
         const vendorRole = await getRoleByNameService(Enum.VENDOR);
-        const vendorUsers = await getAllusers(
-          { roleId: vendorRole._id },
-          { _id: 1 }
-        );
+        const vendorUsers = await User.find({
+          $or: [
+            ...(vendorRole ? [{ roleId: vendorRole._id }] : []),
+            { role: { $regex: new RegExp(`^${Enum.VENDOR}$`, 'i') } }
+          ],
+          isDeleted: false
+        }, '_id').lean();
         const vendorIds = vendorUsers.map((v) => v._id);
 
-        if (userRole === Enum.VENDOR && query.$or) {
-          // Keep vendor's own filter
+        // Get admin users (for backward compatibility - admin jobs without jobModule)
+        const adminRole = await getRoleByNameService(Enum.ADMIN);
+        const adminUsers = await User.find({
+          $or: [
+            ...(adminRole ? [{ roleId: adminRole._id }] : []),
+            { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } }
+          ],
+          isDeleted: false
+        }, '_id').lean();
+        const adminIds = adminUsers.map((a) => a._id);
+
+        if (userRole === Enum.VENDOR) {
+          // For vendor: show vendor jobs OR jobs with jobModule='vendor' OR admin jobs without jobModule OR jobs they were emailed about
+          const vendorId = new mongoose.Types.ObjectId(user.id);
+          query.$or = [
+            { addedBy: { $in: vendorIds } },
+            { jobModule: 'vendor' },
+            { addedBy: { $in: adminIds }, jobModule: { $in: [null, 'vendor'] } },
+            { emailedVendors: vendorId },
+          ];
         } else {
-          query.addedBy = { $in: vendorIds };
+          // For admin: show vendor-created jobs OR jobs with jobModule='vendor' OR admin jobs without jobModule (default to vendor)
+          query.$or = [
+            { addedBy: { $in: vendorIds } },
+            { jobModule: 'vendor' },
+            { addedBy: { $in: adminIds }, jobModule: { $in: [null, 'vendor'] } },
+          ];
         }
+      
       } else if (normalizedFilterBy === Enum.CLIENT) {
+        // Get client users (by roleId OR role string field)
         const clientRole = await getRoleByNameService(Enum.CLIENT);
-        const clientUsers = await getAllusers(
-          { roleId: clientRole._id },
-          { _id: 1 }
-        );
+        const clientUsers = await User.find({
+          $or: [
+            ...(clientRole ? [{ roleId: clientRole._id }] : []),
+            { role: { $regex: new RegExp(`^${Enum.CLIENT}$`, 'i') } }
+          ],
+          isDeleted: false
+        }, '_id').lean();
         const clientIds = clientUsers.map((v) => v._id);
 
-        if (userRole === Enum.VENDOR && query.$or) {
+        // Get admin users (for backward compatibility - admin jobs without jobModule)
+        const adminRole = await getRoleByNameService(Enum.ADMIN);
+        const adminUsers = await User.find({
+          $or: [
+            ...(adminRole ? [{ roleId: adminRole._id }] : []),
+            { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } }
+          ],
+          isDeleted: false
+        }, '_id').lean();
+        const adminIds = adminUsers.map((a) => a._id);
+
+        if (userRole === Enum.VENDOR) {
+          // For vendor filtering by client: show client jobs OR admin jobs with jobModule='client' they were emailed about
           const vendorId = new mongoose.Types.ObjectId(user.id);
           query.$or = [
             {
               $and: [
-                { addedBy: { $in: clientIds } },
+                { $or: [
+                  { addedBy: { $in: clientIds } }, 
+                  { jobModule: 'client' },
+                  { addedBy: { $in: adminIds }, jobModule: { $in: [null, 'client'] } },
+                ]},
                 { emailedVendors: vendorId },
               ],
             },
           ];
         } else {
-          query.addedBy = { $in: clientIds };
+          // For admin: show client-created jobs OR jobs with jobModule='client' OR admin jobs without jobModule
+          query.$or = [
+            { addedBy: { $in: clientIds } },
+            { jobModule: 'client' },
+            { addedBy: { $in: adminIds }, jobModule: { $in: [null, 'client'] } },
+          ];
         }
       }
     }
@@ -649,7 +707,8 @@ export const viewJobs = async (req, res) => {
       query,
       sort: { createdAt: -1 },
     });
-    if (!result || result?.length === 0) {
+    
+    if (!result || result?.item?.length === 0) {
       logger.error(`Jobs ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
@@ -789,6 +848,172 @@ export const viewJobDetails = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} fetch job`
+    );
+  }
+};
+
+// View invited/emailed applicants for a job
+export const viewInvitedApplicants = async (req, res) => {
+  try {
+    const user = req.user || {};
+    const userRole = user?.role?.toLowerCase();
+    const { jobId } = req.params;
+    const { page = 1, limit = 10, search } = req.query;
+
+    if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.BAD_REQUEST,
+        'Valid Job ID is required'
+      );
+    }
+
+    // Fetch job details
+    const job = await fetchJobService(jobId);
+    if (!job) {
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        `Job ${Message.NOT_FOUND}`
+      );
+    }
+
+    // Role-based access control
+    if (userRole === Enum.VENDOR) {
+      const vendorId = new mongoose.Types.ObjectId(user.id);
+      const ownsJob = job.addedBy.toString() === user.id;
+      const wasEmailed = job.emailedVendors?.some(
+        (id) => id.toString() === vendorId.toString()
+      );
+      if (!ownsJob && !wasEmailed) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.FORBIDDEN,
+          'You can only view invited applicants for your own jobs or jobs you were emailed about'
+        );
+      }
+    } else if (userRole === Enum.CLIENT) {
+      if (job.addedBy.toString() !== user.id) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.FORBIDDEN,
+          'You can only view invited applicants for your own jobs'
+        );
+      }
+    }
+    // Admin can view all
+
+    // Get emailed applicant IDs
+    const emailedApplicantIds = job.emailedApplicants || [];
+
+    if (emailedApplicantIds.length === 0) {
+      return HandleResponse(
+        res,
+        true,
+        StatusCodes.OK,
+        'No applicants have been invited for this job',
+        {
+          applicants: [],
+          totalRecords: 0,
+          currentPage: parseInt(page),
+          totalPages: 0,
+          limit: parseInt(limit),
+        }
+      );
+    }
+
+    // Build query for applicants
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    let applicantQuery = {
+      _id: { $in: emailedApplicantIds },
+      isDeleted: false,
+    };
+
+    // Add search filter if provided
+    if (search && typeof search === 'string') {
+      const searchRegex = new RegExp(
+        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'i'
+      );
+      applicantQuery.$or = [
+        { 'name.firstName': searchRegex },
+        { 'name.lastName': searchRegex },
+        { email: searchRegex },
+        { 'phone.phoneNumber': searchRegex },
+        { appliedSkills: searchRegex },
+      ];
+    }
+
+    // Get total count
+    const totalCount = await Applicant.countDocuments(applicantQuery);
+
+    // Fetch applicants with pagination
+    const applicants = await Applicant.find(applicantQuery)
+      .select(
+        'name email phone appliedSkills otherSkills currentCompanyName currentCompanyDesignation totalExperience currentCity state workPreference noticePeriod profilePicture resumeUrl'
+      )
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Check which invited applicants have applied to this job
+    const applicantEmails = applicants.map((a) => a.email);
+    const existingApplications = await jobApplication
+      .find({
+        job_id: jobId,
+        email: { $in: applicantEmails },
+        isDeleted: false,
+      })
+      .select('email status interviewStage score')
+      .lean();
+
+    // Create map for application status
+    const applicationMap = new Map(
+      existingApplications.map((app) => [
+        app.email,
+        { status: app.status, interviewStage: app.interviewStage, score: app.score },
+      ])
+    );
+
+    // Add application status to each applicant
+    const applicantsWithStatus = applicants.map((applicant) => ({
+      ...applicant,
+      hasApplied: applicationMap.has(applicant.email),
+      applicationStatus: applicationMap.get(applicant.email) || null,
+    }));
+
+    logger.info(`Invited applicants for job ${jobId} ${Message.FETCH_SUCCESSFULLY}`);
+
+    return HandleResponse(
+      res,
+      true,
+      StatusCodes.OK,
+      undefined,
+      {
+        applicants: applicantsWithStatus,
+        totalRecords: totalCount,
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalCount / parseInt(limit)),
+        limit: parseInt(limit),
+        job: {
+          _id: job._id,
+          job_id: job.job_id,
+          job_subject: job.job_subject,
+        },
+      }
+    );
+  } catch (error) {
+    logger.error(`${Message.FAILED_TO} fetch invited applicants: ${error.message}`);
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `${Message.FAILED_TO} fetch invited applicants`
     );
   }
 };
@@ -952,7 +1177,6 @@ export const checkEmailForJobApplication = async (req, res) => {
   try {
     const { email } = req.body;
     const { jobId } = req.params;
-    console.log(email, jobId);
 
     if (!email) {
       return HandleResponse(
@@ -2458,7 +2682,7 @@ export const sendJobEmailToRecipients = async (req, res) => {
       res,
       true,
       StatusCodes.OK,
-      `Emails sent: ${totalSent} successful, ${totalFailed} failed`,
+      `${totalSent === 1 ? 'Email' : 'Emails'} sent: ${totalSent} successful, ${totalFailed} failed`,
       {
         emailStatus,
         job: {

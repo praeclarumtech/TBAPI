@@ -86,6 +86,13 @@ export const createJobValidation = Joi.object().keys({
   job_location: Joi.string().optional().allow('', null).messages({
     'string.base': 'Job location must be a string',
   }),
+  jobModule: Joi.string()
+    .valid('vendor', 'client')
+    .optional()
+    .allow(null)
+    .messages({
+      'any.only': 'Job Module must be either "vendor" or "client".',
+    }),
 });
 
 export const jobApplicationStatusValidation = Joi.object({

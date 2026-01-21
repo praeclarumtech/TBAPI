@@ -333,9 +333,10 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
 
     if (userRole === Enum.VENDOR) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
+      
       // Vendor can see applications for:
-      // 1. Jobs they created (addedBy)
-      // 2. Jobs they were emailed about (emailedVendors)
+      // 1. Jobs they created (addedBy: vendorId)
+      // 2. Jobs they were emailed about (emailedVendors: vendorId)
       // 3. Applications they submitted (vendor_id)
       const vendorJobs = await jobs.find({
         $or: [
@@ -360,28 +361,69 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
     if (userRole === Enum.ADMIN && filterBy) {
       const normalizedFilterBy = filterBy.toLowerCase();
       if (normalizedFilterBy === Enum.VENDOR) {
+        // Get vendor users (by roleId OR role string field)
         const vendorRole = await getRoleByNameService(Enum.VENDOR);
-        const vendorUsers = await getAllusers(
-          { roleId: vendorRole._id },
-          { _id: 1 }
-        );
+        const vendorUsers = await User.find({
+          $or: [
+            ...(vendorRole ? [{ roleId: vendorRole._id }] : []),
+            { role: { $regex: new RegExp(`^${Enum.VENDOR}$`, 'i') } }
+          ],
+          isDeleted: false
+        }, '_id').lean();
+
+        // Get admin users (for backward compatibility - admin jobs without jobModule)
+        const adminRole = await getRoleByNameService(Enum.ADMIN);
+        const adminUsers = await User.find({
+          $or: [
+            ...(adminRole ? [{ roleId: adminRole._id }] : []),
+            { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } }
+          ],
+          isDeleted: false
+        }, '_id').lean();
+
+        // Get jobs created by vendors OR jobs with jobModule='vendor' OR admin jobs without jobModule
         const vendorJobIds = await jobs
-          .find({ addedBy: { $in: vendorUsers.map((u) => u._id) } }, { _id: 1 })
+          .find({
+            $or: [
+              { addedBy: { $in: vendorUsers.map((u) => u._id) } },
+              { jobModule: 'vendor' },
+              { addedBy: { $in: adminUsers.map((u) => u._id) }, jobModule: { $in: [null, 'vendor'] } },
+            ]
+          }, { _id: 1 })
           .lean();
         query.job_id = { $in: vendorJobIds.map((job) => job._id) };
       } else if (normalizedFilterBy === Enum.CLIENT) {
+        // Get client users (by roleId OR role string field)
         const clientRole = await getRoleByNameService(Enum.CLIENT);
-        const clientUsers = await getAllusers(
-          { roleId: clientRole._id },
-          { _id: 1 }
-        );
-        console.log('clientUsers', clientUsers);
+        const clientUsers = await User.find({
+          $or: [
+            ...(clientRole ? [{ roleId: clientRole._id }] : []),
+            { role: { $regex: new RegExp(`^${Enum.CLIENT}$`, 'i') } }
+          ],
+          isDeleted: false
+        }, '_id').lean();
+
+        // Get admin users (for backward compatibility - admin jobs without jobModule)
+        const adminRole = await getRoleByNameService(Enum.ADMIN);
+        const adminUsers = await User.find({
+          $or: [
+            ...(adminRole ? [{ roleId: adminRole._id }] : []),
+            { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } }
+          ],
+          isDeleted: false
+        }, '_id').lean();
+
+        // Get jobs created by clients OR jobs with jobModule='client' OR admin jobs without jobModule
         const clientJobIds = await jobs
-          .find({ addedBy: { $in: clientUsers.map((u) => u._id) } }, { _id: 1 })
+          .find({
+            $or: [
+              { addedBy: { $in: clientUsers.map((u) => u._id) } },
+              { jobModule: 'client' },
+              { addedBy: { $in: adminUsers.map((u) => u._id) }, jobModule: { $in: [null, 'client'] } },
+            ]
+          }, { _id: 1 })
           .lean();
-        console.log('clientJobIds', clientJobIds);
         query.job_id = { $in: clientJobIds.map((job) => job._id) };
-        console.log('query', query);
       }
     }
 
@@ -1212,7 +1254,6 @@ export const addVendorByQrCode = async (req, res) => {
     });
 
     const hrEmail = process.env.SMTP_USER || process.env.USER;
-    console.log(hrEmail);
     if (!hrEmail || hrEmail.trim() === '') {
       logger.warn(
         'HR_EMAIL environment variable is not set. Skipping email notification.'
