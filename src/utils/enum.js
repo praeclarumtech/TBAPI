@@ -18,6 +18,8 @@ export const jodTypeEnum = {
   CONTRACT: 'contract',
   INTERNSHIP: 'internship',
   FREELANCE: 'freelance',
+  ONSITE: 'onsite',
+  REMOTE: 'remote',
 };
 export const timeZome = {
   IST: 'IST',

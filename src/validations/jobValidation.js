@@ -26,11 +26,13 @@ export const createJobValidation = Joi.object().keys({
       jodTypeEnum.FREELANCE,
       jodTypeEnum.FULL_TIME,
       jodTypeEnum.PART_TIME,
-      jodTypeEnum.INTERNSHIP
+      jodTypeEnum.INTERNSHIP,
+      jodTypeEnum.ONSITE,
+      jodTypeEnum.REMOTE
     )
     .required()
     .messages({
-      'any.only': `Job Type must be ${jodTypeEnum.CONTRACT},${jodTypeEnum.FREELANCE},${jodTypeEnum.FULL_TIME},${jodTypeEnum.PART_TIME} or ${jodTypeEnum.INTERNSHIP}.`,
+      'any.only': `Job Type must be one of: ${Object.values(jodTypeEnum).join(', ')}.`,
       'any.required': 'Job Type is required',
     }),
   time_zone: Joi.string()
