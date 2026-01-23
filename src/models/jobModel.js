@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import {
   applicantEnum,
   jodTypeEnum,
+  jobPaymentTypeEnum,
   salaryCurrencyEnum,
   salaryFrequencyEnum,
   timeZome,
@@ -62,6 +63,12 @@ const jobSchema = new mongoose.Schema(
     min_salary: { type: Number, required: false },
     max_salary: { type: Number, required: false },
     contract_duration: { type: String, required: false },
+    budget: { type: String, required: false },
+    jobPaymentType: {
+      type: String,
+      enum: Object.values(jobPaymentTypeEnum),
+      required: false,
+    },
     addedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

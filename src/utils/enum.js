@@ -41,6 +41,11 @@ export const salaryCurrencyEnum = {
   SGD: 'SGD',
 };
 
+export const jobPaymentTypeEnum = {
+  CTH: 'CTH', // Contract to Hire
+  CTC: 'CTC', // Cost to Company
+};
+
 export const applicationsEnum = {
   SUBMITTED: 'Submitted',
   INTERVIEW: 'Interview',
