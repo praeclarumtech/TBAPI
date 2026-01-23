@@ -3,6 +3,7 @@ import {
   applicantEnum,
   applicationsEnum,
   jodTypeEnum,
+  jobPaymentTypeEnum,
   salaryFrequencyEnum,
   timeZome,
 } from '../utils/enum.js';
@@ -94,6 +95,16 @@ export const createJobValidation = Joi.object().keys({
     .allow(null)
     .messages({
       'any.only': 'Job Module must be either "vendor" or "client".',
+    }),
+  budget: Joi.string().optional().allow('', null).messages({
+    'string.base': 'Budget must be a string',
+  }),
+  jobPaymentType: Joi.string()
+    .valid(...Object.values(jobPaymentTypeEnum))
+    .optional()
+    .allow('', null)
+    .messages({
+      'any.only': `Job Payment Type must be one of: ${Object.values(jobPaymentTypeEnum).join(', ')}.`,
     }),
 });
 
