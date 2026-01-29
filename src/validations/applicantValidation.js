@@ -110,10 +110,17 @@ export const applicantValidation = Joi.object({
   negotiation: Joi.string().allow(null, ''),
 
   workPreference: Joi.string()
-    .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, applicantEnum.FREELANCER_WORK, '')
+    .valid(
+      applicantEnum.REMOTE,
+      applicantEnum.HYBRID,
+      applicantEnum.ONSITE,
+      applicantEnum.FREELANCER_WORK,
+      ''
+    )
     .allow(null, '')
     .messages({
-      'any.only': 'Work Preference must be remote, hybrid, onsite, or freelancer.',
+      'any.only':
+        'Work Preference must be remote, hybrid, onsite, or freelancer.',
       'any.required': 'Work Preference is required.',
     }),
 
@@ -167,7 +174,7 @@ export const applicantValidation = Joi.object({
     .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '')
     .optional()
     .messages({
-      'any.only': 'Maritial status must be Single,or Married.',
+      'any.only': 'Marital status must be Single or Married.',
     }),
   lastFollowUpDate: Joi.date().allow(null, '').messages({
     'date.base': 'lastFollowUpDate must be a valid date.',
@@ -185,7 +192,13 @@ export const applicantValidation = Joi.object({
     'string.base': 'Job ID must be a string.',
   }),
   addedBy: Joi.string()
-    .valid(applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, applicantEnum.GUEST, '')
+    .valid(
+      applicantEnum.MANUAL,
+      applicantEnum.CSV,
+      applicantEnum.RESUME,
+      applicantEnum.GUEST,
+      ''
+    )
     .allow(null, '')
     .messages({
       'any.only': 'Added by must be Manual, Csv, Resume, or Guest.',
@@ -284,10 +297,17 @@ export const updateApplicantValidation = Joi.object({
   negotiation: Joi.string().allow(''),
 
   workPreference: Joi.string()
-    .valid(applicantEnum.REMOTE, applicantEnum.HYBRID, applicantEnum.ONSITE, applicantEnum.FREELANCER_WORK, '')
+    .valid(
+      applicantEnum.REMOTE,
+      applicantEnum.HYBRID,
+      applicantEnum.ONSITE,
+      applicantEnum.FREELANCER_WORK,
+      ''
+    )
     .allow(null, '')
     .messages({
-      'any.only': 'Work Preference must be remote, hybrid, onsite, or freelancer.',
+      'any.only':
+        'Work Preference must be remote, hybrid, onsite, or freelancer.',
     }),
 
   currentCompanyDesignation: Joi.string().allow(null, '').messages({
@@ -329,13 +349,6 @@ export const updateApplicantValidation = Joi.object({
     .valid(applicantEnum.ONLINE, applicantEnum.OFFLINE, '')
     .allow(null, '')
     .messages({
-      'any.only': 'Interview Mode must be Online or Offline.',
-    }),
-
-  interviewMode: Joi.string()
-    .valid(applicantEnum.ONLINE, applicantEnum.OFFLINE, '')
-    .allow(null, '')
-    .messages({
       'any.only': 'Interview mode must be online or offline.',
     }),
 
@@ -348,7 +361,7 @@ export const updateApplicantValidation = Joi.object({
     .valid('', applicantEnum.SINGLE, applicantEnum.MARRIED, '')
     .optional()
     .messages({
-      'any.only': 'Maritial status must be Single,or Married.',
+      'any.only': 'Marital status must be Single or Married.',
     }),
   lastFollowUpDate: Joi.date().allow(null, '').messages({
     'date.base': 'lastFollowUpDate must be a valid date.',
@@ -372,7 +385,13 @@ export const updateApplicantValidation = Joi.object({
     'string.base': 'Job ID must be a string.',
   }),
   addedBy: Joi.string()
-    .valid(applicantEnum.MANUAL, applicantEnum.CSV, applicantEnum.RESUME, applicantEnum.GUEST, '')
+    .valid(
+      applicantEnum.MANUAL,
+      applicantEnum.CSV,
+      applicantEnum.RESUME,
+      applicantEnum.GUEST,
+      ''
+    )
     .allow(null, '')
     .messages({
       'any.only': 'Added by must be Manual, Csv, Resume, or Guest.',

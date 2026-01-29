@@ -31,9 +31,10 @@ export const addSkills = async (req, res) => {
   const normalizeSkill = (str) => str.toLowerCase().replace(/\s+/g, '');
   const normalizedInput = normalizeSkill(skills);
   try {
-
     const allSkills = await Skills.find({ isDeleted: false });
-    const existingSkill = allSkills.find(s => normalizeSkill(s.skills) === normalizedInput);
+    const existingSkill = allSkills.find(
+      (s) => normalizeSkill(s.skills) === normalizedInput
+    );
 
     if (existingSkill) {
       return HandleResponse(
@@ -45,7 +46,7 @@ export const addSkills = async (req, res) => {
     }
 
     const result = await create({ skills: skills.trim() });
-    clearCacheByPrefixes(['skill','skill-id','skill-dashboard']);
+    clearCacheByPrefixes(['skill', 'skill-id', 'skill-dashboard']);
     logger.info(`Skill ${Message.ADDED_SUCCESSFULLY}`);
     HandleResponse(
       res,
@@ -76,7 +77,15 @@ export const getSkills = async (req, res) => {
 
     if (search) {
       const searchFields = ['skills'];
-      const searchResult = await commonSearch(Skills, searchFields, search, '', page, limit, { createdAt: -1, _id: 1 });
+      const searchResult = await commonSearch(
+        Skills,
+        searchFields,
+        search,
+        '',
+        page,
+        limit,
+        { createdAt: -1, _id: 1 }
+      );
       data = searchResult.results;
       totalRecords = searchResult.totalRecords;
     } else {
@@ -157,7 +166,7 @@ export const updateSkills = async (req, res) => {
         `Skill ${Message.NOT_FOUND}`
       );
     }
-    clearCacheByPrefixes(['skill','skill-id','skill-dashboard']);
+    clearCacheByPrefixes(['skill', 'skill-id', 'skill-dashboard']);
     logger.info(`Skill ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -185,7 +194,7 @@ export const deleteSkills = async (req, res) => {
     });
 
     if (!deletedSkill) {
-      logger.warn(`Skill ${Message.NOT_FOUND}`)
+      logger.warn(`Skill ${Message.NOT_FOUND}`);
       return HandleResponse(
         res,
         false,
@@ -193,7 +202,7 @@ export const deleteSkills = async (req, res) => {
         `Skill ${Message.NOT_FOUND}`
       );
     }
-    clearCacheByPrefixes(['skill','skill-id','skill-dashboard']);
+    clearCacheByPrefixes(['skill', 'skill-id', 'skill-dashboard']);
     logger.info(`Skill ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -217,7 +226,12 @@ export const importSkillsCsv = async (req, res) => {
   try {
     uploadCv(req, res, async (err) => {
       if (err || !req.file) {
-        return HandleResponse(res, false, StatusCodes.BAD_REQUEST, `${Message.FAILED_TO} upload CSV`);
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          `${Message.FAILED_TO} upload CSV`
+        );
       }
       const results = [];
       fs.createReadStream(req.file.path)
@@ -229,44 +243,79 @@ export const importSkillsCsv = async (req, res) => {
         })
         .on('end', async () => {
           try {
-            const skillRegexes = results.map(skill => ({
-              skills: { $regex: `^${skill.skills.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' }
+            const skillRegexes = results.map((skill) => ({
+              skills: {
+                $regex: `^${skill.skills.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+                $options: 'i',
+              },
             }));
-            const existingSkills = await Skills.find({ $or: skillRegexes }).lean();
+            const existingSkills = await Skills.find({
+              $or: skillRegexes,
+            }).lean();
 
-            const existingSkillNames = existingSkills.map(skill => skill.skills.toLowerCase());
-
-            const newSkills = results.filter(skill =>
-              !existingSkillNames.includes(skill.skills.toLowerCase())
+            const existingSkillNames = existingSkills.map((skill) =>
+              skill.skills.toLowerCase()
             );
-            const duplicateSkills = results.filter(skill =>
+
+            const newSkills = results.filter(
+              (skill) =>
+                !existingSkillNames.includes(skill.skills.toLowerCase())
+            );
+            const duplicateSkills = results.filter((skill) =>
               existingSkillNames.includes(skill.skills.toLowerCase())
             );
             if (duplicateSkills.length) {
-              const duplicatesList = duplicateSkills.map(s => s.skills).join(', ');
+              const duplicatesList = duplicateSkills
+                .map((s) => s.skills)
+                .join(', ');
               fs.unlinkSync(req.file.path);
               if (duplicateSkills.length > 1) {
-                return HandleResponse(res, false, StatusCodes.CONFLICT, `${duplicatesList} Are already exist.`)
+                return HandleResponse(
+                  res,
+                  false,
+                  StatusCodes.CONFLICT,
+                  `${duplicatesList} already exist.`
+                );
               } else {
-                return HandleResponse(res, false, StatusCodes.CONFLICT, `${duplicatesList} is already exist.`)
+                return HandleResponse(
+                  res,
+                  false,
+                  StatusCodes.CONFLICT,
+                  `${duplicatesList} already exists.`
+                );
               }
             }
             if (newSkills.length) {
-              await Skills.insertMany(newSkills).catch(error => {
-              });
+              await Skills.insertMany(newSkills).catch((error) => {});
             }
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, true, StatusCodes.OK, 'CSV imported successfully.', {
-              insertedSkills: newSkills,
-            });
+            return HandleResponse(
+              res,
+              true,
+              StatusCodes.OK,
+              'CSV imported successfully.',
+              {
+                insertedSkills: newSkills,
+              }
+            );
           } catch (dbError) {
             fs.unlinkSync(req.file.path);
-            return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to import skills.');
+            return HandleResponse(
+              res,
+              false,
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              'Failed to import skills.'
+            );
           }
         })
         .on('error', (error) => {
           fs.unlinkSync(req.file.path);
-          return HandleResponse(res, false, StatusCodes.INTERNAL_SERVER_ERROR, error.message);
+          return HandleResponse(
+            res,
+            false,
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error.message
+          );
         });
     });
   } catch (error) {
@@ -278,6 +327,3 @@ export const importSkillsCsv = async (req, res) => {
     );
   }
 };
-
-
-

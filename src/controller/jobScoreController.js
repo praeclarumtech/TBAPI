@@ -162,7 +162,7 @@ export const addJobApplication = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Could not extract email or phone from resume'
+        'Could not extract email or phone from resume.'
       );
     }
 
@@ -324,7 +324,7 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
   try {
     const user = req.user || {};
     const userRole = user?.role?.toLowerCase(); // Normalize role to lowercase
-    const { appliedSkills, filterBy } = req.query;
+    const { appliedSkills, filterBy, search } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -333,27 +333,28 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
 
     if (userRole === Enum.VENDOR) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
-      
+
       // Vendor can see applications for:
       // 1. Jobs they created (addedBy: vendorId)
       // 2. Jobs they were emailed about (emailedVendors: vendorId)
       // 3. Applications they submitted (vendor_id)
-      const vendorJobs = await jobs.find({
-        $or: [
-          { addedBy: vendorId },
-          { emailedVendors: vendorId }
-        ],
-        isDeleted: false
-      }, '_id').lean();
-      
-      const jobIds = vendorJobs.map(job => job._id);
-      query.$or = [
-        { vendor_id: vendorId },
-        { job_id: { $in: jobIds } }
-      ];
+      const vendorJobs = await jobs
+        .find(
+          {
+            $or: [{ addedBy: vendorId }, { emailedVendors: vendorId }],
+            isDeleted: false,
+          },
+          '_id'
+        )
+        .lean();
+
+      const jobIds = vendorJobs.map((job) => job._id);
+      query.$or = [{ vendor_id: vendorId }, { job_id: { $in: jobIds } }];
     }
     if (userRole === Enum.CLIENT) {
-      const jobIds = await jobs.find({ addedBy: user.id, isDeleted: false }, { _id: 1 }).lean();
+      const jobIds = await jobs
+        .find({ addedBy: user.id, isDeleted: false }, { _id: 1 })
+        .lean();
       const jobIdList = jobIds.map((job) => job._id);
       query.job_id = { $in: jobIdList };
     }
@@ -363,65 +364,89 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
       if (normalizedFilterBy === Enum.VENDOR) {
         // Get vendor users (by roleId OR role string field)
         const vendorRole = await getRoleByNameService(Enum.VENDOR);
-        const vendorUsers = await User.find({
-          $or: [
-            ...(vendorRole ? [{ roleId: vendorRole._id }] : []),
-            { role: { $regex: new RegExp(`^${Enum.VENDOR}$`, 'i') } }
-          ],
-          isDeleted: false
-        }, '_id').lean();
+        const vendorUsers = await User.find(
+          {
+            $or: [
+              ...(vendorRole ? [{ roleId: vendorRole._id }] : []),
+              { role: { $regex: new RegExp(`^${Enum.VENDOR}$`, 'i') } },
+            ],
+            isDeleted: false,
+          },
+          '_id'
+        ).lean();
 
         // Get admin users (for backward compatibility - admin jobs without jobModule)
         const adminRole = await getRoleByNameService(Enum.ADMIN);
-        const adminUsers = await User.find({
-          $or: [
-            ...(adminRole ? [{ roleId: adminRole._id }] : []),
-            { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } }
-          ],
-          isDeleted: false
-        }, '_id').lean();
+        const adminUsers = await User.find(
+          {
+            $or: [
+              ...(adminRole ? [{ roleId: adminRole._id }] : []),
+              { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } },
+            ],
+            isDeleted: false,
+          },
+          '_id'
+        ).lean();
 
         // Get jobs created by vendors OR jobs with jobModule='vendor' OR admin jobs without jobModule
         const vendorJobIds = await jobs
-          .find({
-            $or: [
-              { addedBy: { $in: vendorUsers.map((u) => u._id) } },
-              { jobModule: 'vendor' },
-              { addedBy: { $in: adminUsers.map((u) => u._id) }, jobModule: { $in: [null, 'vendor'] } },
-            ]
-          }, { _id: 1 })
+          .find(
+            {
+              $or: [
+                { addedBy: { $in: vendorUsers.map((u) => u._id) } },
+                { jobModule: 'vendor' },
+                {
+                  addedBy: { $in: adminUsers.map((u) => u._id) },
+                  jobModule: { $in: [null, 'vendor'] },
+                },
+              ],
+            },
+            { _id: 1 }
+          )
           .lean();
         query.job_id = { $in: vendorJobIds.map((job) => job._id) };
       } else if (normalizedFilterBy === Enum.CLIENT) {
         // Get client users (by roleId OR role string field)
         const clientRole = await getRoleByNameService(Enum.CLIENT);
-        const clientUsers = await User.find({
-          $or: [
-            ...(clientRole ? [{ roleId: clientRole._id }] : []),
-            { role: { $regex: new RegExp(`^${Enum.CLIENT}$`, 'i') } }
-          ],
-          isDeleted: false
-        }, '_id').lean();
+        const clientUsers = await User.find(
+          {
+            $or: [
+              ...(clientRole ? [{ roleId: clientRole._id }] : []),
+              { role: { $regex: new RegExp(`^${Enum.CLIENT}$`, 'i') } },
+            ],
+            isDeleted: false,
+          },
+          '_id'
+        ).lean();
 
         // Get admin users (for backward compatibility - admin jobs without jobModule)
         const adminRole = await getRoleByNameService(Enum.ADMIN);
-        const adminUsers = await User.find({
-          $or: [
-            ...(adminRole ? [{ roleId: adminRole._id }] : []),
-            { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } }
-          ],
-          isDeleted: false
-        }, '_id').lean();
+        const adminUsers = await User.find(
+          {
+            $or: [
+              ...(adminRole ? [{ roleId: adminRole._id }] : []),
+              { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } },
+            ],
+            isDeleted: false,
+          },
+          '_id'
+        ).lean();
 
         // Get jobs created by clients OR jobs with jobModule='client' OR admin jobs without jobModule
         const clientJobIds = await jobs
-          .find({
-            $or: [
-              { addedBy: { $in: clientUsers.map((u) => u._id) } },
-              { jobModule: 'client' },
-              { addedBy: { $in: adminUsers.map((u) => u._id) }, jobModule: { $in: [null, 'client'] } },
-            ]
-          }, { _id: 1 })
+          .find(
+            {
+              $or: [
+                { addedBy: { $in: clientUsers.map((u) => u._id) } },
+                { jobModule: 'client' },
+                {
+                  addedBy: { $in: adminUsers.map((u) => u._id) },
+                  jobModule: { $in: [null, 'client'] },
+                },
+              ],
+            },
+            { _id: 1 }
+          )
           .lean();
         query.job_id = { $in: clientJobIds.map((job) => job._id) };
       }
@@ -439,6 +464,75 @@ export const viewJobApplicantionsByVendor = async (req, res) => {
         );
 
       query.appliedSkills = { $all: skillsArray };
+    }
+
+    // Search functionality for applicant name and job title
+    if (search && typeof search === 'string' && search.trim()) {
+      const searchRegex = new RegExp(
+        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'i'
+      );
+
+      // If there's already a $or condition (for vendor), we need to combine it with search
+      if (query.$or) {
+        // Get job IDs that match the search term in job_subject
+        const matchingJobs = await jobs
+          .find(
+            {
+              job_subject: { $regex: searchRegex },
+              isDeleted: false,
+            },
+            '_id'
+          )
+          .lean();
+
+        const matchingJobIds = matchingJobs.map((job) => job._id);
+
+        // Combine existing $or with search conditions
+        query.$and = [
+          {
+            $or: query.$or,
+          },
+          {
+            $or: [
+              { 'name.firstName': searchRegex },
+              { 'name.lastName': searchRegex },
+              { 'name.middleName': searchRegex },
+              { email: searchRegex },
+              { 'phone.phoneNumber': searchRegex },
+              ...(matchingJobIds.length > 0
+                ? [{ job_id: { $in: matchingJobIds } }]
+                : []),
+            ],
+          },
+        ];
+        delete query.$or;
+      } else {
+        // No existing $or condition, add search directly
+        // Get job IDs that match the search term in job_subject
+        const matchingJobs = await jobs
+          .find(
+            {
+              job_subject: { $regex: searchRegex },
+              isDeleted: false,
+            },
+            '_id'
+          )
+          .lean();
+
+        const matchingJobIds = matchingJobs.map((job) => job._id);
+
+        query.$or = [
+          { 'name.firstName': searchRegex },
+          { 'name.lastName': searchRegex },
+          { 'name.middleName': searchRegex },
+          { email: searchRegex },
+          { 'phone.phoneNumber': searchRegex },
+          ...(matchingJobIds.length > 0
+            ? [{ job_id: { $in: matchingJobIds } }]
+            : []),
+        ];
+      }
     }
 
     const totalCount = await jobApplication.countDocuments(query);
@@ -605,7 +699,7 @@ export const updateApplicantStatus = async (req, res) => {
           res,
           false,
           StatusCodes.FORBIDDEN,
-          'You can only update status for applications to your own jobs or client jobs you were emailed about'
+          'You can only update status for applications to your own jobs or client jobs you were emailed about.'
         );
       }
     } else if (userRole === Enum.CLIENT) {
@@ -614,7 +708,7 @@ export const updateApplicantStatus = async (req, res) => {
           res,
           false,
           StatusCodes.FORBIDDEN,
-          'You can only update status for applications to your own jobs'
+          'You can only update status for applications to your own jobs.'
         );
       }
     } else if (userRole !== Enum.ADMIN && userRole !== Enum.HR) {
@@ -622,7 +716,7 @@ export const updateApplicantStatus = async (req, res) => {
         res,
         false,
         StatusCodes.FORBIDDEN,
-        'Only clients, vendors, admins, and HR can update application status'
+        'Only clients, vendors, admins, and HR can update application status.'
       );
     }
 
@@ -777,12 +871,12 @@ export const getVendorJobApplicantReport = async (req, res) => {
       }
     );
   } catch (error) {
-    logger.error('Failed to generate vendor report', error);
+    logger.error('Failed to generate vendor report.', error);
     return HandleResponse(
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Failed to generate vendor report'
+      'Failed to generate vendor report.'
     );
   }
 };
@@ -834,7 +928,7 @@ export const addVendor = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Username and email are required'
+        'Username and email are required.'
       );
     }
 
@@ -1510,7 +1604,12 @@ export const getMatchingApplicantsForJob = async (req, res) => {
       })
       .lean();
     if (!job) {
-      return HandleResponse(res, false, StatusCodes.NOT_FOUND, 'Job not found');
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.NOT_FOUND,
+        'Job not found.'
+      );
     }
 
     // Get job creator role
@@ -1546,22 +1645,64 @@ export const getMatchingApplicantsForJob = async (req, res) => {
       ),
     };
 
-    // Add search filter if provided
-    if (search && typeof search === 'string') {
+    // Add search filter if provided with full name matching
+    if (search && typeof search === 'string' && search.trim()) {
+      const searchTerm = search.trim();
       const searchRegex = new RegExp(
-        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
         'i'
       );
-      applicantQuery.$and = [
-        {
-          $or: [
-            { 'name.firstName': searchRegex },
-            { 'name.lastName': searchRegex },
-            { email: searchRegex },
-            { 'phone.phoneNumber': searchRegex },
-            { appliedSkills: searchRegex },
+
+      // Split search term into words for full name matching
+      const searchWords = searchTerm
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      // Build search conditions
+      const searchConditions = [
+        { 'name.firstName': searchRegex },
+        { 'name.lastName': searchRegex },
+        { 'name.middleName': searchRegex },
+        { email: searchRegex },
+        { 'phone.phoneNumber': searchRegex },
+        { appliedSkills: searchRegex },
+      ];
+
+      // For full name searches (multiple words), also try matching across firstName and lastName
+      if (searchWords.length > 1) {
+        const firstNameRegex = new RegExp(
+          searchWords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+        const lastNameRegex = new RegExp(
+          searchWords
+            .slice(1)
+            .join(' ')
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+
+        searchConditions.push({
+          $and: [
+            { 'name.firstName': firstNameRegex },
+            { 'name.lastName': lastNameRegex },
           ],
-        },
+        });
+
+        // Also try reverse: lastName contains first word, firstName contains rest
+        if (searchWords.length === 2) {
+          searchConditions.push({
+            $and: [
+              { 'name.lastName': firstNameRegex },
+              { 'name.firstName': lastNameRegex },
+            ],
+          });
+        }
+      }
+
+      applicantQuery.$and = [
+        ...(applicantQuery.$and || []),
+        { $or: searchConditions },
       ];
     }
 

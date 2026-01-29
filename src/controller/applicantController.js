@@ -64,7 +64,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
         false,
         StatusCodes.BAD_REQUEST,
         err.message.includes('File type')
-          ? Message.INVALID_FILE_TYPE
+          ? Message.INVALID_FILE_TYPE_RESUME
           : err.message
       );
     }
@@ -116,7 +116,7 @@ export const uploadResumeAndCreateApplicant = async (req, res) => {
 
             results.processed++;
           } catch (error) {
-            let reason = 'Could not extract email or phone from resume';
+            let reason = 'Could not extract email or phone from resume.';
             if (error.message.includes('Invalid resume format')) {
               reason = error.message;
             } else if (error.code === 11000) {
@@ -242,7 +242,7 @@ async function processSingleResumeFile(file) {
       resumeText = await extractTextFromDoc(filePath);
       break;
     default:
-      throw new Error(Message.INVALID_FILE_TYPE);
+      throw new Error(Message.INVALID_FILE_TYPE_RESUME);
   }
   // 🔒 Reject matrimony biodata
   if (detectMatrimonyBioData(resumeText)) {
@@ -253,7 +253,7 @@ async function processSingleResumeFile(file) {
 
   const parsedData = parseResumeText(resumeText);
   if (!parsedData.email) {
-    throw new Error('Could not extract email or phone from resume');
+    throw new Error('Could not extract email or phone from resume.');
   }
 
   const matchedSkills = await extractSkillsFromResume(resumeText);
@@ -393,7 +393,7 @@ export const addApplicant = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        'Phone number is already in use'
+        'Phone number is already in use.'
       );
     } else if (error.code === 'DUPLICATE_WHATSAPP') {
       return HandleResponse(
@@ -448,7 +448,7 @@ export const saveUserFilter = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Error saving filters'
+      'Error saving filters.'
     );
   }
 };
@@ -460,13 +460,13 @@ export const getUserFilter = async (req, res) => {
     const objectUserId = new mongoose.Types.ObjectId(userId);
     const filter = await UserFilter.findOne({ userId: objectUserId });
 
-    logger.info('Filters fetched successfully');
+    logger.info('Filters fetched successfully.');
 
     return HandleResponse(
       res,
       true,
       StatusCodes.OK,
-      'Filters fetched successfully',
+      'Filters fetched successfully.',
       filter?.filters || {}
     );
   } catch (error) {
@@ -475,7 +475,7 @@ export const getUserFilter = async (req, res) => {
       res,
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Error fetching filters'
+      'Error fetching filters.'
     );
   }
 };
@@ -530,8 +530,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-          ? { $in: validAddedBy }
-          : undefined;
+            ? { $in: validAddedBy }
+            : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -1682,18 +1682,18 @@ export const exportApplicantCsv = async (req, res) => {
           source === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : source === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : source === applicantEnum.MANUAL
-            ? applicantEnum.MANUAL
-            : source === applicantEnum.GUEST
-            ? applicantEnum.GUEST
-            : {
-                $in: [
-                  applicantEnum.RESUME,
-                  applicantEnum.CSV,
-                  applicantEnum.GUEST,
-                ],
-              };
+              ? applicantEnum.CSV
+              : source === applicantEnum.MANUAL
+                ? applicantEnum.MANUAL
+                : source === applicantEnum.GUEST
+                  ? applicantEnum.GUEST
+                  : {
+                      $in: [
+                        applicantEnum.RESUME,
+                        applicantEnum.CSV,
+                        applicantEnum.GUEST,
+                      ],
+                    };
       }
 
       if (filtered) {
@@ -1701,8 +1701,8 @@ export const exportApplicantCsv = async (req, res) => {
           filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : filtered === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1838,7 +1838,7 @@ export const exportApplicantCsv = async (req, res) => {
         res,
         false,
         StatusCodes.FORBIDDEN,
-        'Only admin users can export applicants'
+        'Only admin users can export applicants.'
       );
     }
 
@@ -1896,8 +1896,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     const user = await User.findById(req.user.id);
 

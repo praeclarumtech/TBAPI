@@ -24,25 +24,25 @@ import country from '../models/countryModel.js';
 import city from '../models/citymodel.js';
 import { pagination } from '../helpers/commonFunction/handlePagination.js';
 import { HandleResponse } from '../helpers/handleResponse.js';
-import { clearCacheByPrefixes } from '../helpers/commonFunction/cacheUtils.js'; 
+import { clearCacheByPrefixes } from '../helpers/commonFunction/cacheUtils.js';
 
 export const viewCountry = async (req, res) => {
   try {
-    const { page = 1, limit , search = ''} = req.query;
+    const { page = 1, limit, search = '' } = req.query;
     const query = {};
 
-     if (search) {
+    if (search) {
       query.country_name = { $regex: search, $options: 'i' };
     }
 
-     const countries = await pagination({
+    const countries = await pagination({
       Schema: country,
       page: parseInt(page),
       limit: parseInt(limit),
       query: query,
-      sort:  { country_name: 1 },
+      sort: { country_name: 1 },
     });
-  
+
     logger.info(`All countries are ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -52,7 +52,7 @@ export const viewCountry = async (req, res) => {
       countries
     );
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch countries`,error);
+    logger.error(`${Message.FAILED_TO} fetch countries`, error);
     return HandleResponse(
       res,
       false,
@@ -88,7 +88,7 @@ export const addCountry = async (req, res) => {
       );
     }
     const newCountry = await createCountry({ country_name });
-    clearCacheByPrefixes('country','country-id');
+    clearCacheByPrefixes('country', 'country-id');
     return HandleResponse(
       res,
       true,
@@ -129,7 +129,7 @@ export const updateCountryById = async (req, res) => {
     }
 
     const updatedcountrys = await updateCountry(countryId, updateData);
-    clearCacheByPrefixes('country','country-id');
+    clearCacheByPrefixes('country', 'country-id');
     logger.info(`country  is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -162,8 +162,8 @@ export const deleteCountryById = async (req, res) => {
         'Country not found'
       );
     }
-    clearCacheByPrefixes('country','country-id');
-    
+    clearCacheByPrefixes('country', 'country-id');
+
     return HandleResponse(
       res,
       true,
@@ -196,7 +196,7 @@ export const deleteManyCountries = async (req, res) => {
       );
     }
     const result = await deleteManyCountry(ids);
-    clearCacheByPrefixes('country','country-id');
+    clearCacheByPrefixes('country', 'country-id');
     return HandleResponse(
       res,
       true,
@@ -256,11 +256,11 @@ export const viewCountryById = async (req, res) => {
 export const viewState = async (req, res) => {
   try {
     const { country_id, page = 1, limit, search = '' } = req.query;
-    const query ={}
+    const query = {};
 
     if (country_id) query.country_id = country_id;
 
-     if (search) {
+    if (search) {
       query.state_name = { $regex: search, $options: 'i' };
     }
 
@@ -269,7 +269,7 @@ export const viewState = async (req, res) => {
       page: parseInt(page),
       limit: parseInt(limit),
       query: query,
-      sort:  { state_name: 1 },
+      sort: { state_name: 1 },
     });
 
     logger.info(`All states are ${Message.FETCH_SUCCESSFULLY}`);
@@ -336,7 +336,7 @@ export const addState = async (req, res) => {
     }
 
     const result = await createState({ state_name, country_id });
-    clearCacheByPrefixes('state','state-id');
+    clearCacheByPrefixes('state', 'state-id');
 
     logger.info(`State ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
@@ -377,7 +377,7 @@ export const updateStateById = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `state name and country id Message.FIELD_REQUIRED`
+        `State name and country id ${Message.FIELD_REQUIRED}`
       );
     }
 
@@ -406,7 +406,7 @@ export const updateStateById = async (req, res) => {
     }
 
     const updatedState = await updateState(stateId, { state_name, country_id });
-    clearCacheByPrefixes('state','state-id');
+    clearCacheByPrefixes('state', 'state-id');
     logger.info(`State ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -442,7 +442,7 @@ export const deleteStateById = async (req, res) => {
         `State is ${Message.NOT_FOUND}`
       );
     }
-    clearCacheByPrefixes('state','state-id');
+    clearCacheByPrefixes('state', 'state-id');
     logger.info(`State is ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -489,8 +489,8 @@ export const deleteManyStates = async (req, res) => {
         `States are ${Message.NOT_FOUND}`
       );
     }
-    clearCacheByPrefixes('state','state-id');
-  
+    clearCacheByPrefixes('state', 'state-id');
+
     logger.info(`States are ${Message.DELETED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -514,20 +514,20 @@ export const deleteManyStates = async (req, res) => {
 
 export const viewCity = async (req, res) => {
   try {
-    const { state_id ,page = 1, limit, search = ''} = req.query;
-     const query = {};
+    const { state_id, page = 1, limit, search = '' } = req.query;
+    const query = {};
     if (state_id) query.state_id = state_id;
 
-     if (search) {
+    if (search) {
       query.city_name = { $regex: search, $options: 'i' };
     }
 
-     const citys = await pagination({
+    const citys = await pagination({
       Schema: city,
       page: parseInt(page),
       limit: parseInt(limit),
       query: query,
-      sort: {city_name : 1},
+      sort: { city_name: 1 },
     });
 
     logger.info(`All cities are ${Message.FETCH_SUCCESSFULLY}`);
@@ -630,7 +630,7 @@ export const addCity = async (req, res) => {
     }
 
     const result = await createCity({ city_name, state_id });
-    clearCacheByPrefixes('city','city-id');
+    clearCacheByPrefixes('city', 'city-id');
     logger.info(`City ${Message.ADDED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -665,7 +665,7 @@ export const viewCityById = async (req, res) => {
         'City not found'
       );
     }
-    
+
     logger.info(`City fetched successfully`);
     return HandleResponse(res, true, StatusCodes.OK, undefined, cityData);
   } catch (error) {
@@ -693,7 +693,7 @@ export const updateCityById = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        `city anme and stated id ${Message.FIELD_REQUIRED}`
+        `City name and state id ${Message.FIELD_REQUIRED}`
       );
     }
 
@@ -702,7 +702,7 @@ export const updateCityById = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Invalid city_id format'
+        'Invalid city_id format.'
       );
     }
 
@@ -731,7 +731,7 @@ export const updateCityById = async (req, res) => {
     }
 
     const result = await updateCity(city_id, { city_name, state_id });
-    clearCacheByPrefixes('city','city-id');
+    clearCacheByPrefixes('city', 'city-id');
     logger.info(`City is ${Message.UPDATED_SUCCESSFULLY}`);
     return HandleResponse(
       res,
@@ -758,7 +758,7 @@ export const deleteCityById = async (req, res) => {
     const { id } = req.params;
 
     const result = await deleteCity(id);
-    clearCacheByPrefixes('city','city-id');
+    clearCacheByPrefixes('city', 'city-id');
     logger.info(`City deleted successfully`);
     return HandleResponse(
       res,
@@ -787,7 +787,7 @@ export const deleteManyCities = async (req, res) => {
     const { ids } = req.body;
 
     const result = await deleteManyCity(ids);
-    clearCacheByPrefixes('city','city-id');
+    clearCacheByPrefixes('city', 'city-id');
     logger.info(`Cities deleted successfully`);
     return HandleResponse(
       res,

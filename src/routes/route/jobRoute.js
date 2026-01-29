@@ -16,6 +16,7 @@ import {
   sendJobNotificationsToApplicants,
   sendApplicantStatusEmail,
   getJobApplicationsByRole,
+  downloadSampleApplicationImport,
 } from '../../controller/jobController.js';
 import { validator } from '../../helpers/validator.js';
 import { createJobValidation } from '../../validations/jobValidation.js';
@@ -34,6 +35,9 @@ router.get('/public/viewJobs', viewJobs);
 router.get('/client/applications', authorization, viewClientJobApplications);
 router.get('/applications/by-role', authorization, getJobApplicationsByRole);
 router.get('/email/recipients', authorization, getVendorsAndApplicantsForEmail);
+
+// Download sample Excel template for job application import
+router.get('/sample-application-import', authorization, downloadSampleApplicationImport);
 
 router.post(
   '/applicant/send-status-email',
