@@ -55,7 +55,27 @@ export const sendEmail = async (req, res) => {
     );
     const finalEmailsToSend = [...activeEmailsFromDB, ...emailsNotInDB];
 
+    // Check if all recipients are inactive
     if (finalEmailsToSend.length === 0) {
+      // If all recipients are inactive applicants, show specific message
+      if (inactiveEmails.length > 0 && emailsNotInDB.length === 0) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          'Please activate the user before sending the email.'
+        );
+      }
+      // If all recipients are not in database
+      if (emailsNotInDB.length > 0 && inactiveEmails.length === 0) {
+        return HandleResponse(
+          res,
+          false,
+          StatusCodes.BAD_REQUEST,
+          'Email not sent. No eligible recipients found.'
+        );
+      }
+      // Mixed case or no recipients
       return HandleResponse(
         res,
         false,
@@ -109,7 +129,7 @@ export const sendEmail = async (req, res) => {
     const storedEmails = finalEmailsToSend.map((email) => ({
       email_to: email,
       email_bcc: email_bcc || [],
-      subject,              
+      subject,
       description,
       attachments,
     }));
@@ -289,7 +309,7 @@ export const generateMultipleQrs = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Emails are required'
+        'Emails are required.'
       );
     }
 
@@ -360,7 +380,7 @@ export const getEmailCount = async (req, res) => {
       StatusCodes.OK,
       `Email count ${Message.FETCH_SUCCESSFULLY}`,
       {
-        count
+        count,
       }
     );
   } catch (error) {

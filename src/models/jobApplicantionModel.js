@@ -42,7 +42,7 @@ const jobApplicationSchema = new mongoose.Schema(
     rating: { type: Number, required: false },
     currentPkg: { type: Number },
     expectedPkg: { type: Number },
-    noticePeriod: { type: Number },
+    noticePeriod: { type: Number, required: false },
     negotiation: { type: String, required: false },
     workPreference: {
       type: String,
@@ -68,6 +68,7 @@ const jobApplicationSchema = new mongoose.Schema(
         applicantEnum.ON_HOLD,
         applicantEnum.ONBOARDED,
         applicantEnum.LEAVED,
+        'pending', // Allow 'pending' as a valid status
       ],
       default: applicantEnum.APPLIED,
       required: false,

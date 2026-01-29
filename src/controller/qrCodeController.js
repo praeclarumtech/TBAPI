@@ -127,8 +127,8 @@ const generateQRCodeInviteTemplate = ({
                 📧 If you have any queries, please contact HR at <a href="mailto:${
                   process.env.HR_EMAIL || 'hr@talentbox.com'
                 }" style="color: #e94560; text-decoration: none; font-weight: 600;">${
-  process.env.HR_EMAIL || 'hr@talentbox.com'
-}</a>
+                  process.env.HR_EMAIL || 'hr@talentbox.com'
+                }</a>
               </p>
               <hr style="border: none; border-top: 1px solid #dee2e6; margin: 15px 0;" />
               <p style="color: #999999; font-size: 12px; margin: 0;">
@@ -174,7 +174,7 @@ export const sendQRCodeInvite = async (req, res) => {
         res,
         false,
         StatusCodes.FORBIDDEN,
-        'Only admin can send QR code invites'
+        'Only admin can send QR code invites.'
       );
     }
 
@@ -262,9 +262,8 @@ export const sendQRCodeInvite = async (req, res) => {
     // If templateType is provided, fetch by type
     else if (templateType && typeof templateType === 'string') {
       try {
-        const { getEmailTemplateByStatus } = await import(
-          '../services/emailTemplateService.js'
-        );
+        const { getEmailTemplateByStatus } =
+          await import('../services/emailTemplateService.js');
         emailTemplate = await getEmailTemplateByStatus(templateType);
         if (!emailTemplate || emailTemplate.isDeleted) {
           logger.warn(

@@ -136,7 +136,7 @@ const uploadAttachmentsMulter = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(Message.INVALID_FILE_TYPE));
+      cb(new Error(Message.INVALID_FILE_TYPE_ATTACHMENT));
     }
   },
 }).array('attachments', 5);
@@ -218,7 +218,7 @@ const resumeFileFilter = (req, file, cb) => {
       logger.warn(
         `Rejected file type: ${file.mimetype} for ${file.originalname}`
       );
-      return cb(new Error(Message.INVALID_FILE_TYPE), false);
+      return cb(new Error(Message.INVALID_FILE_TYPE_RESUME), false);
     }
     cb(null, true);
   } catch (error) {
@@ -289,7 +289,7 @@ export const jobScoreResume = (req, res, next) => {
       cb(
         allowedTypes.includes(file.mimetype)
           ? null
-          : new Error(Message.INVALID_FILE_TYPE),
+          : new Error(Message.INVALID_FILE_TYPE_RESUME),
         true
       );
     },

@@ -21,7 +21,7 @@ router.get(
   verifyRoles([Enum.ADMIN, Enum.HR]),
   getDesignationsById
 );
-router.put('/update/:designationId', verifyRoles([Enum.ADMIN]), authorization, updateDesignations);
+router.put('/update/:designationId', authorization, verifyRoles([Enum.ADMIN]), updateDesignations);
 router.delete('/deleteDesignation/:id', authorization, verifyRoles([Enum.ADMIN]), deleteDesignation);
 router.delete('/deleteManyDesignation', authorization, verifyRoles([Enum.ADMIN]), deleteManyDesignation);
 

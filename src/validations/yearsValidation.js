@@ -16,6 +16,6 @@ export const passingYearValidation = Joi.object({
     'number.base': 'Year must be a number',
     'number.integer': 'Year must be an integer',
     'number.required': 'Year is required',
-    'number.min': 'passout year  must after 2017',
+    'number.min': 'Passing year must be 1999 or later.',
   }),
 });

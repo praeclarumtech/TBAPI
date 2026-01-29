@@ -224,6 +224,9 @@ export const login = async (req, res) => {
     // ✅ Populate role before creating token
     const userWithRole = await User.findById(user._id).populate('roleId');
 
+    const expiresIn = process.env.EXPIRES_IN || '24h';
+    logger.info(`Token expiration set to: ${expiresIn}`);
+
     const token = jwt.sign(
       {
         id: userWithRole._id,
@@ -231,8 +234,15 @@ export const login = async (req, res) => {
         accessModules: userWithRole.roleId?.accessModules || [],
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.EXPIRES_IN }
+      { expiresIn }
     );
+
+    // Decode token to verify expiration
+    const decoded = jwt.decode(token);
+    if (decoded && decoded.exp) {
+      const expirationDate = new Date(decoded.exp * 1000);
+      logger.info(`Token will expire at: ${expirationDate.toISOString()}`);
+    }
 
     logger.info(Message.USER_LOGGED_IN_SUCCESSFULLY);
 
@@ -970,8 +980,8 @@ export const importvendorCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     if (!req.file) {
       return HandleResponse(
@@ -1177,34 +1187,51 @@ export const importvendorCsv = async (req, res) => {
         });
       }
 
-      const errs = [];
+      const requiredFieldErrors = [];
+      const invalidValueErrors = [];
 
-      if (!vendor.username) errs.push('username is required');
-      if (!vendor.email) errs.push('email is required');
-      if (!vendor.role) errs.push('role is required (vendor/client)');
-      if (!['vendor', 'client'].includes(vendor.role)) {
-        errs.push(`Invalid role: ${vendor.role}`);
+      if (!vendor.username) requiredFieldErrors.push('username');
+      if (!vendor.email) requiredFieldErrors.push('email');
+      if (!vendor.role) requiredFieldErrors.push('role');
+      if (!vendor.whatsapp_number) requiredFieldErrors.push('whatsapp_number');
+      if (!vendor.company_type) requiredFieldErrors.push('company_type');
+      if (!vendor.hire_resources) requiredFieldErrors.push('hire_resources');
+
+      // Check for invalid values only if field exists
+      if (vendor.role && !['vendor', 'client'].includes(vendor.role)) {
+        invalidValueErrors.push(`Invalid role: ${vendor.role}`);
       }
-      if (!vendor.whatsapp_number) errs.push('whatsapp_number is required');
-
-      if (!vendor.company_type) {
-        errs.push('company_type is required');
-      } else if (
+      if (
+        vendor.company_type &&
         !Object.values(CompanyTypeEnum).includes(vendor.company_type)
       ) {
-        errs.push(`Invalid company_type: ${vendor.company_type}`);
+        invalidValueErrors.push(`Invalid company_type: ${vendor.company_type}`);
       }
-
-      if (!vendor.hire_resources) {
-        errs.push('hire_resources is required');
-      } else if (
+      if (
+        vendor.hire_resources &&
         !Object.values(HireResourcesEnum).includes(vendor.hire_resources)
       ) {
-        errs.push(`Invalid hire_resources: ${vendor.hire_resources}`);
+        invalidValueErrors.push(
+          `Invalid hire_resources: ${vendor.hire_resources}`
+        );
       }
 
-      if (errs.length) {
-        validationErrors.push(`Line ${line}: ${errs.join(', ')}`);
+      if (requiredFieldErrors.length > 0 || invalidValueErrors.length > 0) {
+        const lineErrors = [];
+        if (requiredFieldErrors.length > 0) {
+          lineErrors.push(
+            `Line ${line}: ${requiredFieldErrors.join(', ')} ${requiredFieldErrors.length === 1 ? 'is' : 'are'} required`
+          );
+        }
+        if (invalidValueErrors.length > 0) {
+          lineErrors.push(`Line ${line}: ${invalidValueErrors.join(', ')}`);
+        }
+        validationErrors.push({
+          line,
+          requiredFields: requiredFieldErrors,
+          invalidValues: invalidValueErrors,
+          message: lineErrors.join('; '),
+        });
       } else {
         validVendors.push(vendor);
       }
@@ -1212,12 +1239,37 @@ export const importvendorCsv = async (req, res) => {
 
     if (validationErrors.length) {
       fs.unlinkSync(req.file.path);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.BAD_REQUEST,
-        validationErrors
-      );
+
+      // Group errors by type
+      const requiredFieldsGroup = [];
+      const invalidValuesGroup = [];
+
+      validationErrors.forEach((error) => {
+        if (error.requiredFields.length > 0) {
+          requiredFieldsGroup.push(
+            `Line ${error.line}: ${error.requiredFields.join(', ')} ${error.requiredFields.length === 1 ? 'is' : 'are'} required`
+          );
+        }
+        if (error.invalidValues.length > 0) {
+          invalidValuesGroup.push(
+            `Line ${error.line}: ${error.invalidValues.join(', ')}`
+          );
+        }
+      });
+
+      // Format response message
+      const errorMessages = [];
+      if (requiredFieldsGroup.length > 0) {
+        errorMessages.push('Required Fields Errors:');
+        errorMessages.push(...requiredFieldsGroup);
+      }
+      if (invalidValuesGroup.length > 0) {
+        if (errorMessages.length > 0) errorMessages.push(''); // Add separator
+        errorMessages.push('Invalid Values Errors:');
+        errorMessages.push(...invalidValuesGroup);
+      }
+
+      return HandleResponse(res, false, StatusCodes.BAD_REQUEST, errorMessages);
     }
 
     const seenEmails = new Set();
@@ -1256,11 +1308,17 @@ export const importvendorCsv = async (req, res) => {
 
     if (duplicateErrors.length) {
       fs.unlinkSync(req.file.path);
+
+      // Format duplicate errors
+      const formattedErrors = [];
+      formattedErrors.push('Duplicate Errors:');
+      formattedErrors.push(...duplicateErrors);
+
       return HandleResponse(
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        duplicateErrors
+        formattedErrors
       );
     }
 
@@ -1319,9 +1377,20 @@ export const importvendorCsv = async (req, res) => {
         })
         .map((v) => (v.company_email || v.email).trim().toLowerCase());
 
-      return HandleResponse(res, false, StatusCodes.CONFLICT, dbDupErrors, {
-        duplicateEmails: [...new Set(duplicateEmails)],
-      });
+      // Format database duplicate errors
+      const formattedDbErrors = [];
+      formattedDbErrors.push('Duplicate Errors (Already exists in database):');
+      formattedDbErrors.push(...dbDupErrors);
+
+      return HandleResponse(
+        res,
+        false,
+        StatusCodes.CONFLICT,
+        formattedDbErrors,
+        {
+          duplicateEmails: [...new Set(duplicateEmails)],
+        }
+      );
     }
 
     const inserted = [];
@@ -1482,7 +1551,7 @@ export const importvendorCsv = async (req, res) => {
 
     fs.unlinkSync(req.file.path);
 
-    return HandleResponse(res, true, StatusCodes.OK, 'Import completed', {
+    return HandleResponse(res, true, StatusCodes.OK, 'Import completed.', {
       inserted,
       updated,
       skipped,
@@ -1505,7 +1574,7 @@ export const exportVendorCsv = async (req, res) => {
         res,
         false,
         StatusCodes.UNAUTHORIZED,
-        'Only admin can export vendor/client data'
+        'Only admin can export vendor/client data.'
       );
     }
 

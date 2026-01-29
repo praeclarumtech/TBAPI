@@ -8,7 +8,7 @@ import logger from '../loggers/logger.js';
 export const createApplicant = async (body) => {
   try {
     if (!body.email) {
-      throw new Error('Email is required');
+      throw new Error('Email is required.');
     }
 
     // Check if phone number is already used by a different applicant
@@ -18,7 +18,7 @@ export const createApplicant = async (body) => {
         email: { $ne: body.email },
       });
       if (existingByPhone) {
-        const error = new Error('Phone number is already in use');
+        const error = new Error('Phone number is already in use.');
         error.code = 'DUPLICATE_PHONE';
         throw error;
       }
@@ -31,7 +31,7 @@ export const createApplicant = async (body) => {
         email: { $ne: body.email },
       });
       if (existingByWhatsapp) {
-        const error = new Error('WhatsApp number is already in use');
+        const error = new Error('WhatsApp number is already in use.');
         error.code = 'DUPLICATE_WHATSAPP';
         throw error;
       }

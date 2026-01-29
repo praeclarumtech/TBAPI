@@ -33,6 +33,7 @@ import { applicantEnum } from '../utils/enum.js';
 import { calculateJobScore } from '../services/jobScoreService.js';
 import QRCode from 'qrcode';
 import { getEmailTemplateById } from '../services/emailTemplateService.js';
+import xlsx from 'xlsx';
 
 const sendJobNotificationsToMatchingApplicants = async (job, jobId) => {
   let applicantEmailStatus = { sent: 0, failed: 0, errors: [] };
@@ -317,7 +318,7 @@ export const sendJobNotificationsToApplicants = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Invalid job ID'
+        'Invalid job ID.'
       );
     }
 
@@ -492,7 +493,8 @@ export const viewJobs = async (req, res) => {
   try {
     const {
       page = 1,
-      limit = 10,
+      limit: limitParam,
+      pageSize,
       search,
       job_type,
       salary_currency,
@@ -506,6 +508,9 @@ export const viewJobs = async (req, res) => {
       posted_by_role,
       filterBy,
     } = req.query;
+
+    // Support both 'limit' and 'pageSize' parameters
+    const limit = limitParam || pageSize || 10;
     const query = { isDeleted: false };
 
     const user = req.user || {};
@@ -516,12 +521,9 @@ export const viewJobs = async (req, res) => {
       query.addedBy = new mongoose.Types.ObjectId(user.id);
     } else if (userRole === Enum.VENDOR) {
       const vendorId = new mongoose.Types.ObjectId(user.id);
-      
+
       // Vendor can see: their own jobs OR jobs they were emailed about
-      query.$or = [
-        { addedBy: vendorId },
-        { emailedVendors: vendorId }
-      ];
+      query.$or = [{ addedBy: vendorId }, { emailedVendors: vendorId }];
     } else if (posted_by_role && userRole === Enum.ADMIN) {
       // Only admin can filter by posted_by_role (case-insensitive)
       const normalizedRole = posted_by_role.toLowerCase();
@@ -540,24 +542,30 @@ export const viewJobs = async (req, res) => {
       if (normalizedFilterBy === Enum.VENDOR) {
         // Get vendor users (by roleId OR role string field)
         const vendorRole = await getRoleByNameService(Enum.VENDOR);
-        const vendorUsers = await User.find({
-          $or: [
-            ...(vendorRole ? [{ roleId: vendorRole._id }] : []),
-            { role: { $regex: new RegExp(`^${Enum.VENDOR}$`, 'i') } }
-          ],
-          isDeleted: false
-        }, '_id').lean();
+        const vendorUsers = await User.find(
+          {
+            $or: [
+              ...(vendorRole ? [{ roleId: vendorRole._id }] : []),
+              { role: { $regex: new RegExp(`^${Enum.VENDOR}$`, 'i') } },
+            ],
+            isDeleted: false,
+          },
+          '_id'
+        ).lean();
         const vendorIds = vendorUsers.map((v) => v._id);
 
         // Get admin users (for backward compatibility - admin jobs without jobModule)
         const adminRole = await getRoleByNameService(Enum.ADMIN);
-        const adminUsers = await User.find({
-          $or: [
-            ...(adminRole ? [{ roleId: adminRole._id }] : []),
-            { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } }
-          ],
-          isDeleted: false
-        }, '_id').lean();
+        const adminUsers = await User.find(
+          {
+            $or: [
+              ...(adminRole ? [{ roleId: adminRole._id }] : []),
+              { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } },
+            ],
+            isDeleted: false,
+          },
+          '_id'
+        ).lean();
         const adminIds = adminUsers.map((a) => a._id);
 
         if (userRole === Enum.VENDOR) {
@@ -566,7 +574,10 @@ export const viewJobs = async (req, res) => {
           query.$or = [
             { addedBy: { $in: vendorIds } },
             { jobModule: 'vendor' },
-            { addedBy: { $in: adminIds }, jobModule: { $in: [null, 'vendor'] } },
+            {
+              addedBy: { $in: adminIds },
+              jobModule: { $in: [null, 'vendor'] },
+            },
             { emailedVendors: vendorId },
           ];
         } else {
@@ -574,31 +585,39 @@ export const viewJobs = async (req, res) => {
           query.$or = [
             { addedBy: { $in: vendorIds } },
             { jobModule: 'vendor' },
-            { addedBy: { $in: adminIds }, jobModule: { $in: [null, 'vendor'] } },
+            {
+              addedBy: { $in: adminIds },
+              jobModule: { $in: [null, 'vendor'] },
+            },
           ];
         }
-      
       } else if (normalizedFilterBy === Enum.CLIENT) {
         // Get client users (by roleId OR role string field)
         const clientRole = await getRoleByNameService(Enum.CLIENT);
-        const clientUsers = await User.find({
-          $or: [
-            ...(clientRole ? [{ roleId: clientRole._id }] : []),
-            { role: { $regex: new RegExp(`^${Enum.CLIENT}$`, 'i') } }
-          ],
-          isDeleted: false
-        }, '_id').lean();
+        const clientUsers = await User.find(
+          {
+            $or: [
+              ...(clientRole ? [{ roleId: clientRole._id }] : []),
+              { role: { $regex: new RegExp(`^${Enum.CLIENT}$`, 'i') } },
+            ],
+            isDeleted: false,
+          },
+          '_id'
+        ).lean();
         const clientIds = clientUsers.map((v) => v._id);
 
         // Get admin users (for backward compatibility - admin jobs without jobModule)
         const adminRole = await getRoleByNameService(Enum.ADMIN);
-        const adminUsers = await User.find({
-          $or: [
-            ...(adminRole ? [{ roleId: adminRole._id }] : []),
-            { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } }
-          ],
-          isDeleted: false
-        }, '_id').lean();
+        const adminUsers = await User.find(
+          {
+            $or: [
+              ...(adminRole ? [{ roleId: adminRole._id }] : []),
+              { role: { $regex: new RegExp(`^${Enum.ADMIN}$`, 'i') } },
+            ],
+            isDeleted: false,
+          },
+          '_id'
+        ).lean();
         const adminIds = adminUsers.map((a) => a._id);
 
         if (userRole === Enum.VENDOR) {
@@ -607,11 +626,16 @@ export const viewJobs = async (req, res) => {
           query.$or = [
             {
               $and: [
-                { $or: [
-                  { addedBy: { $in: clientIds } }, 
-                  { jobModule: 'client' },
-                  { addedBy: { $in: adminIds }, jobModule: { $in: [null, 'client'] } },
-                ]},
+                {
+                  $or: [
+                    { addedBy: { $in: clientIds } },
+                    { jobModule: 'client' },
+                    {
+                      addedBy: { $in: adminIds },
+                      jobModule: { $in: [null, 'client'] },
+                    },
+                  ],
+                },
                 { emailedVendors: vendorId },
               ],
             },
@@ -621,7 +645,10 @@ export const viewJobs = async (req, res) => {
           query.$or = [
             { addedBy: { $in: clientIds } },
             { jobModule: 'client' },
-            { addedBy: { $in: adminIds }, jobModule: { $in: [null, 'client'] } },
+            {
+              addedBy: { $in: adminIds },
+              jobModule: { $in: [null, 'client'] },
+            },
           ];
         }
       }
@@ -632,24 +659,34 @@ export const viewJobs = async (req, res) => {
       const flexiblePattern = cleanSearch.split('').join('[-_\\s]*');
       const regex = new RegExp(flexiblePattern, 'i');
 
+      const searchCondition = {
+        $or: [
+          { job_subject: { $regex: regex } },
+          { job_type: { $regex: regex } },
+        ],
+      };
+
       if (userRole === Enum.VENDOR && query.$or) {
+        // Vendor with existing $or (from vendor filter logic)
         query.$and = [
           {
             $or: query.$or,
           },
+          searchCondition,
+        ];
+        delete query.$or;
+      } else if (query.$or) {
+        // Other roles with existing $or - combine with search
+        query.$and = [
           {
-            $or: [
-              { job_subject: { $regex: regex } },
-              { job_type: { $regex: regex } },
-            ],
+            $or: query.$or,
           },
+          searchCondition,
         ];
         delete query.$or;
       } else {
-        query.$or = [
-          { job_subject: { $regex: regex } },
-          { job_type: { $regex: regex } },
-        ];
+        // No existing $or - just add search
+        query.$or = searchCondition.$or;
       }
     }
 
@@ -707,15 +744,17 @@ export const viewJobs = async (req, res) => {
       query,
       sort: { createdAt: -1 },
     });
-    
+
+    // Return empty array instead of 404 when no jobs found
     if (!result || result?.item?.length === 0) {
-      logger.error(`Jobs ${Message.NOT_FOUND}`);
-      return HandleResponse(
-        res,
-        false,
-        StatusCodes.NOT_FOUND,
-        `Jobs ${Message.NOT_FOUND}`
-      );
+      logger.info(`No jobs found for the given criteria`);
+      return HandleResponse(res, true, StatusCodes.OK, `No jobs found`, {
+        item: [],
+        totalRecords: 0,
+        currentPage: parseInt(page),
+        totalPages: 0,
+        limit: parseInt(limit),
+      });
     }
 
     if (userRole === Enum.VENDOR && result?.item) {
@@ -976,7 +1015,11 @@ export const viewInvitedApplicants = async (req, res) => {
     const applicationMap = new Map(
       existingApplications.map((app) => [
         app.email,
-        { status: app.status, interviewStage: app.interviewStage, score: app.score },
+        {
+          status: app.status,
+          interviewStage: app.interviewStage,
+          score: app.score,
+        },
       ])
     );
 
@@ -987,28 +1030,26 @@ export const viewInvitedApplicants = async (req, res) => {
       applicationStatus: applicationMap.get(applicant.email) || null,
     }));
 
-    logger.info(`Invited applicants for job ${jobId} ${Message.FETCH_SUCCESSFULLY}`);
-
-    return HandleResponse(
-      res,
-      true,
-      StatusCodes.OK,
-      undefined,
-      {
-        applicants: applicantsWithStatus,
-        totalRecords: totalCount,
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(totalCount / parseInt(limit)),
-        limit: parseInt(limit),
-        job: {
-          _id: job._id,
-          job_id: job.job_id,
-          job_subject: job.job_subject,
-        },
-      }
+    logger.info(
+      `Invited applicants for job ${jobId} ${Message.FETCH_SUCCESSFULLY}`
     );
+
+    return HandleResponse(res, true, StatusCodes.OK, undefined, {
+      applicants: applicantsWithStatus,
+      totalRecords: totalCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalCount / parseInt(limit)),
+      limit: parseInt(limit),
+      job: {
+        _id: job._id,
+        job_id: job.job_id,
+        job_subject: job.job_subject,
+      },
+    });
   } catch (error) {
-    logger.error(`${Message.FAILED_TO} fetch invited applicants: ${error.message}`);
+    logger.error(
+      `${Message.FAILED_TO} fetch invited applicants: ${error.message}`
+    );
     return HandleResponse(
       res,
       false,
@@ -1183,7 +1224,7 @@ export const checkEmailForJobApplication = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Email is required'
+        'Email is required.'
       );
     }
 
@@ -1192,7 +1233,7 @@ export const checkEmailForJobApplication = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Job ID is required'
+        'Job ID is required.'
       );
     }
 
@@ -1295,7 +1336,7 @@ export const applyForJob = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Email is required'
+        'Email is required.'
       );
     }
 
@@ -1304,7 +1345,7 @@ export const applyForJob = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Job ID is required'
+        'Job ID is required.'
       );
     }
 
@@ -1503,7 +1544,7 @@ export const viewApplicantsForVendorJobs = async (req, res) => {
           res,
           false,
           StatusCodes.BAD_REQUEST,
-          'Invalid job ID'
+          'Invalid job ID.'
         );
       }
       query.job_id = jobId;
@@ -1532,18 +1573,76 @@ export const viewApplicantsForVendorJobs = async (req, res) => {
       if (maxScore) query.score.$lte = parseFloat(maxScore);
     }
 
-    if (search && typeof search === 'string') {
+    // Search functionality with full name matching
+    if (search && typeof search === 'string' && search.trim()) {
+      const searchTerm = search.trim();
       const searchRegex = new RegExp(
-        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
         'i'
       );
-      query.$or = [
+
+      // Split search term into words for full name matching
+      const searchWords = searchTerm
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      // Build search conditions
+      const searchConditions = [
         { 'name.firstName': searchRegex },
         { 'name.lastName': searchRegex },
         { 'name.middleName': searchRegex },
         { email: searchRegex },
         { 'phone.phoneNumber': searchRegex },
         { 'phone.whatsappNumber': searchRegex },
+      ];
+
+      // For full name searches (multiple words), also try matching across firstName and lastName
+      if (searchWords.length > 1) {
+        const firstNameRegex = new RegExp(
+          searchWords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+        const lastNameRegex = new RegExp(
+          searchWords
+            .slice(1)
+            .join(' ')
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+
+        searchConditions.push({
+          $and: [
+            { 'name.firstName': firstNameRegex },
+            { 'name.lastName': lastNameRegex },
+          ],
+        });
+
+        // Also try reverse: lastName contains first word, firstName contains rest
+        if (searchWords.length === 2) {
+          searchConditions.push({
+            $and: [
+              { 'name.lastName': firstNameRegex },
+              { 'name.firstName': lastNameRegex },
+            ],
+          });
+        }
+      }
+
+      // Combine search with existing query conditions
+      const existingConditions = {};
+      Object.keys(query).forEach((key) => {
+        if (!['$or', '$and', 'isDeleted'].includes(key)) {
+          existingConditions[key] = query[key];
+          delete query[key];
+        }
+      });
+
+      query.$and = [
+        ...(Object.keys(existingConditions).length > 0
+          ? [existingConditions]
+          : []),
+        ...(query.$and || []),
+        { $or: searchConditions },
       ];
     }
 
@@ -1642,7 +1741,7 @@ export const viewApplicantsForJob = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Job ID is required'
+        'Job ID is required.'
       );
     }
 
@@ -1651,7 +1750,7 @@ export const viewApplicantsForJob = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Invalid job ID'
+        'Invalid job ID.'
       );
     }
 
@@ -1719,18 +1818,76 @@ export const viewApplicantsForJob = async (req, res) => {
       if (maxScore) query.score.$lte = parseFloat(maxScore);
     }
 
-    if (search && typeof search === 'string') {
+    // Search functionality with full name matching
+    if (search && typeof search === 'string' && search.trim()) {
+      const searchTerm = search.trim();
       const searchRegex = new RegExp(
-        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
         'i'
       );
-      query.$or = [
+
+      // Split search term into words for full name matching
+      const searchWords = searchTerm
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      // Build search conditions
+      const searchConditions = [
         { 'name.firstName': searchRegex },
         { 'name.lastName': searchRegex },
         { 'name.middleName': searchRegex },
         { email: searchRegex },
         { 'phone.phoneNumber': searchRegex },
         { 'phone.whatsappNumber': searchRegex },
+      ];
+
+      // For full name searches (multiple words), also try matching across firstName and lastName
+      if (searchWords.length > 1) {
+        const firstNameRegex = new RegExp(
+          searchWords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+        const lastNameRegex = new RegExp(
+          searchWords
+            .slice(1)
+            .join(' ')
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+
+        searchConditions.push({
+          $and: [
+            { 'name.firstName': firstNameRegex },
+            { 'name.lastName': lastNameRegex },
+          ],
+        });
+
+        // Also try reverse: lastName contains first word, firstName contains rest
+        if (searchWords.length === 2) {
+          searchConditions.push({
+            $and: [
+              { 'name.lastName': firstNameRegex },
+              { 'name.firstName': lastNameRegex },
+            ],
+          });
+        }
+      }
+
+      // Combine search with existing query conditions
+      const existingConditions = {};
+      Object.keys(query).forEach((key) => {
+        if (!['$or', '$and', 'isDeleted'].includes(key)) {
+          existingConditions[key] = query[key];
+          delete query[key];
+        }
+      });
+
+      query.$and = [
+        ...(Object.keys(existingConditions).length > 0
+          ? [existingConditions]
+          : []),
+        ...(query.$and || []),
+        { $or: searchConditions },
       ];
     }
 
@@ -1866,7 +2023,7 @@ export const viewClientJobApplications = async (req, res) => {
           res,
           false,
           StatusCodes.BAD_REQUEST,
-          'Invalid job ID'
+          'Invalid job ID.'
         );
       }
 
@@ -1924,19 +2081,112 @@ export const viewClientJobApplications = async (req, res) => {
       if (maxScore) query.score.$lte = parseFloat(maxScore);
     }
 
-    // Search functionality
-    if (search && typeof search === 'string') {
+    // Search functionality for applicant name and job title
+    if (search && typeof search === 'string' && search.trim()) {
+      const searchTerm = search.trim();
       const searchRegex = new RegExp(
-        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
         'i'
       );
-      query.$or = [
+
+      // Split search term into words for full name matching
+      const searchWords = searchTerm
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      // Get job IDs that match the search term in job_subject
+      // Only search in jobs that belong to this client
+      let clientJobIdsForSearch = [];
+      if (query.job_id) {
+        if (query.job_id.$in) {
+          clientJobIdsForSearch = query.job_id.$in;
+        } else if (mongoose.Types.ObjectId.isValid(query.job_id)) {
+          clientJobIdsForSearch = [query.job_id];
+        }
+      }
+
+      const jobSearchQuery = {
+        job_subject: { $regex: searchRegex },
+        isDeleted: false,
+      };
+
+      // Limit job search to client's jobs
+      if (clientJobIdsForSearch.length > 0) {
+        jobSearchQuery._id = { $in: clientJobIdsForSearch };
+      } else {
+        // If no specific job_id filter, search in all client's jobs
+        jobSearchQuery.addedBy = user.id;
+      }
+
+      const matchingJobs = await jobs.find(jobSearchQuery, '_id').lean();
+
+      const matchingJobIds = matchingJobs.map((job) => job._id);
+
+      // Build search conditions
+      const searchConditions = [
         { 'name.firstName': searchRegex },
         { 'name.lastName': searchRegex },
         { 'name.middleName': searchRegex },
         { email: searchRegex },
         { 'phone.phoneNumber': searchRegex },
         { 'phone.whatsappNumber': searchRegex },
+      ];
+
+      // Add job title search if matching jobs found
+      if (matchingJobIds.length > 0) {
+        searchConditions.push({ job_id: { $in: matchingJobIds } });
+      }
+
+      // For full name searches (multiple words), also try matching across firstName and lastName
+      if (searchWords.length > 1) {
+        // Match if firstName contains first word AND lastName contains any other word
+        const firstNameRegex = new RegExp(
+          searchWords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+        const lastNameRegex = new RegExp(
+          searchWords
+            .slice(1)
+            .join(' ')
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+
+        searchConditions.push({
+          $and: [
+            { 'name.firstName': firstNameRegex },
+            { 'name.lastName': lastNameRegex },
+          ],
+        });
+
+        // Also try reverse: lastName contains first word, firstName contains rest
+        if (searchWords.length === 2) {
+          searchConditions.push({
+            $and: [
+              { 'name.lastName': firstNameRegex },
+              { 'name.firstName': lastNameRegex },
+            ],
+          });
+        }
+      }
+
+      // Combine search with existing query conditions using $and
+      // Extract existing conditions (job_id, status, appliedSkills, score, etc.)
+      const existingConditions = {};
+      Object.keys(query).forEach((key) => {
+        if (!['$or', '$and', 'isDeleted'].includes(key)) {
+          existingConditions[key] = query[key];
+          delete query[key];
+        }
+      });
+
+      // Build final query with $and to combine existing conditions with search
+      query.$and = [
+        ...(Object.keys(existingConditions).length > 0
+          ? [existingConditions]
+          : []),
+        ...(query.$and || []),
+        { $or: searchConditions },
       ];
     }
 
@@ -2069,7 +2319,7 @@ export const sendJobEmailToRecipients = async (req, res) => {
         res,
         false,
         StatusCodes.BAD_REQUEST,
-        'Invalid job ID'
+        'Invalid job ID.'
       );
     }
 
@@ -2424,7 +2674,16 @@ export const sendJobEmailToRecipients = async (req, res) => {
             emailStatus.applicants.failed++;
             emailStatus.applicants.errors.push({
               applicantId,
-              error: 'Applicant not found',
+              error: 'Applicant not found.',
+            });
+            continue;
+          }
+
+          if (!applicant.isActive) {
+            emailStatus.applicants.failed++;
+            emailStatus.applicants.errors.push({
+              applicantId,
+              error: 'Please activate the user before sending the email.',
             });
             continue;
           }
@@ -2902,31 +3161,68 @@ export const getVendorsAndApplicantsForEmail = async (req, res) => {
         }
 
         // Add search filter if provided (combine with skill matching if both exist)
-        if (search && typeof search === 'string') {
+        if (search && typeof search === 'string' && search.trim()) {
+          const searchTerm = search.trim();
           const searchRegex = new RegExp(
-            search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+            searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
             'i'
           );
+
+          // Split search term into words for full name matching
+          const searchWords = searchTerm
+            .split(/\s+/)
+            .filter((word) => word.length > 0);
+
+          // Build search conditions
+          const searchConditions = [
+            { 'name.firstName': searchRegex },
+            { 'name.lastName': searchRegex },
+            { 'name.middleName': searchRegex },
+            { email: searchRegex },
+            { 'phone.phoneNumber': searchRegex },
+          ];
+
+          // For full name searches (multiple words), also try matching across firstName and lastName
+          if (searchWords.length > 1) {
+            const firstNameRegex = new RegExp(
+              searchWords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+              'i'
+            );
+            const lastNameRegex = new RegExp(
+              searchWords
+                .slice(1)
+                .join(' ')
+                .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+              'i'
+            );
+
+            searchConditions.push({
+              $and: [
+                { 'name.firstName': firstNameRegex },
+                { 'name.lastName': lastNameRegex },
+              ],
+            });
+
+            // Also try reverse: lastName contains first word, firstName contains rest
+            if (searchWords.length === 2) {
+              searchConditions.push({
+                $and: [
+                  { 'name.lastName': firstNameRegex },
+                  { 'name.firstName': lastNameRegex },
+                ],
+              });
+            }
+          }
 
           if (applicantQuery.$or) {
             // If $or already exists (from skill matching), combine with $and
             applicantQuery.$and = [
               { $or: applicantQuery.$or },
-              {
-                $or: [
-                  { 'name.firstName': searchRegex },
-                  { 'name.lastName': searchRegex },
-                  { email: searchRegex },
-                ],
-              },
+              { $or: searchConditions },
             ];
             delete applicantQuery.$or;
           } else {
-            applicantQuery.$or = [
-              { 'name.firstName': searchRegex },
-              { 'name.lastName': searchRegex },
-              { email: searchRegex },
-            ];
+            applicantQuery.$or = searchConditions;
           }
         }
 
@@ -3094,7 +3390,7 @@ export const getJobApplicationsByRole = async (req, res) => {
             res,
             false,
             StatusCodes.NOT_FOUND,
-            'Applicant not found'
+            'Applicant not found.'
           );
         }
       } else {
@@ -3178,17 +3474,111 @@ export const getJobApplicationsByRole = async (req, res) => {
       };
     }
 
-    // Search functionality
-    if (search && typeof search === 'string') {
+    // Search functionality for applicant name and job title
+    if (search && typeof search === 'string' && search.trim()) {
+      const searchTerm = search.trim();
       const searchRegex = new RegExp(
-        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
         'i'
       );
-      query.$or = [
+
+      // Split search term into words for full name matching
+      const searchWords = searchTerm
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      // Get job IDs that match the search term in job_subject
+      const matchingJobs = await jobs
+        .find(
+          {
+            job_subject: { $regex: searchRegex },
+            isDeleted: false,
+          },
+          '_id'
+        )
+        .lean();
+
+      const matchingJobIds = matchingJobs.map((job) => job._id);
+
+      // Build search conditions
+      const searchConditions = [
         { 'name.firstName': searchRegex },
         { 'name.lastName': searchRegex },
+        { 'name.middleName': searchRegex },
         { email: searchRegex },
+        { 'phone.phoneNumber': searchRegex },
       ];
+
+      // Add job title search if matching jobs found
+      if (matchingJobIds.length > 0) {
+        searchConditions.push({ job_id: { $in: matchingJobIds } });
+      }
+
+      // For full name searches (multiple words), also try matching across firstName and lastName
+      if (searchWords.length > 1) {
+        // Match if firstName contains first word AND lastName contains any other word
+        // or vice versa
+        const firstNameRegex = new RegExp(
+          searchWords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+        const lastNameRegex = new RegExp(
+          searchWords
+            .slice(1)
+            .join(' ')
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+
+        searchConditions.push({
+          $and: [
+            { 'name.firstName': firstNameRegex },
+            { 'name.lastName': lastNameRegex },
+          ],
+        });
+
+        // Also try reverse: lastName contains first word, firstName contains rest
+        if (searchWords.length === 2) {
+          searchConditions.push({
+            $and: [
+              { 'name.lastName': firstNameRegex },
+              { 'name.firstName': lastNameRegex },
+            ],
+          });
+        }
+      }
+
+      // Check if there are existing query conditions that might conflict
+      // If query has direct field assignments (not $or/$and), we need to use $and
+      const hasDirectFields = Object.keys(query).some(
+        (key) => !['$or', '$and', 'isDeleted'].includes(key)
+      );
+
+      if (hasDirectFields) {
+        // Use $and to combine existing conditions with search
+        const directFields = {};
+        Object.keys(query).forEach((key) => {
+          if (!['$or', '$and', 'isDeleted'].includes(key)) {
+            directFields[key] = query[key];
+            delete query[key];
+          }
+        });
+
+        query.$and = [
+          ...(Object.keys(directFields).length > 0 ? [directFields] : []),
+          ...(query.$and || []),
+          { $or: searchConditions },
+        ];
+      } else {
+        // No direct fields, can use $or directly
+        if (query.$or) {
+          // If $or already exists, combine with $and
+          query.$and = [{ $or: query.$or }, { $or: searchConditions }];
+          delete query.$or;
+        } else {
+          query.$or = searchConditions;
+        }
+      }
     }
 
     // Fetch job applications with pagination
@@ -3472,9 +3862,8 @@ export const sendApplicantStatusEmail = async (req, res) => {
     const normalizedRole = userRole.toLowerCase();
 
     // Get the email template by type
-    const { getEmailTemplateByStatus } = await import(
-      '../services/emailTemplateService.js'
-    );
+    const { getEmailTemplateByStatus } =
+      await import('../services/emailTemplateService.js');
     const emailTemplate = await getEmailTemplateByStatus(templateType);
 
     if (!emailTemplate) {
@@ -3538,9 +3927,8 @@ export const sendApplicantStatusEmail = async (req, res) => {
 
       if (vendorId) {
         // Send to vendor
-        const vendorUser = await User.findById(vendorId).populate(
-          'vendorProfileId'
-        );
+        const vendorUser =
+          await User.findById(vendorId).populate('vendorProfileId');
         if (vendorUser && vendorUser.email) {
           recipientEmail = vendorUser.email;
           recipientName = vendorUser.firstName
@@ -3665,6 +4053,161 @@ export const sendApplicantStatusEmail = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `Failed to send applicant status email: ${error.message}`
+    );
+  }
+};
+
+/**
+ * Download sample Excel template for job application import
+ * GET /api/job/sample-application-import
+ *
+ * Required fields: First Name, Email, Phone Number, Job ID
+ * Optional fields: Last Name, Middle Name, Applied Role, Current Company Designation, etc.
+ */
+export const downloadSampleApplicationImport = async (req, res) => {
+  try {
+    // Define Excel headers (matching the expected import format)
+    const headers = [
+      'First Name', // Required
+      'Last Name', // Optional
+      'Middle Name', // Optional
+      'Email', // Required
+      'Phone Number', // Required
+      'WhatsApp Number', // Optional
+      'Job ID', // Required - The job_id from the jobs collection
+      'Applied Role', // Optional
+      'Current Company Designation', // Optional
+      'Current Company Name', // Optional
+      'Total Experience', // Optional (in years)
+      'Applied Skills', // Optional (comma-separated)
+      'Other Skills', // Optional
+      'Current Package', // Optional
+      'Expected Package', // Optional
+      'Notice Period', // Optional (in days)
+      'Work Preference', // Optional (remote/hybrid/onsite/freelancer)
+      'Gender', // Optional (male/female/other)
+      'Qualification', // Optional
+      'Current City', // Optional
+      'State', // Optional
+      'Country', // Optional
+    ];
+
+    // Sample data rows with example values
+    const timestamp = Date.now();
+    const phoneBase = String(timestamp).slice(-10);
+    const phone1 = phoneBase.slice(0, 10).padStart(10, '9');
+    const phone2 = String(Number(phone1) + 1);
+
+    const sampleData = [
+      {
+        'First Name': 'John',
+        'Last Name': 'Doe',
+        'Middle Name': '',
+        Email: `john.doe_${timestamp}@example.com`,
+        'Phone Number': phone1,
+        'WhatsApp Number': phone1,
+        'Job ID': 'JOB001', // Replace with actual job_id
+        'Applied Role': 'Software Engineer',
+        'Current Company Designation': 'Senior Developer',
+        'Current Company Name': 'Tech Solutions Inc',
+        'Total Experience': '5',
+        'Applied Skills': 'JavaScript, React, Node.js, MongoDB',
+        'Other Skills': 'Agile, Scrum',
+        'Current Package': '800000',
+        'Expected Package': '1000000',
+        'Notice Period': '30',
+        'Work Preference': 'remote',
+        Gender: 'male',
+        Qualification: 'B.Tech',
+        'Current City': 'Mumbai',
+        State: 'Maharashtra',
+        Country: 'India',
+      },
+      {
+        'First Name': 'Jane',
+        'Last Name': 'Smith',
+        'Middle Name': 'Marie',
+        Email: `jane.smith_${timestamp}@example.com`,
+        'Phone Number': phone2,
+        'WhatsApp Number': phone2,
+        'Job ID': 'JOB001', // Replace with actual job_id
+        'Applied Role': 'Full Stack Developer',
+        'Current Company Designation': 'Developer',
+        'Current Company Name': 'Digital Services Ltd',
+        'Total Experience': '3',
+        'Applied Skills': 'Python, Django, PostgreSQL, AWS',
+        'Other Skills': 'Docker, Kubernetes',
+        'Current Package': '600000',
+        'Expected Package': '850000',
+        'Notice Period': '15',
+        'Work Preference': 'hybrid',
+        Gender: 'female',
+        Qualification: 'M.Tech',
+        'Current City': 'Bangalore',
+        State: 'Karnataka',
+        Country: 'India',
+      },
+    ];
+
+    // Create workbook and worksheet
+    const workbook = xlsx.utils.book_new();
+    const worksheet = xlsx.utils.json_to_sheet(sampleData, { header: headers });
+
+    // Set column widths for better readability
+    const columnWidths = [
+      { wch: 15 }, // First Name
+      { wch: 15 }, // Last Name
+      { wch: 15 }, // Middle Name
+      { wch: 30 }, // Email
+      { wch: 15 }, // Phone Number
+      { wch: 15 }, // WhatsApp Number
+      { wch: 12 }, // Job ID
+      { wch: 20 }, // Applied Role
+      { wch: 25 }, // Current Company Designation
+      { wch: 20 }, // Current Company Name
+      { wch: 15 }, // Total Experience
+      { wch: 40 }, // Applied Skills
+      { wch: 20 }, // Other Skills
+      { wch: 15 }, // Current Package
+      { wch: 15 }, // Expected Package
+      { wch: 15 }, // Notice Period
+      { wch: 15 }, // Work Preference
+      { wch: 10 }, // Gender
+      { wch: 15 }, // Qualification
+      { wch: 15 }, // Current City
+      { wch: 15 }, // State
+      { wch: 15 }, // Country
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Add worksheet to workbook
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Sample Applications');
+
+    // Generate Excel file buffer
+    const excelBuffer = xlsx.write(workbook, {
+      type: 'buffer',
+      bookType: 'xlsx',
+    });
+
+    const filename = `sample_job_application_import_template.xlsx`;
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    logger.info(`Sample job application import template downloaded`);
+    return res.status(StatusCodes.OK).send(excelBuffer);
+  } catch (error) {
+    logger.error(
+      `Failed to generate sample application import template: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to generate sample template: ${error.message}`
     );
   }
 };
