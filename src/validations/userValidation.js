@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { CompanyTypeEnum, Enum, HireResourcesEnum } from '../utils/enum.js';
+import { CompanyTypeEnum, HireResourcesEnum } from '../utils/enum.js';
 
 export const registerValidation = Joi.object().keys({
   userName: Joi.string().alphanum().min(3).max(30).required().messages({
@@ -52,15 +52,12 @@ export const registerValidation = Joi.object().keys({
     'any.required': 'Last name is required.',
   }),
 
-  role: Joi.string()
-    .required()
-    .valid(Enum.ADMIN, Enum.HR, Enum.VENDOR, Enum.GUEST, Enum.CLIENT)
-    .messages({
-      'string.base': `Role should be number`,
-      'any.only': `Role must be a ${Enum.ADMIN},${Enum.VENDOR},${Enum.HR},${Enum.CLIENT}, or ${Enum.GUEST}`,
-      'string.empty': `Role cannot be an empty field`,
-      'any.required': `Role is a required field`,
-    }),
+  role: Joi.string().required().trim().min(1).messages({
+    'string.base': `Role should be a string`,
+    'string.empty': `Role cannot be an empty field`,
+    'string.min': `Role must be at least 1 character`,
+    'any.required': `Role is a required field`,
+  }),
 });
 
 export const vendorValidation = Joi.object().keys({

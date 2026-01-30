@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
+import { applicantEnum, genderEnum } from '../utils/enum.js';
 
 const TemporaryExportsApplicantsSchema = new mongoose.Schema(
   {
@@ -120,11 +120,11 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     createdBy: {
       type: String,
-      enum: Object.values(Enum),
+      // Allow any role name (custom roles from role collection)
     },
     updatedBy: {
       type: String,
-      enum: Object.values(Enum),
+      // Allow any role name (custom roles from role collection)
     },
     addedBy: {
       type: String,

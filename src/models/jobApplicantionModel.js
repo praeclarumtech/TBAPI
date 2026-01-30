@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
+import { applicantEnum, genderEnum } from '../utils/enum.js';
 
 const jobApplicationSchema = new mongoose.Schema(
   {
@@ -116,11 +116,11 @@ const jobApplicationSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     createdBy: {
       type: String,
-      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+      // Allow any role name (custom roles from role collection)
     },
     updatedBy: {
       type: String,
-      enum: [Enum.ADMIN, Enum.HR, Enum.USER],
+      // Allow any role name (custom roles from role collection)
     },
     addedBy: {
       type: String,
