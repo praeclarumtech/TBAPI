@@ -271,7 +271,7 @@ export const listOfUsers = async (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     const additionalFilter = {};
     const loggedInUser = req.user; // Get the logged-in user from JWT token
-    if (role && Object.values(Enum).includes(role)) {
+    if (role) {
       const roleId = await roleModel.findOne({ name: role }).select('_id');
       if (!roleId) {
         logger.warn(`Role ${Message.NOT_FOUND}`);
