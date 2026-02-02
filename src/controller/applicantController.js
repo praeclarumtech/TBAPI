@@ -341,14 +341,14 @@ export const addApplicant = async (req, res) => {
       ...body,
     };
 
-    // When resume is uploaded via QR form, set resumeUrl so viewApplicant returns it
     const resumeFile = req.files || [];
     if (resumeFile.length > 0) {
-      const baseUrl =
-        process.env.BASE_URL ||
-        process.env.API_URL ||
-        `${req.protocol}://${req.get('host')}`;
-      applicantData.resumeUrl = `${baseUrl.replace(/\/$/, '')}/uploads/Attachments/${resumeFile[0].filename}`;
+      const base =
+        (process.env.BASE_URL ||
+          process.env.API_URL ||
+          `${req.protocol}://${req.get('host')}`).replace(/\/$/, '') +
+        (process.env.ATTACHMENT_BASE_PATH || '').replace(/\/$/, '');
+      applicantData.resumeUrl = `${base}/uploads/Attachments/${resumeFile[0].filename}`;
     }
 
     const applicant = await createApplicant(applicantData);
@@ -538,8 +538,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-            ? { $in: validAddedBy }
-            : undefined;
+          ? { $in: validAddedBy }
+          : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -1137,14 +1137,16 @@ export const updateApplicant = async (req, res) => {
     let updateData = {
       ...body,
     };
-    // When resume is uploaded via QR form, set resumeUrl so viewApplicant returns it
+    // When resume is uploaded via QR form, set resumeUrl so viewApplicant returns it.
+    // Production: ATTACHMENT_BASE_PATH=/talent → .../talent/uploads/Attachments/... ; localhost: no path.
     const resumeFile = req.files || [];
     if (resumeFile.length > 0) {
-      const baseUrl =
-        process.env.BASE_URL ||
-        process.env.API_URL ||
-        `${req.protocol}://${req.get('host')}`;
-      updateData.resumeUrl = `${baseUrl.replace(/\/$/, '')}/uploads/Attachments/${resumeFile[0].filename}`;
+      const base =
+        (process.env.BASE_URL ||
+          process.env.API_URL ||
+          `${req.protocol}://${req.get('host')}`).replace(/\/$/, '') +
+        (process.env.ATTACHMENT_BASE_PATH || '').replace(/\/$/, '');
+      updateData.resumeUrl = `${base}/uploads/Attachments/${resumeFile[0].filename}`;
     }
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
@@ -1699,18 +1701,18 @@ export const exportApplicantCsv = async (req, res) => {
           source === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : source === applicantEnum.CSV
-              ? applicantEnum.CSV
-              : source === applicantEnum.MANUAL
-                ? applicantEnum.MANUAL
-                : source === applicantEnum.GUEST
-                  ? applicantEnum.GUEST
-                  : {
-                      $in: [
-                        applicantEnum.RESUME,
-                        applicantEnum.CSV,
-                        applicantEnum.GUEST,
-                      ],
-                    };
+            ? applicantEnum.CSV
+            : source === applicantEnum.MANUAL
+            ? applicantEnum.MANUAL
+            : source === applicantEnum.GUEST
+            ? applicantEnum.GUEST
+            : {
+                $in: [
+                  applicantEnum.RESUME,
+                  applicantEnum.CSV,
+                  applicantEnum.GUEST,
+                ],
+              };
       }
 
       if (filtered) {
@@ -1718,8 +1720,8 @@ export const exportApplicantCsv = async (req, res) => {
           filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : filtered === applicantEnum.CSV
-              ? applicantEnum.CSV
-              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+            ? applicantEnum.CSV
+            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1913,8 +1915,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-          ? false
-          : undefined;
+        ? false
+        : undefined;
 
     const user = await User.findById(req.user.id);
 
