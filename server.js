@@ -9,7 +9,13 @@ import { errorHandlerMiddleware } from './src/helpers/errorHandle.js';
 import { Message } from './src/utils/constant/message.js';
 import logger from './src/loggers/logger.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
 dotenv.config();
+
+// Resolve paths relative to this file so uploads work regardless of process cwd (e.g. in production)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.join(__dirname, 'src', 'uploads');
 
 const app = express();
 connectDB();
@@ -22,8 +28,8 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cors());
 app.use(helmet());
-app.use('/uploads/profile', express.static(path.join('src', 'uploads', 'profile')));
-app.use('/uploads/Attachments', express.static(path.join('src', 'uploads', 'Attachments')));
+app.use('/uploads/profile', express.static(path.join(uploadsDir, 'profile')));
+app.use('/uploads/Attachments', express.static(path.join(uploadsDir, 'Attachments')));
 
 app.use(express.json());
 app.use('/api', router);
