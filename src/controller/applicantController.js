@@ -341,9 +341,17 @@ export const addApplicant = async (req, res) => {
       ...body,
     };
 
-    const applicant = await createApplicant(applicantData);
-
+    // When resume is uploaded via QR form, set resumeUrl so viewApplicant returns it
     const resumeFile = req.files || [];
+    if (resumeFile.length > 0) {
+      const baseUrl =
+        process.env.BASE_URL ||
+        process.env.API_URL ||
+        `${req.protocol}://${req.get('host')}`;
+      applicantData.resumeUrl = `${baseUrl.replace(/\/$/, '')}/uploads/Attachments/${resumeFile[0].filename}`;
+    }
+
+    const applicant = await createApplicant(applicantData);
 
     if (resumeFile.length > 0) {
       const attachments = resumeFile.map((file) => ({
@@ -1129,6 +1137,15 @@ export const updateApplicant = async (req, res) => {
     let updateData = {
       ...body,
     };
+    // When resume is uploaded via QR form, set resumeUrl so viewApplicant returns it
+    const resumeFile = req.files || [];
+    if (resumeFile.length > 0) {
+      const baseUrl =
+        process.env.BASE_URL ||
+        process.env.API_URL ||
+        `${req.protocol}://${req.get('host')}`;
+      updateData.resumeUrl = `${baseUrl.replace(/\/$/, '')}/uploads/Attachments/${resumeFile[0].filename}`;
+    }
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
     if (!updatedApplicant) {
@@ -1165,7 +1182,9 @@ export const updateApplicant = async (req, res) => {
         jobApplicationUpdateData.noticePeriod = body.noticePeriod;
       if (body.workPreference)
         jobApplicationUpdateData.workPreference = body.workPreference;
-      if (body.resumeUrl) jobApplicationUpdateData.resumeUrl = body.resumeUrl;
+      if (body.resumeUrl || updateData.resumeUrl)
+        jobApplicationUpdateData.resumeUrl =
+          updateData.resumeUrl || body.resumeUrl;
       if (body.currentCity)
         jobApplicationUpdateData.currentCity = body.currentCity;
       if (body.state) jobApplicationUpdateData.state = body.state;
@@ -1185,8 +1204,6 @@ export const updateApplicant = async (req, res) => {
         );
       }
     }
-
-    const resumeFile = req.files || [];
 
     if (resumeFile.length > 0) {
       const attachments = resumeFile.map((file) => ({

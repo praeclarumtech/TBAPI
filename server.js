@@ -13,12 +13,17 @@ dotenv.config();
 
 const app = express();
 connectDB();
+
+// Trust proxy so req.protocol and req.get('host') are correct behind nginx/load balancer (production)
+app.set('trust proxy', 1);
+
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cors());
 app.use(helmet());
-app.use('/uploads/profile', express.static(path.join('src/uploads/profile')));
+app.use('/uploads/profile', express.static(path.join('src', 'uploads', 'profile')));
+app.use('/uploads/Attachments', express.static(path.join('src', 'uploads', 'Attachments')));
 
 app.use(express.json());
 app.use('/api', router);
