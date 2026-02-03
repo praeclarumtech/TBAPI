@@ -66,7 +66,7 @@ const jobSchema = new mongoose.Schema(
     budget: { type: String, required: false },
     jobPaymentType: {
       type: String,
-      enum: Object.values(jobPaymentTypeEnum),
+      enum: [...Object.values(jobPaymentTypeEnum), ''],
       required: false,
     },
     addedBy: {

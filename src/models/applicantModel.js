@@ -43,8 +43,8 @@ const ApplicantSchema = new mongoose.Schema(
     currentPkg: { type: Number },
     expectedPkg: { type: Number },
     noticePeriod: {
-          type: Number,
-          required: true,
+      type: Number,
+      required: false,
     },
     negotiation: { type: String, required: false },
     workPreference: {
@@ -71,6 +71,7 @@ const ApplicantSchema = new mongoose.Schema(
         applicantEnum.ON_HOLD,
         applicantEnum.ONBOARDED,
         applicantEnum.LEAVED,
+        'pending',
       ],
       default: applicantEnum.APPLIED,
       required: false,
