@@ -344,9 +344,11 @@ export const addApplicant = async (req, res) => {
     const resumeFile = req.files || [];
     if (resumeFile.length > 0) {
       const base =
-        (process.env.BASE_URL ||
+        (
+          process.env.BASE_URL ||
           process.env.API_URL ||
-          `${req.protocol}://${req.get('host')}`).replace(/\/$/, '') +
+          `${req.protocol}://${req.get('host')}`
+        ).replace(/\/$/, '') +
         (process.env.ATTACHMENT_BASE_PATH || '').replace(/\/$/, '');
       applicantData.resumeUrl = `${base}/uploads/Attachments/${resumeFile[0].filename}`;
     }
@@ -1142,9 +1144,11 @@ export const updateApplicant = async (req, res) => {
     const resumeFile = req.files || [];
     if (resumeFile.length > 0) {
       const base =
-        (process.env.BASE_URL ||
+        (
+          process.env.BASE_URL ||
           process.env.API_URL ||
-          `${req.protocol}://${req.get('host')}`).replace(/\/$/, '') +
+          `${req.protocol}://${req.get('host')}`
+        ).replace(/\/$/, '') +
         (process.env.ATTACHMENT_BASE_PATH || '').replace(/\/$/, '');
       updateData.resumeUrl = `${base}/uploads/Attachments/${resumeFile[0].filename}`;
     }
@@ -1402,12 +1406,10 @@ export const exportApplicantCsv = async (req, res) => {
     if (ids && Array.isArray(ids) && ids.length > 0) {
       const query = { _id: { $in: ids }, isDeleted: false };
 
+      // When specific ids are provided, only filter by addedBy if user chose a source filter
       if (filtered === 'Resume') query.addedBy = applicantEnum.RESUME;
       else if (filtered === 'Csv') query.addedBy = applicantEnum.CSV;
-      else
-        query.addedBy = {
-          $in: [applicantEnum.RESUME, applicantEnum.CSV, applicantEnum.MANUAL],
-        };
+      // When filtered is not set: return all requested ids (no addedBy filter)
 
       applicants = main
         ? await Applicant.find(query, projection)

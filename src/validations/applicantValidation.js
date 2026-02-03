@@ -141,7 +141,8 @@ export const applicantValidation = Joi.object({
       applicantEnum.REJECTED,
       applicantEnum.ON_HOLD,
       applicantEnum.ONBOARDED,
-      applicantEnum.LEAVED
+      applicantEnum.LEAVED,
+      'pending'
     )
     .default(applicantEnum.APPLIED)
     .messages({
@@ -327,7 +328,8 @@ export const updateApplicantValidation = Joi.object({
       applicantEnum.REJECTED,
       applicantEnum.ON_HOLD,
       applicantEnum.ONBOARDED,
-      applicantEnum.LEAVED
+      applicantEnum.LEAVED,
+      'pending'
     )
     .messages({
       'any.only': 'Invalid status value.',
@@ -426,7 +428,8 @@ export const updateManyApplicantsValidation = Joi.object({
         applicantEnum.REJECTED,
         applicantEnum.ON_HOLD,
         applicantEnum.ONBOARDED,
-        applicantEnum.LEAVED
+        applicantEnum.LEAVED,
+        'pending'
       )
       .messages({ 'any.only': 'Invalid status value.' }),
 

@@ -68,6 +68,7 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
         applicantEnum.ON_HOLD,
         applicantEnum.ONBOARDED,
         applicantEnum.LEAVED,
+        'pending',
       ],
       default: applicantEnum.APPLIED,
       required: false,
