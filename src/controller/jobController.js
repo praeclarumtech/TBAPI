@@ -658,34 +658,48 @@ export const viewJobs = async (req, res) => {
       const cleanSearch = search.replace(/[^a-zA-Z0-9]/g, '');
       const flexiblePattern = cleanSearch.split('').join('[-_\\s]*');
       const regex = new RegExp(flexiblePattern, 'i');
+      const searchOrConditions = [
+        { job_id: { $regex: regex } },
+        { job_subject: { $regex: regex } },
+        { job_type: { $regex: regex } },
+        { job_details: { $regex: regex } },
+      ];
 
-      const searchCondition = {
-        $or: [
-          { job_subject: { $regex: regex } },
-          { job_type: { $regex: regex } },
-        ],
-      };
+      // When filterBy=client: also search by client name (addedBy); when filterBy=vendor: search by vendor name
+      if (filterBy && userRole !== Enum.CLIENT) {
+        const normalizedFilterBy = filterBy.toLowerCase();
+        const roleToMatch =
+          normalizedFilterBy === Enum.CLIENT ? Enum.CLIENT : Enum.VENDOR;
+        const roleRef = await getRoleByNameService(roleToMatch);
+        const roleCondition = roleRef
+          ? { roleId: roleRef._id }
+          : { role: { $regex: new RegExp(`^${roleToMatch}$`, 'i') } };
+        const usersMatchingName = await User.find({
+          ...roleCondition,
+          isDeleted: false,
+          $or: [
+            { firstName: { $regex: regex } },
+            { lastName: { $regex: regex } },
+            { userName: { $regex: regex } },
+          ],
+        })
+          .select('_id')
+          .lean();
+        const addedByIds = usersMatchingName.map((u) => u._id);
+        if (addedByIds.length > 0) {
+          searchOrConditions.push({ addedBy: { $in: addedByIds } });
+        }
+      }
+
+      const searchCondition = { $or: searchOrConditions };
 
       if (userRole === Enum.VENDOR && query.$or) {
-        // Vendor with existing $or (from vendor filter logic)
-        query.$and = [
-          {
-            $or: query.$or,
-          },
-          searchCondition,
-        ];
+        query.$and = [{ $or: query.$or }, searchCondition];
         delete query.$or;
       } else if (query.$or) {
-        // Other roles with existing $or - combine with search
-        query.$and = [
-          {
-            $or: query.$or,
-          },
-          searchCondition,
-        ];
+        query.$and = [{ $or: query.$or }, searchCondition];
         delete query.$or;
       } else {
-        // No existing $or - just add search
         query.$or = searchCondition.$or;
       }
     }
@@ -1469,7 +1483,40 @@ export const applyForJob = async (req, res) => {
         phoneNumber: applicant.phone?.phoneNumber || '',
         whatsappNumber: applicant.phone?.whatsappNumber || '',
       },
+      appliedSkills: applicant.appliedSkills || [],
+      totalExperience: applicant.totalExperience || 0,
+      relevantSkillExperience: applicant.relevantSkillExperience || 0,
+      communicationSkill: applicant.communicationSkill || 0,
+      rating: applicant.rating || 0,
+      currentPkg: applicant.currentPkg || 0,
+      expectedPkg: applicant.expectedPkg || 0,
+      noticePeriod: applicant.noticePeriod || 0,
+      negotiation: applicant.negotiation || '',
+      workPreference: applicant.workPreference || '',
+      currentCompanyDesignation: applicant.currentCompanyDesignation || '',
+      appliedRole: applicant.appliedRole || '',
+      practicalUrl: applicant.practicalUrl || '',
+      practicalFeedback: applicant.practicalFeedback || '',
+      portfolioUrl: applicant.portfolioUrl || '',
+      referral: applicant.referral || '',
+      resumeUrl: applicant.resumeUrl || applicant.resume || '',
+      gitHubUrl: applicant.gitHubUrl || '',
       email: applicant.email,
+      gender: applicant.gender || '',
+      dateOfBirth: applicant.dateOfBirth || '',
+      qualification: applicant.qualification || '',
+      specialization: applicant.specialization || '',
+      passingYear: applicant.passingYear || '',
+      currentAddress: applicant.currentAddress || '',
+      state: applicant.state || '',
+      currentCity: applicant.currentCity || '',
+      anyHandOnOffers: applicant.anyHandOnOffers || false,
+      phone: applicant.phone || {
+        phoneNumber: applicant.phone?.phoneNumber || '',
+        whatsappNumber: applicant.phone?.whatsappNumber || '',
+      },
+      country: applicant.country || '',
+      currentPincode: applicant.currentPincode || '',
       job_id: job._id,
       vendor_id: vendorId,
       client_id: clientId,
@@ -2941,7 +2988,9 @@ export const sendJobEmailToRecipients = async (req, res) => {
       res,
       true,
       StatusCodes.OK,
-      `${totalSent === 1 ? 'Email' : 'Emails'} sent: ${totalSent} successful, ${totalFailed} failed`,
+      `${
+        totalSent === 1 ? 'Email' : 'Emails'
+      } sent: ${totalSent} successful, ${totalFailed} failed`,
       {
         emailStatus,
         job: {
@@ -3487,18 +3536,82 @@ export const getJobApplicationsByRole = async (req, res) => {
         .split(/\s+/)
         .filter((word) => word.length > 0);
 
-      // Get job IDs that match the search term in job_subject
+      // Get job IDs that match the search term in job_id or job_subject
       const matchingJobs = await jobs
         .find(
           {
-            job_subject: { $regex: searchRegex },
             isDeleted: false,
+            $or: [
+              { job_id: { $regex: searchRegex } },
+              { job_subject: { $regex: searchRegex } },
+            ],
           },
           '_id'
         )
         .lean();
 
       const matchingJobIds = matchingJobs.map((job) => job._id);
+
+      // Build name match conditions for User (supports multi-word e.g. "Vincent Christa")
+      const userNameOrConditions = [
+        { firstName: { $regex: searchRegex } },
+        { lastName: { $regex: searchRegex } },
+        { userName: { $regex: searchRegex } },
+      ];
+      if (searchWords.length > 1) {
+        const firstWordRegex = new RegExp(
+          searchWords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+        const restRegex = new RegExp(
+          searchWords
+            .slice(1)
+            .join(' ')
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+        userNameOrConditions.push(
+          { $and: [{ firstName: firstWordRegex }, { lastName: restRegex }] },
+          { $and: [{ lastName: firstWordRegex }, { firstName: restRegex }] }
+        );
+      }
+
+      // Client name search: find clients whose name matches, then jobs they created
+      const clientRole = await getRoleByNameService(Enum.CLIENT);
+      const clientRoleCondition = clientRole
+        ? { roleId: clientRole._id }
+        : { role: { $regex: new RegExp(`^${Enum.CLIENT}$`, 'i') } };
+      const clientsMatchingName = await User.find({
+        ...clientRoleCondition,
+        isDeleted: false,
+        $or: userNameOrConditions,
+      })
+        .select('_id')
+        .lean();
+      const clientUserIds = clientsMatchingName.map((u) => u._id);
+      if (clientUserIds.length > 0) {
+        const jobsByClients = await jobs
+          .find({ addedBy: { $in: clientUserIds }, isDeleted: false }, '_id')
+          .lean();
+        const clientJobIds = jobsByClients.map((j) => j._id);
+        if (clientJobIds.length > 0) {
+          matchingJobIds.push(...clientJobIds);
+        }
+      }
+
+      // Vendor name search: find vendors whose name matches
+      const vendorRole = await getRoleByNameService(Enum.VENDOR);
+      const vendorRoleCondition = vendorRole
+        ? { roleId: vendorRole._id }
+        : { role: { $regex: new RegExp(`^${Enum.VENDOR}$`, 'i') } };
+      const vendorsMatchingName = await User.find({
+        ...vendorRoleCondition,
+        isDeleted: false,
+        $or: userNameOrConditions,
+      })
+        .select('_id')
+        .lean();
+      const vendorUserIds = vendorsMatchingName.map((u) => u._id);
 
       // Build search conditions
       const searchConditions = [
@@ -3509,9 +3622,21 @@ export const getJobApplicationsByRole = async (req, res) => {
         { 'phone.phoneNumber': searchRegex },
       ];
 
-      // Add job title search if matching jobs found
-      if (matchingJobIds.length > 0) {
-        searchConditions.push({ job_id: { $in: matchingJobIds } });
+      // Add job search (job_id, job_subject, or client name -> job_ids)
+      const uniqueJobIds = Array.from(
+        new Set(matchingJobIds.map((id) => id.toString()))
+      );
+      if (uniqueJobIds.length > 0) {
+        searchConditions.push({
+          job_id: {
+            $in: uniqueJobIds.map((id) => new mongoose.Types.ObjectId(id)),
+          },
+        });
+      }
+
+      // Add vendor name search
+      if (vendorUserIds.length > 0) {
+        searchConditions.push({ vendor_id: { $in: vendorUserIds } });
       }
 
       // For full name searches (multiple words), also try matching across firstName and lastName
@@ -3862,8 +3987,9 @@ export const sendApplicantStatusEmail = async (req, res) => {
     const normalizedRole = userRole.toLowerCase();
 
     // Get the email template by type
-    const { getEmailTemplateByStatus } =
-      await import('../services/emailTemplateService.js');
+    const { getEmailTemplateByStatus } = await import(
+      '../services/emailTemplateService.js'
+    );
     const emailTemplate = await getEmailTemplateByStatus(templateType);
 
     if (!emailTemplate) {
@@ -3927,8 +4053,9 @@ export const sendApplicantStatusEmail = async (req, res) => {
 
       if (vendorId) {
         // Send to vendor
-        const vendorUser =
-          await User.findById(vendorId).populate('vendorProfileId');
+        const vendorUser = await User.findById(vendorId).populate(
+          'vendorProfileId'
+        );
         if (vendorUser && vendorUser.email) {
           recipientEmail = vendorUser.email;
           recipientName = vendorUser.firstName
