@@ -19,6 +19,7 @@ import jobs from '../models/jobModel.js';
 import {
   extractMatchingRoleFromResume,
   extractSkillsFromResume,
+  createApplicant,
 } from '../services/applicantService.js';
 import fs from 'fs';
 import {
@@ -190,6 +191,28 @@ export const addJobApplication = async (req, res) => {
     const userRole = req.user?.role?.toLowerCase() || '';
     const isVendorSubmitting = userRole === Enum.VENDOR.toLowerCase();
     const isClientSubmitting = userRole === Enum.CLIENT.toLowerCase();
+
+    // Also create/update Applicant so they appear in admin applicant list and count
+    const applicantBody = {
+      ...applicantData,
+      appliedRole: role || applicantData.appliedRole,
+      appliedSkills: Array.isArray(matchedSkills)
+        ? matchedSkills
+        : matchedSkills
+        ? [matchedSkills]
+        : [],
+      addedBy: applicantEnum.RESUME,
+      createdBy: req.user?.role,
+      updatedBy: req.user?.role,
+    };
+    try {
+      await createApplicant(applicantBody);
+    } catch (applicantErr) {
+      logger.warn(
+        `Applicant sync for job application skipped: ${applicantErr.message}`
+      );
+      // Continue to save job application even if Applicant sync fails (e.g. duplicate phone)
+    }
 
     const applicant = new jobApplication({
       ...applicantData,

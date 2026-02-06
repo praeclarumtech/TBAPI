@@ -11,6 +11,7 @@ import {
   getResumeAndCsvApplicants,
   exportApplicantCsv,
   importApplicantCsv,
+  downloadSampleApplicantImport,
   checkApplicantExists,
   updateManyApplicant,
   viewImportedApplicantById,
@@ -163,6 +164,12 @@ router.post(
 );
 
 // import export applicant
+router.get(
+  '/downloadSampleApplicantImport',
+  authorization,
+  verifyRoles(Enum.ADMIN),
+  downloadSampleApplicantImport
+);
 router.post(
   '/exportCsv',
   authorization,

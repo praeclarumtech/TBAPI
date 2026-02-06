@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
 
+/** Escape string for safe use inside RegExp */
+const escapeRegex = (str) => (str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export const commonSearch = async (
   model,
   searchFields,
@@ -15,12 +18,19 @@ export const commonSearch = async (
   }
   const searchConditions = [];
 
-  if (query) {
-    searchConditions.push(
-      ...searchFields.map((field) => ({
-        [field]: { $regex: `^${query}`, $options: 'i' },
-      }))
-    );
+  if (query && typeof query === 'string') {
+    const trimmed = query.trim();
+    if (trimmed.length > 0) {
+      const words = trimmed.split(/\s+/).filter((w) => w.length > 0);
+      // Multi-word: each word must match at least one of the fields (e.g. "Hardik Test" -> firstName Hardik + lastName Test)
+      const escapedWords = words.map((w) => escapeRegex(w));
+      const wordConditions = escapedWords.map((word) => ({
+        $or: searchFields.map((field) => ({
+          [field]: { $regex: word, $options: 'i' },
+        })),
+      }));
+      searchConditions.push(...wordConditions);
+    }
   }
 
   if (typeof searchSkills === 'string' && searchSkills.trim().length > 0) {
@@ -37,7 +47,7 @@ export const commonSearch = async (
   let filterQuery = baseFilter;
   if (searchConditions.length > 0) {
     filterQuery = {
-      $and: [baseFilter, { $or: searchConditions }],
+      $and: [baseFilter, ...searchConditions],
     };
   }
   const totalRecords = await model.countDocuments(filterQuery);

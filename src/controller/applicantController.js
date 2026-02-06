@@ -757,6 +757,7 @@ export const viewAllApplicant = async (req, res) => {
         'name.middleName',
         'name.lastName',
         'appliedSkills',
+        'appliedRole',
         'phone.phoneNumber',
         'phone.whatsappNumber',
         'email',
@@ -768,7 +769,9 @@ export const viewAllApplicant = async (req, res) => {
         search,
         '',
         pageNum,
-        limitNum
+        limitNum,
+        { createdAt: -1 },
+        query
       );
 
       return HandleResponse(
@@ -1060,6 +1063,7 @@ export const getResumeAndCsvApplicants = async (req, res) => {
         'name.middleName',
         'name.lastName',
         'appliedSkills',
+        'appliedRole',
         'phone.phoneNumber',
         'phone.whatsappNumber',
         'email',
@@ -2240,6 +2244,111 @@ export const importApplicantCsv = async (req, res) => {
       false,
       StatusCodes.INTERNAL_SERVER_ERROR,
       `${Message.FAILED_TO} import file`
+    );
+  }
+};
+
+/**
+ * Download sample Excel template for applicant import.
+ * GET /api/applicants/sample-import
+ *
+ * All column headers are included; only required fields have sample data.
+ * Required: First Name, Email, Phone Number
+ */
+export const downloadSampleApplicantImport = async (req, res) => {
+  try {
+    const headers = [
+      'First Name',
+      'Middle Name',
+      'Last Name',
+      'Phone Number',
+      'WhatsApp Number',
+      'Email',
+      'Gender',
+      'Date of Birth',
+      'Qualification',
+      'Specialization',
+      'Passing Year',
+      'Current Pincode',
+      'Current City',
+      'Current Address',
+      'State',
+      'Country',
+      'Applied Skills',
+      'Total Experience (years)',
+      'Relevant Skill Experience (years)',
+      'College Name',
+      'CGPA',
+      'Permanent Address',
+      'Communication Skill',
+      'Other Skills',
+      'Rating',
+      'Current Package',
+      'Expected Package',
+      'Notice Period',
+      'Negotiation',
+      'Work Preference',
+      'Feedback',
+      'Comment',
+      'Status',
+      'Interview Stage',
+      'Current Company Designation',
+      'Applied Role',
+      'Practical URL',
+      'Practical Feedback',
+      'Portfolio URL',
+      'Referral',
+      'Resume URL',
+      'Github URL',
+      'Preferred Locations',
+      'Current Company Name',
+      'Marital Status',
+      'Last Follow-Up Date',
+      'Any Hands-On Offers',
+      'LinkedIn URL',
+      'Client CV URL',
+      'Client Feedback',
+    ];
+
+    const sampleRow = {};
+    headers.forEach((h) => {
+      sampleRow[h] = '';
+    });
+    sampleRow['First Name'] = 'John';
+    sampleRow['Email'] = 'john.doe@example.com';
+    sampleRow['Phone Number'] = '9876543210';
+
+    const sampleData = [sampleRow];
+
+    const workbook = xlsx.utils.book_new();
+    const worksheet = xlsx.utils.json_to_sheet(sampleData, { header: headers });
+    worksheet['!cols'] = headers.map(() => ({ wch: 18 }));
+
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Sample Import');
+
+    const excelBuffer = xlsx.write(workbook, {
+      type: 'buffer',
+      bookType: 'xlsx',
+    });
+
+    const filename = 'sample_applicant_import_required_fields.xlsx';
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    logger.info('Sample applicant import template downloaded');
+    return res.status(StatusCodes.OK).send(excelBuffer);
+  } catch (error) {
+    logger.error(
+      `Failed to generate sample applicant import template: ${error.message}`
+    );
+    return HandleResponse(
+      res,
+      false,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to generate sample template: ${error.message}`
     );
   }
 };

@@ -1,27 +1,28 @@
 import mongoose from 'mongoose';
-import logger from '../loggers/logger.js'
-import jobs from '../models/jobModel.js'
+import logger from '../loggers/logger.js';
+import jobs from '../models/jobModel.js';
 import jobApplication from '../models/jobApplicantionModel.js';
+import Applicant from '../models/applicantModel.js';
 import Vendor from '../models/vendorModel.js';
 
 export const createJobService = async (jobData) => {
   try {
-    return await jobs.create(jobData)
+    return await jobs.create(jobData);
   } catch (error) {
     logger.error('Error while creating job', error);
     throw error;
   }
-}
+};
 
 export const fetchJobService = async (jobId) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(jobId)) return null;
-    return await jobs.findOne({ _id: jobId })
+    return await jobs.findOne({ _id: jobId });
   } catch (error) {
     logger.error('Error while fetch job', error);
     throw error;
   }
-}
+};
 
 export const fetchJobsById = async (userId, page = 1, limit = 10) => {
   try {
@@ -57,8 +58,8 @@ export const fetchJobsById = async (userId, page = 1, limit = 10) => {
         currentPage: page,
         totalPages: Math.ceil(totalCount / limit),
         limit,
-      }
-    }
+      },
+    };
   } catch (error) {
     logger.error('Error while fetch job', error);
     throw error;
@@ -67,19 +68,19 @@ export const fetchJobsById = async (userId, page = 1, limit = 10) => {
 
 export const updateJobService = async (id, body) => {
   try {
-    return jobs.updateOne({ _id: id }, { $set: body })
+    return jobs.updateOne({ _id: id }, { $set: body });
   } catch (error) {
     logger.error('Error while update job', error);
     throw error;
   }
-}
+};
 
 export const deletJobService = async (ids) => {
   try {
     return await jobs.updateMany(
       { _id: { $in: ids } },
       { $set: { isDeleted: true } }
-    )
+    );
   } catch (error) {
     logger.error('Error while delete jobs', error);
     throw error;
@@ -89,24 +90,28 @@ export const deletJobService = async (ids) => {
 export const updateJobApplicantionStatus = async (applicationId, status) => {
   try {
     const applicationObjectId = new mongoose.Types.ObjectId(applicationId);
-    return await jobApplication.updateOne({
-      'applications._id': applicationObjectId
-    },
+    return await jobApplication.updateOne(
+      {
+        'applications._id': applicationObjectId,
+      },
       {
         $set: {
-          'applications.$.status': status
-        }
-      });
+          'applications.$.status': status,
+        },
+      }
+    );
   } catch (error) {
     logger.error('Error while updating job application status', error);
     throw error;
   }
 };
 
-export const createVendorData = async (vendorData  = {}) => {
+export const createVendorData = async (vendorData = {}) => {
   try {
     Object.keys(vendorData).forEach(
-      key => (vendorData[key] === undefined || vendorData[key] === null) && delete vendorData[key]
+      (key) =>
+        (vendorData[key] === undefined || vendorData[key] === null) &&
+        delete vendorData[key]
     );
 
     return await Vendor.create(vendorData);
@@ -114,23 +119,20 @@ export const createVendorData = async (vendorData  = {}) => {
     logger.error('Error while creating vendor profile', error);
     throw error;
   }
-}
+};
 
 export const findVendorByUserId = async (query) => {
   try {
-    return await Vendor.findOne(query)
+    return await Vendor.findOne(query);
   } catch (error) {
-    logger.error('Error while find vendor by userId', error)
+    logger.error('Error while find vendor by userId', error);
     throw error;
   }
-}
+};
 
 export const updateVendorData = async (userId, updatedData) => {
   try {
-    const result = await Vendor.updateOne(
-      { userId },
-      { $set: updatedData }
-    );
+    const result = await Vendor.updateOne({ userId }, { $set: updatedData });
 
     if (result.modifiedCount === 0) {
       logger.warn(`No vendor data was updated for userId: ${userId}`);
@@ -140,9 +142,14 @@ export const updateVendorData = async (userId, updatedData) => {
     logger.error('Error while updating vendor data', error);
     throw new Error('Failed to update vendor data');
   }
-}
+};
 
-export const getJobApplicationsByvendor = async (vendorId, page = 1, limit = 50, appliedSkills) => {
+export const getJobApplicationsByvendor = async (
+  vendorId,
+  page = 1,
+  limit = 50,
+  appliedSkills
+) => {
   try {
     const skip = (page - 1) * limit;
 
@@ -153,11 +160,12 @@ export const getJobApplicationsByvendor = async (vendorId, page = 1, limit = 50,
     if (appliedSkills) {
       const skillsArray = appliedSkills
         .split(',')
-        .map(skill =>
-          new RegExp(
-            `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
-            'i'
-          )
+        .map(
+          (skill) =>
+            new RegExp(
+              `^${skill.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i'
+            )
         );
 
       query.appliedSkills = { $all: skillsArray };
@@ -197,28 +205,74 @@ export const getApplicantionById = async (applicationId) => {
       path: 'job_id',
       model: 'jobs',
       select: 'job_id job_subject',
-    })
-    return applicant
+    });
+    return applicant;
   } catch (error) {
     logger.error('Error while fetch Job applicantions by id', error);
     throw error;
   }
-}
+};
 
 export const deleteApplications = async (ids) => {
   try {
-    return await jobApplication.updateMany({ _id: { $in: ids } }, { $set: { isDeleted: true } });
+    return await jobApplication.updateMany(
+      { _id: { $in: ids } },
+      { $set: { isDeleted: true } }
+    );
   } catch (error) {
     logger.error('Error while deleting applications', error);
     throw error;
   }
-}
+};
 
-export const updateStatusAndInterviewstage = async (applicantId, updateData) => {
+const APPLICANT_SYNC_FIELDS = [
+  'status',
+  'interviewStage',
+  'feedback',
+  'comment',
+  'lastFollowUpDate',
+];
+
+export const updateStatusAndInterviewstage = async (
+  applicantId,
+  updateData
+) => {
   try {
-    return await jobApplication.updateOne({ _id: applicantId }, { $set: updateData })
+    const application = await jobApplication
+      .findById(applicantId)
+      .select('email')
+      .lean();
+    const result = await jobApplication.updateOne(
+      { _id: applicantId },
+      { $set: updateData }
+    );
+
+    if (application?.email && result.modifiedCount > 0) {
+      const applicantUpdate = {};
+      APPLICANT_SYNC_FIELDS.forEach((field) => {
+        if (updateData[field] !== undefined)
+          applicantUpdate[field] = updateData[field];
+      });
+      if (Object.keys(applicantUpdate).length > 0) {
+        const email = (application.email || '').trim();
+        const emailRegex = new RegExp(
+          `^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+          'i'
+        );
+        await Applicant.updateOne(
+          { email: emailRegex },
+          { $set: applicantUpdate }
+        ).catch((err) => {
+          logger.warn(
+            `Sync to Applicant table skipped for ${application.email}: ${err.message}`
+          );
+        });
+      }
+    }
+
+    return result;
   } catch (error) {
     logger.error('Error while updating status and interview stage', error);
     throw error;
   }
-}
+};
