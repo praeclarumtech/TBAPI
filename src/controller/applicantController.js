@@ -54,6 +54,7 @@ import { extractSkillsFromResume } from '../services/applicantService.js';
 import { buildApplicantQuery } from '../helpers/commonFunction/filterQuery.js';
 import { sendingEmail } from '../helpers/commonFunction/handleEmail.js';
 import states from '../models/stateModel.js';
+import { uploadResumeToDrive } from '../helpers/googleDriveUpload.js';
 
 export const uploadResumeAndCreateApplicant = async (req, res) => {
   uploadResume(req, res, async (err) => {
@@ -343,6 +344,7 @@ export const addApplicant = async (req, res) => {
 
     const resumeFile = req.files || [];
     if (resumeFile.length > 0) {
+      const file = resumeFile[0];
       const base =
         (
           process.env.BASE_URL ||
@@ -350,10 +352,24 @@ export const addApplicant = async (req, res) => {
           `${req.protocol}://${req.get('host')}`
         ).replace(/\/$/, '') +
         (process.env.ATTACHMENT_BASE_PATH || '').replace(/\/$/, '');
-      applicantData.resumeUrl = `${base}/uploads/Attachments/${resumeFile[0].filename}`;
+      applicantData.resumeUrl = `${base}/uploads/Attachments/${file.filename}`;
     }
 
     const applicant = await createApplicant(applicantData);
+
+    if (resumeFile.length > 0) {
+      const file = resumeFile[0];
+      const localPath = path.isAbsolute(file.path)
+        ? file.path
+        : path.join(process.cwd(), file.path);
+      const driveUrl = await uploadResumeToDrive(
+        localPath,
+        file.originalname || file.filename
+      );
+      if (driveUrl) {
+        await updateApplicantById(applicant._id, { resumeUrl: driveUrl });
+      }
+    }
 
     if (resumeFile.length > 0) {
       const attachments = resumeFile.map((file) => ({
@@ -1143,10 +1159,9 @@ export const updateApplicant = async (req, res) => {
     let updateData = {
       ...body,
     };
-    // When resume is uploaded via QR form, set resumeUrl so viewApplicant returns it.
-    // Production: ATTACHMENT_BASE_PATH=/talent → .../talent/uploads/Attachments/... ; localhost: no path.
     const resumeFile = req.files || [];
     if (resumeFile.length > 0) {
+      const file = resumeFile[0];
       const base =
         (
           process.env.BASE_URL ||
@@ -1154,7 +1169,7 @@ export const updateApplicant = async (req, res) => {
           `${req.protocol}://${req.get('host')}`
         ).replace(/\/$/, '') +
         (process.env.ATTACHMENT_BASE_PATH || '').replace(/\/$/, '');
-      updateData.resumeUrl = `${base}/uploads/Attachments/${resumeFile[0].filename}`;
+      updateData.resumeUrl = `${base}/uploads/Attachments/${file.filename}`;
     }
     const updatedApplicant = await updateApplicantById(applicantId, updateData);
 
@@ -1166,6 +1181,20 @@ export const updateApplicant = async (req, res) => {
         StatusCodes.NOT_FOUND,
         `Applicant ${Message.NOT_FOUND}`
       );
+    }
+
+    if (resumeFile.length > 0) {
+      const file = resumeFile[0];
+      const localPath = path.isAbsolute(file.path)
+        ? file.path
+        : path.join(process.cwd(), file.path);
+      const driveUrl = await uploadResumeToDrive(
+        localPath,
+        file.originalname || file.filename
+      );
+      if (driveUrl) {
+        await updateApplicantById(applicantId, { resumeUrl: driveUrl });
+      }
     }
 
     // Sync updated applicant data to all job applications
