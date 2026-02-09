@@ -8,6 +8,11 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 
 /**
  * Load service account email and private key from env or key file.
+ * Option 1: Set GOOGLE_APPLICATION_CREDENTIALS to path to service-account.json.
+ * Option 2 (no file): Set in .env (one per line):
+ *   GOOGLE_DRIVE_CLIENT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+ *   GOOGLE_DRIVE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+ * (Copy client_email and private_key from service-account.json; keep \n in the key as literal \n.)
  * @returns {{ clientEmail: string, privateKey: string } | null}
  */
 function loadServiceAccountCredentials() {
@@ -24,7 +29,7 @@ function loadServiceAccountCredentials() {
       return null;
     }
   }
-  const clientEmail = process.env.GOOGLE_DRIVE_CLIENT_EMAIL;
+  const clientEmail = process.env.GOOGLE_DRIVE_CLIENT_EMAIL?.trim();
   const privateKey = process.env.GOOGLE_DRIVE_PRIVATE_KEY;
   if (!clientEmail || !privateKey) return null;
   return {
