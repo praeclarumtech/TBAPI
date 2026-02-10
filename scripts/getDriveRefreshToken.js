@@ -60,10 +60,12 @@ const authUrl = oauth2Client.generateAuthUrl({
 });
 
 async function handleRequest(req, res) {
-  const host = req.headers.host || `localhost:${PORT}`;
+  const host = req.headers.host || `localhost:${4001}`;
   const url = new URL(req.url || '/', `http://${host}`);
   const pathMatch =
-    url.pathname === '/callback' || url.pathname === '/' || url.pathname === REDIRECT_PATH;
+    url.pathname === '/callback' ||
+    url.pathname === '/' ||
+    url.pathname === REDIRECT_PATH;
   const server = req.socket?.server;
   if (pathMatch) {
     const code = url.searchParams.get('code');
