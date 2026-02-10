@@ -1,6 +1,7 @@
 import express from 'express';
 import connectDB from './src/helpers/dbConnection.js';
 import router from './src/routes/routes.js';
+import driveAuthRouter from './src/routes/route/driveAuthRoute.js';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -32,6 +33,7 @@ app.use('/uploads/profile', express.static(path.join(uploadsDir, 'profile')));
 app.use('/uploads/Attachments', express.static(path.join(uploadsDir, 'Attachments')));
 
 app.use(express.json());
+app.use('/tb', driveAuthRouter);
 app.use('/api', router);
 app.use(errorHandlerMiddleware);
 
