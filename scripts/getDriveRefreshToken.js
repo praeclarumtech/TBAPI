@@ -85,10 +85,26 @@ async function handleRequest(req, res) {
         if (server) server.close();
         process.exit(1);
       }
+      const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Drive token</title>
+<style>
+  body { font-family: system-ui,sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { color: #0d6; }
+  pre { background: #f4f4f4; padding: 1rem; border-radius: 8px; overflow-x: auto; word-break: break-all; }
+  button { margin-top: 0.5rem; padding: 0.5rem 1rem; cursor: pointer; }
+</style>
+</head>
+<body>
+  <h1>Success</h1>
+  <p>Copy the token below and add it to .env as <code>GOOGLE_DRIVE_REFRESH_TOKEN</code>:</p>
+  <pre id="token">${refreshToken}</pre>
+  <button onclick="navigator.clipboard.writeText(document.getElementById('token').innerText); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy to clipboard', 2000)">Copy to clipboard</button>
+</body>
+</html>`;
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(
-        `<h1>Success</h1><p>Copy the refresh token from your terminal and add it to .env as <code>GOOGLE_DRIVE_REFRESH_TOKEN</code>. You can close this tab.</p>`
-      );
+      res.end(html);
       console.log('\n---------- COPY THIS REFRESH TOKEN TO .env ----------\n');
       console.log(refreshToken);
       console.log('\n---------- END REFRESH TOKEN ----------\n');
