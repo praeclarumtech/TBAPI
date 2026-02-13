@@ -419,14 +419,14 @@ export const addApplicant = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        'Phone number is already in use.'
+        'Job record is already submitted using this phone number. Kindly use another if you want to submit again.'
       );
     } else if (error.code === 'DUPLICATE_WHATSAPP') {
       return HandleResponse(
         res,
         false,
         StatusCodes.CONFLICT,
-        'WhatsApp number is already in use'
+        'Job record is already submitted using this WhatsApp number. Kindly use another if you want to submit again.'
       );
     } else if (error.code === 11000) {
       const duplicateField = Object.keys(error.keyValue)[0];
