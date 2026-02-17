@@ -224,7 +224,7 @@ export const login = async (req, res) => {
     // ✅ Populate role before creating token
     const userWithRole = await User.findById(user._id).populate('roleId');
 
-    const expiresIn = process.env.EXPIRES_IN || '24h';
+    const expiresIn = (process.env.EXPIRES_IN || '24h').toString().replace(/^['"]|['"]$/g, '').trim();
     logger.info(`Token expiration set to: ${expiresIn}`);
 
     const token = jwt.sign(
@@ -251,7 +251,7 @@ export const login = async (req, res) => {
       true,
       StatusCodes.OK,
       Message.USER_LOGGED_IN_SUCCESSFULLY,
-      { token } // send token + user profile
+      { token }
     );
   } catch (error) {
     logger.error(`${Message.FAILED_TO} login.`, error);
