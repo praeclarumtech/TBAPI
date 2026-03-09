@@ -104,6 +104,11 @@ async function getDriveClient() {
     return { drive };
   } catch (err) {
     logger.error(`Google Drive auth failed: ${err.message}`);
+    if (err.message?.includes('invalid_grant')) {
+      logger.error(
+        'INVALID_GRANT: Get a new token at /tb and set GOOGLE_DRIVE_REFRESH_TOKEN in production .env'
+      );
+    }
     return null;
   }
 }
@@ -158,6 +163,11 @@ export async function uploadResumeToDrive(localFilePath, originalName) {
     return webViewLink;
   } catch (err) {
     logger.error(`Google Drive upload failed: ${err.message}`);
+    if (err.message?.includes('invalid_grant')) {
+      logger.error(
+        'INVALID_GRANT: Get a new token at /tb and set GOOGLE_DRIVE_REFRESH_TOKEN in production .env'
+      );
+    }
     return null;
   }
 }
