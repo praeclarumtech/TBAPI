@@ -65,13 +65,13 @@ router.get('/callback', async (req, res) => {
       );
     return;
   }
-  const redirectUri = getRedirectUri(req);
-  const oauth2Client = new google.auth.OAuth2(
-    clientId,
-    clientSecret,
-    redirectUri
-  );
   try {
+    const redirectUri = getRedirectUri(req);
+    const oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret,
+      redirectUri
+    );
     const { tokens } = await oauth2Client.getToken(code);
     const refreshToken = tokens.refresh_token;
     if (!refreshToken) {
@@ -93,9 +93,11 @@ router.get('/callback', async (req, res) => {
     );
   } catch (err) {
     logger.error('Drive token exchange failed: ' + err.message);
-    res
-      .status(500)
-      .send('<h1>Error</h1><pre>' + String(err.message) + '</pre>');
+    if (!res.headersSent) {
+      res
+        .status(500)
+        .send('<h1>Error</h1><pre>' + String(err.message) + '</pre>');
+    }
   }
 });
 
