@@ -1,5 +1,10 @@
 import mongoose from 'mongoose';
-import { applicantEnum, genderEnum, Enum } from '../utils/enum.js';
+import {
+  applicantEnum,
+  parseApplicantWorkPreference,
+  genderEnum,
+  Enum,
+} from '../utils/enum.js';
 
 const ApplicantSchema = new mongoose.Schema(
   {
@@ -49,14 +54,18 @@ const ApplicantSchema = new mongoose.Schema(
     negotiation: { type: String, required: false },
     workPreference: {
       type: String,
-      enum: [
-        applicantEnum.REMOTE,
-        applicantEnum.HYBRID,
-        applicantEnum.ONSITE,
-        applicantEnum.FREELANCER_WORK,
-        '',
-      ],
       required: false,
+      validate: {
+        validator(v) {
+          return parseApplicantWorkPreference(v).ok;
+        },
+        message(props) {
+          const p = parseApplicantWorkPreference(props.value);
+          return p.ok
+            ? 'Invalid work preference.'
+            : p.message;
+        },
+      },
     },
     comment: { type: String },
     feedback: { type: String },

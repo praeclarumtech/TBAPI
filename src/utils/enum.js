@@ -152,6 +152,77 @@ export const applicantEnum = {
   GUEST: 'guest',
 };
 
+/** Allowed `workPreference` values: work mode + engagement type (QR/add/edit + view by id). */
+export const applicantWorkPreferenceValues = [
+  applicantEnum.REMOTE,
+  applicantEnum.HYBRID,
+  applicantEnum.ONSITE,
+  applicantEnum.FREELANCER_WORK,
+  jodTypeEnum.FULL_TIME,
+  jodTypeEnum.FREELANCE,
+  jodTypeEnum.CONTRACT,
+  '',
+];
+
+/** Labels for validation errors (excludes empty string). */
+export const applicantWorkPreferenceAllowedLabels =
+  applicantWorkPreferenceValues.filter(Boolean);
+
+/** Joi `any.only` message — keeps API docs and errors in sync with allowed values. */
+export const applicantWorkPreferenceJoiMessage = `Work preference must be one or more of: ${applicantWorkPreferenceAllowedLabels.join(', ')}. Use a comma-separated string (e.g. "full-time,freelance,contract"), an array of values, or a single value — case-insensitive. Empty is allowed.`;
+
+/**
+ * Normalize form/API input to a canonical comma-separated string (deduped, order preserved).
+ * Accepts: "", null, "remote", "full-time,freelance", ["full-time","freelance"], etc.
+ * @returns {{ ok: true, value: string } | { ok: false, message: string }}
+ */
+export function parseApplicantWorkPreference(value) {
+  if (value === null || value === undefined || value === '') {
+    return { ok: true, value: '' };
+  }
+
+  let parts = [];
+  if (Array.isArray(value)) {
+    parts = value
+      .flatMap((v) => String(v).split(','))
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } else if (typeof value === 'string') {
+    parts = value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } else {
+    return {
+      ok: false,
+      message: `Work preference must be a string, comma-separated string, or array of strings.`,
+    };
+  }
+
+  if (parts.length === 0) {
+    return { ok: true, value: '' };
+  }
+
+  const seen = new Set();
+  const out = [];
+  for (const p of parts) {
+    const canon = applicantWorkPreferenceAllowedLabels.find(
+      (a) => a.toLowerCase() === p.toLowerCase()
+    );
+    if (!canon) {
+      return {
+        ok: false,
+        message: `Invalid work preference "${p}". Allowed: ${applicantWorkPreferenceAllowedLabels.join(', ')}.`,
+      };
+    }
+    if (!seen.has(canon)) {
+      seen.add(canon);
+      out.push(canon);
+    }
+  }
+  return { ok: true, value: out.join(',') };
+}
+
 export const candidateTemplateType = {
   APPLICATION_RECEIVED: 'APPLICATION_RECEIVED',
   SHORTLISTED_FOR_INTERVIEW: 'SHORTLISTED_FOR_INTERVIEW',

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import {
-  applicantEnum,
+  parseApplicantWorkPreference,
   jodTypeEnum,
   jobPaymentTypeEnum,
   salaryCurrencyEnum,
@@ -40,13 +40,15 @@ const jobSchema = new mongoose.Schema(
     },
     work_preference: {
       type: String,
-      enum: [
-        applicantEnum.REMOTE,
-        applicantEnum.HYBRID,
-        applicantEnum.ONSITE,
-        applicantEnum.FREELANCER_WORK,
-        '',
-      ],
+      validate: {
+        validator(v) {
+          return parseApplicantWorkPreference(v).ok;
+        },
+        message(props) {
+          const p = parseApplicantWorkPreference(props.value);
+          return p.ok ? 'Invalid work preference.' : p.message;
+        },
+      },
     },
     required_skills: { type: [String], required: false },
     application_deadline: {

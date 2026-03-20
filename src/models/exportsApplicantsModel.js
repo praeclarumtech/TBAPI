@@ -1,5 +1,9 @@
 import mongoose from 'mongoose';
-import { applicantEnum, genderEnum } from '../utils/enum.js';
+import {
+  applicantEnum,
+  parseApplicantWorkPreference,
+  genderEnum,
+} from '../utils/enum.js';
 
 const TemporaryExportsApplicantsSchema = new mongoose.Schema(
   {
@@ -46,14 +50,16 @@ const TemporaryExportsApplicantsSchema = new mongoose.Schema(
     negotiation: { type: String, required: false },
     workPreference: {
       type: String,
-      enum: [
-        applicantEnum.REMOTE,
-        applicantEnum.HYBRID,
-        applicantEnum.ONSITE,
-        applicantEnum.FREELANCER_WORK,
-        '',
-      ],
       required: false,
+      validate: {
+        validator(v) {
+          return parseApplicantWorkPreference(v).ok;
+        },
+        message(props) {
+          const p = parseApplicantWorkPreference(props.value);
+          return p.ok ? 'Invalid work preference.' : p.message;
+        },
+      },
     },
     comment: { type: String },
     feedback: { type: String },
