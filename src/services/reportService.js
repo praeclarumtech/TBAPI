@@ -1,5 +1,9 @@
 import Applicant from '../models/applicantModel.js';
-import { applicantEnum, Enum } from '../utils/enum.js';
+import {
+  applicantEnum,
+  applicantWorkPreferenceValues,
+  Enum,
+} from '../utils/enum.js';
 import { getDateRange } from '../helpers/commonFunction/moment.js';
 import moment from 'moment';
 import Skills from '../models/skillsModel.js';
@@ -687,7 +691,10 @@ export const getApplicantByGenderWorkNotice = async (filters) => {
   };
 
   const genderOptions = ['male', 'female', 'other'];
-  const workPrefOptions = ['onsite', 'remote', 'hybrid', 'other'];
+  const workPrefOptions = [
+    ...applicantWorkPreferenceValues.filter(Boolean),
+    'other',
+  ];
   const noticeOptions = [15, 30, 60, 90, 'other'];
   const roleOptions = ['admin', 'vendor', 'client', 'hr', 'guest', 'other'];
 

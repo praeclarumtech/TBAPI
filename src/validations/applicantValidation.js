@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { applicantEnum, genderEnum } from '../utils/enum.js';
+import { workPreferenceJoi } from './workPreferenceSchema.js';
 
 export const applicantValidation = Joi.object({
   name: Joi.object({
@@ -109,20 +110,9 @@ export const applicantValidation = Joi.object({
   noticePeriod: Joi.number().allow(''),
   negotiation: Joi.string().allow(null, ''),
 
-  workPreference: Joi.string()
-    .valid(
-      applicantEnum.REMOTE,
-      applicantEnum.HYBRID,
-      applicantEnum.ONSITE,
-      applicantEnum.FREELANCER_WORK,
-      ''
-    )
-    .allow(null, '')
-    .messages({
-      'any.only':
-        'Work Preference must be remote, hybrid, onsite, or freelancer.',
-      'any.required': 'Work Preference is required.',
-    }),
+  workPreference: workPreferenceJoi.messages({
+    'any.required': 'Work Preference is required.',
+  }),
 
   currentCompanyDesignation: Joi.string().messages({
     'any.required': 'CurrentCompanyDesignation is required.',
@@ -297,19 +287,7 @@ export const updateApplicantValidation = Joi.object({
   noticePeriod: Joi.number().allow(''),
   negotiation: Joi.string().allow(''),
 
-  workPreference: Joi.string()
-    .valid(
-      applicantEnum.REMOTE,
-      applicantEnum.HYBRID,
-      applicantEnum.ONSITE,
-      applicantEnum.FREELANCER_WORK,
-      ''
-    )
-    .allow(null, '')
-    .messages({
-      'any.only':
-        'Work Preference must be remote, hybrid, onsite, or freelancer.',
-    }),
+  workPreference: workPreferenceJoi,
 
   currentCompanyDesignation: Joi.string().allow(null, '').messages({
     'any.required': 'CurrentCompanyDesignation is required.',
