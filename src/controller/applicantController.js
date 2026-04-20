@@ -556,8 +556,8 @@ export const viewAllApplicant = async (req, res) => {
         validAddedBy.length === 1
           ? validAddedBy[0]
           : validAddedBy.length > 1
-          ? { $in: validAddedBy }
-          : undefined;
+            ? { $in: validAddedBy }
+            : undefined;
     }
 
     if (applicationNo && !isNaN(applicationNo)) {
@@ -1736,18 +1736,18 @@ export const exportApplicantCsv = async (req, res) => {
           source === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : source === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : source === applicantEnum.MANUAL
-            ? applicantEnum.MANUAL
-            : source === applicantEnum.GUEST
-            ? applicantEnum.GUEST
-            : {
-                $in: [
-                  applicantEnum.RESUME,
-                  applicantEnum.CSV,
-                  applicantEnum.GUEST,
-                ],
-              };
+              ? applicantEnum.CSV
+              : source === applicantEnum.MANUAL
+                ? applicantEnum.MANUAL
+                : source === applicantEnum.GUEST
+                  ? applicantEnum.GUEST
+                  : {
+                      $in: [
+                        applicantEnum.RESUME,
+                        applicantEnum.CSV,
+                        applicantEnum.GUEST,
+                      ],
+                    };
       }
 
       if (filtered) {
@@ -1755,8 +1755,8 @@ export const exportApplicantCsv = async (req, res) => {
           filtered === applicantEnum.RESUME
             ? applicantEnum.RESUME
             : filtered === applicantEnum.CSV
-            ? applicantEnum.CSV
-            : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
+              ? applicantEnum.CSV
+              : { $in: [applicantEnum.RESUME, applicantEnum.CSV] };
 
         const tempApplicants = await ExportsApplicants.find(query, projection);
 
@@ -1950,8 +1950,8 @@ export const importApplicantCsv = async (req, res) => {
       req.query.updateFlag === 'true'
         ? true
         : req.query.updateFlag === 'false'
-        ? false
-        : undefined;
+          ? false
+          : undefined;
 
     const user = await User.findById(req.user.id);
 

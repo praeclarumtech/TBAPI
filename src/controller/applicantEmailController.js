@@ -326,7 +326,7 @@ export const generateMultipleQrs = async (req, res) => {
 
     const qrResults = await Promise.all(
       applicants.map(async (applicant) => {
-        const url = `https://tb-front.vercel.app/applicants/edit-applicant/${applicant._id}`;
+        const url = `${process.env.FRONT_URL}applicants/edit-applicant/${applicant._id}`;
         const qrCode = await QRCode.toDataURL(url);
         return { email: applicant.email, qrCode };
       })

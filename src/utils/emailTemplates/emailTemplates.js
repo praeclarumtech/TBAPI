@@ -209,7 +209,7 @@ export const passwordResetRequestTemplate = ({ email }) => `
       </p>
 
       <div style="text-align: center; margin: 30px 0;">
-        <a href="https://tb-front.vercel.app/update-password"
+        <a href="${process.env.FRONT_URL}update-password"
            target="_blank"
            style="background-color: #007bff; color: #fff; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold;">
           Reset User Password

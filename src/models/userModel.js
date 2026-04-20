@@ -76,6 +76,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true, // Default to true for existing users, false for users with temp passwords
     },
+    passwordUpdatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+      required: false,
+    },
     // User address fields
     state: {
       type: String,

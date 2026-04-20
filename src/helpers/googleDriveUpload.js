@@ -140,34 +140,62 @@ export async function uploadResumeToDrive(localFilePath, originalName) {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     }[path.extname(name).toLowerCase()] || 'application/octet-stream';
 
-  try {
-    const response = await client.drive.files.create({
-      supportsAllDrives: true,
-      requestBody: {
-        name,
-        parents: [folderId],
-      },
-      media: {
-        mimeType,
-        body: fs.createReadStream(localFilePath),
-      },
-      fields: 'id, webViewLink, webContentLink',
-    });
+  const maxAttempts = 4;
+  const retryableStatus = new Set([429, 500, 502, 503, 504]);
 
-    const fileId = response.data.id;
-    const webViewLink =
-      response.data.webViewLink ||
-      `https://drive.google.com/file/d/${fileId}/view`;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    logger.info(`Resume uploaded to Drive: ${name} -> ${webViewLink}`);
-    return webViewLink;
-  } catch (err) {
-    logger.error(`Google Drive upload failed: ${err.message}`);
-    if (err.message?.includes('invalid_grant')) {
-      logger.error(
-        'INVALID_GRANT: Get a new token at /tb and set GOOGLE_DRIVE_REFRESH_TOKEN in production .env'
-      );
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let readStream;
+    try {
+      readStream = fs.createReadStream(localFilePath);
+      const response = await client.drive.files.create({
+        supportsAllDrives: true,
+        requestBody: {
+          name,
+          parents: [folderId],
+        },
+        media: {
+          mimeType,
+          body: readStream,
+        },
+        fields: 'id, webViewLink, webContentLink',
+      });
+
+      const fileId = response.data.id;
+      const webViewLink =
+        response.data.webViewLink ||
+        `https://drive.google.com/file/d/${fileId}/view`;
+
+      logger.info(`Resume uploaded to Drive: ${name} -> ${webViewLink}`);
+      return webViewLink;
+    } catch (err) {
+      const status = err.response?.status ?? err.code;
+      const isRetryable =
+        retryableStatus.has(Number(status)) ||
+        (typeof err.message === 'string' &&
+          /502|503|504|429|ECONNRESET|ETIMEDOUT|ENOTFOUND/i.test(err.message));
+
+      if (isRetryable && attempt < maxAttempts) {
+        const delayMs = Math.min(8000, 500 * 2 ** (attempt - 1));
+        logger.warn(
+          `Google Drive upload attempt ${attempt}/${maxAttempts} failed (${status ?? 'n/a'}), retrying in ${delayMs}ms`
+        );
+        await sleep(delayMs);
+        continue;
+      }
+
+      const shortReason =
+        status === 502 || (err.message && err.message.includes('<!DOCTYPE html>'))
+          ? 'HTTP 502/503 from Google (transient); try again later or check status.cloud.google.com'
+          : err.message;
+      logger.error(`Google Drive upload failed: ${shortReason}`);
+      if (err.message?.includes('invalid_grant')) {
+        logger.error(
+          'INVALID_GRANT: Get a new token at /tb and set GOOGLE_DRIVE_REFRESH_TOKEN in production .env'
+        );
+      }
+      return null;
     }
-    return null;
   }
 }
