@@ -497,6 +497,13 @@ export const updateProfile = (req, res) => {
 
       if (password) {
         updateData.password = await bcrypt.hash(password, 10);
+        const actorId = req.user?.id || req.user?._id || 'unknown';
+        if (mongoose.Types.ObjectId.isValid(actorId)) {
+          updateData.passwordUpdatedBy = new mongoose.Types.ObjectId(actorId);
+        }
+        logger.info(
+          `Password updated via profile update for userId=${userId}, updatedBy=${actorId}`
+        );
       }
 
       if (req.file) {
@@ -619,7 +626,7 @@ export const sendEmail = async (req, res) => {
 
     const htmlContent = passwordResetRequestTemplate({ email });
     const data = await sendingEmail({
-      email_to: [process.env.HR_EMAIL],
+      email_to: [process.env.HR_EMAIL, email],
       subject: 'Password Reset Request – TalentBox',
       description: htmlContent,
     });
@@ -721,7 +728,16 @@ export const forgotPassword = async (req, res) => {
       );
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await updateUserById(email, { password: hashedPassword });
+    const actorIdRaw = req.user?.id || req.user?._id;
+    const passwordUpdateData = { password: hashedPassword };
+    if (actorIdRaw && mongoose.Types.ObjectId.isValid(actorIdRaw)) {
+      passwordUpdateData.passwordUpdatedBy = new mongoose.Types.ObjectId(
+        actorIdRaw
+      );
+    }
+
+    await updateUserById(email, passwordUpdateData);
+    logger.info(`Password reset updated for user email: ${email}`);
 
     const htmlContent = resetPasswordCredentialsTemplate({
       email,
@@ -786,10 +802,17 @@ export const changePassword = async (req, res) => {
         Message.OLD_PASSWORD_INCORRECT
       );
     }
+    const actorId = req.user?.id || req.user?._id || 'unknown';
     user.password = newPassword; // Pre-save hook will hash it
     user.passwordChanged = true; // Mark password as changed
+    if (mongoose.Types.ObjectId.isValid(actorId)) {
+      user.passwordUpdatedBy = new mongoose.Types.ObjectId(actorId);
+    }
     await user.save();
 
+    logger.info(
+      `Password updated for userId=${userId}, email=${user.email}, updatedBy=${actorId}`
+    );
     logger.info(Message.PASSWORD_CHANGE_SUCCESSFULLY);
     return HandleResponse(
       res,

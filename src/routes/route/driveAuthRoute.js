@@ -16,7 +16,10 @@ function getRedirectUri(req) {
   if (uri) return uri;
   const protocol = req.protocol || 'https';
   const host = req.get('host') || req.hostname;
-  const isLocal = host === 'localhost' || host.startsWith('127.0.0.1') || host.startsWith('localhost:');
+  const isLocal =
+    host === 'localhost' ||
+    host.startsWith('127.0.0.1') ||
+    host.startsWith('localhost:');
   const path = isLocal ? '/callback' : '/tb/callback';
   return `${protocol}://${host}${path}`;
 }
@@ -35,7 +38,10 @@ router.get('/', (req, res) => {
     return;
   }
   const redirectUri = getRedirectUri(req);
-  logger.info('Google Drive OAuth redirect_uri (add this in Google Console): ' + redirectUri);
+  logger.info(
+    'Google Drive OAuth redirect_uri (add this in Google Console): ' +
+      redirectUri
+  );
   const oauth2Client = new google.auth.OAuth2(
     clientId,
     clientSecret,

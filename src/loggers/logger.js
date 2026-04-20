@@ -17,13 +17,21 @@ const jsonFormat = format.combine(
   format.errors({ stack: true })
 );
 
+const consoleFormat = format.combine(
+  format.colorize(),
+  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  format.printf(({ timestamp, level, message, stack }) => {
+    return `${timestamp} [${level.toUpperCase()}]: ${stack || message}`;
+  })
+);
+
 const logger = createLogger({
   level: 'info',
   format: logFormat,
   transports: [
     // Console transport with colorized output
     new transports.Console({
-      format: format.combine(format.colorize(), logFormat),
+      format: consoleFormat,
     }),
 
     // Daily rotating file for error logs
