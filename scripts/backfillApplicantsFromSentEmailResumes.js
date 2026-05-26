@@ -6,9 +6,16 @@
  *   node scripts/backfillApplicantsFromSentEmailResumes.js --limit=50
  *   node scripts/backfillApplicantsFromSentEmailResumes.js --email-id=<applicant_email_id>
  *   node scripts/backfillApplicantsFromSentEmailResumes.js --from=2026-05-01 --to=2026-05-26
+ *   node scripts/backfillApplicantsFromSentEmailResumes.js --from-attachments --dry-run
+ *   node scripts/backfillApplicantsFromSentEmailResumes.js --from-attachments --attachments-dir=src/uploads/Attachments
+ *   node scripts/backfillApplicantsFromSentEmailResumes.js --from-drive --dry-run
+ *   node scripts/backfillApplicantsFromSentEmailResumes.js --from-drive --drive-folder-id=<folder_id>
+ *   node scripts/backfillApplicantsFromSentEmailResumes.js --from-drive --drive-file-id=<file_id>
  *
  * What it does:
  * - Reads applicant_email records that have attachments
+ * - Or scans the local attachments folder when --from-attachments is used
+ * - Or downloads/parses resumes from Google Drive when --from-drive is used
  * - Extracts applicant data from attached PDF/DOC/DOCX resumes
  * - Creates records in applicants only when the email/phone is not already present
  */
@@ -32,6 +39,7 @@ import {
   extractMatchingRoleFromResume,
   extractSkillsFromResume,
 } from '../src/services/applicantService.js';
+import { getDriveClient } from '../src/helpers/googleDriveUpload.js';
 import logger from '../src/loggers/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -44,13 +52,34 @@ const limitArg = args.find((arg) => arg.startsWith('--limit='));
 const emailIdArg = args.find((arg) => arg.startsWith('--email-id='));
 const fromArg = args.find((arg) => arg.startsWith('--from='));
 const toArg = args.find((arg) => arg.startsWith('--to='));
+const attachmentsDirArg = args.find((arg) => arg.startsWith('--attachments-dir='));
+const driveFolderIdArg = args.find((arg) => arg.startsWith('--drive-folder-id='));
+const driveFileIdArg = args.find((arg) => arg.startsWith('--drive-file-id='));
 
 const limit = limitArg ? Number(limitArg.split('=')[1]) : 0;
 const emailId = emailIdArg ? emailIdArg.split('=')[1] : null;
 const fromDate = fromArg ? fromArg.split('=')[1] : null;
 const toDate = toArg ? toArg.split('=')[1] : null;
+const fromAttachments = args.includes('--from-attachments');
+const fromDrive = args.includes('--from-drive');
+const attachmentsDir = path.resolve(
+  projectRoot,
+  attachmentsDirArg
+    ? attachmentsDirArg.split('=')[1]
+    : path.join('src', 'uploads', 'Attachments')
+);
+const driveFolderId = driveFolderIdArg
+  ? driveFolderIdArg.split('=')[1]
+  : process.env.GOOGLE_DRIVE_FOLDER_ID;
+const driveFileId = driveFileIdArg ? driveFileIdArg.split('=')[1] : null;
+const tempDriveDir = path.join(projectRoot, 'src', 'uploads', 'temp-drive-backfill');
 
 const resumeExtensions = new Set(['.pdf', '.doc', '.docx']);
+const resumeMimeTypes = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
 
 function normalizeEmail(email) {
   return typeof email === 'string' ? email.trim().toLowerCase() : '';
@@ -76,6 +105,25 @@ function resolveAttachmentPath(attachment) {
   }
 
   return path.join(projectRoot, 'src', 'uploads', 'Attachments', attachmentPath);
+}
+
+function buildAttachmentFromFile(filePath) {
+  return {
+    filename: path.basename(filePath),
+    path: filePath,
+  };
+}
+
+function safeFileName(fileName) {
+  const ext = path.extname(fileName);
+  const baseName = path
+    .basename(fileName, ext)
+    .replace(/[^a-zA-Z0-9_-]/g, '_');
+  return `${baseName || 'resume'}${ext}`;
+}
+
+function getDriveViewUrl(fileId) {
+  return `https://drive.google.com/file/d/${fileId}/view`;
 }
 
 function buildResumeUrl(filePath) {
@@ -170,7 +218,7 @@ async function processAttachment(emailRecord, attachment, summary) {
   if (!fs.existsSync(filePath)) {
     summary.missingFile += 1;
     logger.warn(
-      `[EmailResumeBackfill] missing file emailId=${emailRecord._id} path=${filePath}`
+      `[EmailResumeBackfill] missing file source=${emailRecord._id} path=${filePath}`
     );
     return;
   }
@@ -179,7 +227,7 @@ async function processAttachment(emailRecord, attachment, summary) {
   if (!resumeText) {
     summary.parseFailed += 1;
     logger.warn(
-      `[EmailResumeBackfill] text extraction failed emailId=${emailRecord._id} file=${filePath}`
+      `[EmailResumeBackfill] text extraction failed source=${emailRecord._id} file=${filePath}`
     );
     return;
   }
@@ -194,7 +242,7 @@ async function processAttachment(emailRecord, attachment, summary) {
   if (!email || !phoneNumber) {
     summary.skippedMissingRequired += 1;
     logger.warn(
-      `[EmailResumeBackfill] missing email/phone emailId=${emailRecord._id} file=${filePath} email=${email || 'none'}`
+      `[EmailResumeBackfill] missing email/phone source=${emailRecord._id} file=${filePath} email=${email || 'none'}`
     );
     return;
   }
@@ -203,7 +251,7 @@ async function processAttachment(emailRecord, attachment, summary) {
   if (existingApplicant) {
     summary.skippedDuplicate += 1;
     logger.info(
-      `[EmailResumeBackfill] duplicate applicant emailId=${emailRecord._id} existingApplicantId=${existingApplicant._id} email=${email}`
+      `[EmailResumeBackfill] duplicate applicant source=${emailRecord._id} existingApplicantId=${existingApplicant._id} email=${email}`
     );
     return;
   }
@@ -224,12 +272,18 @@ async function processAttachment(emailRecord, attachment, summary) {
     appliedRole,
     addedBy: applicantEnum.RESUME,
     isActive: true,
-    resumeUrl: buildResumeUrl(filePath),
+    resumeUrl: attachment.driveFileId
+      ? getDriveViewUrl(attachment.driveFileId)
+      : buildResumeUrl(filePath),
     meta: {
       ...(parsedData.meta || {}),
-      source: 'applicant_email_resume_backfill',
-      sourceEmailId: emailRecord._id.toString(),
+      source: emailRecord.source || 'applicant_email_resume_backfill',
+      sourceEmailId:
+        emailRecord._id === 'local-attachments'
+          ? undefined
+          : emailRecord._id.toString(),
       sourceAttachment: attachment.filename || path.basename(filePath),
+      sourceDriveFileId: attachment.driveFileId,
     },
   };
 
@@ -250,8 +304,205 @@ async function processAttachment(emailRecord, attachment, summary) {
   );
 }
 
+function getLocalResumeFiles() {
+  if (!fs.existsSync(attachmentsDir)) {
+    throw new Error(`Attachments directory not found: ${attachmentsDir}`);
+  }
+
+  const files = fs
+    .readdirSync(attachmentsDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.join(attachmentsDir, entry.name))
+    .filter((filePath) => resumeExtensions.has(path.extname(filePath).toLowerCase()))
+    .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+
+  return limit > 0 ? files.slice(0, limit) : files;
+}
+
+async function processLocalAttachments(summary) {
+  const files = getLocalResumeFiles();
+  const localRecord = {
+    _id: 'local-attachments',
+    email_to: [],
+    source: 'local_attachment_resume_backfill',
+  };
+
+  summary.localFiles = files.length;
+  logger.info(
+    `[EmailResumeBackfill] scanning local attachments files=${files.length} dir=${attachmentsDir}`
+  );
+
+  for (const filePath of files) {
+    summary.attachments += 1;
+    try {
+      await processAttachment(localRecord, buildAttachmentFromFile(filePath), summary);
+    } catch (error) {
+      summary.errors += 1;
+      logger.error(
+        `[EmailResumeBackfill] failed local attachment=${path.basename(filePath)}: ${error.message}`
+      );
+    }
+  }
+}
+
+function isResumeDriveFile(file) {
+  const ext = path.extname(file.name || '').toLowerCase();
+  return resumeExtensions.has(ext) || resumeMimeTypes.has(file.mimeType);
+}
+
+async function listDriveFiles(drive) {
+  if (driveFileId) {
+    const response = await drive.files.get({
+      fileId: driveFileId,
+      supportsAllDrives: true,
+      fields: 'id, name, mimeType',
+    });
+    return [response.data].filter(isResumeDriveFile);
+  }
+
+  if (!driveFolderId) {
+    throw new Error(
+      'Google Drive folder id is required. Set GOOGLE_DRIVE_FOLDER_ID or pass --drive-folder-id=<folder_id>.'
+    );
+  }
+
+  const files = [];
+  let pageToken;
+
+  do {
+    const response = await drive.files.list({
+      q: `'${driveFolderId}' in parents and trashed = false`,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime)',
+      orderBy: 'modifiedTime desc',
+      pageSize: 100,
+      pageToken,
+    });
+
+    files.push(...(response.data.files || []).filter(isResumeDriveFile));
+    pageToken = response.data.nextPageToken;
+  } while (pageToken && (limit <= 0 || files.length < limit));
+
+  return limit > 0 ? files.slice(0, limit) : files;
+}
+
+async function downloadDriveFile(drive, file) {
+  fs.mkdirSync(tempDriveDir, { recursive: true });
+
+  const ext = path.extname(file.name || '');
+  const fallbackName = `${file.id}${ext || '.pdf'}`;
+  const localPath = path.join(tempDriveDir, `${file.id}_${safeFileName(file.name || fallbackName)}`);
+  const response = await drive.files.get(
+    {
+      fileId: file.id,
+      alt: 'media',
+      supportsAllDrives: true,
+    },
+    {
+      responseType: 'stream',
+    }
+  );
+
+  await new Promise((resolve, reject) => {
+    const writeStream = fs.createWriteStream(localPath);
+    response.data
+      .on('end', resolve)
+      .on('error', reject)
+      .pipe(writeStream)
+      .on('error', reject);
+  });
+
+  return localPath;
+}
+
+async function processDriveFiles(summary) {
+  const client = await getDriveClient();
+  if (!client) {
+    throw new Error(
+      'Google Drive auth failed. Check GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, GOOGLE_DRIVE_REFRESH_TOKEN, and GOOGLE_DRIVE_FOLDER_ID.'
+    );
+  }
+
+  const files = await listDriveFiles(client.drive);
+  const driveRecord = {
+    _id: 'google-drive',
+    email_to: [],
+    source: 'google_drive_resume_backfill',
+  };
+
+  summary.driveFiles = files.length;
+  logger.info(`[EmailResumeBackfill] scanning Google Drive files=${files.length}`);
+
+  for (const file of files) {
+    let localPath;
+    summary.attachments += 1;
+    try {
+      localPath = await downloadDriveFile(client.drive, file);
+      await processAttachment(
+        driveRecord,
+        {
+          filename: file.name,
+          path: localPath,
+          driveFileId: file.id,
+        },
+        summary
+      );
+    } catch (error) {
+      summary.errors += 1;
+      logger.error(
+        `[EmailResumeBackfill] failed driveFileId=${file.id} name=${file.name}: ${error.message}`
+      );
+    } finally {
+      if (localPath && fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+      }
+    }
+  }
+}
+
 async function run() {
   await connectDB();
+
+  if (fromDrive) {
+    const summary = {
+      emailRecords: 0,
+      driveFiles: 0,
+      attachments: 0,
+      created: 0,
+      skippedDuplicate: 0,
+      skippedMissingRequired: 0,
+      skippedNotResume: 0,
+      missingFile: 0,
+      parseFailed: 0,
+      errors: 0,
+    };
+
+    logger.info(`[EmailResumeBackfill] start fromDrive=true dryRun=${dryRun}`);
+    await processDriveFiles(summary);
+    logger.info(`[EmailResumeBackfill] done ${JSON.stringify(summary)}`);
+    return;
+  }
+
+  if (fromAttachments) {
+    const summary = {
+      emailRecords: 0,
+      localFiles: 0,
+      attachments: 0,
+      created: 0,
+      skippedDuplicate: 0,
+      skippedMissingRequired: 0,
+      skippedNotResume: 0,
+      missingFile: 0,
+      parseFailed: 0,
+      errors: 0,
+    };
+
+    logger.info(`[EmailResumeBackfill] start fromAttachments=true dryRun=${dryRun}`);
+    await processLocalAttachments(summary);
+    logger.info(`[EmailResumeBackfill] done ${JSON.stringify(summary)}`);
+    return;
+  }
 
   const query = buildQuery();
   let recordsQuery = applicantEmail

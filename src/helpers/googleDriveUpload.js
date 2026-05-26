@@ -44,7 +44,7 @@ function loadServiceAccountCredentials() {
  * Falls back to service account (with optional impersonation for Workspace).
  * @returns {Promise<{ drive: import('googleapis').drive_v3.Drive } | null>}
  */
-async function getDriveClient() {
+export async function getDriveClient() {
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
   if (!folderId) {
     logger.warn('GOOGLE_DRIVE_FOLDER_ID is not set; skipping Drive upload');
