@@ -126,6 +126,24 @@ function getDriveViewUrl(fileId) {
   return `https://drive.google.com/file/d/${fileId}/view`;
 }
 
+function ensureDetails(summary) {
+  if (!summary.details) {
+    summary.details = {
+      created: [],
+      skippedDuplicate: [],
+      skippedMissingRequired: [],
+      parseFailed: [],
+      errors: [],
+    };
+  }
+
+  return summary.details;
+}
+
+function getAttachmentName(attachment, filePath) {
+  return attachment?.filename || path.basename(filePath || '') || 'unknown';
+}
+
 function buildResumeUrl(filePath) {
   const fileName = path.basename(filePath);
   const baseUrl = (
@@ -217,6 +235,12 @@ async function processAttachment(emailRecord, attachment, summary) {
 
   if (!fs.existsSync(filePath)) {
     summary.missingFile += 1;
+    ensureDetails(summary).errors.push({
+      type: 'missingFile',
+      file: getAttachmentName(attachment, filePath),
+      path: filePath,
+      source: emailRecord._id,
+    });
     logger.warn(
       `[EmailResumeBackfill] missing file source=${emailRecord._id} path=${filePath}`
     );
@@ -226,6 +250,14 @@ async function processAttachment(emailRecord, attachment, summary) {
   const resumeText = await extractResumeText(filePath);
   if (!resumeText) {
     summary.parseFailed += 1;
+    ensureDetails(summary).parseFailed.push({
+      file: getAttachmentName(attachment, filePath),
+      path: filePath,
+      driveFileId: attachment.driveFileId,
+      driveUrl: attachment.driveFileId
+        ? getDriveViewUrl(attachment.driveFileId)
+        : undefined,
+    });
     logger.warn(
       `[EmailResumeBackfill] text extraction failed source=${emailRecord._id} file=${filePath}`
     );
@@ -241,6 +273,15 @@ async function processAttachment(emailRecord, attachment, summary) {
 
   if (!email || !phoneNumber) {
     summary.skippedMissingRequired += 1;
+    ensureDetails(summary).skippedMissingRequired.push({
+      file: getAttachmentName(attachment, filePath),
+      email: email || '',
+      phoneNumber: phoneNumber || '',
+      driveFileId: attachment.driveFileId,
+      driveUrl: attachment.driveFileId
+        ? getDriveViewUrl(attachment.driveFileId)
+        : undefined,
+    });
     logger.warn(
       `[EmailResumeBackfill] missing email/phone source=${emailRecord._id} file=${filePath} email=${email || 'none'}`
     );
@@ -250,6 +291,16 @@ async function processAttachment(emailRecord, attachment, summary) {
   const existingApplicant = await applicantExists(email, phoneNumber);
   if (existingApplicant) {
     summary.skippedDuplicate += 1;
+    ensureDetails(summary).skippedDuplicate.push({
+      file: getAttachmentName(attachment, filePath),
+      email,
+      phoneNumber,
+      existingApplicantId: existingApplicant._id.toString(),
+      driveFileId: attachment.driveFileId,
+      driveUrl: attachment.driveFileId
+        ? getDriveViewUrl(attachment.driveFileId)
+        : undefined,
+    });
     logger.info(
       `[EmailResumeBackfill] duplicate applicant source=${emailRecord._id} existingApplicantId=${existingApplicant._id} email=${email}`
     );
@@ -289,6 +340,15 @@ async function processAttachment(emailRecord, attachment, summary) {
 
   if (dryRun) {
     summary.created += 1;
+    ensureDetails(summary).created.push({
+      file: getAttachmentName(attachment, filePath),
+      email,
+      phoneNumber,
+      driveFileId: attachment.driveFileId,
+      driveUrl: attachment.driveFileId
+        ? getDriveViewUrl(attachment.driveFileId)
+        : undefined,
+    });
     logger.info(
       `[EmailResumeBackfill] DRY-RUN create email=${email} file=${path.basename(
         filePath
@@ -299,6 +359,16 @@ async function processAttachment(emailRecord, attachment, summary) {
 
   const applicant = await Applicant.create(applicantData);
   summary.created += 1;
+  ensureDetails(summary).created.push({
+    file: getAttachmentName(attachment, filePath),
+    email,
+    phoneNumber,
+    applicantId: applicant._id.toString(),
+    driveFileId: attachment.driveFileId,
+    driveUrl: attachment.driveFileId
+      ? getDriveViewUrl(attachment.driveFileId)
+      : undefined,
+  });
   logger.info(
     `[EmailResumeBackfill] created applicantId=${applicant._id} email=${email}`
   );
@@ -338,6 +408,12 @@ async function processLocalAttachments(summary) {
       await processAttachment(localRecord, buildAttachmentFromFile(filePath), summary);
     } catch (error) {
       summary.errors += 1;
+      ensureDetails(summary).errors.push({
+        type: 'localAttachmentError',
+        file: path.basename(filePath),
+        path: filePath,
+        message: error.message,
+      });
       logger.error(
         `[EmailResumeBackfill] failed local attachment=${path.basename(filePath)}: ${error.message}`
       );
@@ -464,6 +540,13 @@ async function processDriveFiles(summary) {
       );
     } catch (error) {
       summary.errors += 1;
+      ensureDetails(summary).errors.push({
+        type: 'driveFileError',
+        file: file.name,
+        driveFileId: file.id,
+        driveUrl: getDriveViewUrl(file.id),
+        message: error.message,
+      });
       logger.error(
         `[EmailResumeBackfill] failed driveFileId=${file.id} name=${file.name}: ${error.message}`
       );
@@ -552,6 +635,12 @@ async function run() {
         await processAttachment(emailRecord, attachment, summary);
       } catch (error) {
         summary.errors += 1;
+        ensureDetails(summary).errors.push({
+          type: 'emailAttachmentError',
+          file: attachment?.filename,
+          sourceEmailId: emailRecord._id.toString(),
+          message: error.message,
+        });
         logger.error(
           `[EmailResumeBackfill] failed emailId=${emailRecord._id} attachment=${attachment?.filename}: ${error.message}`
         );
