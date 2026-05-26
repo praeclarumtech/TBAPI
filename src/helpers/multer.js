@@ -118,7 +118,12 @@ const attachmentStorage = multer.diskStorage({
     cb(null, uploadAttachmentsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const ext = path.extname(file.originalname);
+    const baseName = path
+      .basename(file.originalname, ext)
+      .replace(/[^a-zA-Z0-9_-]/g, '_');
+    const uniqueSuffix = `${Date.now()}_${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${baseName}_${uniqueSuffix}${ext}`);
   },
 });
 
