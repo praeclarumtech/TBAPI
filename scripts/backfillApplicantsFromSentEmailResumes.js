@@ -350,12 +350,26 @@ function isResumeDriveFile(file) {
   return resumeExtensions.has(ext) || resumeMimeTypes.has(file.mimeType);
 }
 
+function buildDriveListQuery() {
+  const queryParts = [`'${driveFolderId}' in parents`, 'trashed = false'];
+
+  if (fromDate) {
+    queryParts.push(`modifiedTime >= '${fromDate}T00:00:00.000Z'`);
+  }
+
+  if (toDate) {
+    queryParts.push(`modifiedTime <= '${toDate}T23:59:59.999Z'`);
+  }
+
+  return queryParts.join(' and ');
+}
+
 async function listDriveFiles(drive) {
   if (driveFileId) {
     const response = await drive.files.get({
       fileId: driveFileId,
       supportsAllDrives: true,
-      fields: 'id, name, mimeType',
+      fields: 'id, name, mimeType, modifiedTime',
     });
     return [response.data].filter(isResumeDriveFile);
   }
@@ -371,7 +385,7 @@ async function listDriveFiles(drive) {
 
   do {
     const response = await drive.files.list({
-      q: `'${driveFolderId}' in parents and trashed = false`,
+      q: buildDriveListQuery(),
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
       fields: 'nextPageToken, files(id, name, mimeType, modifiedTime)',
