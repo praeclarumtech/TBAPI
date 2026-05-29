@@ -15,8 +15,8 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
  * (Copy client_email and private_key from service-account.json; keep \n in the key as literal \n.)
  * @returns {{ clientEmail: string, privateKey: string } | null}
  */
-function loadServiceAccountCredentials() {
-  const keyFilePath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+function loadServiceAccountCredentials(options = {}) {
+  const keyFilePath = options.keyFilePath || process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (keyFilePath && fs.existsSync(keyFilePath)) {
     try {
       const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'));
@@ -29,8 +29,8 @@ function loadServiceAccountCredentials() {
       return null;
     }
   }
-  const clientEmail = process.env.GOOGLE_DRIVE_CLIENT_EMAIL?.trim();
-  const privateKey = process.env.GOOGLE_DRIVE_PRIVATE_KEY;
+  const clientEmail = options.clientEmail || process.env.GOOGLE_DRIVE_CLIENT_EMAIL?.trim();
+  const privateKey = options.privateKey || process.env.GOOGLE_DRIVE_PRIVATE_KEY;
   if (!clientEmail || !privateKey) return null;
   return {
     clientEmail,
@@ -44,16 +44,17 @@ function loadServiceAccountCredentials() {
  * Falls back to service account (with optional impersonation for Workspace).
  * @returns {Promise<{ drive: import('googleapis').drive_v3.Drive } | null>}
  */
-export async function getDriveClient() {
-  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+export async function getDriveClient(options = {}) {
+  const folderId = options.folderId || process.env.GOOGLE_DRIVE_FOLDER_ID;
   if (!folderId) {
     logger.warn('GOOGLE_DRIVE_FOLDER_ID is not set; skipping Drive upload');
     return null;
   }
 
-  const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN?.trim();
+  const clientId = options.clientId || process.env.GOOGLE_DRIVE_CLIENT_ID;
+  const clientSecret = options.clientSecret || process.env.GOOGLE_DRIVE_CLIENT_SECRET;
+  const refreshToken =
+    options.refreshToken?.trim() || process.env.GOOGLE_DRIVE_REFRESH_TOKEN?.trim();
 
   try {
     // Option 1: OAuth2 with refresh token (for Gmail/personal – uploads use that user's Drive quota)
@@ -69,7 +70,11 @@ export async function getDriveClient() {
     }
 
     // Option 2: Service account (with optional domain-wide delegation for Workspace)
-    const creds = loadServiceAccountCredentials();
+    const creds = loadServiceAccountCredentials({
+      keyFilePath: options.keyFilePath,
+      clientEmail: options.clientEmail,
+      privateKey: options.privateKey,
+    });
     if (!creds) {
       logger.warn(
         'Google Drive: set GOOGLE_DRIVE_CLIENT_ID + GOOGLE_DRIVE_CLIENT_SECRET + GOOGLE_DRIVE_REFRESH_TOKEN (run scripts/getDriveRefreshToken.js) or use service account credentials'
@@ -77,7 +82,9 @@ export async function getDriveClient() {
       return null;
     }
 
-    const impersonateEmail = process.env.GOOGLE_DRIVE_IMPERSONATE_EMAIL?.trim();
+    const impersonateEmail =
+      options.impersonateEmail?.trim() ||
+      process.env.GOOGLE_DRIVE_IMPERSONATE_EMAIL?.trim();
     let auth;
 
     if (impersonateEmail) {

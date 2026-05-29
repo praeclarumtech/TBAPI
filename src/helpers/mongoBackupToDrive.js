@@ -49,6 +49,19 @@ function getDriveParentFolderId() {
   return process.env.MONGO_BACKUP_DRIVE_FOLDER_ID || process.env.GOOGLE_DRIVE_FOLDER_ID;
 }
 
+function getBackupDriveClientOptions(parentFolderId) {
+  return {
+    folderId: parentFolderId,
+    clientId: process.env.MONGO_BACKUP_DRIVE_CLIENT_ID,
+    clientSecret: process.env.MONGO_BACKUP_DRIVE_CLIENT_SECRET,
+    refreshToken: process.env.MONGO_BACKUP_DRIVE_REFRESH_TOKEN,
+    keyFilePath: process.env.MONGO_BACKUP_GOOGLE_APPLICATION_CREDENTIALS,
+    clientEmail: process.env.MONGO_BACKUP_DRIVE_CLIENT_EMAIL,
+    privateKey: process.env.MONGO_BACKUP_DRIVE_PRIVATE_KEY,
+    impersonateEmail: process.env.MONGO_BACKUP_DRIVE_IMPERSONATE_EMAIL,
+  };
+}
+
 function cleanupOldLocalBackups(localBackupDir, currentFileName) {
   const retentionMs = getLocalRetentionDays() * 24 * 60 * 60 * 1000;
   const cutoffTime = Date.now() - retentionMs;
@@ -205,7 +218,7 @@ async function uploadBackupAndCleanupDrive(backupPath, fileName, weekFolderName)
     throw new Error('Mongo backup failed: GOOGLE_DRIVE_FOLDER_ID is not configured');
   }
 
-  const client = await getDriveClient();
+  const client = await getDriveClient(getBackupDriveClientOptions(parentFolderId));
   if (!client) {
     throw new Error('Mongo backup failed: Google Drive client is not available');
   }

@@ -26,6 +26,8 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 const REDIRECT_URI =
   process.env.GOOGLE_DRIVE_REDIRECT_URI || 'http://localhost:4000';
 const REDIRECT_PATH = new URL(REDIRECT_URI).pathname || '/';
+const DRIVE_TOKEN_ENV_PREFIX = process.env.DRIVE_TOKEN_ENV_PREFIX || 'GOOGLE_DRIVE';
+const refreshTokenEnvName = `${DRIVE_TOKEN_ENV_PREFIX}_REFRESH_TOKEN`;
 // Use DRIVE_TOKEN_PORT for this script so it doesn't conflict with main app (PORT=4000)
 const PORT = process.env.DRIVE_TOKEN_PORT
   ? parseInt(process.env.DRIVE_TOKEN_PORT, 10)
@@ -33,12 +35,16 @@ const PORT = process.env.DRIVE_TOKEN_PORT
     ? parseInt(process.env.PORT, 10)
     : 4000;
 
-const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID;
-const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
+const clientId =
+  process.env[`${DRIVE_TOKEN_ENV_PREFIX}_CLIENT_ID`] ||
+  process.env.GOOGLE_DRIVE_CLIENT_ID;
+const clientSecret =
+  process.env[`${DRIVE_TOKEN_ENV_PREFIX}_CLIENT_SECRET`] ||
+  process.env.GOOGLE_DRIVE_CLIENT_SECRET;
 
 if (!clientId || !clientSecret) {
   console.error(
-    'Missing GOOGLE_DRIVE_CLIENT_ID or GOOGLE_DRIVE_CLIENT_SECRET in .env'
+    `Missing ${DRIVE_TOKEN_ENV_PREFIX}_CLIENT_ID or ${DRIVE_TOKEN_ENV_PREFIX}_CLIENT_SECRET in .env`
   );
   console.error(
     'Create an OAuth 2.0 Client ID (Web application) in Google Cloud Console and add the redirect URI:',
@@ -98,7 +104,7 @@ async function handleRequest(req, res) {
 </head>
 <body>
   <h1>Success</h1>
-  <p>Copy the token below and add it to .env as <code>GOOGLE_DRIVE_REFRESH_TOKEN</code>:</p>
+      <p>Copy the token below and add it to .env as <code>${refreshTokenEnvName}</code>:</p>
   <pre id="token">${refreshToken}</pre>
   <button onclick="navigator.clipboard.writeText(document.getElementById('token').innerText); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy to clipboard', 2000)">Copy to clipboard</button>
 </body>
@@ -108,7 +114,7 @@ async function handleRequest(req, res) {
       console.log('\n---------- COPY THIS REFRESH TOKEN TO .env ----------\n');
       console.log(refreshToken);
       console.log('\n---------- END REFRESH TOKEN ----------\n');
-      console.log('Add to .env: GOOGLE_DRIVE_REFRESH_TOKEN=' + refreshToken);
+      console.log(`Add to .env: ${refreshTokenEnvName}=${refreshToken}`);
       if (server) server.close();
       process.exit(0);
     } catch (err) {
