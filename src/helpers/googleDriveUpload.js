@@ -51,10 +51,30 @@ export async function getDriveClient(options = {}) {
     return null;
   }
 
-  const clientId = options.clientId || process.env.GOOGLE_DRIVE_CLIENT_ID;
-  const clientSecret = options.clientSecret || process.env.GOOGLE_DRIVE_CLIENT_SECRET;
-  const refreshToken =
-    options.refreshToken?.trim() || process.env.GOOGLE_DRIVE_REFRESH_TOKEN?.trim();
+  const optionRefreshToken = options.refreshToken?.trim();
+  const hasOptionOAuthConfig =
+    options.clientId || options.clientSecret || options.refreshToken;
+  const hasOptionOAuth = options.clientId && options.clientSecret && optionRefreshToken;
+  const hasDefaultOAuth =
+    !hasOptionOAuthConfig &&
+    process.env.GOOGLE_DRIVE_CLIENT_ID &&
+    process.env.GOOGLE_DRIVE_CLIENT_SECRET &&
+    process.env.GOOGLE_DRIVE_REFRESH_TOKEN?.trim();
+  const clientId = hasOptionOAuth
+    ? options.clientId
+    : hasDefaultOAuth
+      ? process.env.GOOGLE_DRIVE_CLIENT_ID
+      : null;
+  const clientSecret = hasOptionOAuth
+    ? options.clientSecret
+    : hasDefaultOAuth
+      ? process.env.GOOGLE_DRIVE_CLIENT_SECRET
+      : null;
+  const refreshToken = hasOptionOAuth
+    ? optionRefreshToken
+    : hasDefaultOAuth
+      ? process.env.GOOGLE_DRIVE_REFRESH_TOKEN.trim()
+      : null;
 
   try {
     // Option 1: OAuth2 with refresh token (for Gmail/personal – uploads use that user's Drive quota)
