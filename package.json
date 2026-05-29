@@ -8,6 +8,7 @@
     "get-drive-token": "node scripts/getDriveRefreshToken.js",
     "backfill-drive-resumes": "node scripts/backfillResumesToDrive.js",
     "backfill-email-resume-applicants": "node scripts/backfillApplicantsFromSentEmailResumes.js",
+    "backup-mongo-drive": "node scripts/backupMongoToDrive.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js",
     "lint": "eslint . --fix",

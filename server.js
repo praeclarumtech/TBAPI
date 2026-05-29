@@ -11,6 +11,7 @@ import { Message } from './src/utils/constant/message.js';
 import logger from './src/loggers/logger.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { startMongoBackupScheduler } from './src/helpers/cron.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ const uploadsDir = path.join(__dirname, 'src', 'uploads');
 
 const app = express();
 connectDB();
+startMongoBackupScheduler();
 
 // Trust proxy so req.protocol and req.get('host') are correct behind nginx/load balancer (production)
 app.set('trust proxy', 1);
