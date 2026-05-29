@@ -60,6 +60,8 @@ node_modules/
 log/
 
 logs/
+backups/
+src/uploads/mongo-backups/
 .env/
 .env
 
