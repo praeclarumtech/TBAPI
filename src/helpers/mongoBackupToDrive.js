@@ -21,19 +21,27 @@ function getMongoUri() {
   return process.env.DBURL || process.env.MONGO_URI || process.env.DATABASE;
 }
 
-function getWeekFolderName(date = new Date()) {
-  const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const day = utcDate.getUTCDay() || 7;
-  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((utcDate - yearStart) / 86400000 + 1) / 7);
-
-  return `${utcDate.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+function getMongoDatabaseName(mongoUri) {
+  try {
+    const parsedUri = new URL(mongoUri);
+    const databaseName = decodeURIComponent(parsedUri.pathname.replace(/^\/+/, ''));
+    return databaseName || 'mongodb';
+  } catch {
+    return 'mongodb';
+  }
 }
 
-function buildBackupFileName(weekFolderName, date = new Date()) {
-  const timestamp = date.toISOString().replace(/[:.]/g, '-');
-  return `mongodb-backup-${weekFolderName}-${timestamp}.archive.gz`;
+function sanitizeFileNamePart(value) {
+  return value.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
+function getBackupDateString(date = new Date()) {
+  return date.toISOString().slice(0, 10);
+}
+
+function buildBackupFileName(mongoUri, date = new Date()) {
+  const databaseName = sanitizeFileNamePart(getMongoDatabaseName(mongoUri));
+  return `mongodb-backup_${databaseName}_${getBackupDateString(date)}.gz`;
 }
 
 function shouldUploadToDrive() {
@@ -41,8 +49,8 @@ function shouldUploadToDrive() {
 }
 
 function getLocalRetentionDays() {
-  const retentionDays = Number(process.env.MONGO_BACKUP_RETENTION_DAYS || 21);
-  return Number.isFinite(retentionDays) && retentionDays > 0 ? retentionDays : 21;
+  const retentionDays = Number(process.env.MONGO_BACKUP_RETENTION_DAYS || 5);
+  return Number.isFinite(retentionDays) && retentionDays > 0 ? retentionDays : 5;
 }
 
 function getDriveParentFolderId() {
@@ -75,8 +83,8 @@ function cleanupOldLocalBackups(localBackupDir, currentFileName) {
     if (
       !entry.isFile() ||
       entry.name === currentFileName ||
-      !entry.name.startsWith('mongodb-backup-') ||
-      !entry.name.endsWith('.archive.gz')
+      !entry.name.startsWith('mongodb-backup') ||
+      !entry.name.endsWith('.gz')
     ) {
       continue;
     }
@@ -123,37 +131,27 @@ async function cleanupOldDriveBackups(drive, parentFolderId, currentFileId) {
     Date.now() - getLocalRetentionDays() * 24 * 60 * 60 * 1000
   ).toISOString();
   const deletedFiles = [];
-  const backupFolders = await listDriveFiles(
+
+  const oldBackups = await listDriveFiles(
     drive,
-    `'${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    'files(id, name), nextPageToken'
+    `'${parentFolderId}' in parents and name contains 'mongodb-backup' and createdTime < '${cutoffDate}' and trashed=false`,
+    'files(id, name, createdTime), nextPageToken'
   );
-  const folderIds = backupFolders
-    .filter((folder) => /^\d{4}-W\d{2}$/.test(folder.name))
-    .map((folder) => folder.id);
 
-  for (const folderId of folderIds) {
-    const oldBackups = await listDriveFiles(
-      drive,
-      `'${folderId}' in parents and name contains 'mongodb-backup-' and createdTime < '${cutoffDate}' and trashed=false`,
-      'files(id, name, createdTime), nextPageToken'
-    );
-
-    for (const file of oldBackups) {
-      if (
-        file.id === currentFileId ||
-        !file.name.startsWith('mongodb-backup-') ||
-        !file.name.endsWith('.archive.gz')
-      ) {
-        continue;
-      }
-
-      await drive.files.delete({
-        fileId: file.id,
-        supportsAllDrives: true,
-      });
-      deletedFiles.push(file.name);
+  for (const file of oldBackups) {
+    if (
+      file.id === currentFileId ||
+      !file.name.startsWith('mongodb-backup') ||
+      !file.name.endsWith('.gz')
+    ) {
+      continue;
     }
+
+    await drive.files.delete({
+      fileId: file.id,
+      supportsAllDrives: true,
+    });
+    deletedFiles.push(file.name);
   }
 
   if (deletedFiles.length) {
@@ -161,32 +159,6 @@ async function cleanupOldDriveBackups(drive, parentFolderId, currentFileId) {
   }
 
   return deletedFiles;
-}
-
-async function getOrCreateDriveFolder(drive, folderName, parentFolderId) {
-  const safeFolderName = folderName.replace(/'/g, "\\'");
-  const response = await drive.files.list({
-    q: `'${parentFolderId}' in parents and name='${safeFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    fields: 'files(id, name)',
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-  });
-
-  if (response.data.files?.length) {
-    return response.data.files[0].id;
-  }
-
-  const createdFolder = await drive.files.create({
-    requestBody: {
-      name: folderName,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentFolderId],
-    },
-    fields: 'id',
-    supportsAllDrives: true,
-  });
-
-  return createdFolder.data.id;
 }
 
 async function createMongoDump(backupPath) {
@@ -212,7 +184,7 @@ async function createMongoDump(backupPath) {
   }
 }
 
-async function uploadBackupAndCleanupDrive(backupPath, fileName, weekFolderName) {
+async function uploadBackupAndCleanupDrive(backupPath, fileName) {
   const parentFolderId = getDriveParentFolderId();
   if (!parentFolderId) {
     throw new Error('Mongo backup failed: GOOGLE_DRIVE_FOLDER_ID is not configured');
@@ -223,16 +195,10 @@ async function uploadBackupAndCleanupDrive(backupPath, fileName, weekFolderName)
     throw new Error('Mongo backup failed: Google Drive client is not available');
   }
 
-  const weekFolderId = await getOrCreateDriveFolder(
-    client.drive,
-    weekFolderName,
-    parentFolderId
-  );
-
   const response = await client.drive.files.create({
     requestBody: {
       name: fileName,
-      parents: [weekFolderId],
+      parents: [parentFolderId],
     },
     media: {
       mimeType: 'application/gzip',
@@ -257,8 +223,12 @@ export async function backupMongoToDrive() {
   const localBackupDir = getLocalBackupDir();
   fs.mkdirSync(localBackupDir, { recursive: true });
 
-  const weekFolderName = getWeekFolderName();
-  const fileName = buildBackupFileName(weekFolderName);
+  const mongoUri = getMongoUri();
+  if (!mongoUri) {
+    throw new Error('Mongo backup failed: DBURL, MONGO_URI, or DATABASE is not configured');
+  }
+
+  const fileName = buildBackupFileName(mongoUri);
   const backupPath = path.join(localBackupDir, fileName);
 
   try {
@@ -270,7 +240,6 @@ export async function backupMongoToDrive() {
       logger.info(`Mongo backup stored locally: ${backupPath}`);
       return {
         fileName,
-        weekFolderName,
         localBackupPath: backupPath,
         uploadedToDrive: false,
         deletedLocalBackups,
@@ -279,8 +248,7 @@ export async function backupMongoToDrive() {
 
     const { uploadedFile, deletedDriveBackups } = await uploadBackupAndCleanupDrive(
       backupPath,
-      fileName,
-      weekFolderName
+      fileName
     );
     logger.info(
       `Mongo backup uploaded to Google Drive: ${uploadedFile.webViewLink || uploadedFile.id}`
@@ -288,7 +256,6 @@ export async function backupMongoToDrive() {
 
     return {
       fileName,
-      weekFolderName,
       localBackupPath: backupPath,
       driveFileId: uploadedFile.id,
       webViewLink: uploadedFile.webViewLink,

@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import logger from '../loggers/logger.js';
 import { backupMongoToDrive } from './mongoBackupToDrive.js';
 
-const defaultMongoBackupSchedule = '30 23 * * 0';
+const defaultMongoBackupSchedule = '30 23 * * *';
 const defaultTimezone = 'Asia/Kolkata';
 
 export const runMongoBackupCronTask = async () => {
