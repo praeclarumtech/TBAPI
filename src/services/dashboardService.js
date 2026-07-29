@@ -4,7 +4,7 @@ import jobApplication from '../models/jobApplicantionModel.js';
 import jobs from '../models/jobModel.js';
 import { applicantEnum, Enum } from '../utils/enum.js';
 
-export const getDashboardCounts = async (role, userId) => {
+const getDashboardApplicantScope = async (role, userId) => {
   const Model =
     role === Enum.VENDOR || role === Enum.CLIENT ? jobApplication : Applicant;
 
@@ -53,6 +53,12 @@ export const getDashboardCounts = async (role, userId) => {
     const jobIds = clientJobs.map((job) => job._id);
     matchCondition.job_id = { $in: jobIds };
   }
+
+  return { Model, matchCondition };
+};
+
+export const getDashboardCounts = async (role, userId) => {
+  const { Model, matchCondition } = await getDashboardApplicantScope(role, userId);
 
   const statusCounts = await Model.aggregate([
     { $match: matchCondition },
@@ -107,6 +113,48 @@ export const getDashboardCounts = async (role, userId) => {
   });
 
   return defaultCounts;
+};
+
+export const getApplicantAppliedChartCounts = async (role, userId) => {
+  const { Model, matchCondition } = await getDashboardApplicantScope(role, userId);
+  const now = new Date();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const startOfLast7Days = new Date(startOfToday);
+  startOfLast7Days.setDate(startOfLast7Days.getDate() - 6);
+
+  const startOfLast30Days = new Date(startOfToday);
+  startOfLast30Days.setDate(startOfLast30Days.getDate() - 29);
+
+  const startOfLast365Days = new Date(startOfToday);
+  startOfLast365Days.setDate(startOfLast365Days.getDate() - 364);
+
+  const ranges = [
+    { key: 'today', label: 'Today', from: startOfToday },
+    { key: 'last7Days', label: 'Last 7 Days', from: startOfLast7Days },
+    { key: 'last30Days', label: 'Last 30 Days', from: startOfLast30Days },
+    { key: 'last365Days', label: 'Last 365 Days', from: startOfLast365Days },
+  ];
+
+  const counts = await Promise.all(
+    ranges.map(async (range) => {
+      const count = await Model.countDocuments({
+        ...matchCondition,
+        createdAt: { $gte: range.from, $lte: now },
+      });
+
+      return {
+        key: range.key,
+        label: range.label,
+        count,
+        from: range.from,
+        to: now,
+      };
+    })
+  );
+
+  return counts;
 };
 
 export const getApplicantsByMonth = async (month, year) => {

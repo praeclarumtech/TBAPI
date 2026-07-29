@@ -199,8 +199,8 @@ export const addJobApplication = async (req, res) => {
       appliedSkills: Array.isArray(matchedSkills)
         ? matchedSkills
         : matchedSkills
-        ? [matchedSkills]
-        : [],
+          ? [matchedSkills]
+          : [],
       addedBy: applicantEnum.RESUME,
       createdBy: req.user?.role,
       updatedBy: req.user?.role,
