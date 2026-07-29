@@ -328,10 +328,15 @@ export const addApplicant = async (req, res) => {
       const request = req?.user;
       id = request.id;
     }
-    const applicationNo = await generateApplicantNo();
+    const normalizedEmail =
+      typeof body.email === 'string' ? body.email.trim().toLowerCase() : body.email;
+    const existingApplicant = normalizedEmail
+      ? await findApplicantByField('email', normalizedEmail)
+      : null;
+    const applicationNo = existingApplicant ? undefined : await generateApplicantNo();
 
     const applicantData = {
-      applicationNo,
+      ...(applicationNo ? { applicationNo } : {}),
       name: { firstName, middleName, lastName },
       user_id: id,
       addedBy: applicantEnum.MANUAL,
@@ -340,6 +345,7 @@ export const addApplicant = async (req, res) => {
       meta: meta || {},
       job_id,
       ...body,
+      email: normalizedEmail,
     };
 
     const resumeFile = req.files || [];
@@ -376,8 +382,7 @@ export const addApplicant = async (req, res) => {
         filename: file.originalname || file.filename,
         path: path.join(file.destination, file.filename),
       }));
-      const isExist = await findApplicantByField('email', req.body.email);
-      const message = !isExist
+      const message = !existingApplicant
         ? `New applicant resume received from ${
             req.body.job_id ? 'Job Portal' : 'QR Code form'
           } – ${req.body.name.firstName} ${req.body.name.lastName}.`
@@ -404,12 +409,16 @@ export const addApplicant = async (req, res) => {
         });
     }
 
-    logger.info(`Applicant ${Message.ADDED_SUCCESSFULLY}`);
+    const responseMessage = existingApplicant
+      ? 'Applicant details updated successfully for this email.'
+      : `Applicant ${Message.ADDED_SUCCESSFULLY}`;
+
+    logger.info(responseMessage);
     return HandleResponse(
       res,
       true,
-      StatusCodes.CREATED,
-      `Applicant ${Message.ADDED_SUCCESSFULLY}`,
+      existingApplicant ? StatusCodes.OK : StatusCodes.CREATED,
+      responseMessage,
       applicant
     );
   } catch (error) {

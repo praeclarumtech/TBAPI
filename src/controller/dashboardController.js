@@ -2,6 +2,7 @@ import logger from '../loggers/logger.js';
 import { Message } from '../utils/constant/message.js';
 import {
   // getDashboard,
+  getApplicantAppliedChartCounts,
   getApplicantsByMonth,
   getDashboardCounts,
 } from '../services/dashboardService.js';
@@ -17,7 +18,15 @@ export const dashboard = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized role' });
     }
 
-    const dashboardData = await getDashboardCounts(user.role, user.id);
+    const [dashboardCounts, applicantAppliedChart] = await Promise.all([
+      getDashboardCounts(user.role, user.id),
+      getApplicantAppliedChartCounts(user.role, user.id),
+    ]);
+    const dashboardData = {
+      ...dashboardCounts,
+      applicantAppliedChart,
+    };
+
     logger.info(`Dashboard data ${Message.FETCH_SUCCESSFULLY}`);
     return HandleResponse(
       res,
