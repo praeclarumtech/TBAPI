@@ -127,11 +127,6 @@ export const getApplicantAppliedChartCounts = async (role, userId) => {
   const startOfDayBeforeYesterday = new Date(startOfToday);
   startOfDayBeforeYesterday.setDate(startOfDayBeforeYesterday.getDate() - 2);
 
-  const startOfTwoDaysBeforeYesterday = new Date(startOfToday);
-  startOfTwoDaysBeforeYesterday.setDate(
-    startOfTwoDaysBeforeYesterday.getDate() - 3
-  );
-
   const startOfLast7Days = new Date(startOfToday);
   startOfLast7Days.setDate(startOfLast7Days.getDate() - 6);
 
@@ -142,28 +137,28 @@ export const getApplicantAppliedChartCounts = async (role, userId) => {
   startOfLast365Days.setDate(startOfLast365Days.getDate() - 364);
 
   const ranges = [
-    { key: 'today', label: 'Today', from: startOfToday },
+    { key: 'last365Days', label: 'Last 365 Days', from: startOfLast365Days },
+    { key: 'last30Days', label: 'Last 30 Days', from: startOfLast30Days },
+    { key: 'last7Days', label: 'Last 7 Days', from: startOfLast7Days },
+    {
+      key: 'twoDaysBeforeYesterday',
+      label: 'Last 2 Days',
+      from: startOfDayBeforeYesterday,
+      to: startOfToday,
+    },
+    {
+      key: 'dayBeforeYesterday',
+      label: '2 Days Ago',
+      from: startOfDayBeforeYesterday,
+      to: startOfYesterday,
+    },
     {
       key: 'yesterday',
       label: 'Yesterday',
       from: startOfYesterday,
       to: startOfToday,
     },
-    {
-      key: 'dayBeforeYesterday',
-      label: 'Day Before Yesterday',
-      from: startOfDayBeforeYesterday,
-      to: startOfYesterday,
-    },
-    {
-      key: 'twoDaysBeforeYesterday',
-      label: '2 Days Before Yesterday',
-      from: startOfTwoDaysBeforeYesterday,
-      to: startOfDayBeforeYesterday,
-    },
-    { key: 'last7Days', label: 'Last 7 Days', from: startOfLast7Days },
-    { key: 'last30Days', label: 'Last 30 Days', from: startOfLast30Days },
-    { key: 'last365Days', label: 'Last 365 Days', from: startOfLast365Days },
+    { key: 'today', label: 'Today', from: startOfToday },
   ];
 
   const counts = await Promise.all(
@@ -171,6 +166,13 @@ export const getApplicantAppliedChartCounts = async (role, userId) => {
       const createdAtFilter = range.to
         ? { $gte: range.from, $lt: range.to }
         : { $gte: range.from, $lte: now };
+      const responseTo = range.to
+        ? new Date(range.to.getTime() - 1)
+        : now;
+      const filter = {
+        startDate: range.from.toISOString().slice(0, 10),
+        endDate: responseTo.toISOString().slice(0, 10),
+      };
       const count = await Model.countDocuments({
         ...matchCondition,
         createdAt: createdAtFilter,
@@ -181,7 +183,8 @@ export const getApplicantAppliedChartCounts = async (role, userId) => {
         label: range.label,
         count,
         from: range.from,
-        to: range.to || now,
+        to: responseTo,
+        filter,
       };
     })
   );
