@@ -119,7 +119,7 @@ export const getApplicantAppliedChartCounts = async (role, userId) => {
   const { Model, matchCondition } = await getDashboardApplicantScope(role, userId);
   const now = new Date();
   const startOfToday = new Date(now);
-  startOfToday.setHours(0, 0, 0, 0);
+  startOfToday.setUTCHours(0, 0, 0, 0);
 
   const startOfYesterday = new Date(startOfToday);
   startOfYesterday.setDate(startOfYesterday.getDate() - 1);
