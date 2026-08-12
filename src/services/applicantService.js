@@ -11,44 +11,64 @@ export const createApplicant = async (body) => {
       throw new Error('Email is required.');
     }
 
-    // Check if phone number is already used by a different applicant
+    body.email = String(body.email).trim().toLowerCase();
     if (body.phone?.phoneNumber) {
-      const existingByPhone = await Applicant.findOne({
-        'phone.phoneNumber': body.phone.phoneNumber,
-        email: { $ne: body.email },
-      });
-      if (existingByPhone) {
-        const error = new Error('Phone number is already in use.');
-        error.code = 'DUPLICATE_PHONE';
-        throw error;
-      }
+      body.phone.phoneNumber = String(body.phone.phoneNumber).trim();
+    }
+    if (body.phone?.whatsappNumber) {
+      body.phone.whatsappNumber = String(body.phone.whatsappNumber).trim();
     }
 
-    // Check if WhatsApp number is already used by a different applicant
+    const escapedEmail = body.email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const existingByEmail = await Applicant.findOne({
+      email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') },
+    });
+
+    const existingByPhone = body.phone?.phoneNumber
+      ? await Applicant.findOne({ 'phone.phoneNumber': body.phone.phoneNumber })
+      : null;
+
+    if (
+      existingByEmail &&
+      existingByPhone &&
+      !existingByEmail._id.equals(existingByPhone._id)
+    ) {
+      const error = new Error(
+        'Email and phone number are already used by different applicants.'
+      );
+      error.code = 'DUPLICATE_PHONE';
+      throw error;
+    }
+
+    const targetApplicant = existingByEmail || existingByPhone;
+
     if (body.phone?.whatsappNumber) {
       const existingByWhatsapp = await Applicant.findOne({
         'phone.whatsappNumber': body.phone.whatsappNumber,
-        email: { $ne: body.email },
       });
-      if (existingByWhatsapp) {
+
+      if (
+        existingByWhatsapp &&
+        (!targetApplicant || !existingByWhatsapp._id.equals(targetApplicant._id))
+      ) {
         const error = new Error('WhatsApp number is already in use.');
         error.code = 'DUPLICATE_WHATSAPP';
         throw error;
       }
     }
 
-    // Find by email and update, or create new
+    // Find by email/phone and update, or create a new applicant.
     const applicant = await Applicant.findOneAndUpdate(
-      { email: body.email },
+      targetApplicant ? { _id: targetApplicant._id } : { email: body.email },
       { $set: { ...body } },
       {
-        upsert: true,
+        upsert: !targetApplicant,
         setDefaultsOnInsert: true,
         new: true,
       }
     );
 
-    // Sync updated data to all job applications for this email
+    // Sync updated data to related job applications by email or phone.
     const jobApplicationUpdateData = {};
     if (body.name) jobApplicationUpdateData.name = body.name;
     if (body.phone) jobApplicationUpdateData.phone = body.phone;
@@ -58,6 +78,7 @@ export const createApplicant = async (body) => {
       jobApplicationUpdateData.otherSkills = body.otherSkills;
     if (body.appliedRole)
       jobApplicationUpdateData.appliedRole = body.appliedRole;
+    if (body.email) jobApplicationUpdateData.email = body.email;
     if (body.totalExperience !== undefined)
       jobApplicationUpdateData.totalExperience = body.totalExperience;
     if (body.currentPkg !== undefined)
@@ -79,8 +100,20 @@ export const createApplicant = async (body) => {
         body.currentCompanyDesignation;
 
     if (Object.keys(jobApplicationUpdateData).length > 0) {
+      const jobApplicationSyncQuery = {
+        $or: [
+          { email: body.email },
+          ...(targetApplicant?.email && targetApplicant.email !== body.email
+            ? [{ email: targetApplicant.email }]
+            : []),
+          ...(body.phone?.phoneNumber
+            ? [{ 'phone.phoneNumber': body.phone.phoneNumber }]
+            : []),
+        ],
+      };
+
       await jobApplication.updateMany(
-        { email: body.email },
+        jobApplicationSyncQuery,
         { $set: jobApplicationUpdateData }
       );
       logger.info(

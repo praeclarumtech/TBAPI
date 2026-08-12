@@ -330,9 +330,22 @@ export const addApplicant = async (req, res) => {
     }
     const normalizedEmail =
       typeof body.email === 'string' ? body.email.trim().toLowerCase() : body.email;
-    const existingApplicant = normalizedEmail
+    const normalizedPhoneNumber = body.phone?.phoneNumber
+      ? String(body.phone.phoneNumber).trim()
+      : null;
+    if (normalizedPhoneNumber) {
+      body.phone.phoneNumber = normalizedPhoneNumber;
+    }
+
+    let existingApplicant = normalizedEmail
       ? await findApplicantByField('email', normalizedEmail)
       : null;
+    if (!existingApplicant && normalizedPhoneNumber) {
+      existingApplicant = await findApplicantByField(
+        'phone.phoneNumber',
+        normalizedPhoneNumber
+      );
+    }
     const applicationNo = existingApplicant ? undefined : await generateApplicantNo();
 
     const applicantData = {
@@ -410,7 +423,7 @@ export const addApplicant = async (req, res) => {
     }
 
     const responseMessage = existingApplicant
-      ? 'Applicant details updated successfully for this email.'
+      ? 'Applicant details updated successfully.'
       : `Applicant ${Message.ADDED_SUCCESSFULLY}`;
 
     logger.info(responseMessage);
@@ -428,7 +441,8 @@ export const addApplicant = async (req, res) => {
         res,
         false,
         StatusCodes.CONFLICT,
-        'Job record is already submitted using this phone number. Kindly use another if you want to submit again.'
+        error.message ||
+          'Email and phone number are already used by different applicants.'
       );
     } else if (error.code === 'DUPLICATE_WHATSAPP') {
       return HandleResponse(
