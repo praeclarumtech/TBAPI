@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-dotenv.config();
+import loadEnv from '../loadEnv.js';
+loadEnv();
 import QRCode from 'qrcode';
 
 export const sendingEmail = async ({

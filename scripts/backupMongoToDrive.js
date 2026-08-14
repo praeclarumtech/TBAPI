@@ -1,12 +1,7 @@
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import loadEnv from '../src/helpers/loadEnv.js';
 import { backupMongoToDrive } from '../src/helpers/mongoBackupToDrive.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(__dirname, '..');
-
-dotenv.config({ path: path.join(projectRoot, '.env') });
+loadEnv();
 
 backupMongoToDrive()
   .then((result) => {

@@ -14,7 +14,12 @@ export const runMongoBackupCronTask = async () => {
 };
 
 export const startMongoBackupScheduler = () => {
-  if (process.env.MONGO_BACKUP_ENABLED === 'false') {
+  const backupEnabled = process.env.MONGO_BACKUP_ENABLED;
+  const shouldDisableBackup =
+    backupEnabled === 'false' ||
+    (process.env.NODE_ENV === 'test' && backupEnabled !== 'true');
+
+  if (shouldDisableBackup) {
     logger.info('Mongo backup scheduler is disabled');
     return null;
   }

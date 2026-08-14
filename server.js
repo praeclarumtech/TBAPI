@@ -2,7 +2,7 @@ import express from 'express';
 import connectDB from './src/helpers/dbConnection.js';
 import router from './src/routes/routes.js';
 import driveAuthRouter from './src/routes/route/driveAuthRoute.js';
-import dotenv from 'dotenv';
+import loadEnv from './src/helpers/loadEnv.js';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -13,7 +13,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { startMongoBackupScheduler } from './src/helpers/cron.js';
 
-dotenv.config();
+loadEnv();
 
 // Resolve paths relative to this file so uploads work regardless of process cwd (e.g. in production)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

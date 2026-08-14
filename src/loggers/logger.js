@@ -1,8 +1,18 @@
 import { createLogger, format, transports } from 'winston';
 import 'winston-mongodb';
 import 'winston-daily-rotate-file';
-import dotenv from 'dotenv';
-dotenv.config();
+import dns from 'dns';
+import loadEnv from '../helpers/loadEnv.js';
+loadEnv();
+
+const dnsServers = (process.env.DNS_SERVERS || '8.8.8.8,1.1.1.1')
+  .split(',')
+  .map((server) => server.trim())
+  .filter(Boolean);
+
+if (dnsServers.length) {
+  dns.setServers(dnsServers);
+}
 
 const logFormat = format.combine(
   format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),

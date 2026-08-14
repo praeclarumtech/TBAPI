@@ -15,12 +15,9 @@
 
 import { google } from 'googleapis';
 import http from 'http';
-import { config } from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import loadEnv from '../src/helpers/loadEnv.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-config({ path: path.resolve(__dirname, '..', '.env') });
+loadEnv();
 
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 const REDIRECT_URI =
