@@ -20,11 +20,11 @@
  * - Creates records in applicants only when the email/phone is not already present
  */
 
-import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
+import loadEnv from '../src/helpers/loadEnv.js';
 import connectDB from '../src/helpers/dbConnection.js';
 import applicantEmail from '../src/models/applicantEmailModel.js';
 import Applicant from '../src/models/applicantModel.js';
@@ -44,7 +44,7 @@ import logger from '../src/loggers/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..');
-dotenv.config({ path: path.join(projectRoot, '.env') });
+loadEnv();
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
