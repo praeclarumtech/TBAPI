@@ -90,10 +90,10 @@ const upsertUser = async ({ role, roleId, email, userName, firstName, lastName }
 
 const resetSeedData = async () => {
   await Promise.all([
-    jobApplication.deleteMany({ email: /@test\.talentbox$/ }),
+    jobApplication.deleteMany({ email: /@test\.talentbox\.com$/ }),
     jobs.deleteMany({ job_id: /^TEST-/ }),
-    Applicant.deleteMany({ email: /@test\.talentbox$/ }),
-    User.deleteMany({ email: /@test\.talentbox$/ }),
+    Applicant.deleteMany({ email: /@test\.talentbox\.com$/ }),
+    User.deleteMany({ email: /@test\.talentbox\.com$/ }),
     Vendor.deleteMany({ addedByRole: seedTag }),
     appliedRoleModel.deleteMany({ appliedRole: { $in: ['MERN Stack Developer', 'QA Engineer'] } }),
     Skills.deleteMany({ skills: { $in: ['MERN Stack', 'Node.js', 'React.js', 'Manual Testing'] } }),
@@ -130,7 +130,7 @@ const run = async () => {
     upsertUser({
       role: Enum.ADMIN,
       roleId: adminRole._id,
-      email: 'admin@test.talentbox',
+      email: 'admin@test.talentbox.com',
       userName: 'testadmin',
       firstName: 'Test',
       lastName: 'Admin',
@@ -138,7 +138,7 @@ const run = async () => {
     upsertUser({
       role: Enum.HR,
       roleId: hrRole._id,
-      email: 'hr@test.talentbox',
+      email: 'hr@test.talentbox.com',
       userName: 'testhr',
       firstName: 'Test',
       lastName: 'HR',
@@ -146,7 +146,7 @@ const run = async () => {
     upsertUser({
       role: Enum.VENDOR,
       roleId: vendorRole._id,
-      email: 'vendor@test.talentbox',
+      email: 'vendor@test.talentbox.com',
       userName: 'testvendor',
       firstName: 'Test',
       lastName: 'Vendor',
@@ -154,7 +154,7 @@ const run = async () => {
     upsertUser({
       role: Enum.CLIENT,
       roleId: clientRole._id,
-      email: 'client@test.talentbox',
+      email: 'client@test.talentbox.com',
       userName: 'testclient',
       firstName: 'Test',
       lastName: 'Client',
@@ -169,7 +169,7 @@ const run = async () => {
           userId: vendorUser._id,
           whatsapp_number: '9000000001',
           company_name: 'Test Vendor Pvt Ltd',
-          company_email: 'vendor-company@test.talentbox',
+          company_email: 'vendor-company@test.talentbox.com',
           company_phone_number: '9000000002',
           company_location: 'Ahmedabad',
           company_type: 'both',
@@ -191,7 +191,7 @@ const run = async () => {
           userId: clientUser._id,
           whatsapp_number: '9000000003',
           company_name: 'Test Client Pvt Ltd',
-          company_email: 'client-company@test.talentbox',
+          company_email: 'client-company@test.talentbox.com',
           company_phone_number: '9000000004',
           company_location: 'Ahmedabad',
           company_type: 'product',
@@ -336,7 +336,7 @@ const run = async () => {
       {
         name: { firstName: 'Aarav', lastName: 'Shah' },
         phone: { phoneNumber: '9100000001', whatsappNumber: '9100000002' },
-        email: 'aarav.applicant@test.talentbox',
+        email: 'aarav.applicant@test.talentbox.com',
         gender: 'male',
         qualification: 'B.Tech',
         currentCity: 'Ahmedabad',
@@ -359,7 +359,7 @@ const run = async () => {
       {
         name: { firstName: 'Nisha', lastName: 'Patel' },
         phone: { phoneNumber: '9100000003', whatsappNumber: '9100000004' },
-        email: 'nisha.applicant@test.talentbox',
+        email: 'nisha.applicant@test.talentbox.com',
         gender: 'female',
         qualification: 'MCA',
         currentCity: 'Surat',
@@ -384,7 +384,10 @@ const run = async () => {
   ).catch(async () =>
     Applicant.find({
       email: {
-        $in: ['aarav.applicant@test.talentbox', 'nisha.applicant@test.talentbox'],
+        $in: [
+          'aarav.applicant@test.talentbox.com',
+          'nisha.applicant@test.talentbox.com',
+        ],
       },
     })
   );
@@ -393,7 +396,10 @@ const run = async () => {
     ? applicantDocs
     : await Applicant.find({
         email: {
-          $in: ['aarav.applicant@test.talentbox', 'nisha.applicant@test.talentbox'],
+          $in: [
+            'aarav.applicant@test.talentbox.com',
+            'nisha.applicant@test.talentbox.com',
+          ],
         },
       });
 
@@ -437,7 +443,9 @@ const run = async () => {
 
   console.log('Test seed completed.');
   console.log(`Login password for sample users: ${seedPassword}`);
-  console.log('Users: admin@test.talentbox, hr@test.talentbox, vendor@test.talentbox, client@test.talentbox');
+  console.log(
+    'Users: admin@test.talentbox.com, hr@test.talentbox.com, vendor@test.talentbox.com, client@test.talentbox.com'
+  );
 
   await mongoose.disconnect();
 };
