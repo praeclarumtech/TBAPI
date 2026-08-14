@@ -1,5 +1,7 @@
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
 import mongoose from 'mongoose';
+import path from 'path';
 import loadEnv from '../src/helpers/loadEnv.js';
 import Role from '../src/models/roleModel.js';
 import User from '../src/models/userModel.js';
@@ -20,6 +22,7 @@ const allowNonTest = process.argv.includes('--allow-non-test');
 const shouldReset = process.argv.includes('--reset');
 const seedPassword = process.env.TEST_SEED_PASSWORD || 'Test@12345';
 const seedTag = 'test-seed';
+const hasEnvTestFile = fs.existsSync(path.resolve(process.cwd(), '.env.test'));
 
 if (process.env.NODE_ENV !== 'test' && !allowNonTest) {
   console.error(
@@ -30,6 +33,14 @@ if (process.env.NODE_ENV !== 'test' && !allowNonTest) {
 
 if (!process.env.DBURL) {
   console.error('Missing DBURL. Set DBURL in .env.test before running the seed.');
+  process.exit(1);
+}
+
+if (!hasEnvTestFile && !allowNonTest && !/test/i.test(process.env.DBURL)) {
+  console.error(
+    'Refusing to seed because .env.test is missing and DBURL does not look like a test database.'
+  );
+  console.error('Use a test DBURL containing "test" or pass --allow-non-test intentionally.');
   process.exit(1);
 }
 

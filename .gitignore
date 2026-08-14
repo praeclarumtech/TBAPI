@@ -64,6 +64,9 @@ backups/
 src/uploads/mongo-backups/
 .env/
 .env
+.env.*
+!.env.test.example
+!.env.development.example
 
 # upload 
 uploads/profile

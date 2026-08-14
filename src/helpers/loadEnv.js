@@ -8,20 +8,18 @@ export const loadEnv = () => {
   if (loaded) return;
 
   const nodeEnv = process.env.NODE_ENV?.trim();
-  const envFiles = [];
+  const baseEnvPath = path.resolve(process.cwd(), '.env');
 
-  if (nodeEnv) {
-    envFiles.push(`.env.${nodeEnv}`);
+  if (fs.existsSync(baseEnvPath)) {
+    dotenv.config({ path: baseEnvPath });
   }
 
-  envFiles.push('.env');
-
-  envFiles.forEach((fileName) => {
-    const envPath = path.resolve(process.cwd(), fileName);
+  if (nodeEnv) {
+    const envPath = path.resolve(process.cwd(), `.env.${nodeEnv}`);
     if (fs.existsSync(envPath)) {
-      dotenv.config({ path: envPath });
+      dotenv.config({ path: envPath, override: true });
     }
-  });
+  }
 
   loaded = true;
 };

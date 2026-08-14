@@ -1,8 +1,7 @@
 import { spawn } from 'child_process';
 
 const nodeEnv = process.argv[2] || process.env.NODE_ENV || 'development';
-const isProduction = nodeEnv === 'production';
-const command = isProduction ? 'node' : 'nodemon';
+const command = nodeEnv === 'development' ? 'nodemon' : 'node';
 const child = spawn(command, ['server.js'], {
   env: {
     ...process.env,

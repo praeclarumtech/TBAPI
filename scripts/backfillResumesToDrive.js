@@ -13,11 +13,11 @@
  * - Updates Applicant.resumeUrl and related jobApplication.resumeUrl
  */
 
-import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
+import loadEnv from '../src/helpers/loadEnv.js';
 import connectDB from '../src/helpers/dbConnection.js';
 import Applicant from '../src/models/applicantModel.js';
 import jobApplication from '../src/models/jobApplicantionModel.js';
@@ -25,7 +25,7 @@ import { uploadResumeToDrive } from '../src/helpers/googleDriveUpload.js';
 import logger from '../src/loggers/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+loadEnv();
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
