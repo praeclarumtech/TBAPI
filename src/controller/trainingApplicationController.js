@@ -16,7 +16,8 @@ const normalizeTechnologies = (value) => {
     : typeof value === 'string' && value.trim()
       ? value.split(',')
       : [];
-  return [...new Set(list.map((item) => String(item).trim()).filter(Boolean))];
+  const first = list.map((item) => String(item).trim()).find(Boolean);
+  return first ? [first] : [];
 };
 
 export const submitTrainingApplication = async (req, res) => {
@@ -80,6 +81,7 @@ export const listTrainingApplications = async (req, res) => {
       technology = '',
       semester = '',
       duration = '',
+      interestedFor = '',
       gender = '',
       applicantType = '',
       state = '',
@@ -98,6 +100,7 @@ export const listTrainingApplications = async (req, res) => {
     }
     if (semester) query.semester = semester;
     if (duration) query.duration = duration;
+    if (interestedFor) query.interestedFor = interestedFor;
     if (gender) query.gender = gender;
     if (applicantType) query.applicantType = applicantType;
     if (state) {
@@ -137,7 +140,9 @@ export const listTrainingApplications = async (req, res) => {
               { email: pattern },
               { phone: pattern },
               { collegeName: pattern },
+              { qualification: pattern },
               { technology: pattern },
+              { interestedFor: pattern },
               { city: pattern },
               { state: pattern },
               { address: pattern },
@@ -190,6 +195,8 @@ const applicationPayload = (body) => ({
   phone: String(body.phone).trim(),
   email: (body.email || '').trim().toLowerCase(),
   technology: normalizeTechnologies(body.technology),
+  interestedFor: body.interestedFor,
+  qualification: (body.qualification || '').trim(),
   collegeName: (body.collegeName || '').trim(),
   semester: body.semester || '',
   duration: body.duration,

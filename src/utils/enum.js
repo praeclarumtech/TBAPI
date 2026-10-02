@@ -36,6 +36,8 @@ export const trainingApplicantTypeEnum = {
   OTHER: 'other',
 };
 
+export const trainingInterestValues = ['online', 'offline', 'hybrid'];
+
 export const jodTypeEnum = {
   FULL_TIME: 'full-time',
   PART_TIME: 'part-time',
