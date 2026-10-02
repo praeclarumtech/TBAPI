@@ -16,6 +16,8 @@ import duplicateRecordRouter from './route/duplicateRecordRoute.js';
 import jobsRouter from './route/jobRoute.js';
 import vendorRoute from './route/vendorRoute.js';
 import qrCodeRoute from './route/qrCodeRoute.js';
+import trainingApplicationRoute from './route/trainingApplicationRoute.js';
+import trainingTechnologyRoute from './route/trainingTechnologyRoute.js';
 // import { runSampleCronTask } from '../helpers/cron.js';
 
 const router = express.Router();
@@ -28,6 +30,8 @@ router.use('/email/applicant', applicantEmailRouter);
 router.use('/skill', skillsRoute);
 router.use('/degree', degreeRoute);
 router.use('/applicants', applicantRouter);
+router.use('/training-application', trainingApplicationRoute);
+router.use('/training-technology', trainingTechnologyRoute);
 router.use('/job', jobsRouter);
 router.use('/vendor', vendorRoute);
 router.use('/qr-code', qrCodeRoute);

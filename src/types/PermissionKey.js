@@ -10,6 +10,7 @@ export const PermissionKey = {
   // Applicants
   APPLICANTS: 'applicants',
   APPLICANTS_IMPORT: 'applicants_import',
+  TRAINING_APPLICATIONS: 'training_applications',
 
   // Vendors
   VENDORS: 'vendors',
@@ -39,6 +40,7 @@ export const PermissionKey = {
   MASTER_COUNTRY: 'master_country',
   MASTER_STATE: 'master_state',
   MASTER_CITY: 'master_city',
+  MASTER_TRAINING_TECHNOLOGY: 'master_training_technology',
 };
 
 // Helper function to get all permission keys
@@ -51,7 +53,11 @@ export const isValidPermissionKey = (key) =>
 // Helper function to get permission keys by category
 export const getPermissionsByCategory = () => ({
   dashboard: [PermissionKey.DASHBOARD],
-  applicants: [PermissionKey.APPLICANTS, PermissionKey.APPLICANTS_IMPORT],
+  applicants: [
+    PermissionKey.APPLICANTS,
+    PermissionKey.APPLICANTS_IMPORT,
+    PermissionKey.TRAINING_APPLICATIONS,
+  ],
   vendors: [
     PermissionKey.VENDORS,
     PermissionKey.VENDOR_LIST,
@@ -77,5 +83,6 @@ export const getPermissionsByCategory = () => ({
     PermissionKey.MASTER_COUNTRY,
     PermissionKey.MASTER_STATE,
     PermissionKey.MASTER_CITY,
+    PermissionKey.MASTER_TRAINING_TECHNOLOGY,
   ],
 });
