@@ -3,6 +3,7 @@ import {
   genderEnum,
   trainingApplicantTypeEnum,
   trainingDurationValues,
+  trainingInterestValues,
   trainingSemesterValues,
 } from '../utils/enum.js';
 
@@ -35,10 +36,18 @@ export const trainingApplicationValidation = Joi.object({
   }).required(),
   technology: Joi.alternatives()
     .try(
-      Joi.array().items(Joi.string().trim().allow('')),
+      Joi.array().max(1).items(Joi.string().trim().allow('')),
       Joi.string().trim().allow('', null)
     )
     .optional(),
+  interestedFor: Joi.string()
+    .valid(...trainingInterestValues)
+    .required()
+    .messages({
+      'any.only': 'Select online, offline, or hybrid.',
+      'any.required': 'Select online, offline, or hybrid.',
+    }),
+  qualification: Joi.string().trim().allow('', null),
   collegeName: Joi.string().trim().allow('', null),
   semester: Joi.string()
     .valid(...trainingSemesterValues, '')

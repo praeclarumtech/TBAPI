@@ -3,6 +3,7 @@ import {
   genderEnum,
   trainingApplicantTypeEnum,
   trainingDurationValues,
+  trainingInterestValues,
   trainingSemesterValues,
 } from '../utils/enum.js';
 
@@ -17,6 +18,12 @@ const TrainingApplicationSchema = new mongoose.Schema(
     phone: { type: String, required: true, trim: true },
     email: { type: String, trim: true, lowercase: true, default: '' },
     technology: { type: [String], default: [] },
+    interestedFor: {
+      type: String,
+      enum: [...trainingInterestValues, ''],
+      default: '',
+    },
+    qualification: { type: String, trim: true, default: '' },
     collegeName: { type: String, trim: true, default: '' },
     semester: {
       type: String,
