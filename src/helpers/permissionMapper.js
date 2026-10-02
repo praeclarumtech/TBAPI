@@ -9,6 +9,7 @@ export const sidebarToPermissionMap = {
   Dashboard: PermissionKey.DASHBOARD,
   Applicants: PermissionKey.APPLICANTS,
   'Import Applicants': PermissionKey.APPLICANTS_IMPORT,
+  'Training Applications': PermissionKey.TRAINING_APPLICATIONS,
   Vendors: PermissionKey.VENDORS,
   Vendor: PermissionKey.VENDORS,
   'Vendor List': PermissionKey.VENDOR_LIST,
@@ -30,6 +31,7 @@ export const sidebarToPermissionMap = {
   'Add Country': PermissionKey.MASTER_COUNTRY,
   'Add State': PermissionKey.MASTER_STATE,
   'Add City': PermissionKey.MASTER_CITY,
+  'Training Technologies': PermissionKey.MASTER_TRAINING_TECHNOLOGY,
 };
 
 /**
@@ -75,7 +77,11 @@ export const validatePermissions = (permissions) => {
  */
 export const getPermissionsByCategory = () => ({
   dashboard: [PermissionKey.DASHBOARD],
-  applicants: [PermissionKey.APPLICANTS, PermissionKey.APPLICANTS_IMPORT],
+  applicants: [
+    PermissionKey.APPLICANTS,
+    PermissionKey.APPLICANTS_IMPORT,
+    PermissionKey.TRAINING_APPLICATIONS,
+  ],
   vendors: [
     PermissionKey.VENDORS,
     PermissionKey.VENDOR_LIST,
@@ -94,6 +100,7 @@ export const getPermissionsByCategory = () => ({
     PermissionKey.MASTER_COUNTRY,
     PermissionKey.MASTER_STATE,
     PermissionKey.MASTER_CITY,
+    PermissionKey.MASTER_TRAINING_TECHNOLOGY,
   ],
   clients: [
     PermissionKey.CLIENTS,

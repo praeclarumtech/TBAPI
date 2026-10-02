@@ -12,6 +12,30 @@ export const genderEnum = {
   OTHER: 'other',
 };
 
+export const trainingDurationValues = [
+  '15 Days',
+  '1 Month',
+  '3 Month',
+  '4 - 6 Month',
+];
+
+export const trainingSemesterValues = [
+  'Semester 1',
+  'Semester 2',
+  'Semester 3',
+  'Semester 4',
+  'Semester 5',
+  'Semester 6',
+  'Semester 7',
+  'Semester 8',
+];
+
+export const trainingApplicantTypeEnum = {
+  STUDENT: 'student',
+  EMPLOYEE: 'employee',
+  OTHER: 'other',
+};
+
 export const jodTypeEnum = {
   FULL_TIME: 'full-time',
   PART_TIME: 'part-time',
@@ -245,6 +269,7 @@ export const PermissionKey = {
   // Applicants
   APPLICANTS: 'applicants',
   APPLICANTS_IMPORT: 'applicants_import',
+  TRAINING_APPLICATIONS: 'training_applications',
 
   //clients
   CLIENTS: 'clients',
@@ -275,6 +300,7 @@ export const PermissionKey = {
   MASTER_COUNTRY: 'master_country',
   MASTER_STATE: 'master_state',
   MASTER_CITY: 'master_city',
+  MASTER_TRAINING_TECHNOLOGY: 'master_training_technology',
 
   // Settings
   SETTINGS: 'settings',
